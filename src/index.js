@@ -1,17 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Debug logs to verify rendering
+console.log('%c[React] Starting...', 'color: green; font-weight: bold;');
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+try {
+   const rootElement = document.getElementById('root');
+   console.log('[React] Root element:', rootElement);
+
+   const root = ReactDOM.createRoot(rootElement);
+
+   root.render(
+     <React.StrictMode>
+       <App />
+     </React.StrictMode>
+   );
+
+   console.log('%c[React] App rendered successfully', 'color: green; font-weight: bold;');
+
+} catch (err) {
+   console.error('[React ERROR]', err);
+}
+
