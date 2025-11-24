@@ -1,24 +1,30 @@
-import React from 'react';
-import LandingPage from './components/LandingPage';
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import LandingPage from "./components/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+
 import ProtectedRoute from "./ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 
 function App() {
-   console.log('%c[App] Loaded App component', 'color: blue;');
+   console.log("%c[App] Loaded App component", "color: blue;");
 
-return (
+   return (
      <AuthProvider>
        <BrowserRouter>
          <Routes>
-           <Route path="/" element={<Login />} />
+
+           {/* Public Landing Page */}
+           <Route path="/" element={<LandingPage />} />
+
+           {/* Auth Pages */}
            <Route path="/login" element={<Login />} />
            <Route path="/register" element={<Register />} />
 
+           {/* Protected Dashboard */}
            <Route
              path="/dashboard"
              element={
@@ -27,6 +33,7 @@ return (
                </ProtectedRoute>
              }
            />
+
          </Routes>
        </BrowserRouter>
      </AuthProvider>
