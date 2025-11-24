@@ -1,19 +1,18 @@
-const API_URL = "https://5.75.175.150";
+const API_URL = "https://5.75.175.150"; // ändern!
 
-export async function registerUser(email, password) {
+export const registerUser = async (email, password) => {
    const res = await fetch(`${API_URL}/auth/register`, {
      method: "POST",
      headers: { "Content-Type": "application/json" },
      body: JSON.stringify({ email, password }),
    });
-   return res.json(); }
+   return res.json(); };
 
-export async function loginUser(email, password) {
+export const loginUser = async (email, password) => {
    const res = await fetch(`${API_URL}/auth/login`, {
      method: "POST",
      headers: { "Content-Type": "application/json" },
      body: JSON.stringify({ email, password }),
    });
-   return res.json();
-}
+   return res.json(); };
 
