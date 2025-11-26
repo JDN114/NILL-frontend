@@ -3,57 +3,52 @@ import HeroImg from "../assets/images/hero-image.png";
 
 export default function Hero() {
   return (
-    <section id="home" className="relative">
-      {/* Background gradient + decorative shapes */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a]/60 to-[#111827]/50 pointer-events-none" />
+    <section id="home" className="relative overflow-hidden">
+      {/* soft gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#071023] via-[#081426] to-[#03060a] pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-6 py-28 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="text-white">
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4" style={{ color: "#F9FAFB" }}>
-              Automatisiere <span className="text-[#C5A572]">Routineaufgaben</span> — fokussiere das Wesentliche.
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div className="space-y-6">
+            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-white">
+              Automatisiere <span style={{ color: "#C5A572" }}>Routineaufgaben</span> — fokus auf das Wesentliche.
             </h1>
-            <p className="max-w-xl text-gray-200 mb-6">
-              NILL ist deine KI-basierte Assistenzplattform: E-Mail-Automatisierung, Terminplanung und intelligente Zusammenfassungen — alles automatisiert, datenschutzbewusst und klimafreundlich.
+
+            <p className="text-gray-300 max-w-xl">
+              NILL ist deine KI-basierte Assistenzplattform: E-Mail-Automatisierung, intelligente Zusammenfassungen, Terminplanung und mehr — datenschutzbewusst und energieeffizient.
             </p>
 
             <div className="flex gap-4">
-              <a href="/register" className="inline-flex items-center gap-2 bg-white text-[#111827] px-5 py-3 rounded-lg font-semibold shadow hover:shadow-lg transform hover:-translate-y-0.5 transition">
+              <a href="/register" className="inline-flex items-center gap-2 bg-white text-[#111827] px-5 py-3 rounded-lg font-semibold shadow hover:shadow-lg transition transform hover:-translate-y-0.5">
                 Kostenlos testen
               </a>
-              <a href="#about" className="inline-flex items-center gap-2 border border-white/30 text-white px-5 py-3 rounded-lg hover:bg-white/10 transition">
-                Mehr erfahren
-              </a>
+              <a href="#about" className="inline-flex items-center gap-2 border border-white/10 text-white px-5 py-3 rounded-lg hover:bg-white/5 transition">Mehr erfahren</a>
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-4">
-              <Statistic title="99% Automatisierbar" subtitle="Weniger manuelle Arbeit" />
-              <Statistic title="24/7 Support" subtitle="Immer erreichbar" />
-              <Statistic title="CO₂-effizient" subtitle="Grüne Infrastruktur" />
+            <div className="flex gap-4 mt-6">
+              <div className="glass p-4 rounded-xl">
+                <div className="text-sm text-gray-100 font-semibold">Email AI</div>
+                <div className="text-xs text-gray-300">Kategorisierung & Zusammenfassung</div>
+              </div>
+              <div className="glass p-4 rounded-xl">
+                <div className="text-sm text-gray-100 font-semibold">Terminplanung</div>
+                <div className="text-xs text-gray-300">Automatisch & smart</div>
+              </div>
             </div>
           </div>
 
           <div className="relative">
-            <div className="rounded-2xl overflow-hidden shadow-2xl transform hover:scale-102 transition duration-500">
+            <div className="rounded-3xl overflow-hidden shadow-2xl transform transition hover:scale-[1.02]">
               <img src={HeroImg} alt="Hero" className="w-full h-auto object-cover" />
             </div>
 
-            {/* subtle floating cards */}
-            <div className="absolute -left-8 -bottom-8 bg-white rounded-xl p-4 shadow-md w-56 text-sm">
-              <strong className="text-gray-900">Email AI</strong>
-              <p className="text-gray-600">Kategorisierung, Zusammenfassungen & Routing.</p>
+            <div className="absolute -left-10 -bottom-10 bg-white/6 border border-white/4 p-4 rounded-xl w-56 animate-floaty">
+              <div className="text-xs text-gray-100 font-semibold">Realtime Insights</div>
+              <div className="text-[12px] text-gray-300">Actionable suggestions for follow-ups</div>
             </div>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function Statistic({ title, subtitle }) {
-  return (
-    <div className="bg-white/10 p-3 rounded-lg">
-      <p className="text-white font-semibold">{title}</p>
-      <p className="text-gray-200 text-sm">{subtitle}</p>
-    </div>
   );
 }
