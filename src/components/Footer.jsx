@@ -1,28 +1,20 @@
 import React from "react";
-import Logo from "./Logo";
-  export default function Footer() {
-   return (
-     <footer className="footer" role="contentinfo">
-       <div className="container inner">
-         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-           <Logo width={100} height={28} />
-           <div style={{ marginLeft: 6 }}>
-             <div style={{ fontWeight: 700, color: "#e6eefc" }}>NILL</div>
-             <div className="small">Simple. Fast. Efficient.</div>
-           </div>
-         </div>
 
-         <div className="links" aria-hidden>
-           <a href="#features">Features</a>
-           <a href="#about">About</a>
-           <a href="#contact">Contact</a>
-         </div>
+export default function Footer() {
+  return (
+    <footer className="bg-[#0b1117] text-gray-300 py-8 mt-16">
+      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <p className="font-semibold text-white">NILL</p>
+          <p className="text-sm text-gray-400">© {new Date().getFullYear()} NILL. Alle Rechte vorbehalten.</p>
+        </div>
 
-         <div className="copy" style={{ minWidth: 240, textAlign: "right" }}>
-           © {new Date().getFullYear()} NILL AI — All rights reserved.
-         </div>
-       </div>
-     </footer>
-   );
+        <div className="flex gap-4">
+          <a href="/impressum" className="text-gray-400 hover:text-white">Impressum</a>
+          <a href="/datenschutz" className="text-gray-400 hover:text-white">Datenschutz</a>
+          <a href="/kontakt" className="text-gray-400 hover:text-white">Kontakt</a>
+        </div>
+      </div>
+    </footer>
+  );
 }
-
