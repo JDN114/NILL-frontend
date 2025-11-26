@@ -1,7 +1,7 @@
 import React, { useState } from "react"; 
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.svg";
-import heroImage from "../assets/hero-bg.jpg";
+import logo from "../assets/images/logo.png";
+import heroImage from "../assets/images/hero-image.png";
 
 export default function LandingPage() {
    const [menuOpen, setMenuOpen] = useState(false);
