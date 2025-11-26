@@ -10,7 +10,6 @@ import Sustainability from "../components/Sustainability";
 import ContactForm from "../components/ContactForm";
 import CTABar from "../components/CTABar";
 import Footer from "../components/Footer";
-import Screenshots from "../components/Screenshots";
 
 export default function LandingPage(){
   return (
