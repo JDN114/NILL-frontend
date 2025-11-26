@@ -1,6 +1,5 @@
 import React, { useState } from "react"; 
 import { Link } from "react-router-dom";
-Creating an optimized production build...
 import Logo from "../assets/images/logo.png";
 import heroImage from "../assets/images/hero-image.png";
 
