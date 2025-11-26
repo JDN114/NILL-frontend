@@ -16,3 +16,8 @@ export const loginUser = async (email, password) => {
    });
    return res.json(); };
 
+export const fetchDashboardData = async () => {
+  const response = await fetch("/api/dashboard");
+  const data = await response.json();
+  return data;
+};
