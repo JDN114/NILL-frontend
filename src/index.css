@@ -2,14 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: zusätzliche utility für subtle scale */
-@keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+/* Import font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+:root{
+  --brand: #111827;
+  --accent: #C5A572;
 }
 
-body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+/* Page background and base */
+html, body, #root { height: 100%; }
+body {
+  @apply bg-gradient-to-b from-[#071023] to-[#03060a] text-gray-100 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* Utility animations */
+@keyframes floaty { 0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)} }
+.animate-floaty { animation: floaty 6s ease-in-out infinite; }
+
+/* Glass card */
+.glass {
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* small helpers */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
