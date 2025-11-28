@@ -1,25 +1,21 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect } from "react";
-
+import React, { createContext, useState } from "react";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
+  const [token, setToken] = useState(localStorage.getItem("access_token") || null);
 
   const login = (jwt) => {
-    localStorage.setItem("token", jwt);
+    localStorage.setItem("access_token", jwt);
     setToken(jwt);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
     setToken(null);
   };
 
-  const isLoggedIn = !!token;
-
   return (
-    <AuthContext.Provider value={{ token, login, logout, isLoggedIn }}>
+    <AuthContext.Provider value={{ token, login, logout, isLoggedIn: !!token }}>
       {children}
     </AuthContext.Provider>
   );

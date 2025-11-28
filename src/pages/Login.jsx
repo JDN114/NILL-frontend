@@ -1,74 +1,81 @@
-// src/pages/Login.jsx
-import React, { useState, useContext } from "react";
-import { loginUser } from "../services/api";
-import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleLogin = async (e) => {
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await loginUser(email, password);
-
-      if (res.access_token) {
-        login(res.access_token);        // Token speichern
-        navigate("/dashboard");         // Weiterleitung zum Dashboard
-      } else {
-        alert(res.detail || "Login fehlgeschlagen");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Serverfehler, bitte später erneut versuchen");
-    } finally {
-      setLoading(false);
-    }
+    console.log("Login:", form);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="p-8 bg-gray-50 shadow-lg rounded-lg w-full max-w-md">
-        <h2 className="text-3xl font-bold mb-6 text-gray-900 text-center">
-          Login
-        </h2>
-        <form onSubmit={handleLogin} className="flex flex-col gap-5">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400 bg-white"
-          />
-          <input
-            type="password"
-            placeholder="Passwort"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400 bg-white"
-          />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#071023] to-[#03060a] opacity-90"></div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="glass relative z-10 w-full max-w-md p-10 rounded-2xl shadow-xl"
+      >
+        <h1 className="text-3xl font-bold text-white mb-6">Login</h1>
+        <p className="text-gray-300 mb-8">
+          Willkommen zurück — melde dich bei deinem NILL-Konto an.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* EMAIL */}
+          <div>
+            <label className="block text-gray-200 mb-1 text-sm">
+              E-Mail Adresse
+            </label>
+            <input
+              name="email"
+              type="email"
+              required
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
+            />
+          </div>
+
+          {/* PASSWORD */}
+          <div>
+            <label className="block text-gray-200 mb-1 text-sm">
+              Passwort
+            </label>
+            <input
+              name="password"
+              type="password"
+              required
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
+            />
+          </div>
+
+          {/* SUBMIT */}
           <button
             type="submit"
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold transition"
+            className="btn-primary w-full py-3 rounded-lg font-semibold shadow-lg flex justify-center"
           >
-            {loading ? "Lädt..." : "Login"}
+            Einloggen
           </button>
+
+          <p className="text-center text-gray-400 text-sm">
+            Noch keinen Account?{" "}
+            <a
+              href="/register"
+              className="text-[var(--accent)] font-semibold hover:underline"
+            >
+              Registrieren
+            </a>
+          </p>
         </form>
-        <p className="mt-4 text-center text-gray-700">
-          Kein Konto?{" "}
-          <a href="/register" className="text-blue-600 font-medium hover:underline">
-            Registrieren
-          </a>
-        </p>
-      </div>
-    </div>
+      </motion.div>
+    </section>
   );
 }

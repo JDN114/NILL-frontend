@@ -1,0 +1,517 @@
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:     module = importlib.import_module(module_str)
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:     from app.routes import (
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:     from app.services import email_openai_service
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]:     from openai import OpenAI
+Nov 16 18:36:30 NILL-Server-1 uvicorn[472054]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:31 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:31 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:31 NILL-Server-1 systemd[1]: nill.service: Consumed 1.382s CPU time.
+Nov 16 18:36:34 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300082.
+Nov 16 18:36:34 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:36:34 NILL-Server-1 systemd[1]: nill.service: Consumed 1.382s CPU time.
+Nov 16 18:36:34 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   warnings.warn(message, UserWarning)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]: Traceback (most recent call last):
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     sys.exit(main())
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return self.main(*args, **kwargs)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     rv = self.invoke(ctx)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return callback(*args, **kwargs)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     run(
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     server.run()
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return loop.run_until_complete(main)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return future.result()
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     await self._serve(sockets)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     config.load()
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     module = importlib.import_module(module_str)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     from app.routes import (
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     from app.services import email_openai_service
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]:     from openai import OpenAI
+Nov 16 18:36:35 NILL-Server-1 uvicorn[472056]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:35 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:35 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:35 NILL-Server-1 systemd[1]: nill.service: Consumed 1.463s CPU time.
+Nov 16 18:36:36 NILL-Server-1 sshd[472057]: [0;1;39m[0;1;31m[0;1;39mpam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=193.46.255.217  user=root[0m
+Nov 16 18:36:38 NILL-Server-1 sshd[472057]: Failed password for root from 193.46.255.217 port 45672 ssh2
+Nov 16 18:36:38 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300083.
+Nov 16 18:36:38 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:36:38 NILL-Server-1 systemd[1]: nill.service: Consumed 1.463s CPU time.
+Nov 16 18:36:38 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   warnings.warn(message, UserWarning)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]: Traceback (most recent call last):
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     sys.exit(main())
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return self.main(*args, **kwargs)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     rv = self.invoke(ctx)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return callback(*args, **kwargs)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     run(
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     server.run()
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return loop.run_until_complete(main)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return future.result()
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     await self._serve(sockets)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     config.load()
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     module = importlib.import_module(module_str)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     from app.routes import (
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     from app.services import email_openai_service
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]:     from openai import OpenAI
+Nov 16 18:36:39 NILL-Server-1 uvicorn[472059]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:40 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:40 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:40 NILL-Server-1 systemd[1]: nill.service: Consumed 1.447s CPU time.
+Nov 16 18:36:40 NILL-Server-1 sshd[472057]: Failed password for root from 193.46.255.217 port 45672 ssh2
+Nov 16 18:36:43 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300084.
+Nov 16 18:36:43 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:36:43 NILL-Server-1 systemd[1]: nill.service: Consumed 1.447s CPU time.
+Nov 16 18:36:43 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:36:43 NILL-Server-1 sshd[472057]: Failed password for root from 193.46.255.217 port 45672 ssh2
+Nov 16 18:36:44 NILL-Server-1 sshd[472057]: Received disconnect from 193.46.255.217 port 45672:11:  [preauth]
+Nov 16 18:36:44 NILL-Server-1 sshd[472057]: Disconnected from authenticating user root 193.46.255.217 port 45672 [preauth]
+Nov 16 18:36:44 NILL-Server-1 sshd[472057]: [0;1;39m[0;1;31m[0;1;39mPAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=193.46.255.217  user=root[0m
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   warnings.warn(message, UserWarning)
+Nov 16 18:36:44 NILL-Server-1 sshd[472061]: [0;1;39m[0;1;31m[0;1;39mpam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=193.46.255.217  user=root[0m
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]: Traceback (most recent call last):
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     sys.exit(main())
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return self.main(*args, **kwargs)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     rv = self.invoke(ctx)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return callback(*args, **kwargs)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     run(
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     server.run()
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return loop.run_until_complete(main)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return future.result()
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     await self._serve(sockets)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     config.load()
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     module = importlib.import_module(module_str)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     from app.routes import (
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     from app.services import email_openai_service
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]:     from openai import OpenAI
+Nov 16 18:36:44 NILL-Server-1 uvicorn[472060]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:44 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:44 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:44 NILL-Server-1 systemd[1]: nill.service: Consumed 1.504s CPU time.
+Nov 16 18:36:46 NILL-Server-1 sshd[472061]: Failed password for root from 193.46.255.217 port 55238 ssh2
+Nov 16 18:36:47 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300085.
+Nov 16 18:36:47 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:36:47 NILL-Server-1 systemd[1]: nill.service: Consumed 1.504s CPU time.
+Nov 16 18:36:48 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:36:48 NILL-Server-1 uvicorn[472063]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:36:48 NILL-Server-1 uvicorn[472063]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:36:48 NILL-Server-1 uvicorn[472063]:   warnings.warn(message, UserWarning)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]: Traceback (most recent call last):
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     sys.exit(main())
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return self.main(*args, **kwargs)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     rv = self.invoke(ctx)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return callback(*args, **kwargs)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     run(
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     server.run()
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return loop.run_until_complete(main)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return future.result()
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     await self._serve(sockets)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     config.load()
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     module = importlib.import_module(module_str)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     from app.routes import (
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     from app.services import email_openai_service
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]:     from openai import OpenAI
+Nov 16 18:36:49 NILL-Server-1 uvicorn[472063]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:49 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:49 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:49 NILL-Server-1 systemd[1]: nill.service: Consumed 1.453s CPU time.
+Nov 16 18:36:49 NILL-Server-1 sshd[472061]: Failed password for root from 193.46.255.217 port 55238 ssh2
+Nov 16 18:36:51 NILL-Server-1 sshd[472061]: Failed password for root from 193.46.255.217 port 55238 ssh2
+Nov 16 18:36:52 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300086.
+Nov 16 18:36:52 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:36:52 NILL-Server-1 systemd[1]: nill.service: Consumed 1.453s CPU time.
+Nov 16 18:36:52 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   warnings.warn(message, UserWarning)
+Nov 16 18:36:53 NILL-Server-1 sshd[472061]: Received disconnect from 193.46.255.217 port 55238:11:  [preauth]
+Nov 16 18:36:53 NILL-Server-1 sshd[472061]: Disconnected from authenticating user root 193.46.255.217 port 55238 [preauth]
+Nov 16 18:36:53 NILL-Server-1 sshd[472061]: [0;1;39m[0;1;31m[0;1;39mPAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=193.46.255.217  user=root[0m
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]: Traceback (most recent call last):
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     sys.exit(main())
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return self.main(*args, **kwargs)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     rv = self.invoke(ctx)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return callback(*args, **kwargs)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     run(
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     server.run()
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return loop.run_until_complete(main)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return future.result()
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     await self._serve(sockets)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     config.load()
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     module = importlib.import_module(module_str)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     from app.routes import (
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     from app.services import email_openai_service
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]:     from openai import OpenAI
+Nov 16 18:36:53 NILL-Server-1 uvicorn[472064]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:53 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:53 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:53 NILL-Server-1 systemd[1]: nill.service: Consumed 1.479s CPU time.
+Nov 16 18:36:54 NILL-Server-1 sshd[472065]: [0;1;39m[0;1;31m[0;1;39mpam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=193.46.255.217  user=root[0m
+Nov 16 18:36:55 NILL-Server-1 sshd[472065]: Failed password for root from 193.46.255.217 port 59526 ssh2
+Nov 16 18:36:56 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300087.
+Nov 16 18:36:56 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:36:56 NILL-Server-1 systemd[1]: nill.service: Consumed 1.479s CPU time.
+Nov 16 18:36:56 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:36:58 NILL-Server-1 sshd[472065]: Failed password for root from 193.46.255.217 port 59526 ssh2
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   warnings.warn(message, UserWarning)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]: Traceback (most recent call last):
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     sys.exit(main())
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return self.main(*args, **kwargs)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     rv = self.invoke(ctx)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return callback(*args, **kwargs)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     run(
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     server.run()
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return loop.run_until_complete(main)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return future.result()
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     await self._serve(sockets)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     config.load()
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     module = importlib.import_module(module_str)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     from app.routes import (
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     from app.services import email_openai_service
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]:     from openai import OpenAI
+Nov 16 18:36:58 NILL-Server-1 uvicorn[472067]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:36:58 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:36:58 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:36:58 NILL-Server-1 systemd[1]: nill.service: Consumed 1.840s CPU time.
+Nov 16 18:36:59 NILL-Server-1 sshd[472068]: [0;1;39m[0;1;31m[0;1;39mpam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=61.219.181.31  user=root[0m
+Nov 16 18:37:01 NILL-Server-1 sshd[472068]: Failed password for root from 61.219.181.31 port 6094 ssh2
+Nov 16 18:37:01 NILL-Server-1 sshd[472065]: Failed password for root from 193.46.255.217 port 59526 ssh2
+Nov 16 18:37:01 NILL-Server-1 sshd[472065]: Received disconnect from 193.46.255.217 port 59526:11:  [preauth]
+Nov 16 18:37:01 NILL-Server-1 sshd[472065]: Disconnected from authenticating user root 193.46.255.217 port 59526 [preauth]
+Nov 16 18:37:01 NILL-Server-1 sshd[472065]: [0;1;39m[0;1;31m[0;1;39mPAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=193.46.255.217  user=root[0m
+Nov 16 18:37:01 NILL-Server-1 sshd[472068]: Received disconnect from 61.219.181.31 port 6094:11: Bye Bye [preauth]
+Nov 16 18:37:01 NILL-Server-1 sshd[472068]: Disconnected from authenticating user root 61.219.181.31 port 6094 [preauth]
+Nov 16 18:37:01 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300088.
+Nov 16 18:37:01 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:37:01 NILL-Server-1 systemd[1]: nill.service: Consumed 1.840s CPU time.
+Nov 16 18:37:01 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:37:02 NILL-Server-1 sshd[472070]: [0;1;39m[0;1;31m[0;1;39mpam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=187.110.238.50  user=root[0m
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   warnings.warn(message, UserWarning)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]: Traceback (most recent call last):
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     sys.exit(main())
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return self.main(*args, **kwargs)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     rv = self.invoke(ctx)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return callback(*args, **kwargs)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     run(
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     server.run()
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return loop.run_until_complete(main)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return future.result()
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     await self._serve(sockets)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     config.load()
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     module = importlib.import_module(module_str)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     from app.routes import (
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     from app.services import email_openai_service
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]:     from openai import OpenAI
+Nov 16 18:37:03 NILL-Server-1 uvicorn[472072]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:37:03 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:37:03 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:37:03 NILL-Server-1 systemd[1]: nill.service: Consumed 1.549s CPU time.
+Nov 16 18:37:05 NILL-Server-1 sshd[472070]: Failed password for root from 187.110.238.50 port 34098 ssh2
+Nov 16 18:37:06 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300089.
+Nov 16 18:37:06 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:37:06 NILL-Server-1 systemd[1]: nill.service: Consumed 1.549s CPU time.
+Nov 16 18:37:06 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:37:06 NILL-Server-1 sshd[472070]: Received disconnect from 187.110.238.50 port 34098:11: Bye Bye [preauth]
+Nov 16 18:37:06 NILL-Server-1 sshd[472070]: Disconnected from authenticating user root 187.110.238.50 port 34098 [preauth]
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   warnings.warn(message, UserWarning)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]: Traceback (most recent call last):
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     sys.exit(main())
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return self.main(*args, **kwargs)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     rv = self.invoke(ctx)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return callback(*args, **kwargs)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     run(
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     server.run()
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return loop.run_until_complete(main)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return future.result()
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     await self._serve(sockets)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     config.load()
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/config.py", line 439, in load
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     self.loaded_app = import_from_string(self.app)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     module = importlib.import_module(module_str)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     return _bootstrap._gcd_import(name[level:], package, level)
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/app/main.py", line 3, in <module>
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     from app.routes import (
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/app/routes/email_ai_routes.py", line 7, in <module>
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     from app.services import email_openai_service
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:   File "/root/nill/app/services/email_openai_service.py", line 1, in <module>
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]:     from openai import OpenAI
+Nov 16 18:37:07 NILL-Server-1 uvicorn[472075]: ImportError: cannot import name 'OpenAI' from 'openai' (/root/nill/venv/lib/python3.10/site-packages/openai/__init__.py)
+Nov 16 18:37:08 NILL-Server-1 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnill.service: Main process exited, code=exited, status=1/FAILURE[0m
+Nov 16 18:37:08 NILL-Server-1 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnill.service: Failed with result 'exit-code'.[0m
+Nov 16 18:37:08 NILL-Server-1 systemd[1]: nill.service: Consumed 1.453s CPU time.
+Nov 16 18:37:11 NILL-Server-1 systemd[1]: nill.service: Scheduled restart job, restart counter is at 300090.
+Nov 16 18:37:11 NILL-Server-1 systemd[1]: Stopped NILL FastAPI Service.
+Nov 16 18:37:11 NILL-Server-1 systemd[1]: nill.service: Consumed 1.453s CPU time.
+Nov 16 18:37:11 NILL-Server-1 systemd[1]: Started NILL FastAPI Service.
+Nov 16 18:37:11 NILL-Server-1 sshd[472073]: [0;1;39m[0;1;31m[0;1;39mpam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=137.184.53.92  user=root[0m
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]: /root/nill/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]: * 'orm_mode' has been renamed to 'from_attributes'
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   warnings.warn(message, UserWarning)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]: Traceback (most recent call last):
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/bin/uvicorn", line 8, in <module>
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     sys.exit(main())
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1462, in __call__
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     return self.main(*args, **kwargs)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1383, in main
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     rv = self.invoke(ctx)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 1246, in invoke
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     return ctx.invoke(self.callback, **ctx.params)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/click/core.py", line 814, in invoke
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     return callback(*args, **kwargs)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 423, in main
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     run(
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/main.py", line 593, in run
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     server.run()
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 67, in run
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/_compat.py", line 60, in asyncio_run
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     return loop.run_until_complete(main)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     return future.result()
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 71, in serve
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     await self._serve(sockets)
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3.10/site-packages/uvicorn/server.py", line 78, in _serve
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:     config.load()
+Nov 16 18:37:12 NILL-Server-1 uvicorn[472076]:   File "/root/nill/venv/lib/python3
