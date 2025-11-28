@@ -1,24 +1,27 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // Navigation
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
 
+  // Update input fields
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Hier kommt später der API-Call rein
-    console.log("Login:", form);
+    console.log("Login-Form abgeschickt:", form); // Debug: Formdaten prüfen
 
-    // Mock-Login: wenn Email und Passwort gesetzt sind, weiter zum Dashboard
+    // Einfache Validierung
     if (form.email && form.password) {
-      navigate("/dashboard");
+      console.log("Navigieren zum Dashboard"); // Debug: Navigation wird aufgerufen
+      // Hier würdest du später die Authentifizierung einbauen
+      navigate("/dashboard"); // Weiterleitung zum Dashboard
     } else {
       alert("Bitte Email und Passwort eingeben");
     }
@@ -40,31 +43,36 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* E-Mail */}
           <div>
             <label className="block text-gray-200 mb-1 text-sm">E-Mail Adresse</label>
             <input
               name="email"
               type="email"
               required
+              value={form.email}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
             />
           </div>
 
+          {/* Passwort */}
           <div>
             <label className="block text-gray-200 mb-1 text-sm">Passwort</label>
             <input
               name="password"
               type="password"
               required
+              value={form.password}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
             />
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-[var(--accent)] rounded-lg text-white font-semibold hover:bg-[var(--accent-hover)] transition"
+            className="w-full py-3 bg-[var(--accent)] text-white rounded-lg font-semibold hover:bg-[var(--accent-hover)] transition"
           >
             Einloggen
           </button>
