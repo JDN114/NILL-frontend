@@ -1,21 +1,31 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // Navigation
 
-export default function Register() {
+export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Register:", form);
+
+    // Hier kommt später der API-Call rein
+    console.log("Login:", form);
+
+    // Mock-Login: wenn Email und Passwort gesetzt sind, weiter zum Dashboard
+    if (form.email && form.password) {
+      navigate("/dashboard");
+    } else {
+      alert("Bitte Email und Passwort eingeben");
+    }
   };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Hintergrund */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[#071023] to-[#03060a] opacity-90"></div>
 
       <motion.div
@@ -24,19 +34,14 @@ export default function Register() {
         transition={{ duration: 0.6 }}
         className="glass relative z-10 w-full max-w-md p-10 rounded-2xl shadow-xl"
       >
-        <h1 className="text-3xl font-bold text-white mb-6">
-          Account erstellen
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-6">Login</h1>
         <p className="text-gray-300 mb-8">
-          Starte kostenlos mit NILL — keine Kreditkarte nötig.
+          Willkommen zurück — melde dich bei deinem NILL-Konto an.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* EMAIL */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">
-              E-Mail Adresse
-            </label>
+            <label className="block text-gray-200 mb-1 text-sm">E-Mail Adresse</label>
             <input
               name="email"
               type="email"
@@ -46,11 +51,8 @@ export default function Register() {
             />
           </div>
 
-          {/* PASSWORD */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">
-              Passwort
-            </label>
+            <label className="block text-gray-200 mb-1 text-sm">Passwort</label>
             <input
               name="password"
               type="password"
@@ -60,23 +62,12 @@ export default function Register() {
             />
           </div>
 
-          {/* SUBMIT */}
           <button
             type="submit"
-            className="btn-primary w-full py-3 rounded-lg font-semibold shadow-lg flex justify-center"
+            className="w-full py-3 bg-[var(--accent)] rounded-lg text-white font-semibold hover:bg-[var(--accent-hover)] transition"
           >
-            Kostenlos registrieren
+            Einloggen
           </button>
-
-          <p className="text-center text-gray-400 text-sm">
-            Schon einen Account?{" "}
-            <a
-              href="/login"
-              className="text-[var(--accent)] font-semibold hover:underline"
-            >
-              Login
-            </a>
-          </p>
         </form>
       </motion.div>
     </section>

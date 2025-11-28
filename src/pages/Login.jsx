@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // Navigation
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -10,7 +12,16 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Hier kommt später der API-Call rein
     console.log("Login:", form);
+
+    // Mock-Login: wenn Email und Passwort gesetzt sind, weiter zum Dashboard
+    if (form.email && form.password) {
+      navigate("/dashboard");
+    } else {
+      alert("Bitte Email und Passwort eingeben");
+    }
   };
 
   return (
@@ -29,11 +40,8 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* EMAIL */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">
-              E-Mail Adresse
-            </label>
+            <label className="block text-gray-200 mb-1 text-sm">E-Mail Adresse</label>
             <input
               name="email"
               type="email"
@@ -43,11 +51,8 @@ export default function Login() {
             />
           </div>
 
-          {/* PASSWORD */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">
-              Passwort
-            </label>
+            <label className="block text-gray-200 mb-1 text-sm">Passwort</label>
             <input
               name="password"
               type="password"
@@ -57,23 +62,12 @@ export default function Login() {
             />
           </div>
 
-          {/* SUBMIT */}
           <button
             type="submit"
-            className="btn-primary w-full py-3 rounded-lg font-semibold shadow-lg flex justify-center"
+            className="w-full py-3 bg-[var(--accent)] rounded-lg text-white font-semibold hover:bg-[var(--accent-hover)] transition"
           >
             Einloggen
           </button>
-
-          <p className="text-center text-gray-400 text-sm">
-            Noch keinen Account?{" "}
-            <a
-              href="/register"
-              className="text-[var(--accent)] font-semibold hover:underline"
-            >
-              Registrieren
-            </a>
-          </p>
         </form>
       </motion.div>
     </section>
