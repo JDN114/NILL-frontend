@@ -32,4 +32,9 @@ export async function fetchProtected() {
   return api.get("/protected-endpoint");
 }
 
+export const fetchDashboardData = async () => {
+  const response = await axios.get('/api/dashboard');
+  return response.data;
+};
+
 export default api;
