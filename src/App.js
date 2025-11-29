@@ -1,19 +1,16 @@
-// src/App.js
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
 
-import LandingPage from "./components/LandingPage";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
-// Auth Checker – später ersetzt du dies durch deinen echten JWT-Token
+// Fake Auth – später mit Backend ersetzen
 const isAuthenticated = () => {
   return localStorage.getItem("token") ? true : false;
 };
 
-// Protected Route Wrapper
 function ProtectedRoute({ children }) {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
@@ -23,25 +20,26 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
+    <BrowserRouter>
+      <Routes>
+        {/* --- PUBLIC ROUTES --- */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      {/* PUBLIC ROUTES */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+        {/* --- PROTECTED ROUTE --- */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* PROTECTED ROUTE */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* FALLBACK → Weiterleitung zur Landingpage */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* --- FALLBACK --- */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
