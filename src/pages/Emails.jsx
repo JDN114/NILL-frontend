@@ -1,74 +1,52 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
 export default function Emails() {
-  const [emails, setEmails] = useState([]); // alle Emails
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("Alle");
+  const [emails, setEmails] = useState([]);
 
-  // Emails vom Backend laden
+  // Emails initial vom Backend holen
+  const fetchEmails = async () => {
+    try {
+      const response = await axios.get("https://api.nillai.de/emails");
+      setEmails(response.data);
+    } catch (error) {
+      console.error("Fehler beim Laden der Emails:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchEmails = async () => {
-      try {
-        const res = await axios.get("/api/emails"); // Endpunkt anpassen
-        console.log("Backend Response:", res.data);
-        setEmails(Array.isArray(res.data) ? res.data : []); // Sicherstellen, dass es ein Array ist
-      } catch (err) {
-        console.error("Fehler beim Laden der Emails:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchEmails();
+
+    // --- WebSocket Setup für Live-Updates ---
+    const ws = new WebSocket("wss://api.nillai.de/ws/emails");
+
+    ws.onmessage = (event) => {
+      const newEmail = JSON.parse(event.data);
+      setEmails((prev) => [newEmail, ...prev]); // neue Emails oben hinzufügen
+    };
+
+    ws.onopen = () => console.log("WebSocket verbunden!");
+    ws.onclose = () => console.log("WebSocket geschlossen.");
+
+    return () => ws.close(); // Cleanup
   }, []);
 
-  // Filter Logik
-  const filteredEmails = Array.isArray(emails)
-    ? selectedCategory === "Alle"
-      ? emails
-      : emails.filter((email) => email.category === selectedCategory)
-    : [];
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-white text-xl">Lade Emails...</p>
-      </div>
-    );
-  }
-
   return (
-    <section className="p-6">
-      <h1 className="text-2xl font-bold text-white mb-4">Posteingang</h1>
+    <div className="p-8">
+      <h1 className="text-4xl font-bold text-white mb-6">Postfach</h1>
 
-      {/* Kategorien Auswahl */}
-      <div className="flex gap-3 mb-6">
-        {["Alle", "Support", "Vertrieb", "Marketing"].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded ${
-              selectedCategory === cat
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Emails Liste */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredEmails.length > 0 ? (
-          filteredEmails.map((email) => (
+      {emails.length === 0 ? (
+        <p className="text-gray-400">Keine Emails vorhanden.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {emails.map((email) => (
             <motion.div
               key={email.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 hover:border-blue-500 transition-colors"
+              className="bg-gray-800 p-5 rounded-2xl shadow-lg border border-gray-700 hover:border-blue-500 transition-colors"
             >
               <h2 className="text-xl font-bold text-white">{email.subject}</h2>
               <p className="text-gray-300 mt-2">{email.body}</p>
@@ -83,11 +61,9 @@ export default function Emails() {
                 </span>
               )}
             </motion.div>
-          ))
-        ) : (
-          <p className="text-gray-300 col-span-full">Keine Emails gefunden.</p>
-        )}
-      </div>
-    </section>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
