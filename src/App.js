@@ -9,26 +9,40 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
-function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  );
+// Auth Checker – später ersetzt du dies durch deinen echten JWT-Token
+const isAuthenticated = () => {
+  return localStorage.getItem("token") ? true : false;
+};
+
+// Protected Route Wrapper
+function ProtectedRoute({ children }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 }
 
-export default App;
+export default function App() {
+  return (
+    <Routes>
+
+      {/* PUBLIC ROUTES */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* PROTECTED ROUTE */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* FALLBACK → Weiterleitung zur Landingpage */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
