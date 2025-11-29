@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // Navigation
+import { Link, useNavigate } from "react-router-dom";
 
-export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+export default function Register() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    repeatPassword: "",
+  });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -13,15 +17,12 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Hier kommt später der API-Call rein
-    console.log("Login:", form);
+    if (form.password !== form.repeatPassword) return;
 
-    // Mock-Login: wenn Email und Passwort gesetzt sind, weiter zum Dashboard
-    if (form.email && form.password) {
-      navigate("/dashboard");
-    } else {
-      alert("Bitte Email und Passwort eingeben");
-    }
+    // hier später API Registrierung
+    localStorage.setItem("auth", "true");
+
+    navigate("/dashboard");
   };
 
   return (
@@ -34,14 +35,17 @@ export default function Login() {
         transition={{ duration: 0.6 }}
         className="glass relative z-10 w-full max-w-md p-10 rounded-2xl shadow-xl"
       >
-        <h1 className="text-3xl font-bold text-white mb-6">Login</h1>
+        <h1 className="text-3xl font-bold text-white mb-6">Registrieren</h1>
         <p className="text-gray-300 mb-8">
-          Willkommen zurück — melde dich bei deinem NILL-Konto an.
+          Erstelle dein persönliches NILL-Konto in wenigen Sekunden.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* EMAIL */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">E-Mail Adresse</label>
+            <label className="block text-gray-200 mb-1 text-sm">
+              E-Mail Adresse
+            </label>
             <input
               name="email"
               type="email"
@@ -51,6 +55,7 @@ export default function Login() {
             />
           </div>
 
+          {/* PASSWORD */}
           <div>
             <label className="block text-gray-200 mb-1 text-sm">Passwort</label>
             <input
@@ -62,13 +67,34 @@ export default function Login() {
             />
           </div>
 
+          {/* REPEAT PASSWORD */}
+          <div>
+            <label className="block text-gray-200 mb-1 text-sm">
+              Passwort wiederholen
+            </label>
+            <input
+              name="repeatPassword"
+              type="password"
+              required
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full py-3 bg-[var(--accent)] rounded-lg text-white font-semibold hover:bg-[var(--accent-hover)] transition"
+            className="w-full mt-4 bg-[var(--accent)] py-3 rounded-lg font-semibold text-white hover:opacity-90 transition"
           >
-            Einloggen
+            Registrieren
           </button>
         </form>
+
+        <p className="text-gray-400 text-sm mt-6 text-center">
+          Bereits ein Konto?{" "}
+          <Link to="/login" className="text-[var(--accent)] hover:underline">
+            Jetzt einloggen
+          </Link>
+        </p>
       </motion.div>
     </section>
   );
