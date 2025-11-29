@@ -20,8 +20,11 @@ export default function Login() {
     // Einfache Validierung
     if (form.email && form.password) {
       console.log("Navigieren zum Dashboard"); // Debug: Navigation wird aufgerufen
+
+      alert("Navigiere jetzt!");
+      navigate("/dashboard");
+
       // Hier würdest du später die Authentifizierung einbauen
-      navigate("/dashboard"); // Weiterleitung zum Dashboard
     } else {
       alert("Bitte Email und Passwort eingeben");
     }
