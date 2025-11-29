@@ -1,39 +1,39 @@
+// src/components/Sidebar.jsx
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FiHome, FiSettings, FiLogOut, FiBarChart2 } from "react-icons/fi";
+import { motion } from "framer-motion";
+import { NavLink } from "react-router-dom";
 
 export default function Sidebar() {
-  const navigate = useNavigate();
-
-  const logout = () => {
-    localStorage.removeItem("auth");
-    navigate("/login");
-  };
+  const links = [
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "Emails", path: "/emails" },
+    { name: "Analyse", path: "/analysis" },
+    { name: "Einstellungen", path: "/settings" },
+  ];
 
   return (
-    <aside className="bg-[#0c111b] text-white w-64 min-h-screen p-6 border-r border-white/10 hidden md:block">
-      <h2 className="text-2xl font-bold mb-10 tracking-wide">NILL</h2>
-
-      <nav className="space-y-4">
-        <Link to="/dashboard" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-          <FiHome /> Dashboard
-        </Link>
-
-        <Link to="/analytics" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-          <FiBarChart2 /> Analytics
-        </Link>
-
-        <Link to="/settings" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-          <FiSettings /> Einstellungen
-        </Link>
+    <motion.div
+      initial={{ x: -100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="fixed top-0 left-0 h-full w-64 p-6 rounded-r-2xl shadow-xl glass"
+    >
+      <h2 className="text-2xl font-bold text-white mb-10">NILL Dashboard</h2>
+      <nav className="flex flex-col gap-4">
+        {links.map((link) => (
+          <NavLink
+            key={link.name}
+            to={link.path}
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg text-white font-medium transition-colors ${
+                isActive ? "bg-white/20" : "hover:bg-white/10"
+              }`
+            }
+          >
+            {link.name}
+          </NavLink>
+        ))}
       </nav>
-
-      <button
-        onClick={logout}
-        className="flex items-center gap-3 text-red-400 hover:text-red-300 transition mt-10"
-      >
-        <FiLogOut /> Logout
-      </button>
-    </aside>
+    </motion.div>
   );
 }
