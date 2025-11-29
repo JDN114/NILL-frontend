@@ -37,4 +37,19 @@ export const fetchDashboardData = async () => {
   return response.data;
 };
 
+export const getEmails = async () => {
+  const res = await axios.get(`${API_URL}/emails`);
+  return res.data;
+};
+
+export const createEmail = async (email) => {
+  const res = await axios.post(`${API_URL}/emails`, email);
+  return res.data;
+};
+
+export const summarizeEmail = async (email_id) => {
+  const res = await axios.post(`${API_URL}/emails/${email_id}/summarize`);
+  return res.data;
+};
+
 export default api;

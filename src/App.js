@@ -5,7 +5,7 @@ import LandingPage from "./components/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-
+import Emails from "./pages/Emails";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function App() {
@@ -29,7 +29,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route path="/emails" element={<Emails />} />
       </Routes>
     </BrowserRouter>
   );
