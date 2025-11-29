@@ -1,10 +1,14 @@
-// src/ProtectedRoute.jsx
-import React, { useContext } from "react";
+import React from "react";
 import { Navigate } from "react-router-dom";
-import { AuthContext } from "./context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const { isLoggedIn } = useContext(AuthContext);
+  const token = localStorage.getItem("token");
 
-  return isLoggedIn ? children : <Navigate to="/login" />;
+  if (!token) {
+    // Nicht eingeloggt → zurück zum Login
+    return <Navigate to="/login" replace />;
+  }
+
+  // Eingeloggt → Zugriff erlaubt
+  return children;
 }
