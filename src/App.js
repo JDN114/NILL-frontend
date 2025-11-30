@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Emails from "./pages/Emails";
 import ProtectedRoute from "./ProtectedRoute";
+import ConnectEmail from "./pages/ConnectEmail";
 
 export default function App() {
   return (
@@ -30,6 +31,8 @@ export default function App() {
           }
         />
         <Route path="/emails" element={<Emails />} />
+        <Route path="/emails" element={<ProtectedRoute><Emails /></ProtectedRoute>} />
+        <Route path="/connect-email" element={<ProtectedRoute><ConnectEmail /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
