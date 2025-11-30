@@ -1,56 +1,88 @@
-// src/pages/Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Emails from "./Emails";
+import { motion } from "framer-motion";
 
+// Einzelnes Email-Element
+function EmailCard({ email }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-gray-800 p-4 rounded-xl shadow mb-4 border border-gray-700 hover:border-blue-500 transition-colors"
+    >
+      <h2 className="text-xl font-bold text-white">{email.subject}</h2>
+      <p className="text-gray-300 mt-2">{email.body}</p>
+      {email.summary && (
+        <p className="text-gray-400 mt-2 italic">Zusammenfassung: {email.summary}</p>
+      )}
+      {email.priority && (
+        <span className="inline-block mt-2 px-2 py-1 bg-red-600 text-white rounded">
+          PRIORITÄT: {email.priority}
+        </span>
+      )}
+      {email.category && (
+        <span className="inline-block mt-2 px-2 py-1 bg-blue-600 text-white rounded">
+          Kategorie: {email.category}
+        </span>
+      )}
+      {email.action_items && email.action_items.length > 0 && (
+        <div className="mt-2 text-yellow-400">
+          <strong>Action Items:</strong>
+          <ul className="list-disc list-inside">
+            {email.action_items.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {email.language && (
+        <span className="inline-block mt-2 px-2 py-1 bg-green-600 text-white rounded">
+          Sprache: {email.language}
+        </span>
+      )}
+    </motion.div>
+  );
+}
+
+// Dashboard-Komponente
 export default function Dashboard() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [categories, setCategories] = useState(["All"]); // Dynamisch erweiterbar
+  const [emails, setEmails] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Falls du Kategorien dynamisch aus dem Backend laden willst:
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await axios.get("/api/email/categories");
-        setCategories(["All", ...res.data]);
-      } catch (err) {
-        console.error("Fehler beim Laden der Kategorien:", err);
-      }
+  // Emails vom Backend abrufen
+  const fetchEmails = async () => {
+    try {
+      const response = await axios.get("/emails/"); // Backend-URL anpassen
+      setEmails(response.data);
+    } catch (err) {
+      console.error("Fehler beim Laden der Emails:", err);
+    } finally {
+      setLoading(false);
     }
-    fetchCategories();
+  };
+
+  useEffect(() => {
+    fetchEmails();
+
+    // Automatisches Aktualisieren alle 30 Sekunden
+    const interval = setInterval(fetchEmails, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#03060a] text-white">
-      {/* Sidebar */}
-      <aside className="w-64 bg-black/30 backdrop-blur-md p-6 flex flex-col">
-        <h1 className="text-3xl font-bold mb-6">NILL Dashboard</h1>
-        <nav className="space-y-4">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={`w-full text-left px-3 py-2 rounded-lg ${
-                selectedCategory === cat
-                  ? "bg-[var(--accent)] text-black"
-                  : "hover:bg-white/10"
-              }`}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    <div className="dashboard-wrapper p-6">
+      <h1 className="text-4xl font-bold text-white mb-6">NILL Email Dashboard</h1>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        <h2 className="text-2xl font-semibold mb-4">
-          {selectedCategory === "All" ? "Alle Emails" : selectedCategory}
-        </h2>
+      {loading && <p className="text-gray-300">Lade Emails...</p>}
 
-        {/* Emails-Komponente */}
-        <Emails selectedCategory={selectedCategory} />
-      </main>
+      {!loading && emails.length === 0 && (
+        <p className="text-gray-300">Keine Emails vorhanden.</p>
+      )}
+
+      {emails.map((email) => (
+        <EmailCard key={email.id} email={email} />
+      ))}
     </div>
   );
 }
