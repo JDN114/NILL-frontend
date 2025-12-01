@@ -1,4 +1,4 @@
-kimport React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "../utils/axios";
 import { motion } from "framer-motion";
 
