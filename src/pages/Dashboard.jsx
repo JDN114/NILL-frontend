@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import GmailLogin from "./GmailLogin"; // Passe den Pfad ggf. an
+import { useState, useEffect } from "react";
 
 /**
  * Dashboard.jsx
@@ -31,6 +33,8 @@ export default function Dashboard() {
   const [aiTitle, setAiTitle] = useState("");
   const [aiResult, setAiResult] = useState("");
 
+  const [connectedAccounts, setConnectedAccounts] = useState([]);
+ 
   const token = localStorage.getItem("token"); // passe an, falls anders
 
   const TAGS = [
@@ -255,6 +259,10 @@ export default function Dashboard() {
         <div className="flex-1">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">NILL – Übersicht</h1>
+
+            <div className="email-login-section">
+              <GmailLogin />
+            </div>
 
             <div className="flex items-center gap-3">
               <button
