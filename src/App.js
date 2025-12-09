@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Emails from "./pages/Emails";
 import ProtectedRoute from "./ProtectedRoute";
 import ConnectEmail from "./pages/ConnectEmail";
+import GmailCallback from ",/pages/GmailCallback";
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/emails" element={<Emails />} />
         <Route path="/emails" element={<ProtectedRoute><Emails /></ProtectedRoute>} />
         <Route path="/connect-email" element={<ProtectedRoute><ConnectEmail /></ProtectedRoute>} />
+        <Route path="/gmail/callback" element={<GmailCallback />} />
       </Routes>
     </BrowserRouter>
   );
