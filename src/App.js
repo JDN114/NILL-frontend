@@ -8,7 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Emails from "./pages/Emails";
 import ProtectedRoute from "./ProtectedRoute";
 import ConnectEmail from "./pages/ConnectEmail";
-import GmailCallback from ",/pages/GmailCallback";
+import GmailCallback from "./pages/GmailCallback";
 
 export default function App() {
   return (
