@@ -1,10 +1,30 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function Dashboard() {
-  const [showGmailModal, setShowGmailModal] = useState(false);
-  const [authUrl, setAuthUrl] = useState(null);
-  const [emails, setEmails] = useState([]);
-  const [loadingEmails, setLoadingEmails] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    if (params.get("gmail") === "connected") {
+      alert("Gmail erfolgreich verbunden!");
+      window.history.replaceState({}, document.title, "/dashboard");
+    }
+
+    if (params.get("gmail") === "error") {
+      alert("Fehler beim Verbinden von Gmail");
+      window.history.replaceState({}, document.title, "/dashboard");
+    }
+  }, [location]);
+
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      {/* Dein Inhalt */}
+    </div>
+  );
+}
 
   // ---- Gmail Auth URL laden ----
   const fetchGmailAuthUrl = async () => {
