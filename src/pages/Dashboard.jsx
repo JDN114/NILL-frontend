@@ -8,40 +8,63 @@ import {
 export default function Dashboard() {
   const [gmailConnected, setGmailConnected] = useState(false);
   const [emails, setEmails] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  /* ----------------------------------------
+     INITIAL LOAD
+  ---------------------------------------- */
   useEffect(() => {
-    checkGmail();
+    init();
   }, []);
 
-  const checkGmail = async () => {
+  const init = async () => {
+    setLoading(true);
     try {
-      const res = await getGmailStatus();
-      if (res.data.connected) {
+      const statusRes = await getGmailStatus();
+
+      if (statusRes.data.connected) {
         setGmailConnected(true);
-        loadEmails();
+        await loadEmails();
+      } else {
+        setGmailConnected(false);
       }
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const loadEmails = async () => {
-    setLoading(true);
-    try {
-      const res = await getGmailEmails();
-      setEmails(res.data);
-    } catch (e) {
-      console.error(e);
+      setError("Fehler beim Laden des Dashboards");
     }
     setLoading(false);
   };
 
-  const connectGmail = async () => {
-    const res = await getGmailAuthUrl();
-    window.location.href = res.data.auth_url;
+  /* ----------------------------------------
+     LOAD EMAILS
+  ---------------------------------------- */
+  const loadEmails = async () => {
+    try {
+      const res = await getGmailEmails();
+      setEmails(res.data.emails || []);
+    } catch (e) {
+      console.error(e);
+      setError("E-Mails konnten nicht geladen werden");
+    }
   };
 
+  /* ----------------------------------------
+     GMAIL CONNECT
+  ---------------------------------------- */
+  const connectGmail = async () => {
+    try {
+      const res = await getGmailAuthUrl();
+      window.location.href = res.data.auth_url;
+    } catch (e) {
+      console.error(e);
+      alert("Gmail Verbindung fehlgeschlagen");
+    }
+  };
+
+  /* ----------------------------------------
+     TAG HEURISTICS
+  ---------------------------------------- */
   const getTag = (mail) => {
     const s = (mail.subject || "").toLowerCase();
     if (s.includes("rechnung") || s.includes("invoice")) return "Finance";
@@ -50,6 +73,9 @@ export default function Dashboard() {
     return "General";
   };
 
+  /* ----------------------------------------
+     RENDER
+  ---------------------------------------- */
   return (
     <div style={styles.page}>
       <style>{css}</style>
@@ -77,11 +103,17 @@ export default function Dashboard() {
         {loading && (
           <div style={styles.loaderWrap}>
             <div className="loader" />
-            <p>Lade E-Mails…</p>
+            <p>Lade Dashboard…</p>
           </div>
         )}
 
-        {!loading && gmailConnected && (
+        {error && <p style={{ color: "tomato" }}>{error}</p>}
+
+        {!loading && gmailConnected && emails.length === 0 && (
+          <p style={{ opacity: 0.6 }}>Keine E-Mails gefunden</p>
+        )}
+
+        {!loading && gmailConnected && emails.length > 0 && (
           <div style={styles.mailGrid}>
             {emails.map((mail) => (
               <div key={mail.id} style={styles.mailCard}>
@@ -96,10 +128,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {!gmailConnected && (
+        {!loading && !gmailConnected && (
           <div style={styles.empty}>
             <h2>📬 Verbinde dein Gmail-Konto</h2>
-            <p>Damit NILL deine Mails analysieren kann.</p>
+            <p>Damit NILL dein Postfach intelligent analysieren kann.</p>
           </div>
         )}
       </main>
@@ -174,7 +206,6 @@ const styles = {
     padding: 20,
     borderRadius: 16,
     border: "1px solid #1f2030",
-    transition: "0.2s",
   },
   mailHeader: {
     display: "flex",
@@ -223,7 +254,6 @@ const css = `
   animation: spin 1s linear infinite;
   margin: 0 auto 12px;
 }
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
