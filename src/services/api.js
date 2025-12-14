@@ -1,96 +1,64 @@
 // /root/nill/frontend/src/services/api.js
 import axios from "axios";
 
-/**
- * Backend-Basis-URL
- *
- * PROD:
- *  - über NGINX: /api  → http://127.0.0.1:8000
- *
- * DEV (optional):
- *  - VITE_API_URL=http://localhost:8000
- */
-const API_BASE =
-  import.meta?.env?.VITE_API_URL ||
-  process.env.REACT_APP_API_URL ||
-  "/api";
+// Backend-URL aus Env oder Fallback
+const API_URL = process.env.REACT_APP_API_URL || "https://api.nillai.de";
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
+  withCredentials: true, // falls Cookies verwendet werden
 });
 
-/**
- * JWT automatisch anhängen
- */
+// JWT automatisch hinzufügen, falls vorhanden
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-/* =========================
-   AUTH
-========================= */
+// ---------- Auth / Nutzer ----------
+export async function registerUser(email, password) {
+  return api.post("/auth/auth/register", { email, password });
+}
 
-export const registerUser = (email, password) =>
-  api.post("/auth/register", { email, password });
+export async function loginUser(email, password) {
+  return api.post("/auth/auth/login", { email, password });
+}
 
-export const loginUser = (email, password) =>
-  api.post("/auth/login", { email, password });
-
-/* =========================
-   DASHBOARD
-========================= */
-
+// ---------- Dashboard ----------
 export const fetchDashboardData = async () => {
-  const res = await api.get("/dashboard");
-  return res.data;
+  const response = await api.get("/dashboard");
+  return response.data;
 };
 
-/* =========================
-   GMAIL
-========================= */
-
-/**
- * Gmail OAuth Start
- */
+// ---------- Gmail Integration ----------
 export const getGmailAuthUrl = async () => {
   const res = await api.get("/gmail/auth-url");
   return res.data;
 };
 
-/**
- * Gmail Callback (optional manuell)
- */
-export const handleGmailCallback = async (code, state) => {
-  const res = await api.get("/gmail/callback", {
-    params: { code, state },
-  });
+export const getGmailStatus = async () => {
+  const res = await api.get("/gmail/status");
   return res.data;
 };
 
-/* =========================
-   EMAILS
-========================= */
-
-export const getEmails = async () => {
-  const res = await api.get("/emails");
+export const getGmailEmails = async () => {
+  const res = await api.get("/gmail/emails");
   return res.data;
 };
 
-export const createEmail = async (email) => {
-  const res = await api.post("/emails", email);
-  return res.data;
-};
-
+// Optional: einzelne Mail zusammenfassen
 export const summarizeEmail = async (email_id) => {
   const res = await api.post(`/emails/${email_id}/summarize`);
+  return res.data;
+};
+
+// Optional: neue Mail erstellen
+export const createEmail = async (email) => {
+  const res = await api.post("/emails", email);
   return res.data;
 };
 
