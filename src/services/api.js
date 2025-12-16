@@ -7,7 +7,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // falls Cookies genutzt werden
+  withCredentials: true,
 });
 
 // JWT automatisch hinzufügen
@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ---------- Auth / Nutzer ----------
+// ---------- Auth ----------
 export async function registerUser(email, password) {
   return api.post("/auth/auth/register", { email, password });
 }
@@ -32,61 +32,20 @@ export const fetchDashboardData = async () => {
   return res.data;
 };
 
-// ---------- Gmail Integration ----------
-
-// Auth-URL abrufen
-export const getGmailAuthUrl = async () => {
-  try {
-    const res = await api.get("/gmail/auth-url");
-    return res.data.auth_url;
-  } catch (err) {
-    console.error("Gmail verbinden fehlgeschlagen:", err);
-    throw err;
-  }
+// ---------- Gmail ----------
+export const getGmailAuthUrl = async (user_id) => {
+  const res = await api.get(`/gmail/auth-url?user_id=${user_id}`);
+  return res.data.auth_url;
 };
 
-// Gmail Status abrufen
 export const getGmailStatus = async () => {
-  try {
-    const res = await api.get("/gmail/status");
-    return res.data.connected;
-  } catch (err) {
-    console.error("Gmail Status abrufen fehlgeschlagen:", err);
-    throw err;
-  }
+  const res = await api.get("/gmail/status");
+  return res.data.connected;
 };
 
-// Gmail Mails abrufen
 export const getGmailEmails = async () => {
-  try {
-    const res = await api.get("/gmail/emails");
-    return res.data.emails;
-  } catch (err) {
-    console.error("Gmail Emails abrufen fehlgeschlagen:", err);
-    throw err;
-  }
-};
-
-// Optional: einzelne Mail zusammenfassen
-export const summarizeEmail = async (email_id) => {
-  try {
-    const res = await api.post(`/emails/${email_id}/summarize`);
-    return res.data;
-  } catch (err) {
-    console.error("Mail Zusammenfassung fehlgeschlagen:", err);
-    throw err;
-  }
-};
-
-// Optional: neue Mail erstellen
-export const createEmail = async (email) => {
-  try {
-    const res = await api.post("/emails", email);
-    return res.data;
-  } catch (err) {
-    console.error("Mail erstellen fehlgeschlagen:", err);
-    throw err;
-  }
+  const res = await api.get("/gmail/emails");
+  return res.data.emails;
 };
 
 export default api;
