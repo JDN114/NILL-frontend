@@ -34,4 +34,10 @@ export const getGmailStatus = async () => {
   return res.data;
 };
 
+// ---------- Gmail ----------
+export const getGmailEmails = async () => {
+  const res = await api.get("/gmail/emails");
+  return res.data;
+};
+
 export default api;
