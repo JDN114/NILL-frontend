@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://api.nillai.de";
+const API_URL = "https://api.nillai.de";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -19,19 +19,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ---------- Gmail ----------
-export const getGmailAuthUrl = async () => {
-  const res = await api.get("/gmail/auth-url");
+/* ---------------- AUTH ---------------- */
+export const loginUser = async (email, password) => {
+  const res = await api.post("/auth/login", { email, password });
+  if (res.data?.access_token) {
+    localStorage.setItem("access_token", res.data.access_token);
+  }
   return res.data;
 };
 
+/* ---------------- GMAIL ---------------- */
+
+// ❗ PUBLIC – KEIN AUTH ERFORDERLICH
+export const getGmailAuthUrl = async () => {
+  const res = await axios.get(`${API_URL}/gmail/auth-url`);
+  return res.data;
+};
+
+// AUTH REQUIRED
 export const getGmailStatus = async () => {
   const res = await api.get("/gmail/status");
-  return res.data;
-};
-
-export const getGmailEmails = async () => {
-  const res = await api.get("/gmail/emails");
   return res.data;
 };
 
