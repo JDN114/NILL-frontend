@@ -32,4 +32,9 @@ export const getGmailEmails = async () => {
   return res.data.emails;
 };
 
+export async function loginUser(email, password) {
+  const res = await api.post("/auth/login", { email, password });
+  localStorage.setItem("access_token", res.data.access_token);
+  return res.data;
+}
 export default api;
