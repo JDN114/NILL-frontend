@@ -1,9 +1,10 @@
+/* Import font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+/* Tailwind Direktiven */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
 :root{
   --brand: #111827;
