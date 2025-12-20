@@ -1,21 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
-  },
+  root: ".",               // Root für Vite
+  base: "/",               // relative Pfade
+  publicDir: "public",     // statische Assets
   build: {
-    outDir: "dist", // Output für Vercel
+    outDir: "dist",        // Output für Produktion
     emptyOutDir: true,
   },
-  server: {
-    port: 5173,
-    open: true,
-  }
 });
