@@ -9,13 +9,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
-
-        {/* Auth */}
         <Route path="/login" element={<Login />} />
-
-        {/* App */}
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
