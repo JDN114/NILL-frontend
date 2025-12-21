@@ -21,8 +21,13 @@ api.interceptors.request.use((config) => {
 
 // Gmail
 export const getGmailAuthUrl = async () => {
-  const res = await api.get("/gmail/auth-url");
-  return res.data.auth_url;
+  try {
+    const res = await api.get("/gmail/auth-url");
+    return res.data.auth_url;
+  } catch (err) {
+    console.error("Gmail connect error:", err);
+    throw err;
+  }
 };
 
 export const getGmailStatus = async () => {
@@ -37,8 +42,10 @@ export const getGmailEmails = async () => {
 
 export async function loginUser(email, password) {
   const res = await api.post("/auth/login", { email, password });
-  console.log("Login response:", res.data); // <-- Debug
+  console.log("Login response:", res.data); // Debug
+  if (!res.data.access_token) throw new Error("No token returned from backend");
   localStorage.setItem("access_token", res.data.access_token);
   return res.data;
 }
+
 export default api;
