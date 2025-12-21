@@ -3,29 +3,27 @@ import api from "../services/api";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("access_token") || "");
 
+  // Prüfen, ob Token im LocalStorage existiert
   useEffect(() => {
-    if (token) localStorage.setItem("access_token", token);
-  }, [token]);
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
 
-  const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    setToken(res.data.access_token);
-    setUser({ email }); // Minimal: später vollständige User-Daten
-  };
+    api.get("/auth/me")
+      .then(res => setUser(res.data))
+      .catch(() => setUser(null));
+  }, []);
 
   const logout = () => {
-    setToken("");
-    setUser(null);
     localStorage.removeItem("access_token");
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}

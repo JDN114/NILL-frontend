@@ -1,51 +1,39 @@
 import axios from "axios";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://api.nillai.de";
+const API_URL = import.meta.env.VITE_API_URL || "https://api.nillai.de";
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: false, // ← JWT läuft über Header, nicht Cookies
+  headers: { "Content-Type": "application/json" },
+  withCredentials: false, // JWT über Header
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
+// Login
+export async function loginUser(email, password) {
+  const res = await api.post("/auth/login", { email, password });
+  console.log("Login response:", res.data); 
+  localStorage.setItem("access_token", res.data.access_token);
+  return res.data;
+}
+
 // Gmail
 export const getGmailAuthUrl = async () => {
-  try {
-    const res = await api.get("/gmail/auth-url");
-    return res.data.auth_url;
-  } catch (err) {
-    console.error("Gmail connect error:", err);
-    throw err;
-  }
+  const res = await api.get("/gmail/auth-url");
+  return res.data.auth_url;
 };
-
 export const getGmailStatus = async () => {
   const res = await api.get("/gmail/status");
   return res.data.connected;
 };
-
 export const getGmailEmails = async () => {
   const res = await api.get("/gmail/emails");
   return res.data.emails;
 };
-
-export async function loginUser(email, password) {
-  const res = await api.post("/auth/login", { email, password });
-  console.log("Login response:", res.data); // Debug
-  if (!res.data.access_token) throw new Error("No token returned from backend");
-  localStorage.setItem("access_token", res.data.access_token);
-  return res.data;
-}
 
 export default api;
