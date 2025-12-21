@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { loginUser } from "../services/api";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -11,21 +13,26 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      // Hier API Call einfügen
-      // const res = await api.login(form);
-      // if (res.success) { ... }
+      // API Call an Backend
+      const res = await loginUser(form.email, form.password);
+      console.log("Login erfolgreich:", res);
 
-      // Temporär Simulation:
-      if (form.email && form.password) {
-        localStorage.setItem("authToken", "dummy-token"); // Token speichern
-        navigate("/dashboard"); // Navigation zum Dashboard
-      } else {
-        alert("Bitte Email und Passwort eingeben");
-      }
+      // Token wird von loginUser bereits unter 'access_token' gespeichert
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("Token wurde nicht gespeichert.");
+
+      navigate("/dashboard"); // Weiterleitung nach Login
     } catch (error) {
       console.error("Login Error:", error);
+      alert(
+        error.response?.data?.detail ||
+          "Login fehlgeschlagen. Bitte prüfe deine Eingaben."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,6 +48,7 @@ export default function Login() {
               name="email"
               type="email"
               required
+              value={form.email}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
             />
@@ -51,15 +59,17 @@ export default function Login() {
               name="password"
               type="password"
               required
+              value={form.password}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white focus:border-[var(--accent)] outline-none"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-[var(--accent)] text-white font-semibold rounded-lg"
+            disabled={loading}
+            className="w-full py-3 bg-[var(--accent)] text-white font-semibold rounded-lg disabled:opacity-50"
           >
-            Einloggen
+            {loading ? "Lade..." : "Einloggen"}
           </button>
         </form>
         <p className="text-gray-300 mt-4 text-center text-sm">
