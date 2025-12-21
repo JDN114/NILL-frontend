@@ -29,15 +29,20 @@ export const GmailProvider = ({ children }) => {
     }
   };
 
-  const connectGmail = async () => {
-    if (!token) return;
-    try {
-      const res = await api.get("/gmail/auth-url", { headers: { Authorization: `Bearer ${token}` }});
-      window.location.href = res.data.auth_url;
-    } catch (e) {
-      console.error(e);
-    }
-  };
+const connectGmail = async () => {
+  try {
+    console.log("API BASE URL:", import.meta.env.VITE_API_URL);
+
+    const authUrl = await getGmailAuthUrl();
+
+    console.log("GMAIL AUTH URL:", authUrl);
+
+    window.location.href = authUrl;
+  } catch (err) {
+    console.error("Gmail connect error:", err);
+    alert("Gmail verbinden fehlgeschlagen");
+  }
+};
 
   return (
     <GmailContext.Provider value={{ emails, connected, fetchStatus, fetchEmails, connectGmail }}>
