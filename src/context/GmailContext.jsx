@@ -2,6 +2,12 @@ import React, { createContext, useState, useContext } from "react";
 import { AuthContext } from "./AuthContext";
 import api from "../services/api";
 
+import {
+  getGmailAuthUrl,
+  getGmailStatus,
+  getGmailEmails
+} from "../services/api";
+
 export const GmailContext = createContext();
 
 export const GmailProvider = ({ children }) => {
