@@ -5,6 +5,9 @@ import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
 
+// ✅ Tailwind / CSS Import
+import "./index.css"; // <-- unbedingt hinzufügen
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
