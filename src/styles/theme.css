@@ -1,0 +1,18 @@
+:root {
+  /* Backgrounds */
+  --bg-main: #0a0e1a;
+  --bg-panel: #121827;
+  --bg-panel-soft: #1a2033;
+
+  /* Brand */
+  --nill-primary: #6c63ff;
+  --nill-primary-hover: #594eda;
+
+  /* Text */
+  --text-main: #ffffff;
+  --text-muted: #9ca3af;
+
+  /* Status */
+  --success: #22c55e;
+  --error: #ef4444;
+}
