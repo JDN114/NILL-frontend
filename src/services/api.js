@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || "https://api.nillai.de";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  withCredentials: false, // JWT über Header
+  withCredentials: true, // JWT über Header
 });
 
 api.interceptors.request.use((config) => {
