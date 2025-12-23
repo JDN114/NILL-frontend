@@ -35,5 +35,13 @@ export const getGmailEmails = async () => {
   const res = await api.get("/gmail/emails");
   return res.data.emails;
 };
+// Email Detail
+export const getGmailEmailDetail = async (id) => {
+  const res = await api.get(`/gmail/emails/${id}`);
+  return res.data;
+};
+export const markEmailRead = async (id) => {
+  await api.post(`/gmail/emails/${id}/read`);
+};
 
 export default api;
