@@ -27,11 +27,12 @@ export function GmailProvider({ children }) {
     return res;
   };
 
-  const fetchEmails = async () => {
-    const res = await getGmailEmails();
-    setEmails(res);
-    return res;
-  };
+const fetchEmails = async () => {
+  const res = await getGmailEmails();
+  console.log("📬 Gmail Emails aus API:", res); // 👈 DAS
+  setEmails(res);
+  return res;
+};
 
   /* -----------------------------
      EMAIL DETAIL
