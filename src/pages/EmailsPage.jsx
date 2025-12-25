@@ -11,17 +11,17 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Emails</h1>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* 📬 Inbox Liste */}
-        <Card className="col-span-4 h-[80vh] overflow-y-auto">
+      <div className="grid grid-cols-12 gap-6 h-[80vh]">
+        {/* 📬 Inbox */}
+        <Card className="col-span-4 overflow-y-auto">
           {loading ? (
             <p className="text-[var(--text-muted)]">Lade Emails…</p>
-          ) : emails?.length ? (
-            <ul className="divide-y divide-gray-800">
-              {emails.map((mail) => (
+          ) : (
+            <ul className="divide-y divide-gray-900">
+              {emails?.map((mail) => (
                 <li
                   key={mail.id}
-                  className="p-4 cursor-pointer hover:bg-gray-800 transition rounded"
+                  className="p-4 cursor-pointer hover:bg-gray-800 transition"
                   onClick={() => openEmail(mail.id)}
                 >
                   <p className="font-medium truncate">{mail.subject}</p>
@@ -31,37 +31,34 @@ export default function EmailsPage() {
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-[var(--text-muted)]">Keine Emails gefunden</p>
           )}
         </Card>
 
-        {/* 📄 Email Detail */}
-        <Card className="col-span-8 h-[80vh] overflow-y-auto">
+        {/* 📄 Detailansicht */}
+        <Card className="col-span-8 overflow-y-auto">
           {activeEmail ? (
-            <div className="pr-2">
-              <div className="flex justify-between items-start mb-2">
+            <div className="space-y-3">
+              <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-lg font-semibold">
-                    {activeEmail.subject}
-                  </h2>
-                  <p className="text-sm text-[var(--text-muted)]">
+                  <h2 className="text-lg font-semibold">{activeEmail.subject}</h2>
+                  <p className="text-xs text-[var(--text-muted)]">
                     {activeEmail.from}
                   </p>
                 </div>
+
                 <button
-                  onClick={closeEmail}
                   className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
+                  onClick={closeEmail}
                 >
                   ✕
                 </button>
               </div>
 
-              <hr className="border-gray-700 mb-4" />
+              <hr className="border-gray-700" />
 
-              {/* HTML Emails korrekt anzeigen */}
+              {/* HTML-Rendering verbessern */}
               <div
-                className="prose prose-invert max-w-none text-sm leading-relaxed"
+                className="text-sm leading-relaxed break-words"
                 dangerouslySetInnerHTML={{
                   __html: activeEmail.body || "<p>(Kein Inhalt)</p>",
                 }}
@@ -69,7 +66,7 @@ export default function EmailsPage() {
             </div>
           ) : (
             <p className="text-[var(--text-muted)]">
-              Klicke auf eine Email, um sie zu öffnen
+              Klicke eine Email, um sie zu öffnen
             </p>
           )}
         </Card>
