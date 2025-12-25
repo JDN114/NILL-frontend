@@ -4,75 +4,75 @@ import { useContext } from "react";
 import { GmailContext } from "../context/GmailContext";
 
 export default function EmailsPage() {
-  const { emails, openEmail, activeEmail, closeEmail, loadingEmail } =
+  const { emails, openEmail, activeEmail, closeEmail, loading } =
     useContext(GmailContext);
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Emails</h1>
 
-      {/* Grid mit 1/3 + 2/3 */}
-      <div className="grid grid-cols-3 gap-6 h-[calc(100vh-180px)]">
-
-        {/* 📌 Inbox Navigation */}
-        <div className="col-span-1 bg-[var(--card-bg)] rounded-xl border border-gray-800 p-4 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-3">Posteingang</h2>
-
-          {emails?.length ? (
+      <div className="grid grid-cols-12 gap-6">
+        {/* 📬 Inbox Liste */}
+        <Card className="col-span-4 h-[80vh] overflow-y-auto">
+          {loading ? (
+            <p className="text-[var(--text-muted)]">Lade Emails…</p>
+          ) : emails?.length ? (
             <ul className="divide-y divide-gray-800">
               {emails.map((mail) => (
                 <li
                   key={mail.id}
+                  className="p-4 cursor-pointer hover:bg-gray-800 transition rounded"
                   onClick={() => openEmail(mail.id)}
-                  className="py-3 px-2 cursor-pointer hover:bg-gray-800 transition rounded-lg"
                 >
                   <p className="font-medium truncate">{mail.subject}</p>
-                  <p className="text-sm text-[var(--text-muted)] truncate">
+                  <p className="text-xs text-[var(--text-muted)] truncate">
                     {mail.from}
                   </p>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[var(--text-muted)]">Keine Emails verfügbar</p>
+            <p className="text-[var(--text-muted)]">Keine Emails gefunden</p>
           )}
-        </div>
+        </Card>
 
-        {/* 📌 Detailansicht */}
-        <div className="col-span-2 bg-[var(--card-bg)] rounded-xl border border-gray-800 p-6 overflow-y-auto">
-          {loadingEmail ? (
-            <p className="text-[var(--text-muted)]">Lade Nachricht...</p>
-          ) : activeEmail ? (
-            <>
-              <div className="flex justify-between items-start">
+        {/* 📄 Email Detail */}
+        <Card className="col-span-8 h-[80vh] overflow-y-auto">
+          {activeEmail ? (
+            <div className="pr-2">
+              <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h2 className="text-xl font-semibold">{activeEmail.subject}</h2>
+                  <h2 className="text-lg font-semibold">
+                    {activeEmail.subject}
+                  </h2>
                   <p className="text-sm text-[var(--text-muted)]">
-                    Von: {activeEmail.from}
+                    {activeEmail.from}
                   </p>
                 </div>
-
                 <button
                   onClick={closeEmail}
-                  className="text-sm text-red-400 hover:text-red-300 transition"
+                  className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
                 >
-                  ✕ schließen
+                  ✕
                 </button>
               </div>
 
-              <hr className="my-4 border-gray-700" />
+              <hr className="border-gray-700 mb-4" />
 
-              <div className="whitespace-pre-line text-sm leading-relaxed">
-                {activeEmail.body || "Kein Inhalt"}
-              </div>
-            </>
+              {/* HTML Emails korrekt anzeigen */}
+              <div
+                className="prose prose-invert max-w-none text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: activeEmail.body || "<p>(Kein Inhalt)</p>",
+                }}
+              />
+            </div>
           ) : (
-            <p className="text-[var(--text-muted)] text-center mt-20">
-              Wähle eine Email aus, um den Inhalt anzuzeigen
+            <p className="text-[var(--text-muted)]">
+              Klicke auf eine Email, um sie zu öffnen
             </p>
           )}
-        </div>
-
+        </Card>
       </div>
     </PageLayout>
   );
