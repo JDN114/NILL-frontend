@@ -10,10 +10,9 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      <div className="grid grid-cols-3 gap-4 h-[75vh]">
-        
+      <div className="flex gap-4 h-[75vh]">
         {/* 📩 Sidebar - 1/3 */}
-        <Card className="col-span-1 overflow-y-auto">
+        <Card className="w-1/3 overflow-y-auto">
           {emails?.length ? (
             <ul className="divide-y divide-gray-800">
               {emails.map((mail) => (
@@ -33,7 +32,7 @@ export default function EmailsPage() {
         </Card>
 
         {/* 📄 Detail View - 2/3 */}
-        <Card className="col-span-4 overflow-y-auto p-6">
+        <Card className="w-2/3 overflow-y-auto p-6">
           {!activeEmail ? (
             <p className="text-gray-400">Wähle eine Email aus</p>
           ) : (
