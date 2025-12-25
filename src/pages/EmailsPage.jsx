@@ -4,72 +4,58 @@ import { useContext } from "react";
 import { GmailContext } from "../context/GmailContext";
 
 export default function EmailsPage() {
-  const { emails, openEmail, activeEmail, closeEmail, loading } =
-    useContext(GmailContext);
+  const { emails, openEmail, activeEmail, closeEmail } = useContext(GmailContext);
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Emails</h1>
 
-      <div className="grid grid-cols-12 gap-6 h-[80vh]">
-        {/* 📬 Inbox */}
-        <Card className="col-span-4 overflow-y-auto">
-          {loading ? (
-            <p className="text-[var(--text-muted)]">Lade Emails…</p>
-          ) : (
-            <ul className="divide-y divide-gray-900">
-              {emails?.map((mail) => (
+      {/* 🔥 Flex Layout statt Grid */}
+      <div className="flex gap-6 h-[75vh]">
+        
+        {/* 📌 Sidebar: 25% Breite */}
+        <Card className="w-1/4 overflow-y-auto">
+          {emails?.length ? (
+            <ul className="divide-y divide-gray-800">
+              {emails.map((mail) => (
                 <li
                   key={mail.id}
-                  className="p-4 cursor-pointer hover:bg-gray-800 transition"
+                  className="py-3 px-2 cursor-pointer hover:bg-gray-800 transition-colors"
                   onClick={() => openEmail(mail.id)}
                 >
                   <p className="font-medium truncate">{mail.subject}</p>
-                  <p className="text-xs text-[var(--text-muted)] truncate">
-                    {mail.from}
-                  </p>
+                  <p className="text-xs text-[var(--text-muted)] truncate">{mail.from}</p>
                 </li>
               ))}
             </ul>
+          ) : (
+            <p className="text-[var(--text-muted)]">Keine Emails gefunden</p>
           )}
         </Card>
 
-        {/* 📄 Detailansicht */}
-        <Card className="col-span-8 overflow-y-auto">
+        {/* 📌 Detailseite: 75% Breite */}
+        <Card className="flex-grow overflow-y-auto">
           {activeEmail ? (
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg font-semibold">{activeEmail.subject}</h2>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {activeEmail.from}
-                  </p>
-                </div>
+            <div className="p-2">
+              <h2 className="text-xl font-semibold mb-1">{activeEmail.subject}</h2>
+              <p className="text-sm text-[var(--text-muted)] mb-4">{activeEmail.from}</p>
 
-                <button
-                  className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
-                  onClick={closeEmail}
-                >
-                  ✕
-                </button>
+              <div className="prose prose-invert text-sm leading-relaxed">
+                <p dangerouslySetInnerHTML={{ __html: activeEmail.body }} />
               </div>
 
-              <hr className="border-gray-700" />
-
-              {/* HTML-Rendering verbessern */}
-              <div
-                className="text-sm leading-relaxed break-words"
-                dangerouslySetInnerHTML={{
-                  __html: activeEmail.body || "<p>(Kein Inhalt)</p>",
-                }}
-              />
+              <button
+                className="mt-4 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
+                onClick={closeEmail}
+              >
+                Schließen
+              </button>
             </div>
           ) : (
-            <p className="text-[var(--text-muted)]">
-              Klicke eine Email, um sie zu öffnen
-            </p>
+            <p className="text-[var(--text-muted)]">Klicke eine Email, um sie zu öffnen</p>
           )}
         </Card>
+
       </div>
     </PageLayout>
   );
