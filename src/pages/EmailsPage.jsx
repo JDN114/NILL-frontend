@@ -33,7 +33,7 @@ export default function EmailsPage() {
         </Card>
 
         {/* 📄 Detail View - 2/3 */}
-        <Card className="col-span-2 overflow-y-auto p-4">
+        <Card className="col-span-2 overflow-y-auto p-6">
           {!activeEmail ? (
             <p className="text-gray-400">Wähle eine Email aus</p>
           ) : (
