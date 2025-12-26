@@ -33,40 +33,31 @@ export default function EmailsPage() {
           )}
         </Card>
 
-        {/* 📄 Detail rechts (2/3) */}
-        <Card className="col-span-8 overflow-y-auto p-6">
-          {!activeEmail ? (
-            <p className="text-gray-400">Wähle eine Email aus</p>
+        {/* 📄 Detail View - 2/3 */}
+        <Card className="col-span-2 overflow-y-auto p-8 bg-gray-900 rounded-xl">
+           {!activeEmail ? (
+             <p className="text-gray-400">Wähle eine Email aus</p>
           ) : (
             <>
-              <h2 className="text-xl font-bold mb-1">
-                {activeEmail.subject || "(Kein Betreff)"}
-              </h2>
+              <h2 className="text-2xl font-bold mb-2">{activeEmail.subject || "(Kein Betreff)"}</h2>
+              <p className="text-sm text-gray-400 mb-4">{activeEmail.from}</p>
+              <hr className="border-gray-700 mb-6"/>
 
-              <p className="text-sm text-gray-400 mb-3">
-                {activeEmail.from}
-              </p>
+             {/* 📌 HTML E-Mail-Inhalte sauber rendern */}
+             <div
+               className="email-body text-sm leading-relaxed prose prose-invert max-w-none break-words"
+               dangerouslySetInnerHTML={{ __html: activeEmail.body }}
+             />
 
-              <hr className="border-gray-700 mb-4" />
-
-              {loadingEmail ? (
-                <p className="text-gray-500">Lade Inhalte...</p>
-              ) : (
-                <div
-                  className="text-sm leading-relaxed email-body"
-                  dangerouslySetInnerHTML={{ __html: activeEmail.body }}
-                />
-              )}
-
-              <button
-                onClick={closeEmail}
-                className="mt-6 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
-              >
-                Schließen
-              </button>
-            </>
-          )}
-        </Card>
+             <button
+               onClick={closeEmail}
+               className="mt-6 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
+             >
+               Schließen
+             </button>
+           </>
+         )}
+       </Card>
       </div>
     </PageLayout>
   );
