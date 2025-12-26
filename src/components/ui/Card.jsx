@@ -1,6 +1,6 @@
-export default function Card({ title, description, children }) {
+export default function Card({ title, description, children, className }) {
   return (
-    <div className="bg-[var(--bg-panel)] rounded-xl p-6 shadow-md">
+    <div className={`bg-[var(--bg-panel)] rounded-xl p-6 shadow-md ${className || ""}`}>
       {title && (
         <h2 className="text-lg font-semibold text-[var(--nill-primary)] mb-1">
           {title}

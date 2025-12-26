@@ -1,4 +1,4 @@
-kimport PageLayout from "../components/layout/PageLayout";
+import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import { useContext } from "react";
 import { GmailContext } from "../context/GmailContext";
