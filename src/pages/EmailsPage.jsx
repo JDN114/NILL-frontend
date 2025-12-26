@@ -1,4 +1,4 @@
-import PageLayout from "../components/layout/PageLayout";
+kimport PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import { useContext } from "react";
 import { GmailContext } from "../context/GmailContext";
@@ -12,16 +12,19 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      <div className="flex gap-4 h-[88vh]">
+      <div className="flex gap-4 h-[88vh] min-h-[600px]">
 
         {/* 📩 Inbox Sidebar */}
-        <Card className="w-[280px] flex-shrink-0 overflow-y-auto p-4">
+        <Card className="w-[280px] flex-shrink-0 overflow-y-auto p-4 pointer-events-auto">
           {emails?.length ? (
             <ul className="divide-y divide-gray-800">
               {emails.map((mail) => (
                 <li
                   key={mail.id}
-                  onClick={() => openEmail(mail.id)}
+                  onClick={() => {
+                    if (!mail.id) return;
+                    openEmail(mail.id);
+                  }}
                   className="p-3 cursor-pointer hover:bg-gray-800 transition truncate"
                 >
                   <p className="font-semibold truncate">
@@ -47,11 +50,10 @@ export default function EmailsPage() {
               <h2 className="text-3xl font-bold mb-3">
                 {activeEmail.subject || "(Kein Betreff)"}
               </h2>
-
               <p className="text-sm text-gray-400 mb-4">{activeEmail.from}</p>
               <hr className="border-gray-700 mb-6" />
 
-              {/* HTML sicher rendern */}
+              {/* 🔥 Sichere HTML Darstellung */}
               <SafeEmailHtml html={activeEmail.body} />
 
               <button
