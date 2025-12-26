@@ -11,10 +11,11 @@ export default function EmailsPage() {
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
-      <div className="grid grid-cols-3 gap-4 h-[85vh] min-h-[600px]">
-        
-        {/* 📩 Inbox */}
-        <Card className="col-span-1 overflow-y-auto p-4 !max-w-full">
+
+      <div className="flex gap-4 h-[88vh]">
+
+        {/* 📩 Inbox Sidebar */}
+        <Card className="w-[280px] flex-shrink-0 overflow-y-auto p-4">
           {emails?.length ? (
             <ul className="divide-y divide-gray-800">
               {emails.map((mail) => (
@@ -35,20 +36,22 @@ export default function EmailsPage() {
           )}
         </Card>
 
-        {/* 📄 Detail View */}
-        <Card className="col-span-2 overflow-y-auto p-8 bg-gray-900 rounded-xl">
+        {/* 📄 Detail View - Full focus */}
+        <Card className="flex-1 overflow-y-auto p-8 bg-gray-900 rounded-xl max-w-full">
           {!activeEmail ? (
             <p className="text-gray-400">Wähle eine Email aus</p>
           ) : loadingEmail ? (
             <p className="text-gray-400">Lade Email …</p>
           ) : (
             <>
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="text-3xl font-bold mb-3">
                 {activeEmail.subject || "(Kein Betreff)"}
               </h2>
+
               <p className="text-sm text-gray-400 mb-4">{activeEmail.from}</p>
               <hr className="border-gray-700 mb-6" />
 
+              {/* HTML sicher rendern */}
               <SafeEmailHtml html={activeEmail.body} />
 
               <button
