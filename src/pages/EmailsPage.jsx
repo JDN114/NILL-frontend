@@ -10,10 +10,9 @@ export default function EmailsPage() {
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
-
-      <div className="grid grid-cols-12 gap-4 h-[75vh]">
+      <div className="grid grid-cols-3 gap-4 h-[80vh] min-h-[500px]">
         {/* 📩 Inbox links (1/3) */}
-        <Card className="col-span-4 overflow-y-auto">
+        <Card className="col-span-2 overflow-y-auto p-6 !max-w-full">
           {emails?.length ? (
             <ul className="divide-y divide-gray-800">
               {emails.map((mail) => (
