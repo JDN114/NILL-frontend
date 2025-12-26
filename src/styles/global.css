@@ -1,0 +1,23 @@
+.email-body-render table {
+  width: 100% !important;
+  border-collapse: collapse;
+}
+
+.email-body-render img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.email-body-render * {
+  line-height: 1.5 !important;
+  word-break: break-word;
+}
+
+/* Bessere Link Styles */
+.email-body-render a {
+  color: #60a5fa; /* Tailwind Blue-400 */
+}
+.email-body-render a[target="_blank"]::after {
+  content: " ↗";
+  font-size: 0.75em;
+}
