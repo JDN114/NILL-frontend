@@ -11,20 +11,16 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* Neues Layout: 1/3 | 2/3 */}
-      <div className="grid grid-cols-3 gap-6 h-[75vh]">
-
-        {/* 📩 Sidebar → 1/3 */}
-        <Card className="col-span-1 overflow-y-auto p-4">
-          {emails.length ? (
-            <ul className="divide-y divide-gray-700">
+      <div className="grid grid-cols-12 gap-4 h-[75vh]">
+        {/* 📩 Inbox links (1/3) */}
+        <Card className="col-span-4 overflow-y-auto">
+          {emails?.length ? (
+            <ul className="divide-y divide-gray-800">
               {emails.map((mail) => (
                 <li
                   key={mail.id}
                   onClick={() => openEmail(mail.id)}
-                  className={`cursor-pointer p-3 hover:bg-gray-800 transition truncate ${
-                    activeEmail?.id === mail.id ? "bg-gray-800" : ""
-                  }`}
+                  className="p-3 cursor-pointer hover:bg-gray-800 transition truncate"
                 >
                   <p className="font-semibold truncate">
                     {mail.subject || "(Kein Betreff)"}
@@ -34,28 +30,34 @@ export default function EmailsPage() {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">Keine Emails gefunden.</p>
+            <p className="text-gray-400">Keine Emails gefunden.</p>
           )}
         </Card>
 
-        {/* 📄 Detail – 2/3 */}
-        <Card className="col-span-2 overflow-y-auto p-6">
+        {/* 📄 Detail rechts (2/3) */}
+        <Card className="col-span-8 overflow-y-auto p-6">
           {!activeEmail ? (
-            <p className="text-gray-500">Wähle eine Email aus.</p>
-          ) : loadingEmail ? (
-            <p className="text-gray-400 animate-pulse">Laden...</p>
+            <p className="text-gray-400">Wähle eine Email aus</p>
           ) : (
             <>
               <h2 className="text-xl font-bold mb-1">
                 {activeEmail.subject || "(Kein Betreff)"}
               </h2>
-              <p className="text-sm text-gray-400 mb-3">{activeEmail.from}</p>
+
+              <p className="text-sm text-gray-400 mb-3">
+                {activeEmail.from}
+              </p>
+
               <hr className="border-gray-700 mb-4" />
 
-              <div
-                className="email-body text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: activeEmail.body }}
-              />
+              {loadingEmail ? (
+                <p className="text-gray-500">Lade Inhalte...</p>
+              ) : (
+                <div
+                  className="text-sm leading-relaxed email-body"
+                  dangerouslySetInnerHTML={{ __html: activeEmail.body }}
+                />
+              )}
 
               <button
                 onClick={closeEmail}
@@ -66,7 +68,6 @@ export default function EmailsPage() {
             </>
           )}
         </Card>
-
       </div>
     </PageLayout>
   );
