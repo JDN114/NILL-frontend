@@ -12,10 +12,10 @@ export default function EmailsPage() {
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
       {/* Same height for both columns */}
-      <div className="grid grid-cols-3 gap-4 h-[80vh]">
+      <div className="grid grid-cols-4 gap-6 h-[75vh]">
 
         {/* 📩 Sidebar – 1/3 */}
-        <Card className="col-span-1 overflow-y-auto p-2">
+        <Card className="col-span-2 overflow-y-auto p-6">
           {emails.length ? (
             <ul className="divide-y divide-gray-700">
               {emails.map((mail) => (
