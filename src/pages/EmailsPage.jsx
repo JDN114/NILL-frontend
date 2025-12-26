@@ -11,18 +11,18 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* Same height for both columns */}
-      <div className="grid grid-cols-4 gap-6 h-[75vh]">
+      {/* Neues Layout: 1/3 | 2/3 */}
+      <div className="grid grid-cols-3 gap-6 h-[75vh]">
 
-        {/* 📩 Sidebar – 1/3 */}
-        <Card className="col-span-2 overflow-y-auto p-6">
+        {/* 📩 Sidebar → 1/3 */}
+        <Card className="col-span-1 overflow-y-auto p-4">
           {emails.length ? (
             <ul className="divide-y divide-gray-700">
               {emails.map((mail) => (
                 <li
                   key={mail.id}
                   onClick={() => openEmail(mail.id)}
-                  className={`cursor-pointer p-3 hover:bg-gray-800 transition ${
+                  className={`cursor-pointer p-3 hover:bg-gray-800 transition truncate ${
                     activeEmail?.id === mail.id ? "bg-gray-800" : ""
                   }`}
                 >
@@ -41,9 +41,7 @@ export default function EmailsPage() {
         {/* 📄 Detail – 2/3 */}
         <Card className="col-span-2 overflow-y-auto p-6">
           {!activeEmail ? (
-            <p className="text-gray-500">
-              Wähle eine Email aus.
-            </p>
+            <p className="text-gray-500">Wähle eine Email aus.</p>
           ) : loadingEmail ? (
             <p className="text-gray-400 animate-pulse">Laden...</p>
           ) : (
@@ -51,12 +49,9 @@ export default function EmailsPage() {
               <h2 className="text-xl font-bold mb-1">
                 {activeEmail.subject || "(Kein Betreff)"}
               </h2>
-              <p className="text-sm text-gray-400 mb-3">
-                {activeEmail.from}
-              </p>
-              <hr className="border-gray-700 mb-4"/>
+              <p className="text-sm text-gray-400 mb-3">{activeEmail.from}</p>
+              <hr className="border-gray-700 mb-4" />
 
-              {/* RENDER HTML SAUBER */}
               <div
                 className="email-body text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: activeEmail.body }}
