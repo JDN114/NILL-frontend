@@ -14,7 +14,7 @@ export function GmailProvider({ children }) {
   const [emails, setEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
 
-  const [loading, setLoading] = useState(true);        // initial sync
+  const [loading, setLoading] = useState(true); // initial sync
   const [loadingEmail, setLoadingEmail] = useState(false); // detail view
 
   /* -----------------------------
@@ -29,20 +29,33 @@ export function GmailProvider({ children }) {
 
   const fetchEmails = async () => {
     const res = await getGmailEmails();
-    console.log("📬 Gmail Emails aus API:", res); // 👈 DAS
+    console.log("📬 Gmail Emails aus API:", res);
     setEmails(res);
     return res;
   };
 
   /* -----------------------------
-     EMAIL DETAIL
+     EMAIL DETAIL + AUTO MARK AS READ
   ----------------------------- */
 
   const openEmail = async (id) => {
+    if (!id) return;
     setLoadingEmail(true);
+
     try {
+      // 1️⃣ Fetch Email Detail
       const data = await getGmailEmailDetail(id);
+
+      // 2️⃣ Set activeEmail for rendering
       setActiveEmail(data);
+
+      // 3️⃣ Mark as read automatisch
+      await markEmailRead(id);
+
+      // 4️⃣ UI sofort aktualisieren (Inbox)
+      setEmails((prev) =>
+        prev.map((mail) => (mail.id === id ? { ...mail, unread: false } : mail))
+      );
     } catch (err) {
       console.error("Failed to load email", err);
     } finally {
@@ -57,8 +70,6 @@ export function GmailProvider({ children }) {
   const markAsRead = async (id) => {
     try {
       await markEmailRead(id);
-
-      // UI sofort aktualisieren
       setEmails((prev) =>
         prev.map((mail) =>
           mail.id === id ? { ...mail, unread: false } : mail
