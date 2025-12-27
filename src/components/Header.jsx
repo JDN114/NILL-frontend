@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../assets/images/logo.png";
 
-export default function Header(){
+export default function Header() {
   const [open, setOpen] = useState(false);
+
   return (
     <header className="fixed w-full z-50 top-0 left-0">
       <div className="backdrop-blur-sm bg-white/3 border-b border-white/5">
@@ -20,7 +21,7 @@ export default function Header(){
             <a href="#sustainability" className="text-gray-300 hover:text-white">Nachhaltigkeit</a>
             <a href="#contact" className="text-gray-300 hover:text-white">Kontakt</a>
             <Link to="/login" className="px-3 py-2 border border-white/10 rounded text-white">Login</Link>
-            <Link to="/register" className="px-3 py-2 rounded bg-[var(--brand)] text-white">Account</Link>
+            <Link to="/register" className="px-3 py-2 rounded bg-[var(--brand)] text-white">Registrieren</Link>
           </nav>
 
           <div className="md:hidden">
@@ -45,6 +46,7 @@ export default function Header(){
               <li><a href="#sustainability" onClick={() => setOpen(false)}>Nachhaltigkeit</a></li>
               <li><a href="#contact" onClick={() => setOpen(false)}>Kontakt</a></li>
               <li><Link to="/login" onClick={() => setOpen(false)}>Login</Link></li>
+              <li><Link to="/register" onClick={() => setOpen(false)}>Registrieren</Link></li>
             </ul>
           </div>
         </div>
