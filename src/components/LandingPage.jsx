@@ -4,7 +4,6 @@ import Hero from "../components/Hero";
 import FeaturesGrid from "../components/FeaturesGrid";
 import HowItWorks from "../components/HowItWorks";
 import Pricing from "../components/Pricing";
-import About from "../components/About";
 import Sustainability from "../components/Sustainability";
 import ContactForm from "../components/ContactForm";
 import CTABar from "../components/CTABar";
@@ -22,7 +21,6 @@ export default function LandingPageDebug() {
         <button onClick={() => setVisibleSection("FeaturesGrid")} className="text-white">Features</button>
         <button onClick={() => setVisibleSection("HowItWorks")} className="text-white">How It Works</button>
         <button onClick={() => setVisibleSection("Pricing")} className="text-white">Pricing</button>
-        <button onClick={() => setVisibleSection("About")} className="text-white">About</button>
         <button onClick={() => setVisibleSection("Sustainability")} className="text-white">Sustainability</button>
         <button onClick={() => setVisibleSection("Contact")} className="text-white">Contact</button>
       </div>
@@ -32,7 +30,6 @@ export default function LandingPageDebug() {
         {visibleSection === "FeaturesGrid" && <FeaturesGrid />}
         {visibleSection === "HowItWorks" && <HowItWorks />}
         {visibleSection === "Pricing" && <Pricing />}
-        {visibleSection === "About" && <About />}
         {visibleSection === "Sustainability" && <Sustainability />}
         {visibleSection === "Contact" && (
           <section id="contact" className="py-16">
