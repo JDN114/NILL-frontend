@@ -18,7 +18,6 @@ export default function LandingPage(){
         <Hero />
         <FeaturesGrid />
         <HowItWorks />
-        <Testimonials />
         <Pricing />
         <About />
         <Sustainability />
