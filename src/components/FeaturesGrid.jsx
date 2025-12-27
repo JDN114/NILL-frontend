@@ -25,7 +25,7 @@ export default function FeaturesGrid() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {features.map((f, idx) => (
-          <FeatureCard key={idx} title={f.title} desc={f.desc} />
+          <FeatureCard key={idx} index={idx} title={f.title} desc={f.desc} />
         ))}
       </div>
     </section>
