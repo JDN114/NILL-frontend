@@ -9,6 +9,7 @@ import SettingsPage from "./pages/SettingsPage";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import Register from "./pages/Register";
+import AboutNillPage from "./pages/AboutNillPage"; // die neue Seite
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
         <Route path="/dashboard/settings" element={<SettingsPage />} />
         <Route path="/Impressum" element={<Impressum />} />
         <Route path="/Datenschutz" element={<Datenschutz />} />
-      </Routes>
+        <Route path="/about-nill" element={<AboutNillPage />} /> 
+     </Routes>
     </Router>
   );
 }
