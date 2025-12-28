@@ -6,7 +6,6 @@ export default function Impressum() {
       <h1 className="text-3xl font-bold mb-6">Impressum</h1>
 
       <p><strong>NILLAI</strong> – Inh. Julian David Nill</p>
-      <p>Einzelunternehmen</p>
 
       <p className="mt-2">
         <strong>Vertreten durch:</strong><br />
@@ -15,17 +14,12 @@ export default function Impressum() {
 
       <p className="mt-2">
         <strong>Adresse:</strong><br />
-        {/* TODO: Deine vollständige Anschrift eintragen */}
+        {/* TODO: Mörikestraße 9, 72116 Mössingen */}
       </p>
 
       <p className="mt-2">
         <strong>Kontakt:</strong><br />
-        {/* TODO: Deine Kontakt-E-Mail eintragen */}
-      </p>
-
-      <p className="mt-6">
-        Umsatzsteuer-ID: Nicht vorhanden<br />
-        Registereintrag: Keiner (Einzelunternehmen, nicht im Handelsregister)
+        {/* TODO: nillai@de */}
       </p>
 
       <p className="mt-6 text-gray-300 text-sm">
