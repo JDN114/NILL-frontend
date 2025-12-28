@@ -8,12 +8,14 @@ import EmailsPage from "./pages/EmailsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
+import Registrieren from "./pages/Register";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<DashboardLanding />} />
         <Route path="/dashboard/emails" element={<EmailsPage />} />
