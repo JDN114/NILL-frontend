@@ -25,7 +25,7 @@ function App() {
         <Route path="/Impressum" element={<Impressum />} />
         <Route path="/Datenschutz" element={<Datenschutz />} />
         <Route path="/about-nill" element={<AboutNillPage />} /> 
-        <Route path="/about-us" element={<AboutUsPagee />} />
+        <Route path="/about-us" element={<AboutUsPage />} />
      </Routes>
     </Router>
   );
