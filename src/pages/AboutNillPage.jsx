@@ -1,83 +1,78 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { FiShield, FiZap, FiGlobe } from "react-icons/fi";
 
 export default function AboutNillPage() {
-  return (
-    <section className="min-h-screen py-24 bg-gradient-to-b from-[#03060a] to-[#071023]">
-      <div className="max-w-5xl mx-auto px-6 text-center">
+  const featureList = [
+    "Zentrale Steuerung aller KI-Funktionen über das Dashboard",
+    "E-Mail-Automatisierung: Kategorisierung, Zusammenfassungen, Extraktion von Daten",
+    "Projektplanung & Terminmanagement",
+    "Buchhaltung & Dokumenten-Management",
+    "CO₂-effiziente Infrastruktur & 100% grüne Server",
+    "Skalierbare KI-Lösungen für individuelle Bedürfnisse",
+  ];
 
-        {/* Titel */}
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
+  return (
+    <section className="relative py-20 bg-gradient-to-b from-[#071023] to-[#03060a] min-h-screen">
+      <div className="max-w-5xl mx-auto px-6 space-y-16">
+
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-4xl md:text-5xl font-extrabold text-white mb-6"
+          className="text-center space-y-4"
         >
-          Über NILL
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-gray-300 text-lg md:text-xl mb-12"
-        >
-          NILL ist deine zentrale Plattform für KI-gesteuerte Automatisierung. Von E-Mail-Management über Projektplanung bis hin zu Buchhaltung – alles in einem Dashboard steuerbar.
-        </motion.p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white">
+            Über NILL
+          </h1>
+          <p className="text-gray-300 text-lg md:text-xl">
+            NILL ist eine intelligente KI-Plattform, die Routineaufgaben automatisiert
+            und komplexe Workflows in einem Dashboard zusammenführt – effizient, sicher,
+            und klimafreundlich.
+          </p>
+        </motion.div>
 
-        {/* Interaktive Cards */}
-        <div className="grid md:grid-cols-3 gap-8">
-          <motion.div
-            whileHover={{ y: -8, scale: 1.03 }}
-            className="glass p-6 rounded-2xl shadow-lg flex flex-col items-center text-center transition"
-          >
-            <FiZap className="text-[var(--accent)] w-10 h-10 mb-4"/>
-            <h3 className="text-xl font-semibold text-white mb-2">KI-gesteuerte Effizienz</h3>
-            <p className="text-gray-300 text-sm">
-              Automatisiere Routineaufgaben, spare Zeit und erhöhe die Produktivität, ohne Komplexität.
-            </p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -8, scale: 1.03 }}
-            className="glass p-6 rounded-2xl shadow-lg flex flex-col items-center text-center transition"
-          >
-            <FiShield className="text-[var(--accent)] w-10 h-10 mb-4"/>
-            <h3 className="text-xl font-semibold text-white mb-2">Sicherheit & Datenschutz</h3>
-            <p className="text-gray-300 text-sm">
-              Alle Daten werden sicher verarbeitet. Wir setzen auf DSGVO-konforme Praktiken und transparente Verwaltung.
-            </p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -8, scale: 1.03 }}
-            className="glass p-6 rounded-2xl shadow-lg flex flex-col items-center text-center transition"
-          >
-            <FiGlobe className="text-[var(--accent)] w-10 h-10 mb-4"/>
-            <h3 className="text-xl font-semibold text-white mb-2">Nachhaltigkeit</h3>
-            <p className="text-gray-300 text-sm">
-              Klimaneutrale Infrastruktur, 100% erneuerbare Energie für unsere Server und CO₂-Kompensation für alles, was nicht grün betrieben werden kann.
-            </p>
-          </motion.div>
-        </div>
-
-        {/* Längerer Textbereich */}
+        {/* Features */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 1 }}
-          className="mt-16 space-y-6 text-left text-gray-300"
+          transition={{ duration: 0.8 }}
+          className="grid md:grid-cols-2 gap-12"
         >
-          <p>
-            Mit NILL erhältst du eine Plattform, die sich ständig weiterentwickelt: 
-            Bald wirst du noch mehr KI-Funktionen steuern können, wie z.B. intelligente Priorisierung von E-Mails, automatische Zusammenfassungen ganzer Projekte oder erweiterte Buchhaltungsprozesse. 
-          </p>
-          <p>
-            Unsere Mission ist es, KI zugänglich, intuitiv und transparent zu gestalten. Jeder Klick, jede Analyse und jede Automatisierung unterstützt nicht nur Effizienz, sondern auch nachhaltiges Handeln.
-          </p>
-          <p>
-            So kombinieren wir leistungsstarke Technologie mit Verantwortung – für dein Business und unsere Umwelt.
+          {featureList.map((f, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ x: -20, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.15, duration: 0.6 }}
+              className="glass p-6 rounded-2xl shadow-lg hover:shadow-2xl transition"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-white/10 text-white font-bold">
+                  {idx + 1}
+                </div>
+                <p className="text-white font-semibold">{f}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Nachhaltigkeit Highlight */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="bg-green-900/20 p-8 rounded-2xl text-center space-y-4"
+        >
+          <h2 className="text-3xl font-bold text-white">Nachhaltigkeit bei NILL</h2>
+          <p className="text-gray-300">
+            Schon jetzt klimaneutral: Unsere Server laufen zu 100% auf erneuerbarer Energie.
+            Alles, was nicht direkt grün betrieben werden kann, kompensieren wir fachgerecht.
+            Jeder Klick, jede Analyse trägt so aktiv zum Umweltschutz bei, ohne Kompromisse
+            bei Leistung oder Sicherheit.
           </p>
         </motion.div>
       </div>
