@@ -8,7 +8,7 @@ import EmailsPage from "./pages/EmailsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
-import Registrieren from "./pages/Register";
+import Register from "./pages/Register";
 
 function App() {
   return (
