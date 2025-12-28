@@ -38,17 +38,6 @@ export default function Hero(){
               </div>
             </div>
           </div>
-
-          <motion.div initial={{ scale: 0.98, opacity:0 }} animate={{ scale:1, opacity:1 }} transition={{ duration:0.6 }} className="relative">
-            <div className="rounded-3xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition">
-              <img src={HeroImg} alt="Hero" className="w-full h-auto object-cover" />
-            </div>
-
-            <div className="absolute -left-10 -bottom-10 bg-white/6 border border-white/5 p-3 rounded-xl w-56 animate-floaty">
-              <div className="text-xs text-gray-100 font-semibold">Realtime Insights</div>
-              <div className="text-[12px] text-gray-300">Actionable suggestions for follow-ups</div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>
