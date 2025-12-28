@@ -14,9 +14,10 @@ export default function Header() {
             <span className="text-white font-semibold tracking-tight">NILL</span>
           </div>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="#home" className="text-gray-200 hover:text-white">Home</a>
-            <a href="#about" className="text-gray-300 hover:text-white">Über uns</a>
+            <Link to="/about-nill" className="text-gray-300 hover:text-white">Über uns</Link>
             <a href="#features" className="text-gray-300 hover:text-white">Features</a>
             <a href="#sustainability" className="text-gray-300 hover:text-white">Nachhaltigkeit</a>
             <a href="#contact" className="text-gray-300 hover:text-white">Kontakt</a>
@@ -24,6 +25,7 @@ export default function Header() {
             <Link to="/register" className="px-3 py-2 rounded bg-[var(--brand)] text-white">Registrieren</Link>
           </nav>
 
+          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button onClick={() => setOpen(true)} className="p-2 rounded hover:bg-white/5">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,6 +36,7 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {open && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
@@ -41,7 +44,7 @@ export default function Header() {
             <button onClick={() => setOpen(false)} className="mb-6 p-2 rounded text-white">Close</button>
             <ul className="flex flex-col gap-4 text-gray-200">
               <li><a href="#home" onClick={() => setOpen(false)}>Home</a></li>
-              <li><a href="#about" onClick={() => setOpen(false)}>Über uns</a></li>
+              <li><Link to="/about-nill" onClick={() => setOpen(false)}>Über uns</Link></li>
               <li><a href="#features" onClick={() => setOpen(false)}>Features</a></li>
               <li><a href="#sustainability" onClick={() => setOpen(false)}>Nachhaltigkeit</a></li>
               <li><a href="#contact" onClick={() => setOpen(false)}>Kontakt</a></li>
