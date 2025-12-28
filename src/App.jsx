@@ -6,6 +6,8 @@ import Login from "./pages/Login";
 import DashboardLanding from "./pages/DashboardLanding";
 import EmailsPage from "./pages/EmailsPage";
 import SettingsPage from "./pages/SettingsPage";
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/dashboard" element={<DashboardLanding />} />
         <Route path="/dashboard/emails" element={<EmailsPage />} />
         <Route path="/dashboard/settings" element={<SettingsPage />} />
+        <Route path="/Impressum" element={<Impressum />} />
+        <Route path="/Datenschutz" element={<Datenschutz />} />
       </Routes>
     </Router>
   );
