@@ -14,12 +14,12 @@ export default function Impressum() {
 
       <p className="mt-2">
         <strong>Adresse:</strong><br />
-        {/* TODO: Mörikestraße 9, 72116 Mössingen */}
+        Mörikestraße 9, 72116 Mössingen
       </p>
 
       <p className="mt-2">
         <strong>Kontakt:</strong><br />
-        {/* TODO: nillai@de */}
+        nillai@de
       </p>
 
       <p className="mt-6 text-gray-300 text-sm">
