@@ -1,7 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function Sustainability() {
+  const navigate = useNavigate();
+
   const cards = [
     {
       title: "100% Grüne Energie",
@@ -88,6 +91,7 @@ export default function Sustainability() {
           für unsere Umwelt – für eine nachhaltige Zukunft, die schon heute beginnt.
         </motion.p>
 
+        {/* ✅ Button jetzt mit Navigation */}
         <motion.button
           className="mt-8 px-6 py-3 bg-[var(--brand)] text-white rounded-lg shadow-lg hover:bg-[var(--brand-hover)] transition"
           initial="hidden"
@@ -95,6 +99,7 @@ export default function Sustainability() {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           variants={fadeUpVariants}
+          onClick={() => navigate("/about-nill")} // Navigiert auf die About-Seite
         >
           Mehr erfahren
         </motion.button>
