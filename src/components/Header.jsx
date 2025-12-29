@@ -19,40 +19,34 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-6 text-sm relative">
             <a href="#home" className="text-gray-200 hover:text-white">Home</a>
 
-            {/* Dropdown Über NILL */}
-            <div
-              className="relative group"
-              onMouseEnter={() => setAboutOpen(true)}
-              onMouseLeave={() => setAboutOpen(false)}
-            >
-              <button className="text-gray-300 hover:text-white flex items-center gap-1">
-                Über NILL
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}
-                  viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-
-              {/* Dropdown Panel */}
-              {aboutOpen && (
-                <div className="absolute top-full left-0 mt-2 w-44 bg-black/80 backdrop-blur-xl rounded-md shadow-lg border border-white/10 py-2 fade-in">
-                  <Link to="/about-nill"
-                    className="block px-4 py-2 text-gray-200 hover:bg-white/10">
-                    Über uns
-                  </Link>
-                  <Link to="/founder"
-                    className="block px-4 py-2 text-gray-200 hover:bg-white/10">
-                    Founder
-                  </Link>
-                  <Link to="/roadmap"
-                    className="block px-4 py-2 text-gray-200 hover:bg-white/10">
-                    Roadmap
-                  </Link>
-                </div>
-              )}
-            </div>
-
+    {/* Dropdown Über NILL */}
+    <div
+      className="relative"
+      onMouseEnter={() => setAboutOpen(true)}
+      onMouseLeave={() => setAboutOpen(false)}
+    >
+      <button className="text-gray-300 hover:text-white flex items-center gap-1">
+        Über NILL
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+    
+      {/* Dropdown Panel */}
+      {aboutOpen && (
+        <div className="absolute top-full left-0 mt-2 w-44 bg-black/80 backdrop-blur-xl rounded-md shadow-lg border border-white/10 py-2">
+          <Link to="/about-nill" className="block px-4 py-2 text-gray-200 hover:bg-white/10">
+            Über uns
+          </Link>
+          <Link to="/founder" className="block px-4 py-2 text-gray-200 hover:bg-white/10">
+            Founder
+          </Link>
+          <Link to="/roadmap" className="block px-4 py-2 text-gray-200 hover:bg-white/10">
+            Roadmap
+          </Link>
+        </div>
+      )}
+    </div>
             <a href="#features" className="text-gray-300 hover:text-white">Features</a>
             <a href="#sustainability" className="text-gray-300 hover:text-white">Nachhaltigkeit</a>
             <a href="#contact" className="text-gray-300 hover:text-white">Kontakt</a>
