@@ -11,6 +11,8 @@ import Datenschutz from "./pages/Datenschutz";
 import Register from "./pages/Register";
 import AboutNillPage from "./pages/AboutNillPage"; // die neue Seite
 import AboutUsPage from "./pages/AboutUsPage";
+import Founder from "./pages/Founder";
+import Roadmap from "./pages/Roadmap";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/Datenschutz" element={<Datenschutz />} />
         <Route path="/about-nill" element={<AboutNillPage />} /> 
         <Route path="/about-us" element={<AboutUsPage />} />
+        <Route path="/founder" element={<Founder />} />
+        <Route path="/roadmap" element={<Roadmap />} />
      </Routes>
     </Router>
   );
