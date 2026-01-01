@@ -13,7 +13,7 @@ import AboutNillPage from "./pages/AboutNillPage"; // die neue Seite
 import AboutUsPage from "./pages/AboutUsPage";
 import Founder from "./pages/Founder";
 import Roadmap from "./pages/Roadmap";
-import Redeem-coupon from "./pages/RedeemCouponPage";
+import RedeemCoupon from "./pages/RedeemCouponPage";
 
 function App() {
   return (
@@ -31,7 +31,7 @@ function App() {
         <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/founder" element={<Founder />} />
         <Route path="/roadmap" element={<Roadmap />} />
-        <Route path="/Redeem-coupon" element={<RedeemCouponPage />} />
+        <Route path="/redeem-coupon" element={<RedeemCouponPage />} />
      </Routes>
     </Router>
   );
