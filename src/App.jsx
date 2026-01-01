@@ -13,7 +13,7 @@ import AboutNillPage from "./pages/AboutNillPage"; // die neue Seite
 import AboutUsPage from "./pages/AboutUsPage";
 import Founder from "./pages/Founder";
 import Roadmap from "./pages/Roadmap";
-import RedeemCoupon from "./pages/RedeemCouponPage";
+import Redeem-coupon from "./pages/RedeemCouponPage";
 
 function App() {
   return (
