@@ -31,7 +31,7 @@ function App() {
         <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/founder" element={<Founder />} />
         <Route path="/roadmap" element={<Roadmap />} />
-        <Route path="/redeem-coupon" element={<RedeemCouponPage />} />
+        <Route path="/redeem-coupon" element={<RedeemCoupon />} />
      </Routes>
     </Router>
   );
