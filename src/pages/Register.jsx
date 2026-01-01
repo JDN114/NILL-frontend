@@ -1,3 +1,4 @@
+// frontend/src/pages/Register.jsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -16,12 +17,10 @@ export default function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (form.password !== form.repeatPassword) return;
 
-    // hier später API Registrierung
+    // hier später echte API Registrierung
     localStorage.setItem("auth", "true");
-
     navigate("/dashboard");
   };
 
@@ -43,9 +42,7 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* EMAIL */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">
-              E-Mail Adresse
-            </label>
+            <label className="block text-gray-200 mb-1 text-sm">E-Mail Adresse</label>
             <input
               name="email"
               type="email"
@@ -69,9 +66,7 @@ export default function Register() {
 
           {/* REPEAT PASSWORD */}
           <div>
-            <label className="block text-gray-200 mb-1 text-sm">
-              Passwort wiederholen
-            </label>
+            <label className="block text-gray-200 mb-1 text-sm">Passwort wiederholen</label>
             <input
               name="repeatPassword"
               type="password"
@@ -81,11 +76,21 @@ export default function Register() {
             />
           </div>
 
+          {/* Register Submit */}
           <button
             type="submit"
             className="w-full mt-4 bg-[var(--accent)] py-3 rounded-lg font-semibold text-white hover:opacity-90 transition"
           >
             Registrieren
+          </button>
+
+          {/* Coupon Button */}
+          <button
+            type="button"
+            onClick={() => navigate("/coupon")}
+            className="w-full mt-3 border border-[var(--accent)] text-[var(--accent)] py-3 rounded-lg font-semibold hover:bg-[var(--accent)] hover:text-white transition"
+          >
+            Ich habe einen Coupon-Code
           </button>
         </form>
 
