@@ -14,6 +14,7 @@ import AboutUsPage from "./pages/AboutUsPage";
 import Founder from "./pages/Founder";
 import Roadmap from "./pages/Roadmap";
 import RedeemCoupon from "./pages/RedeemCouponPage";
+import AdminPage from "./pages/AdminPage";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/founder" element={<Founder />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/redeem-coupon" element={<RedeemCoupon />} />
+        <Route path="/admin" element={<AdminPage />} />
      </Routes>
     </Router>
   );
