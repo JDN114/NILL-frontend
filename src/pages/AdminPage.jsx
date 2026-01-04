@@ -1,4 +1,3 @@
-/<<<</ src/pages/AdminPage.jsx
 import React, { useState, useEffect } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
