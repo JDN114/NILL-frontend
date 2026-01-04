@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
-import axios from "axios";
-import { fetchPlans, createPlan } from "../services/adminService";
-import { getCurrentUser } from "../services/authService";
+import { fetchPlans, fetchCoupons, fetchAnalytics, createPlan, createCoupon } from "../services/adminService";
 
 export default function AdminPage() {
-  const authToken = localStorage.getItem("token");
-
   // ----------------------------
   // STATES
   // ----------------------------
@@ -24,43 +20,24 @@ export default function AdminPage() {
   // ----------------------------
   // FETCH DATA
   // ----------------------------
-  const fetchPlans = async () => {
+  const loadData = async () => {
     try {
-      const res = await axios.get("/admin/plans", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      setPlans(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      const [plansRes, couponsRes, analyticsRes] = await Promise.all([
+        fetchPlans(),
+        fetchCoupons(),
+        fetchAnalytics(),
+      ]);
 
-  const fetchCoupons = async () => {
-    try {
-      const res = await axios.get("/admin/coupons", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      setCoupons(res.data);
+      setPlans(Array.isArray(plansRes) ? plansRes : []);
+      setCoupons(Array.isArray(couponsRes) ? couponsRes : []);
+      setAnalytics(analyticsRes || null);
     } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchAnalytics = async () => {
-    try {
-      const res = await axios.get("/admin/analytics", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      setAnalytics(res.data);
-    } catch (err) {
-      console.error(err);
+      console.error("Error loading admin data:", err);
     }
   };
 
   useEffect(() => {
-    fetchPlans();
-    fetchCoupons();
-    fetchAnalytics();
+    loadData();
   }, []);
 
   // ----------------------------
@@ -68,19 +45,19 @@ export default function AdminPage() {
   // ----------------------------
   const handleCreatePlan = async () => {
     if (!newPlan.name || !newPlan.price || !newPlan.features) return;
-
     setLoadingPlan(true);
+
     try {
-      const res = await axios.post(
-        "/admin/plans",
-        { ...newPlan, features: newPlan.features.split(",") },
-        { headers: { Authorization: `Bearer ${authToken}` } }
-      );
-      setPlans((prev) => [...prev, res.data]);
+      const plan = await createPlan({
+        ...newPlan,
+        features: newPlan.features.split(",").map(f => f.trim()),
+      });
+      setPlans(prev => [...prev, plan]);
       setNewPlan({ name: "", price: "", features: "" });
     } catch (err) {
-      console.error(err);
+      console.error("Error creating plan:", err);
     }
+
     setLoadingPlan(false);
   };
 
@@ -89,22 +66,19 @@ export default function AdminPage() {
   // ----------------------------
   const handleCreateCoupon = async () => {
     if (!newCoupon.code || !newCoupon.discount_amount) return;
-
     setLoadingCoupon(true);
+
     try {
-      const res = await axios.post(
-        "/admin/coupons",
-        {
-          ...newCoupon,
-          discount_amount: parseFloat(newCoupon.discount_amount),
-        },
-        { headers: { Authorization: `Bearer ${authToken}` } }
-      );
-      setCoupons((prev) => [...prev, res.data]);
+      const coupon = await createCoupon({
+        ...newCoupon,
+        discount_amount: parseFloat(newCoupon.discount_amount),
+      });
+      setCoupons(prev => [...prev, coupon]);
       setNewCoupon({ code: "", discount_amount: "", valid_days: 30 });
     } catch (err) {
-      console.error(err);
+      console.error("Error creating coupon:", err);
     }
+
     setLoadingCoupon(false);
   };
 
@@ -211,14 +185,14 @@ export default function AdminPage() {
             disabled={loadingCoupon}
             className="px-4 py-2 bg-[var(--accent)] text-white rounded hover:opacity-90"
           >
-            {loadingCoupon ? "Erstellt..." : "Coupon erstellen"}
+            {loadingCoupon ? "Erstellt..." : "Ich habe einen Code"}
           </button>
         </div>
 
         <div className="mt-4">
           <h4 className="font-semibold mb-2">Bestehende Coupons:</h4>
           <ul className="list-disc ml-5">
-            {coupons.map((c) => (
+            {(coupons || []).map((c) => (
               <li key={c.id}>
                 {c.code} – {c.amount}€ – Gültig bis: {new Date(c.valid_until).toLocaleDateString()} – Aktiv: {c.is_active ? "Ja" : "Nein"}
               </li>
