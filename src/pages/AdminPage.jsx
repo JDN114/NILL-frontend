@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import axios from "axios";
+import { fetchPlans, createPlan } from "../services/adminService";
+import { getCurrentUser } from "../services/authService";
 
 export default function AdminPage() {
   const authToken = localStorage.getItem("token");
@@ -172,7 +174,7 @@ export default function AdminPage() {
           <ul className="list-disc ml-5">
             {plans.map((p) => (
               <li key={p.id}>
-                {p.name} – {p.price}€ – Features: {p.features}
+                {p.name} – {p.price}€ – Features: {Array.isArray(p.features) ? p.features.join(", ") : p.features}
               </li>
             ))}
           </ul>
