@@ -15,6 +15,7 @@ import Founder from "./pages/Founder";
 import Roadmap from "./pages/Roadmap";
 import RedeemCoupon from "./pages/RedeemCouponPage";
 import AdminPage from "./pages/AdminPage";
+import VerifyEmail from "./pages/VerifyEmail";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/redeem-coupon" element={<RedeemCoupon />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
      </Routes>
     </Router>
   );
