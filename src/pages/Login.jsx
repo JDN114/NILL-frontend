@@ -1,6 +1,6 @@
+// frontend/src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,10 +15,27 @@ export default function Login() {
     setError(null);
 
     try {
-      await loginUser(email, password);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.detail || "Login fehlgeschlagen");
+        setLoading(false);
+        return;
+      }
+
+      // JWT als Cookie oder localStorage speichern
+      localStorage.setItem("access_token", data.access_token);
+
       navigate("/dashboard");
     } catch (err) {
-      setError("Login fehlgeschlagen. Bitte überprüfe deine Daten.");
+      console.error(err);
+      setError("Backend nicht erreichbar");
     } finally {
       setLoading(false);
     }
@@ -27,11 +44,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] px-4">
       <div className="w-full max-w-md bg-[var(--bg-secondary)] rounded-xl p-8 shadow-xl border border-gray-800">
-        
-        {/* Logo / Title */}
-        <h1 className="text-3xl font-bold text-center mb-2">
-          NILL
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-2">NILL</h1>
         <p className="text-center text-[var(--text-muted)] mb-8">
           Willkommen zurück
         </p>
@@ -65,9 +78,7 @@ export default function Login() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-500">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <button
             type="submit"

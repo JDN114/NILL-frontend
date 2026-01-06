@@ -9,7 +9,6 @@ export default function Register() {
     password: "",
     repeatPassword: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
@@ -30,17 +29,14 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
       const data = await res.json();
 
@@ -73,7 +69,6 @@ export default function Register() {
         <h1 className="text-3xl font-bold text-white mb-6">Registrieren</h1>
 
         {success ? (
-          /* ✅ SUCCESS STATE */
           <div className="text-center space-y-4">
             <p className="text-green-400 font-semibold text-lg">
               Registrierung erfolgreich 🎉
@@ -91,14 +86,12 @@ export default function Register() {
             </Link>
           </div>
         ) : (
-          /* 📝 FORM */
           <>
             <p className="text-gray-300 mb-8">
               Erstelle dein persönliches NILL-Konto in wenigen Sekunden.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* EMAIL */}
               <div>
                 <label className="block text-gray-200 mb-1 text-sm">
                   E-Mail Adresse
@@ -113,7 +106,6 @@ export default function Register() {
                 />
               </div>
 
-              {/* PASSWORD */}
               <div>
                 <label className="block text-gray-200 mb-1 text-sm">
                   Passwort
@@ -128,7 +120,6 @@ export default function Register() {
                 />
               </div>
 
-              {/* REPEAT PASSWORD */}
               <div>
                 <label className="block text-gray-200 mb-1 text-sm">
                   Passwort wiederholen
@@ -143,9 +134,7 @@ export default function Register() {
                 />
               </div>
 
-              {error && (
-                <p className="text-red-400 text-sm">{error}</p>
-              )}
+              {error && <p className="text-red-400 text-sm">{error}</p>}
 
               <button
                 type="submit"
@@ -153,14 +142,6 @@ export default function Register() {
                 className="w-full mt-4 bg-[var(--accent)] py-3 rounded-lg font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
               >
                 {loading ? "Registriere..." : "Registrieren"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => window.location.href = "/coupon"}
-                className="w-full mt-3 border border-[var(--accent)] text-[var(--accent)] py-3 rounded-lg font-semibold hover:bg-[var(--accent)] hover:text-white transition"
-              >
-                Ich habe einen Code
               </button>
             </form>
 
