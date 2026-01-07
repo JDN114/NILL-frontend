@@ -1,51 +1,64 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
+import { apiFetch } from "../lib/api";
 
-export default function Register() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRegister = async (e) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: "https://deine-domain.de/login"
-      }
-    });
+    try {
+      await apiFetch("/register", {
+        method: "POST",
+        body: JSON.stringify({ email, password })
+      });
 
-    if (error) {
-      setError(error.message);
+      setMessage(
+        "Account created. Please check your email to verify your account."
+      );
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSuccess(true);
-    setLoading(false);
-  };
-
-  if (success) {
-    return (
-      <div>
-        <h2>Registrierung erfolgreich</h2>
-        <p>Bitte bestätige deine E-Mail-Adresse.</p>
-      </div>
-    );
   }
 
   return (
-    <form onSubmit={handleRegister}>
-      <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
-      {error && <p>{error}</p>}
-      <button disabled={loading}>Registrieren</button>
-    </form>
+    <main style={{ maxWidth: 420, margin: "4rem auto" }}>
+      <h1>Create Account</h1>
+
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          required
+          minLength={8}
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
+
+        <button disabled={loading}>
+          {loading ? "Creating…" : "Register"}
+        </button>
+      </form>
+
+      {message && <p style={{ color: "green" }}>{message}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </main>
   );
 }
