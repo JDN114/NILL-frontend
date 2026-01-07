@@ -1,60 +1,61 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
-import { apiFetch } from "../lib/api";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../services/api";
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      await apiFetch("/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password })
-      });
-
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
+      await loginUser(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Login fehlgeschlagen");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: "4rem auto" }}>
-      <h1>Login</h1>
+    <div className="min-h-screen flex items-center justify-center">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md space-y-5"
+      >
+        <h1 className="text-3xl font-bold text-center">
+          Login
+        </h1>
 
-      <form onSubmit={handleSubmit}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="E-Mail"
           required
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Passwort"
           required
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button disabled={loading}>
-          {loading ? "Logging in…" : "Login"}
+        {error && <p className="text-red-500">{error}</p>}
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Anmelden..." : "Login"}
         </button>
       </form>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </main>
+    </div>
   );
 }

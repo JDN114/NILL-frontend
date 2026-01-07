@@ -1,7 +1,10 @@
 // src/services/api.js
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://api.nillai.de";
+// ----------------------------
+// Basis-URL
+// ----------------------------
+const API_URL = process.env.REACT_APP_API_URL || "https://api.nillai.de";
 
 // ----------------------------
 // Axios-Instanz
@@ -9,7 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL || "https://api.nillai.de";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, // optional, falls Cookies verwendet werden
+  withCredentials: true, // Cookies werden gesendet
 });
 
 // ----------------------------
@@ -24,6 +27,22 @@ api.interceptors.request.use((config) => {
 // ----------------------------
 // AUTH-FUNKTIONEN
 // ----------------------------
+export async function registerUser(email, password) {
+  const res = await api.post("/auth/register", { email, password });
+  console.log("Register response:", res.data);
+  return res.data;
+}
+
+export async function verifyEmail(token) {
+  const res = await api.post("/auth/verify-email", { token });
+  return res.data;
+}
+
+export async function resendVerification(email) {
+  const res = await api.post("/auth/resend-verification", { email });
+  return res.data;
+}
+
 export async function loginUser(email, password) {
   const res = await api.post("/auth/login", { email, password });
   console.log("Login response:", res.data);
@@ -31,8 +50,9 @@ export async function loginUser(email, password) {
   return res.data;
 }
 
-export function logoutUser() {
+export async function logoutUser() {
   localStorage.removeItem("access_token");
+  await api.post("/auth/logout");
 }
 
 // Aktuellen User abrufen
@@ -47,7 +67,7 @@ export async function getCurrentUser() {
 }
 
 // ----------------------------
-// GMAIL-FUNKTIONEN
+// GMAIL-FUNKTIONEN (optional, falls du die nutzt)
 // ----------------------------
 export async function getGmailAuthUrl() {
   const res = await api.get("/gmail/auth-url");
