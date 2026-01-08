@@ -25,12 +25,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-5"
+        className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-lg space-y-6"
       >
-        <h1 className="text-3xl font-bold text-center">
+        <h1 className="text-3xl font-bold text-center text-white">
           Login
         </h1>
 
@@ -40,6 +40,7 @@ export default function Login() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         <input
@@ -48,13 +49,28 @@ export default function Login() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-        <button type="submit" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-lg hover:from-indigo-500 hover:to-blue-500 transition-colors disabled:opacity-50"
+        >
           {loading ? "Anmelden..." : "Login"}
         </button>
+
+        <p className="text-center text-sm text-gray-400">
+          Noch kein Konto?{" "}
+          <span
+            onClick={() => navigate("/register")}
+            className="text-blue-400 hover:underline cursor-pointer"
+          >
+            Registrieren
+          </span>
+        </p>
       </form>
     </div>
   );
