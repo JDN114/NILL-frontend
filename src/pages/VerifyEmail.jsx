@@ -20,16 +20,14 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/auth/verify-email`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ token }),
-          }
+        const url = new URL(
+          `${import.meta.env.VITE_API_URL}/auth/verify-email`
         );
+        url.searchParams.set("token", token);
+
+        const res = await fetch(url.toString(), {
+          method: "GET",
+        });
 
         const data = await res.json();
 
@@ -42,7 +40,7 @@ export default function VerifyEmail() {
         setStatus("success");
         setMessage("Deine E-Mail-Adresse wurde erfolgreich bestätigt 🎉");
 
-        // 🔁 Automatischer Redirect nach Login
+        // 🔁 Auto-Redirect nach Login
         setTimeout(() => {
           navigate("/login");
         }, 3000);
