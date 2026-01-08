@@ -16,6 +16,8 @@ import Roadmap from "./pages/Roadmap";
 import RedeemCoupon from "./pages/RedeemCouponPage";
 import AdminPage from "./pages/AdminPage";
 import VerifyEmail from "./pages/VerifyEmail";
+import VerificationSuccess from "./pages/VerificationSuccess";
+import VerificationFailed from "./pages/VerificationFailed";
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/redeem-coupon" element={<RedeemCoupon />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/verification-success" element={<VerificationSuccess />} />
+        <Route path="/verification-failed" element={<VerificationFailed />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
      </Routes>
     </Router>
