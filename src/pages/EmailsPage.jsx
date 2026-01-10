@@ -1,15 +1,58 @@
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { GmailContext } from "../context/GmailContext";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import { FiMenu } from "react-icons/fi";
+import axios from "axios";
 
 export default function EmailsPage() {
   const { emails, activeEmail, openEmail, closeEmail, loadingEmail } =
     useContext(GmailContext);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [aiData, setAiData] = useState(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  // 🔹 Wenn eine neue Email aktiv wird, KI-Daten laden
+  useEffect(() => {
+    if (!activeEmail) {
+      setAiData(null);
+      return;
+    }
+
+    const fetchAI = async () => {
+      setLoadingAI(true);
+      try {
+        const res = await axios.get(`/emails/${activeEmail.id}/process`);
+        setAiData(res.data); // enthält summary, category, priority, action_items, language, etc.
+      } catch (err) {
+        console.error("KI Analyse fehlgeschlagen:", err);
+        setAiData(null);
+      } finally {
+        setLoadingAI(false);
+      }
+    };
+
+    fetchAI();
+  }, [activeEmail]);
+
+  // 🔹 Priorität Badge Farbe
+  const getPriorityColor = (priority) => {
+    switch ((priority || "").toLowerCase()) {
+      case "hoch":
+      case "high":
+        return "bg-red-600";
+      case "mittel":
+      case "medium":
+        return "bg-yellow-500";
+      case "niedrig":
+      case "low":
+        return "bg-green-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
 
   return (
     <PageLayout>
@@ -71,11 +114,50 @@ export default function EmailsPage() {
             <p className="text-gray-400">Lade Email …</p>
           ) : (
             <>
-              <h2 className="text-3xl font-bold mb-3">
+              <h2 className="text-3xl font-bold mb-2">
                 {activeEmail.subject || "(Kein Betreff)"}
               </h2>
               <p className="text-sm text-gray-400 mb-4">{activeEmail.from}</p>
+
               <hr className="border-gray-700 mb-6" />
+
+              {/* KI-Zusammenfassung */}
+              {loadingAI ? (
+                <p className="text-gray-400 mb-4">KI-Analyse läuft …</p>
+              ) : aiData ? (
+                <div className="mb-6 space-y-3">
+                  <div>
+                    <span className="font-semibold">Zusammenfassung:</span>
+                    <p className="text-gray-300">{aiData.summary}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Priorität:</span>
+                    <span className={`px-2 py-1 rounded text-white ${getPriorityColor(aiData.priority)}`}>
+                      {aiData.priority || "Unbekannt"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Kategorie:</span>
+                    <span className="ml-2 text-gray-300">{aiData.category}</span>
+                  </div>
+                  {aiData.action_items?.length ? (
+                    <div>
+                      <span className="font-semibold">Action Items:</span>
+                      <ul className="list-disc list-inside text-gray-300">
+                        {aiData.action_items.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {aiData.language && aiData.language !== "de" ? (
+                    <div>
+                      <span className="font-semibold">Übersetzung:</span>
+                      <p className="text-gray-300">{aiData.summary}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {/* Sichere HTML Darstellung */}
               <SafeEmailHtml html={activeEmail.body} />
