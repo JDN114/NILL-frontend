@@ -7,44 +7,39 @@ import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import axios from "axios";
 
 export default function EmailsPage() {
-  const { emails, activeEmail, openEmail, closeEmail, loadingEmail, loadMoreEmails } =
-    useContext(GmailContext);
+  const {
+    emails,
+    activeEmail,
+    openEmail,
+    closeEmail,
+    loadingEmail,
+    loadMoreEmails
+  } = useContext(GmailContext);
 
   const [expandedEmailId, setExpandedEmailId] = useState(null);
-  const [aiData, setAiData] = useState(null);
+  const [aiData, setAiData] = useState({});
   const [loadingAI, setLoadingAI] = useState(false);
 
-  // KI-Daten laden, wenn Email geöffnet wird
+  // 🔹 KI-Daten laden, wenn eine Email aktiv ist
   useEffect(() => {
-    if (!expandedEmailId) {
-      setAiData(null);
-      return;
-    }
+    if (!activeEmail) return;
 
     const fetchAI = async () => {
       setLoadingAI(true);
       try {
-        const res = await axios.get(`/emails/${expandedEmailId}/process`);
-        setAiData(res.data);
+        const res = await axios.get(`/emails/${activeEmail.id}/process`);
+        setAiData((prev) => ({ ...prev, [activeEmail.id]: res.data }));
       } catch (err) {
         console.error("KI Analyse fehlgeschlagen:", err);
-        setAiData(null);
       } finally {
         setLoadingAI(false);
       }
     };
 
     fetchAI();
-  }, [expandedEmailId]);
+  }, [activeEmail]);
 
-  const toggleEmail = (id) => {
-    if (expandedEmailId === id) {
-      setExpandedEmailId(null);
-    } else {
-      setExpandedEmailId(id);
-    }
-  };
-
+  // 🔹 Farben für Priorität
   const getPriorityColor = (priority) => {
     switch ((priority || "").toLowerCase()) {
       case "hoch":
@@ -61,111 +56,105 @@ export default function EmailsPage() {
     }
   };
 
+  const toggleEmail = (id) => {
+    if (expandedEmailId === id) {
+      setExpandedEmailId(null);
+    } else {
+      openEmail(id); // Lädt Body + setzt activeEmail
+      setExpandedEmailId(id);
+    }
+  };
+
   return (
     <PageLayout>
-      <h1 className="text-3xl font-bold mb-6">Postfach</h1>
+      <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[88vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
         {emails?.length ? (
-          <>
-            {emails.map((mail) => {
-              const isExpanded = expandedEmailId === mail.id;
-              return (
-                <Card key={mail.id} className="p-4 bg-gray-900 rounded-lg">
-                  {/* Header der Email */}
-                  <div
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => toggleEmail(mail.id)}
-                  >
-                    <div className="flex flex-col">
-                      <p className="font-semibold text-lg truncate">{mail.subject || "(Kein Betreff)"}</p>
-                      <p className="text-xs text-gray-400">{mail.from}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {mail.priority && (
-                        <span
-                          className={`px-2 py-0.5 rounded text-white text-xs ${getPriorityColor(mail.priority)}`}
-                        >
-                          {mail.priority}
-                        </span>
-                      )}
-                      {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
-                    </div>
+          emails.map((mail) => {
+            const isExpanded = expandedEmailId === mail.id;
+            const ai = aiData[mail.id];
+
+            return (
+              <Card key={mail.id} className="p-4 bg-gray-900 rounded-xl">
+                {/* Header / Subject */}
+                <div
+                  onClick={() => toggleEmail(mail.id)}
+                  className="flex justify-between items-center cursor-pointer"
+                >
+                  <div>
+                    <p className="font-semibold">{mail.subject || "(Kein Betreff)"}</p>
+                    <p className="text-xs text-gray-400 truncate">{mail.from}</p>
                   </div>
+                  {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                </div>
 
-                  {/* Detailbereich */}
-                  {isExpanded && (
-                    <div className="mt-4 border-t border-gray-700 pt-4 space-y-4">
-                      {loadingEmail ? (
-                        <p className="text-gray-400">Lade Email …</p>
-                      ) : (
-                        <>
-                          <SafeEmailHtml html={mail.body} />
+                {/* Detail View */}
+                {isExpanded && (
+                  <div className="mt-4 border-t border-gray-700 pt-4 space-y-4">
+                    {loadingEmail ? (
+                      <p className="text-gray-400">Lade Email …</p>
+                    ) : (
+                      <>
+                        <SafeEmailHtml html={activeEmail?.id === mail.id ? activeEmail.body : ""} />
 
-                          {loadingAI ? (
-                            <p className="text-gray-400">KI-Analyse läuft …</p>
-                          ) : aiData ? (
-                            <div className="bg-gray-800 p-3 rounded space-y-2">
-                              {aiData.summary && (
-                                <div>
-                                  <span className="font-semibold">Zusammenfassung:</span>
-                                  <p className="text-gray-300">{aiData.summary}</p>
-                                </div>
-                              )}
-                              {aiData.priority && (
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold">Priorität:</span>
-                                  <span className={`px-2 py-1 rounded text-white ${getPriorityColor(aiData.priority)}`}>
-                                    {aiData.priority}
-                                  </span>
-                                </div>
-                              )}
-                              {aiData.category && (
-                                <div>
-                                  <span className="font-semibold">Kategorie:</span>
-                                  <span className="ml-2 text-gray-300">{aiData.category}</span>
-                                </div>
-                              )}
-                              {aiData.action_items?.length > 0 && (
-                                <div>
-                                  <span className="font-semibold">Action Items:</span>
-                                  <ul className="list-disc list-inside text-gray-300">
-                                    {aiData.action_items.map((item, idx) => (
-                                      <li key={idx}>{item}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
+                        {loadingAI ? (
+                          <p className="text-gray-400">KI-Analyse läuft …</p>
+                        ) : ai ? (
+                          <div className="bg-gray-800 p-3 rounded space-y-2">
+                            <div>
+                              <span className="font-semibold">Zusammenfassung:</span>
+                              <p className="text-gray-300">{ai.summary}</p>
                             </div>
-                          ) : null}
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">Priorität:</span>
+                              <span className={`px-2 py-1 rounded text-white ${getPriorityColor(ai.priority)}`}>
+                                {ai.priority || "Unbekannt"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-semibold">Kategorie:</span>
+                              <span className="ml-2 text-gray-300">{ai.category}</span>
+                            </div>
+                            {ai.action_items?.length ? (
+                              <div>
+                                <span className="font-semibold">Action Items:</span>
+                                <ul className="list-disc list-inside text-gray-300">
+                                  {ai.action_items.map((item, idx) => (
+                                    <li key={idx}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
 
-                          <button
-                            onClick={() => setExpandedEmailId(null)}
-                            className="mt-4 px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 transition"
-                          >
-                            Schließen
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-
-            {/* Load More Button */}
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={loadMoreEmails}
-                className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 transition"
-              >
-                Ältere Emails laden
-              </button>
-            </div>
-          </>
+                        <button
+                          onClick={() => setExpandedEmailId(null)}
+                          className="mt-4 px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 transition"
+                        >
+                          Schließen
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </Card>
+            );
+          })
         ) : (
-          <p className="text-gray-400 text-center">Keine Emails gefunden.</p>
+          <p className="text-gray-400">Keine Emails gefunden.</p>
         )}
+
+        {/* Load More */}
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={loadMoreEmails}
+            className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 transition"
+          >
+            Mehr Emails laden
+          </button>
+        </div>
       </div>
     </PageLayout>
   );
