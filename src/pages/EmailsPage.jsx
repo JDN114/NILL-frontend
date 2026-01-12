@@ -1,4 +1,4 @@
-import PageLayout from "../components/layout/PageLayout";
+kimport PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import { useContext, useEffect, useState } from "react";
@@ -12,7 +12,6 @@ export default function EmailsPage() {
     activeEmail,
     openEmail,
     closeEmail,
-    loadingEmail,
     loadMoreEmails,
   } = useContext(GmailContext);
 
@@ -20,27 +19,39 @@ export default function EmailsPage() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // 🔹 KI Daten laden, wenn Email geöffnet wird
+  // -------------------------
+  // KI-Daten laden
+  // -------------------------
   useEffect(() => {
-    if (!activeEmail) {
+    if (!activeEmail?.id) {
       setAi(null);
       return;
     }
+
+    let cancelled = false;
 
     const fetchAI = async () => {
       setLoadingAI(true);
       try {
         const res = await axios.get(`/gmail/emails/${activeEmail.id}`);
-        setAi(res.data.ai);
+        if (!cancelled) {
+          setAi(res.data.ai || null);
+        }
       } catch (err) {
-        setAi(null);
+        console.error("Failed to load email / AI", err);
+        if (!cancelled) {
+          setAi({ status: "failed" });
+        }
       } finally {
-        setLoadingAI(false);
+        if (!cancelled) setLoadingAI(false);
       }
     };
 
     fetchAI();
-  }, [activeEmail]);
+    return () => {
+      cancelled = true;
+    };
+  }, [activeEmail?.id]);
 
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -91,7 +102,6 @@ export default function EmailsPage() {
             ))}
           </ul>
 
-          {/* 🔽 Load More */}
           <div className="p-4 border-t border-gray-800">
             <button
               onClick={loadMoreEmails}
@@ -118,7 +128,6 @@ export default function EmailsPage() {
               Zurück
             </button>
 
-            {/* ⋮ Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -144,12 +153,18 @@ export default function EmailsPage() {
           </div>
 
           {/* Header */}
-          <h2 className="text-2xl font-bold mb-1">{activeEmail.subject || "(Kein Betreff)"}</h2>
-          <p className="text-xs text-gray-400 mb-4">{activeEmail.from}</p>
+          <h2 className="text-2xl font-bold mb-1">
+            {activeEmail.subject || "(Kein Betreff)"}
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">
+            {activeEmail.from}
+          </p>
 
-          {/* 🤖 KI BOX (minimal, oben) */}
+          {/* 🤖 KI BOX */}
           {loadingAI && (
-            <p className="text-gray-400 mb-4 text-sm">KI analysiert …</p>
+            <p className="text-gray-400 mb-4 text-sm">
+              KI analysiert …
+            </p>
           )}
 
           {ai?.status === "failed" && (
@@ -160,26 +175,34 @@ export default function EmailsPage() {
 
           {ai?.status === "success" && (
             <div className="mb-6 p-3 bg-gray-800 rounded space-y-2 text-sm">
-              <div>
-                <span className="font-semibold">Zusammenfassung:</span>
-                <p className="text-gray-300">{ai.summary}</p>
-              </div>
+              {ai.summary && ai.summary.trim() && (
+                <div>
+                  <span className="font-semibold">Zusammenfassung:</span>
+                  <p className="text-gray-300">
+                    {ai.summary}
+                  </p>
+                </div>
+              )}
 
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">Priorität:</span>
-                <span
-                  className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(
-                    ai.priority
-                  )}`}
-                >
-                  {ai.priority}
-                </span>
-              </div>
+              {ai.priority && (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Priorität:</span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(
+                      ai.priority
+                    )}`}
+                  >
+                    {ai.priority}
+                  </span>
+                </div>
+              )}
 
               {ai.category && (
                 <div>
                   <span className="font-semibold">Kategorie:</span>
-                  <span className="ml-1 text-gray-300">{ai.category}</span>
+                  <span className="ml-1 text-gray-300">
+                    {ai.category}
+                  </span>
                 </div>
               )}
 
