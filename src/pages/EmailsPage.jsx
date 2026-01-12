@@ -1,4 +1,4 @@
-kimport PageLayout from "../components/layout/PageLayout";
+import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import { useContext, useEffect, useState } from "react";
