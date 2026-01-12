@@ -63,7 +63,7 @@ export default function EmailsPage() {
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
       {/* ======================= */}
-      {/* 📥 EMAIL LIST (1 Spalte) */}
+      {/* 📥 EMAIL LIST */}
       {/* ======================= */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
@@ -107,7 +107,7 @@ export default function EmailsPage() {
       {/* 📄 EMAIL DETAIL */}
       {/* ======================= */}
       {activeEmail && (
-        <Card className="p-6 max-h-[80vh] overflow-y-auto relative">
+        <Card className="p-4 max-h-[80vh] overflow-y-auto relative">
           {/* Top Bar */}
           <div className="flex items-center justify-between mb-4">
             <button
@@ -144,35 +144,31 @@ export default function EmailsPage() {
           </div>
 
           {/* Header */}
-          <h2 className="text-3xl font-bold mb-1">
-            {activeEmail.subject || "(Kein Betreff)"}
-          </h2>
-          <p className="text-sm text-gray-400 mb-6">
-            {activeEmail.from}
-          </p>
+          <h2 className="text-2xl font-bold mb-1">{activeEmail.subject || "(Kein Betreff)"}</h2>
+          <p className="text-xs text-gray-400 mb-4">{activeEmail.from}</p>
 
-          {/* 🤖 KI BOX (ganz oben) */}
+          {/* 🤖 KI BOX (minimal, oben) */}
           {loadingAI && (
-            <p className="text-gray-400 mb-6">KI analysiert …</p>
+            <p className="text-gray-400 mb-4 text-sm">KI analysiert …</p>
           )}
 
           {ai?.status === "failed" && (
-            <div className="mb-6 p-4 bg-red-900/30 rounded-xl">
+            <div className="mb-4 p-2 bg-red-900/30 rounded text-sm">
               KI aktuell nicht verfügbar
             </div>
           )}
 
           {ai?.status === "success" && (
-            <div className="mb-8 p-4 bg-gray-800 rounded-xl space-y-3">
+            <div className="mb-6 p-3 bg-gray-800 rounded space-y-2 text-sm">
               <div>
-                <span className="font-semibold">Zusammenfassung</span>
+                <span className="font-semibold">Zusammenfassung:</span>
                 <p className="text-gray-300">{ai.summary}</p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Priorität</span>
+                <span className="font-semibold">Priorität:</span>
                 <span
-                  className={`px-2 py-1 rounded text-white ${priorityColor(
+                  className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(
                     ai.priority
                   )}`}
                 >
@@ -182,17 +178,15 @@ export default function EmailsPage() {
 
               {ai.category && (
                 <div>
-                  <span className="font-semibold">Kategorie</span>
-                  <span className="ml-2 text-gray-300">
-                    {ai.category}
-                  </span>
+                  <span className="font-semibold">Kategorie:</span>
+                  <span className="ml-1 text-gray-300">{ai.category}</span>
                 </div>
               )}
 
               {ai.action_items?.length > 0 && (
                 <div>
-                  <span className="font-semibold">Action Items</span>
-                  <ul className="list-disc list-inside text-gray-300">
+                  <span className="font-semibold">Action Items:</span>
+                  <ul className="list-disc list-inside text-gray-300 text-xs">
                     {ai.action_items.map((item, i) => (
                       <li key={i}>{item}</li>
                     ))}
