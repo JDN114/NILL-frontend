@@ -1,8 +1,8 @@
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
+import SafeEmailHtml from "../components/SafeEmailHtml";
 import { useContext, useEffect, useState } from "react";
 import { GmailContext } from "../context/GmailContext";
-import SafeEmailHtml from "../components/SafeEmailHtml";
 import axios from "axios";
 import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 
@@ -20,6 +20,7 @@ export default function EmailsPage() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // 🔹 KI Daten laden, wenn Email geöffnet wird
   useEffect(() => {
     if (!activeEmail) {
       setAi(null);
@@ -29,9 +30,9 @@ export default function EmailsPage() {
     const fetchAI = async () => {
       setLoadingAI(true);
       try {
-        const res = await axios.get(`/emails/${activeEmail.id}/process`);
-        setAi(res.data);
-      } catch (e) {
+        const res = await axios.get(`/gmail/emails/${activeEmail.id}`);
+        setAi(res.data.ai);
+      } catch (err) {
         setAi(null);
       } finally {
         setLoadingAI(false);
@@ -41,8 +42,8 @@ export default function EmailsPage() {
     fetchAI();
   }, [activeEmail]);
 
-  const getPriorityColor = (priority) => {
-    switch ((priority || "").toLowerCase()) {
+  const priorityColor = (p) => {
+    switch ((p || "").toLowerCase()) {
       case "high":
       case "hoch":
         return "bg-red-600";
@@ -61,9 +62,9 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* ========================= */}
-      {/* 📥 EMAIL LIST */}
-      {/* ========================= */}
+      {/* ======================= */}
+      {/* 📥 EMAIL LIST (1 Spalte) */}
+      {/* ======================= */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           <ul className="divide-y divide-gray-800">
@@ -73,11 +74,15 @@ export default function EmailsPage() {
                 onClick={() => openEmail(mail.id)}
                 className="px-6 py-4 cursor-pointer hover:bg-gray-800 transition"
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-1">
                   <p className="font-semibold truncate">
                     {mail.subject || "(Kein Betreff)"}
                   </p>
-                  <span className="text-xs text-gray-400">{mail.date}</span>
+                  {mail.date && (
+                    <span className="text-xs text-gray-400">
+                      {mail.date}
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-gray-400 truncate">
                   {mail.from}
@@ -86,10 +91,11 @@ export default function EmailsPage() {
             ))}
           </ul>
 
+          {/* 🔽 Load More */}
           <div className="p-4 border-t border-gray-800">
             <button
               onClick={loadMoreEmails}
-              className="w-full py-2 bg-gray-800 rounded hover:bg-gray-700"
+              className="w-full py-2 bg-gray-800 rounded hover:bg-gray-700 transition"
             >
               Ältere Emails laden
             </button>
@@ -97,9 +103,9 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* ========================= */}
+      {/* ======================= */}
       {/* 📄 EMAIL DETAIL */}
-      {/* ========================= */}
+      {/* ======================= */}
       {activeEmail && (
         <Card className="p-6 max-h-[80vh] overflow-y-auto relative">
           {/* Top Bar */}
@@ -108,7 +114,8 @@ export default function EmailsPage() {
               onClick={closeEmail}
               className="flex items-center text-sm text-gray-400 hover:text-white"
             >
-              <FiArrowLeft className="mr-2" /> Zurück
+              <FiArrowLeft className="mr-2" />
+              Zurück
             </button>
 
             {/* ⋮ Dropdown */}
@@ -121,7 +128,7 @@ export default function EmailsPage() {
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
                   <button className="w-full text-left px-4 py-2 hover:bg-gray-800">
                     Als ungelesen markieren
                   </button>
@@ -144,10 +151,18 @@ export default function EmailsPage() {
             {activeEmail.from}
           </p>
 
-          {/* 🤖 KI BOX */}
-          {loadingAI ? (
-            <p className="text-gray-400 mb-6">KI-Analyse läuft …</p>
-          ) : ai ? (
+          {/* 🤖 KI BOX (ganz oben) */}
+          {loadingAI && (
+            <p className="text-gray-400 mb-6">KI analysiert …</p>
+          )}
+
+          {ai?.status === "failed" && (
+            <div className="mb-6 p-4 bg-red-900/30 rounded-xl">
+              KI aktuell nicht verfügbar
+            </div>
+          )}
+
+          {ai?.status === "success" && (
             <div className="mb-8 p-4 bg-gray-800 rounded-xl space-y-3">
               <div>
                 <span className="font-semibold">Zusammenfassung</span>
@@ -157,7 +172,7 @@ export default function EmailsPage() {
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Priorität</span>
                 <span
-                  className={`px-2 py-1 rounded text-white ${getPriorityColor(
+                  className={`px-2 py-1 rounded text-white ${priorityColor(
                     ai.priority
                   )}`}
                 >
@@ -168,7 +183,9 @@ export default function EmailsPage() {
               {ai.category && (
                 <div>
                   <span className="font-semibold">Kategorie</span>
-                  <span className="ml-2 text-gray-300">{ai.category}</span>
+                  <span className="ml-2 text-gray-300">
+                    {ai.category}
+                  </span>
                 </div>
               )}
 
@@ -183,9 +200,9 @@ export default function EmailsPage() {
                 </div>
               )}
             </div>
-          ) : null}
+          )}
 
-          {/* ✉️ BODY */}
+          {/* ✉️ EMAIL BODY */}
           <SafeEmailHtml html={activeEmail.body} />
         </Card>
       )}
