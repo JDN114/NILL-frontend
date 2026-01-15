@@ -3,13 +3,10 @@ import DOMPurify from "dompurify";
 export default function SafeEmailHtml({ html }) {
   if (!html) return <i>Kein Inhalt</i>;
 
-  // 1️⃣ Plain-Text erkennen
+  // Prüfen, ob die Email nur Plain-Text ist (keine HTML-Tags)
   const isPlainText = !/<[a-z][\s\S]*>/i.test(html);
 
-  // 2️⃣ Hell-Dunkel HTML Hintergrund erkennen
-  const hasLightBg = /background\s*:\s*(#fff|white)/i.test(html);
-
-  // 3️⃣ Sauberer HTML-Inhalt
+  // HTML sanitizen, aber keine Farbänderungen erzwingen
   const cleanHtml = DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
     RETURN_TRUSTED_TYPE: false,
@@ -19,22 +16,13 @@ export default function SafeEmailHtml({ html }) {
     FORBID_TAGS: ["script", "iframe", "object", "embed", "video"],
   });
 
-  // 4️⃣ Dynamische Klassen setzen
-  const classes = [
-    "email-body-render",
-    "prose",
-    "prose-invert",
-    "max-w-none",
-    "text-sm",
-    "leading-relaxed",
-    "break-words",
-    isPlainText ? "plain-text" : "",
-    hasLightBg ? "has-light-bg" : (!isPlainText ? "html-mail" : ""),
-  ].join(" ");
-
   return (
     <div
-      className={classes}
+      className={`email-body-render
+        prose prose-invert max-w-none
+        text-sm leading-relaxed break-words
+        ${isPlainText ? "plain-text" : "html-mail"}
+      `}
       style={{
         width: "100%",
         overflowX: "hidden",

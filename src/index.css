@@ -1,50 +1,10 @@
-/* Import font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
-/* Tailwind Direktiven */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root{
-  --brand: #111827;
-  --accent: #C5A572;
-}
-
-/* Page background and base */
-html, body, #root { height: 100%; }
-body {
-  @apply bg-gradient-to-b from-[#071023] to-[#03060a] text-gray-100 antialiased;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-}
-
-/* Utility animations */
-@keyframes floaty { 
-  0%{transform:translateY(0)}
-  50%{transform:translateY(-8px)}
-  100%{transform:translateY(0)} 
-}
-.animate-floaty { animation: floaty 6s ease-in-out infinite; }
-
-/* Glass card */
-.glass {
-  background: rgba(255,255,255,0.02);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.03);
-}
-
-/* Buttons */
-.btn-primary {
-  background: var(--accent);
-  color: white;
-}
-
 /* ========================= */
 /* EMAIL BODY STYLES          */
 /* ========================= */
+
+/* Basis: KEINE Farbe erzwingen */
 .email-body-render {
-  color: inherit; /* Basis: keine Farbe erzwingen */
+  color: inherit;
 }
 
 /* Tabellen */
@@ -67,43 +27,39 @@ body {
 
 /* Links */
 .email-body-render a {
-  color: #60a5fa; /* Tailwind Blue-400 */
+  color: #60a5fa;
 }
 .email-body-render a[target="_blank"]::after {
   content: " ↗";
   font-size: 0.75em;
 }
 
-/* Tabellenränder – nur sichtbar auf dunklem Hintergrund */
+/* Tabellenränder – sichtbar nur bei dunklem Hintergrund */
 .email-body-render th,
 .email-body-render td {
   border: 1px solid rgba(0,0,0,0.15);
-}
-
-/* ========================= */
-/* DYNAMISCHE ZUSTÄNDE       */
-/* ========================= */
-
-/* Plain-Text Mails → helle Schrift */
-.email-body-render.plain-text {
-  color: #f5f5f5;
-}
-.email-body-render.plain-text * {
-  color: inherit !important;
-}
-
-/* HTML-Mails mit dunklem Hintergrund → behalten Originalfarben */
-.email-body-render.html-mail {
-  color: inherit;
-}
-
-/* HTML-Mails mit hellem Hintergrund → dunkle Schrift */
-.email-body-render.has-light-bg {
-  color: #111827;
 }
 
 /* Detailansicht leicht rauszoomen */
 .email-detail-card {
   transform: scale(0.95);
   transform-origin: top left;
+}
+
+/* --------------------------- */
+/* PLAIN-TEXT EMAILS           */
+/* --------------------------- */
+.email-body-render.plain-text {
+  color: #f5f5f5; /* Knochenweiß */
+}
+
+.email-body-render.plain-text * {
+  color: inherit !important;
+}
+
+/* --------------------------- */
+/* HTML EMAILS                 */
+/* --------------------------- */
+.email-body-render.html-mail {
+  color: inherit; /* Originalfarben bleiben */
 }
