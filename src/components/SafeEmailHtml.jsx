@@ -1,15 +1,15 @@
 import DOMPurify from "dompurify";
 
 export default function SafeEmailHtml({ html }) {
-  if (!html) return <i>Kein Inhalt</i>;
+  if (!html) return <i className="text-gray-400">Kein Inhalt</i>;
 
   const cleanHtml = DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
     RETURN_TRUSTED_TYPE: false,
     ADD_TAGS: ["style", "img"],
     ADD_ATTR: ["target", "rel", "src", "width", "height", "style"],
-    FORBID_ATTR: ["onclick", "onerror", "onload"], // unsichere JS-Events
-    FORBID_TAGS: ["script", "iframe", "object", "embed", "video"], // potentiell gefährlich
+    FORBID_ATTR: ["onclick", "onerror", "onload"],
+    FORBID_TAGS: ["script", "iframe", "object", "embed", "video"],
   });
 
   return (
@@ -17,14 +17,21 @@ export default function SafeEmailHtml({ html }) {
       className="
         email-body-render
         prose prose-invert max-w-none
-        text-sm leading-relaxed
+        text-[13px] leading-relaxed
         break-words
       "
       style={{
         width: "100%",
-        overflowX: "hidden",
+        maxHeight: "calc(80vh - 140px)",
         overflowY: "auto",
-        maxHeight: "calc(88vh - 150px)", // dynamisch für Header & Buttons
+        overflowX: "hidden",
+
+        /* 👇 DAS ist der Schlüssel für Interface-Mails */
+        transform: "scale(0.92)",
+        transformOrigin: "top left",
+
+        /* 👇 erzwingt helle Schrift, auch gegen Inline-Styles */
+        color: "#e5e7eb", // Tailwind gray-200
       }}
       dangerouslySetInnerHTML={{ __html: cleanHtml }}
     />
