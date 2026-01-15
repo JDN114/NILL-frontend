@@ -1,11 +1,50 @@
-/* Basis für alle Email-Bodies */
-.email-body-render {
-  color: inherit; /* HTML-Mails behalten ihre Originalfarben */
+/* Import font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+/* Tailwind Direktiven */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --brand: #111827;
+  --accent: #C5A572;
 }
 
-/* Plain-Text-Mails */
-.email-body-render.text-white {
-  color: #f5f5f5; /* Knochenweiß für Plain-Text */
+/* Page background and base */
+html, body, #root { height: 100%; }
+body {
+  @apply bg-gradient-to-b from-[#071023] to-[#03060a] text-gray-100 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* Utility animations */
+@keyframes floaty { 
+  0%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+  100%{transform:translateY(0)} 
+}
+.animate-floaty { animation: floaty 6s ease-in-out infinite; }
+
+/* Glass card */
+.glass {
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+/* ========================= */
+/* EMAIL BODY STYLES          */
+/* ========================= */
+.email-body-render {
+  color: inherit; /* Basis: keine Farbe erzwingen */
 }
 
 /* Tabellen */
@@ -20,19 +59,47 @@
   height: auto !important;
 }
 
+/* Typografie / Layout */
+.email-body-render * {
+  line-height: 1.5 !important;
+  word-break: break-word;
+}
+
 /* Links */
 .email-body-render a {
-  color: #60a5fa;
+  color: #60a5fa; /* Tailwind Blue-400 */
 }
 .email-body-render a[target="_blank"]::after {
   content: " ↗";
   font-size: 0.75em;
 }
 
-/* Tabellenränder */
+/* Tabellenränder – nur sichtbar auf dunklem Hintergrund */
 .email-body-render th,
 .email-body-render td {
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+/* ========================= */
+/* DYNAMISCHE ZUSTÄNDE       */
+/* ========================= */
+
+/* Plain-Text Mails → helle Schrift */
+.email-body-render.plain-text {
+  color: #f5f5f5;
+}
+.email-body-render.plain-text * {
+  color: inherit !important;
+}
+
+/* HTML-Mails mit dunklem Hintergrund → behalten Originalfarben */
+.email-body-render.html-mail {
+  color: inherit;
+}
+
+/* HTML-Mails mit hellem Hintergrund → dunkle Schrift */
+.email-body-render.has-light-bg {
+  color: #111827;
 }
 
 /* Detailansicht leicht rauszoomen */
