@@ -1,10 +1,11 @@
-/* ========================= */
-/* EMAIL BODY STYLES          */
-/* ========================= */
-
-/* Basis: KEINE Farbe erzwingen */
+/* Basis für alle Email-Bodies */
 .email-body-render {
-  color: inherit;
+  color: inherit; /* HTML-Mails behalten ihre Originalfarben */
+}
+
+/* Plain-Text-Mails */
+.email-body-render.text-white {
+  color: #f5f5f5; /* Knochenweiß für Plain-Text */
 }
 
 /* Tabellen */
@@ -19,12 +20,6 @@
   height: auto !important;
 }
 
-/* Typografie / Layout */
-.email-body-render * {
-  line-height: 1.5 !important;
-  word-break: break-word;
-}
-
 /* Links */
 .email-body-render a {
   color: #60a5fa;
@@ -34,32 +29,14 @@
   font-size: 0.75em;
 }
 
-/* Tabellenränder – sichtbar nur bei dunklem Hintergrund */
+/* Tabellenränder */
 .email-body-render th,
 .email-body-render td {
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Detailansicht leicht rauszoomen */
 .email-detail-card {
   transform: scale(0.95);
   transform-origin: top left;
-}
-
-/* --------------------------- */
-/* PLAIN-TEXT EMAILS           */
-/* --------------------------- */
-.email-body-render.plain-text {
-  color: #f5f5f5; /* Knochenweiß */
-}
-
-.email-body-render.plain-text * {
-  color: inherit !important;
-}
-
-/* --------------------------- */
-/* HTML EMAILS                 */
-/* --------------------------- */
-.email-body-render.html-mail {
-  color: inherit; /* Originalfarben bleiben */
 }
