@@ -1,29 +1,40 @@
 import DOMPurify from "dompurify";
 
-function isPlainText(html) {
-  // kein HTML-Tag → Plain Text
-  return !/<[a-z][\s\S]*>/i.test(html);
-}
-
 export default function SafeEmailHtml({ html }) {
   if (!html) return <i>Kein Inhalt</i>;
 
-  const plainText = isPlainText(html);
+  // 1️⃣ Plain-Text erkennen
+  const isPlainText = !/<[a-z][\s\S]*>/i.test(html);
 
-  const cleanHtml = plainText
-    ? html.replace(/\n/g, "<br />")
-    : DOMPurify.sanitize(html, {
-        USE_PROFILES: { html: true },
-        RETURN_TRUSTED_TYPE: false,
-        ADD_TAGS: ["style", "img"],
-        ADD_ATTR: ["target", "rel", "src", "width", "height", "style"],
-        FORBID_ATTR: ["onclick", "onerror", "onload"],
-        FORBID_TAGS: ["script", "iframe", "object", "embed", "video"],
-      });
+  // 2️⃣ Hell-Dunkel HTML Hintergrund erkennen
+  const hasLightBg = /background\s*:\s*(#fff|white)/i.test(html);
+
+  // 3️⃣ Sauberer HTML-Inhalt
+  const cleanHtml = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    RETURN_TRUSTED_TYPE: false,
+    ADD_TAGS: ["style", "img"],
+    ADD_ATTR: ["target", "rel", "src", "width", "height", "style"],
+    FORBID_ATTR: ["onclick", "onerror", "onload"],
+    FORBID_TAGS: ["script", "iframe", "object", "embed", "video"],
+  });
+
+  // 4️⃣ Dynamische Klassen setzen
+  const classes = [
+    "email-body-render",
+    "prose",
+    "prose-invert",
+    "max-w-none",
+    "text-sm",
+    "leading-relaxed",
+    "break-words",
+    isPlainText ? "plain-text" : "",
+    hasLightBg ? "has-light-bg" : (!isPlainText ? "html-mail" : ""),
+  ].join(" ");
 
   return (
     <div
-      className={`email-body-render ${plainText ? "plain-text" : "html-mail"}`}
+      className={classes}
       style={{
         width: "100%",
         overflowX: "hidden",
