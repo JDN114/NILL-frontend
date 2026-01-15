@@ -1,4 +1,3 @@
-// frontend/src/pages/EmailsPage.jsx
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
@@ -72,14 +71,14 @@ export default function EmailsPage() {
 
   return (
     <PageLayout>
-      <h1 className="text-2xl font-bold mb-6 text-gray-100">Postfach</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white">Postfach</h1>
 
       {/* ======================= */}
       {/* 📥 EMAIL LIST */}
       {/* ======================= */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden bg-gray-900">
-          <ul className="divide-y divide-gray-700">
+          <ul className="divide-y divide-gray-800">
             {emails.map((mail) => (
               <li
                 key={mail.id}
@@ -87,22 +86,26 @@ export default function EmailsPage() {
                 className="px-6 py-4 cursor-pointer hover:bg-gray-800 transition"
               >
                 <div className="flex justify-between items-center mb-1">
-                  <p className="font-semibold truncate text-gray-100">
+                  <p className="font-semibold truncate text-white">
                     {mail.subject || "(Kein Betreff)"}
                   </p>
                   {mail.date && (
-                    <span className="text-xs text-gray-400">{mail.date}</span>
+                    <span className="text-xs text-gray-400">
+                      {mail.date}
+                    </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-300 truncate">{mail.from}</p>
+                <p className="text-sm text-gray-400 truncate">
+                  {mail.from}
+                </p>
               </li>
             ))}
           </ul>
 
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-4 border-t border-gray-800">
             <button
               onClick={loadMoreEmails}
-              className="w-full py-2 bg-gray-800 rounded hover:bg-gray-700 transition text-gray-100"
+              className="w-full py-2 bg-gray-800 rounded hover:bg-gray-700 transition"
             >
               Ältere Emails laden
             </button>
@@ -114,12 +117,12 @@ export default function EmailsPage() {
       {/* 📄 EMAIL DETAIL */}
       {/* ======================= */}
       {activeEmail && (
-        <Card className="p-6 max-h-[70vh] overflow-y-auto relative bg-gray-900 scale-95">
+        <Card className="p-4 max-h-[80vh] overflow-y-auto relative scale-95 bg-gray-900">
           {/* Top Bar */}
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={closeEmail}
-              className="flex items-center text-sm text-gray-300 hover:text-white"
+              className="flex items-center text-sm text-gray-400 hover:text-white"
             >
               <FiArrowLeft className="mr-2" />
               Zurück
@@ -130,15 +133,15 @@ export default function EmailsPage() {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 rounded hover:bg-gray-800"
               >
-                <FiMoreVertical className="text-gray-300" />
+                <FiMoreVertical />
               </button>
 
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-100">
+                  <button className="w-full text-left px-4 py-2 hover:bg-gray-800">
                     Als ungelesen markieren
                   </button>
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-100">
+                  <button className="w-full text-left px-4 py-2 hover:bg-gray-800">
                     Archivieren
                   </button>
                   <button className="w-full text-left px-4 py-2 hover:bg-gray-800 text-red-400">
@@ -150,34 +153,40 @@ export default function EmailsPage() {
           </div>
 
           {/* Header */}
-          <h2 className="text-2xl font-bold mb-1 text-gray-100">
+          <h2 className="text-2xl font-bold mb-1 text-white">
             {activeEmail.subject || "(Kein Betreff)"}
           </h2>
-          <p className="text-xs text-gray-300 mb-4">{activeEmail.from}</p>
+          <p className="text-xs text-gray-400 mb-4">
+            {activeEmail.from}
+          </p>
 
           {/* 🤖 KI BOX */}
           {loadingAI && (
-            <p className="text-gray-300 mb-4 text-sm">KI analysiert …</p>
+            <p className="text-gray-400 mb-4 text-sm">
+              KI analysiert …
+            </p>
           )}
 
           {ai?.status === "failed" && (
-            <div className="mb-4 p-2 bg-red-900/30 rounded text-sm text-gray-100">
+            <div className="mb-4 p-2 bg-red-900/30 rounded text-sm">
               KI aktuell nicht verfügbar
             </div>
           )}
 
           {ai?.status === "success" && (
-            <div className="mb-6 p-3 bg-gray-800 rounded space-y-2 text-sm text-gray-100">
+            <div className="mb-6 p-3 bg-gray-800 rounded space-y-2 text-sm">
               {ai.summary && ai.summary.trim() && (
                 <div>
-                  <span className="font-semibold">Zusammenfassung:</span>
-                  <p className="text-gray-100">{ai.summary}</p>
+                  <span className="font-semibold text-white">Zusammenfassung:</span>
+                  <p className="text-gray-300">
+                    {ai.summary}
+                  </p>
                 </div>
               )}
 
               {ai.priority && (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold">Priorität:</span>
+                  <span className="font-semibold text-white">Priorität:</span>
                   <span
                     className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(
                       ai.priority
@@ -190,15 +199,17 @@ export default function EmailsPage() {
 
               {ai.category && (
                 <div>
-                  <span className="font-semibold">Kategorie:</span>
-                  <span className="ml-1 text-gray-100">{ai.category}</span>
+                  <span className="font-semibold text-white">Kategorie:</span>
+                  <span className="ml-1 text-gray-300">
+                    {ai.category}
+                  </span>
                 </div>
               )}
 
               {ai.action_items?.length > 0 && (
                 <div>
-                  <span className="font-semibold">Action Items:</span>
-                  <ul className="list-disc list-inside text-gray-100 text-xs">
+                  <span className="font-semibold text-white">Action Items:</span>
+                  <ul className="list-disc list-inside text-gray-300 text-xs">
                     {ai.action_items.map((item, i) => (
                       <li key={i}>{item}</li>
                     ))}
@@ -209,7 +220,7 @@ export default function EmailsPage() {
           )}
 
           {/* ✉️ EMAIL BODY */}
-          <div className="email-body text-gray-100">
+          <div className="email-body">
             <SafeEmailHtml html={activeEmail.body} />
           </div>
         </Card>
