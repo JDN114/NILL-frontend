@@ -35,6 +35,10 @@ body {
   background: var(--accent);
   color: white;
 }
+
+/* ========================= */
+/* EMAIL BODY STYLES          */
+/* ========================= */
 .email-body-render table {
   width: 100% !important;
   border-collapse: collapse;
@@ -48,6 +52,7 @@ body {
 .email-body-render * {
   line-height: 1.5 !important;
   word-break: break-word;
+  color: #f5f5f5 !important; /* 🔥 Erzwingt hellen Text */
 }
 
 /* Bessere Link Styles */
@@ -57,4 +62,16 @@ body {
 .email-body-render a[target="_blank"]::after {
   content: " ↗";
   font-size: 0.75em;
+}
+
+/* Optional: Highlight Tabellen & Zellen, falls Hintergrund dunkel */
+.email-body-render th,
+.email-body-render td {
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Optional: Leicht rauszoomen für Detailansicht */
+.email-detail-card {
+  transform: scale(0.95);
+  transform-origin: top left;
 }
