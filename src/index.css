@@ -102,19 +102,16 @@ body {
   transform-origin: top left;
 }
 
-/* ========================= */
-/* FINAL PLAIN TEXT FIX     */
-/* ========================= */
-
-/* Erzwingt Textfarbe auch für reine Textnodes */
-.email-body-render {
-  color: #f5f5f5 !important; /* Knochenweiß */
+/* Plain-Text nur für plain-text Mails */
+.email-body-render.plain-text {
+  color: #f5f5f5;
 }
 
-/* Sicherheit für alle Textcontainer */
-.email-body-render p,
-.email-body-render span,
-.email-body-render div,
-.email-body-render pre {
+.email-body-render.plain-text * {
   color: inherit !important;
+}
+
+/* HTML-Mails behalten ihre Originalfarben */
+.email-body-render.html-mail {
+  color: inherit;
 }
