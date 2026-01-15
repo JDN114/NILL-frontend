@@ -1,4 +1,4 @@
-kimport DOMPurify from "dompurify";
+import DOMPurify from "dompurify";
 
 export default function SafeEmailHtml({ html }) {
   if (!html) return <i>Kein Inhalt</i>;
