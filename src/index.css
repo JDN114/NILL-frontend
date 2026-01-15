@@ -19,7 +19,11 @@ body {
 }
 
 /* Utility animations */
-@keyframes floaty { 0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)} }
+@keyframes floaty { 
+  0%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+  100%{transform:translateY(0)} 
+}
 .animate-floaty { animation: floaty 6s ease-in-out infinite; }
 
 /* Glass card */
@@ -37,40 +41,62 @@ body {
 }
 
 /* ========================= */
-/* EMAIL BODY STYLES          */
+/* EMAIL BODY STYLES (FIXED) */
 /* ========================= */
+
+/* Basis: KEINE Farbe erzwingen */
+.email-body-render {
+  color: inherit;
+}
+
+/* Tabellen */
 .email-body-render table {
   width: 100% !important;
   border-collapse: collapse;
 }
 
+/* Bilder */
 .email-body-render img {
   max-width: 100% !important;
   height: auto !important;
 }
 
+/* Typografie / Layout – OHNE Farbe */
 .email-body-render * {
   line-height: 1.5 !important;
   word-break: break-word;
-  color: #f5f5f5 !important; /* 🔥 Erzwingt hellen Text */
 }
 
-/* Bessere Link Styles */
+/* Links */
 .email-body-render a {
-  color: #60a5fa; /* Tailwind Blue-400 */
+  color: #60a5fa;
 }
 .email-body-render a[target="_blank"]::after {
   content: " ↗";
   font-size: 0.75em;
 }
 
-/* Optional: Highlight Tabellen & Zellen, falls Hintergrund dunkel */
+/* Tabellenränder – nur sichtbar auf dunklem Hintergrund */
 .email-body-render th,
 .email-body-render td {
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(0,0,0,0.15);
 }
 
-/* Optional: Leicht rauszoomen für Detailansicht */
+/* ========================= */
+/* OPTIONAL STATES           */
+/* ========================= */
+
+/* Plain-Text oder dunkle HTML-Mail */
+.email-body-render.plain {
+  color: #f5f5f5;
+}
+
+/* HTML-Mail mit hellem Hintergrund */
+.email-body-render.has-light-bg {
+  color: #111827;
+}
+
+/* Detailansicht leicht rauszoomen */
 .email-detail-card {
   transform: scale(0.95);
   transform-origin: top left;
