@@ -114,7 +114,7 @@ export function GmailProvider({ children }) {
         activeEmail,
         loading,
         loadingEmail,
-
+        fetchStatus,
         fetchEmails,
         loadMoreEmails, // 🔥 bleibt drin
         openEmail,
