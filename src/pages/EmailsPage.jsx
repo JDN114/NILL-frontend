@@ -6,7 +6,8 @@ import { GmailContext } from "../context/GmailContext";
 import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 
 export default function EmailsPage() {
-  const { emails, activeEmail, openEmail, closeEmail, loadMoreEmails } = useContext(GmailContext);
+  const { emails, activeEmail, openEmail, closeEmail } =
+    useContext(GmailContext);
 
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -36,6 +37,12 @@ export default function EmailsPage() {
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           <ul className="divide-y divide-gray-800">
+            {emails.length === 0 && (
+              <li className="px-6 py-6 text-center text-gray-400 text-sm">
+                Keine Emails gefunden
+              </li>
+            )}
+
             {emails.map((mail) => (
               <li
                 key={mail.id}
@@ -52,19 +59,12 @@ export default function EmailsPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-400 truncate">{mail.from}</p>
+                <p className="text-sm text-gray-400 truncate">
+                  {mail.from}
+                </p>
               </li>
             ))}
           </ul>
-
-          <div className="p-4 border-t border-gray-800">
-            <button
-              onClick={loadMoreEmails}
-              className="w-full py-2 bg-gray-800 rounded hover:bg-gray-700 transition"
-            >
-              Ältere Emails laden
-            </button>
-          </div>
         </Card>
       )}
 
@@ -83,22 +83,24 @@ export default function EmailsPage() {
               Zurück
             </button>
 
-            <div className="relative">
-              <button
-                className="p-2 rounded hover:bg-gray-800"
-              >
-                <FiMoreVertical />
-              </button>
-            </div>
+            <button className="p-2 rounded hover:bg-gray-800">
+              <FiMoreVertical />
+            </button>
           </div>
 
           {/* Header */}
-          <h2 className="text-2xl font-bold mb-1">{activeEmail.subject || "(Kein Betreff)"}</h2>
-          <p className="text-xs text-gray-400 mb-4">{activeEmail.from}</p>
+          <h2 className="text-2xl font-bold mb-1">
+            {activeEmail.subject || "(Kein Betreff)"}
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">
+            {activeEmail.from}
+          </p>
 
           {/* 🤖 KI BOX */}
           {ai?.status === "processing" && (
-            <p className="text-gray-400 mb-4 text-sm">KI analysiert …</p>
+            <p className="text-gray-400 mb-4 text-sm">
+              KI analysiert …
+            </p>
           )}
 
           {ai?.status === "failed" && (
@@ -115,20 +117,27 @@ export default function EmailsPage() {
                   <p>{ai.summary}</p>
                 </div>
               )}
+
               {ai.priority && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Priorität:</span>
-                  <span className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(ai.priority)}`}>
+                  <span
+                    className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(
+                      ai.priority
+                    )}`}
+                  >
                     {ai.priority}
                   </span>
                 </div>
               )}
+
               {ai.category && (
                 <div>
                   <span className="font-semibold">Kategorie:</span>
                   <span className="ml-1">{ai.category}</span>
                 </div>
               )}
+
               {ai.sentiment && (
                 <div>
                   <span className="font-semibold">Sentiment:</span>
