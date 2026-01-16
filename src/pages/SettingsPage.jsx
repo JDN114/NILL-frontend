@@ -21,12 +21,16 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <span className="text-sm">
             Status:{" "}
-            <strong className={connected ? "text-green-500" : "text-red-500"}>
-              {connected ? "Verbunden" : "Nicht verbunden"}
+            <strong
+              className={
+                connected?.connected ? "text-green-500" : "text-red-500"
+              }
+            >
+              {connected?.connected ? "Verbunden" : "Nicht verbunden"}
             </strong>
           </span>
 
-          {!connected && (
+          {!connected?.connected && (
             <button
               onClick={connectGmail}
               className="
