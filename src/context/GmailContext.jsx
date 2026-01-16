@@ -14,14 +14,6 @@ export function GmailProvider({ children }) {
   // STATE
   // -----------------------------
 
-  /**
-   * connected ist IMMER ein Objekt:
-   * {
-   *   connected: boolean,
-   *   email?: string,
-   *   expired?: boolean
-   * }
-   */
   const [connected, setConnected] = useState({
     connected: false,
     email: null,
@@ -38,31 +30,26 @@ export function GmailProvider({ children }) {
   // STATUS
   // -----------------------------
 
-const fetchEmails = async () => {
-  try {
-    const res = await getGmailEmails();
+  const fetchStatus = async () => {
+    try {
+      const res = await getGmailStatus();
 
-    /**
-     * Unterstützt:
-     * - res = { emails: [...] }
-     * - res = [...]
-     */
-    let list = [];
-
-    if (Array.isArray(res)) {
-      list = res;
-    } else if (Array.isArray(res?.emails)) {
-      list = res.emails;
+      /**
+       * Erwartet:
+       * {
+       *   connected: boolean,
+       *   email?: string,
+       *   expired?: boolean
+       * }
+       */
+      setConnected(res);
+      return res;
+    } catch (err) {
+      console.error("Failed to fetch Gmail status", err);
+      setConnected({ connected: false, email: null, expired: null });
+      return null;
     }
-
-    setEmails(list);
-    return list;
-  } catch (err) {
-    console.error("Failed to fetch Gmail emails", err);
-    setEmails([]);
-    return [];
-  }
-};
+  };
 
   // -----------------------------
   // EMAIL LIST
@@ -72,8 +59,18 @@ const fetchEmails = async () => {
     try {
       const res = await getGmailEmails();
 
-      // API liefert { emails: [...] }
-      const list = Array.isArray(res?.emails) ? res.emails : [];
+      /**
+       * Unterstützt:
+       * - res = { emails: [...] }
+       * - res = [...]
+       */
+      let list = [];
+
+      if (Array.isArray(res)) {
+        list = res;
+      } else if (Array.isArray(res?.emails)) {
+        list = res.emails;
+      }
 
       setEmails(list);
       return list;
@@ -97,7 +94,7 @@ const fetchEmails = async () => {
       const data = await getGmailEmailDetail(id);
       setActiveEmail(data);
 
-      // optional: automatisch als gelesen markieren
+      // automatisch als gelesen markieren
       await markEmailRead(id);
 
       setEmails((prev) =>
