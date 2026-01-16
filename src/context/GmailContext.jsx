@@ -1,3 +1,4 @@
+// src/context/GmailContext.jsx
 import React, { createContext, useEffect, useState } from "react";
 import {
   getGmailAuthUrl,
@@ -10,6 +11,9 @@ import {
 export const GmailContext = createContext();
 
 export function GmailProvider({ children }) {
+  // -----------------------------
+  // STATE
+  // -----------------------------
   const [connected, setConnected] = useState({
     connected: false,
     email: null,
@@ -18,7 +22,6 @@ export function GmailProvider({ children }) {
 
   const [emails, setEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
-
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
 
@@ -26,13 +29,28 @@ export function GmailProvider({ children }) {
   // STATUS
   // -----------------------------
   const fetchStatus = async () => {
-    const res = await getGmailStatus();
-    setConnected(res);
-    return res;
+    try {
+      // API gibt Boolean zurück
+      const connectedBool = await getGmailStatus();
+
+      const statusObj = {
+        connected: connectedBool,
+        email: null,
+        expired: false,
+      };
+
+      setConnected(statusObj);
+      return statusObj;
+    } catch (err) {
+      console.error("Failed to fetch Gmail status:", err);
+      const fallback = { connected: false, email: null, expired: null };
+      setConnected(fallback);
+      return fallback;
+    }
   };
 
   // -----------------------------
-  // EMAIL LIST (NO PAGINATION)
+  // EMAIL LIST (kein Pagination)
   // -----------------------------
   const fetchEmails = async () => {
     try {
@@ -41,13 +59,13 @@ export function GmailProvider({ children }) {
       setEmails(list);
       return list;
     } catch (err) {
-      console.error("Failed to fetch emails", err);
+      console.error("Failed to fetch emails:", err);
       setEmails([]);
       return [];
     }
   };
 
-  // ❗ WICHTIG: No-Op, damit Consumer nicht crashen
+  // ❗ No-Op, damit Consumer nicht crashen
   const loadMoreEmails = async () => {
     console.warn("loadMoreEmails is disabled (pagination off)");
   };
@@ -64,7 +82,7 @@ export function GmailProvider({ children }) {
       setActiveEmail(data);
       await markEmailRead(id);
     } catch (err) {
-      console.error("Failed to open email", err);
+      console.error("Failed to open email:", err);
     } finally {
       setLoadingEmail(false);
     }
@@ -85,7 +103,7 @@ export function GmailProvider({ children }) {
           await fetchEmails();
         }
       } catch (err) {
-        console.error("Gmail init failed", err);
+        console.error("Gmail init failed:", err);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -99,8 +117,12 @@ export function GmailProvider({ children }) {
   // CONNECT
   // -----------------------------
   const connectGmail = async () => {
-    const url = await getGmailAuthUrl();
-    window.location.href = url;
+    try {
+      const url = await getGmailAuthUrl();
+      window.location.href = url;
+    } catch (err) {
+      console.error("Failed to start Gmail connect flow:", err);
+    }
   };
 
   // -----------------------------
@@ -114,9 +136,9 @@ export function GmailProvider({ children }) {
         activeEmail,
         loading,
         loadingEmail,
-        fetchStatus,
+
         fetchEmails,
-        loadMoreEmails, // 🔥 bleibt drin
+        loadMoreEmails, // 🔥 bleibt drin, No-Op
         openEmail,
         closeEmail,
         connectGmail,
