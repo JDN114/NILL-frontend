@@ -13,7 +13,6 @@ export function GmailProvider({ children }) {
   // -----------------------------
   // STATE
   // -----------------------------
-
   const [connected, setConnected] = useState({
     connected: false,
     email: null,
@@ -25,66 +24,61 @@ export function GmailProvider({ children }) {
 
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const [nextPageToken, setNextPageToken] = useState(null);
 
   // -----------------------------
   // STATUS
   // -----------------------------
-
   const fetchStatus = async () => {
-    try {
-      const res = await getGmailStatus();
-
-      /**
-       * Erwartet:
-       * {
-       *   connected: boolean,
-       *   email?: string,
-       *   expired?: boolean
-       * }
-       */
-      setConnected(res);
-      return res;
-    } catch (err) {
-      console.error("Failed to fetch Gmail status", err);
-      setConnected({ connected: false, email: null, expired: null });
-      return null;
-    }
+    const res = await getGmailStatus();
+    setConnected(res);
+    return res;
   };
 
   // -----------------------------
-  // EMAIL LIST
+  // EMAIL LIST (INITIAL)
   // -----------------------------
-
   const fetchEmails = async () => {
     try {
       const res = await getGmailEmails();
 
-      /**
-       * Unterstützt:
-       * - res = { emails: [...] }
-       * - res = [...]
-       */
-      let list = [];
+      setEmails(res.emails || []);
+      setNextPageToken(res.nextPageToken || null);
 
-      if (Array.isArray(res)) {
-        list = res;
-      } else if (Array.isArray(res?.emails)) {
-        list = res.emails;
-      }
-
-      setEmails(list);
-      return list;
+      return res.emails || [];
     } catch (err) {
-      console.error("Failed to fetch Gmail emails", err);
+      console.error("Failed to fetch emails", err);
       setEmails([]);
+      setNextPageToken(null);
       return [];
+    }
+  };
+
+  // -----------------------------
+  // LOAD MORE (PAGINATION)
+  // -----------------------------
+  const loadMoreEmails = async () => {
+    if (!nextPageToken || loadingMore) return;
+
+    setLoadingMore(true);
+
+    try {
+      const res = await getGmailEmails(nextPageToken);
+
+      setEmails((prev) => [...prev, ...(res.emails || [])]);
+      setNextPageToken(res.nextPageToken || null);
+    } catch (err) {
+      console.error("Failed to load more emails", err);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
   // -----------------------------
   // EMAIL DETAIL
   // -----------------------------
-
   const openEmail = async (id) => {
     if (!id) return;
 
@@ -94,14 +88,7 @@ export function GmailProvider({ children }) {
       const data = await getGmailEmailDetail(id);
       setActiveEmail(data);
 
-      // automatisch als gelesen markieren
       await markEmailRead(id);
-
-      setEmails((prev) =>
-        prev.map((mail) =>
-          mail.id === id ? { ...mail, unread: false } : mail
-        )
-      );
     } catch (err) {
       console.error("Failed to open email", err);
     } finally {
@@ -109,34 +96,17 @@ export function GmailProvider({ children }) {
     }
   };
 
-  const closeEmail = () => {
-    setActiveEmail(null);
-  };
-
-  const markAsRead = async (id) => {
-    try {
-      await markEmailRead(id);
-      setEmails((prev) =>
-        prev.map((mail) =>
-          mail.id === id ? { ...mail, unread: false } : mail
-        )
-      );
-    } catch (err) {
-      console.error("Failed to mark email as read", err);
-    }
-  };
+  const closeEmail = () => setActiveEmail(null);
 
   // -----------------------------
   // INITIAL LOAD
   // -----------------------------
-
   useEffect(() => {
     let mounted = true;
 
     async function init() {
       try {
         const status = await fetchStatus();
-
         if (mounted && status?.connected) {
           await fetchEmails();
         }
@@ -148,46 +118,35 @@ export function GmailProvider({ children }) {
     }
 
     init();
-
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
 
   // -----------------------------
-  // CONNECT FLOW
+  // CONNECT
   // -----------------------------
-
   const connectGmail = async () => {
-    try {
-      const url = await getGmailAuthUrl();
-      window.location.href = url;
-    } catch (err) {
-      console.error("Failed to start Gmail connect flow", err);
-    }
+    const url = await getGmailAuthUrl();
+    window.location.href = url;
   };
 
   // -----------------------------
-  // CONTEXT EXPORT
+  // CONTEXT
   // -----------------------------
-
   return (
     <GmailContext.Provider
       value={{
-        // state
         connected,
         emails,
         activeEmail,
         loading,
         loadingEmail,
+        loadingMore,
 
-        // actions
-        fetchStatus,
         fetchEmails,
+        loadMoreEmails,
         openEmail,
         closeEmail,
         connectGmail,
-        markAsRead,
       }}
     >
       {children}
