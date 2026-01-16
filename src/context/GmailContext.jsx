@@ -38,32 +38,31 @@ export function GmailProvider({ children }) {
   // STATUS
   // -----------------------------
 
-  const fetchStatus = async () => {
-    try {
-      const res = await getGmailStatus();
+const fetchEmails = async () => {
+  try {
+    const res = await getGmailEmails();
 
-      // 🔒 harte Absicherung gegen kaputte Responses
-      const safeStatus = {
-        connected: Boolean(res?.connected),
-        email: res?.email ?? null,
-        expired: res?.expired ?? null,
-      };
+    /**
+     * Unterstützt:
+     * - res = { emails: [...] }
+     * - res = [...]
+     */
+    let list = [];
 
-      setConnected(safeStatus);
-      return safeStatus;
-    } catch (err) {
-      console.error("Failed to fetch Gmail status", err);
-
-      const fallback = {
-        connected: false,
-        email: null,
-        expired: null,
-      };
-
-      setConnected(fallback);
-      return fallback;
+    if (Array.isArray(res)) {
+      list = res;
+    } else if (Array.isArray(res?.emails)) {
+      list = res.emails;
     }
-  };
+
+    setEmails(list);
+    return list;
+  } catch (err) {
+    console.error("Failed to fetch Gmail emails", err);
+    setEmails([]);
+    return [];
+  }
+};
 
   // -----------------------------
   // EMAIL LIST
