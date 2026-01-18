@@ -20,8 +20,10 @@ export function GmailProvider({ children }) {
     expired: null,
   });
 
-  const [emails, setEmails] = useState([]);
+  const [emails, setEmails] = useState([]); // Inbox
+  const [sentEmails, setSentEmails] = useState([]); // Gesendet
   const [activeEmail, setActiveEmail] = useState(null);
+  const [currentMailbox, setCurrentMailbox] = useState("INBOX"); // "INBOX" | "SENT"
 
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
@@ -33,7 +35,6 @@ export function GmailProvider({ children }) {
     try {
       const res = await getGmailStatus();
 
-      // 🔒 Backend-Shape erzwingen
       const safeStatus = {
         connected: Boolean(res?.connected),
         email: res?.email ?? null,
@@ -56,10 +57,7 @@ export function GmailProvider({ children }) {
   const fetchEmails = async () => {
     try {
       const res = await getGmailEmails();
-
-      // Backend liefert { emails: [...] }
       const list = Array.isArray(res?.emails) ? res.emails : [];
-
       setEmails(list);
       return list;
     } catch (err) {
@@ -69,21 +67,38 @@ export function GmailProvider({ children }) {
     }
   };
 
+  const fetchSentEmails = async () => {
+    try {
+      const res = await getGmailEmails("sent"); // optional: Backend anpassen
+      const list = Array.isArray(res?.emails) ? res.emails : [];
+      setSentEmails(list);
+      return list;
+    } catch (err) {
+      console.error("Failed to fetch sent emails:", err);
+      setSentEmails([]);
+      return [];
+    }
+  };
+
   // ---------------------------------
   // EMAIL DETAIL
   // ---------------------------------
-  const openEmail = async (id) => {
+  const openEmail = async (id, mailbox = "INBOX") => {
     if (!id) return;
 
     setLoadingEmail(true);
+    setCurrentMailbox(mailbox);
+
     try {
-      const data = await getGmailEmailDetail(id);
+      const data = await getGmailEmailDetail(id, mailbox);
       setActiveEmail(data);
 
-      // optional read-mark
-      try {
-        await markEmailRead(id);
-      } catch {}
+      // optional: read-mark nur für Inbox
+      if (mailbox === "INBOX") {
+        try {
+          await markEmailRead(id);
+        } catch {}
+      }
     } catch (err) {
       console.error("Failed to open email:", err);
     } finally {
@@ -103,9 +118,6 @@ export function GmailProvider({ children }) {
       try {
         const status = await fetchStatus();
 
-        // 🔥 HIER war der Bug:
-        // wir fetchen Emails IMMER,
-        // nicht nur bei "connected === true"
         if (mounted && status?.connected) {
           await fetchEmails();
         }
@@ -143,13 +155,16 @@ export function GmailProvider({ children }) {
         // state
         connected,
         emails,
+        sentEmails,
         activeEmail,
+        currentMailbox,
         loading,
         loadingEmail,
 
         // actions
         fetchStatus,
         fetchEmails,
+        fetchSentEmails,
         openEmail,
         closeEmail,
         connectGmail,
