@@ -1,68 +1,78 @@
-import React, { useState, useEffect } from "react";
-import Modal from "./ui/Modal";
+// src/components/EmailReplyModal.jsx
+import React, { useState } from "react";
+import Modal from "./ui/Modal"; // dein bestehendes Modal
+import { Button, Textarea } from "./ui"; // falls du eigene UI Komponenten hast
 import api from "../services/api";
 
 export default function EmailReplyModal({ emailId, open, onClose }) {
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (open) setBody(""); // Reset beim Öffnen
-  }, [open]);
-
-  const fetchAiReply = async () => {
-    if (!emailId) return;
-    setAiLoading(true);
+  // --- KI-Vorschlag laden ---
+  const handleAiReply = async () => {
     try {
-      const res = await api.post(`/emails/${emailId}/ai-reply`);
-      setBody(res.reply || "");
-    } catch (e) {
-      console.error("AI Reply failed", e);
+      setAiLoading(true);
+      setError(null);
+      const res = await api.post(`/gmail/emails/${emailId}/ai-reply`);
+      setBody(res.data.reply || "");
+    } catch (err) {
+      console.error(err);
+      setError("KI-Antwort konnte nicht geladen werden.");
     } finally {
       setAiLoading(false);
     }
   };
 
-  const sendReply = async () => {
-    if (!emailId || !body.trim()) return;
-    setLoading(true);
+  // --- Email senden ---
+  const handleSend = async () => {
+    if (!body.trim()) return;
     try {
-      await api.post(`/emails/${emailId}/reply`, { body });
+      setLoading(true);
+      setError(null);
+      await api.post(`/gmail/emails/${emailId}/reply`, { body });
+      setBody("");
       onClose();
-    } catch (e) {
-      console.error("Send Reply failed", e);
+    } catch (err) {
+      console.error(err);
+      setError("Antwort konnte nicht gesendet werden.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Modal open={open} onClose={onClose} title="Antworten">
-      <div className="space-y-2">
-        <textarea
-          className="w-full h-40 p-2 bg-gray-900 text-white rounded"
+    <Modal onClose={onClose} title="Antworten">
+      <div className="space-y-4">
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+
+        <Textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Ihre Antwort hier…"
+          placeholder="Schreibe deine Antwort hier..."
+          rows={6}
         />
 
-        <div className="flex justify-between items-center mt-2">
-          <button
-            onClick={fetchAiReply}
+        <div className="flex justify-between items-center">
+          <Button
+            onClick={handleAiReply}
             disabled={aiLoading}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
+            variant="secondary"
           >
-            {aiLoading ? "KI antwortet…" : "NILL Antwort vorschlagen"}
-          </button>
+            {aiLoading ? "Lädt KI..." : "NILL Antworten lassen"}
+          </Button>
 
-          <button
-            onClick={sendReply}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-          >
-            {loading ? "Senden…" : "Senden"}
-          </button>
+          <div className="flex gap-2">
+            <Button onClick={onClose} variant="secondary">
+              Abbrechen
+            </Button>
+            <Button onClick={handleSend} disabled={loading}>
+              {loading ? "Senden..." : "Senden"}
+            </Button>
+          </div>
         </div>
       </div>
     </Modal>
