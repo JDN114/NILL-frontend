@@ -1,6 +1,5 @@
-// src/components/EmailReplyModal.jsx
 import React, { useState } from "react";
-import Modal from "./ui/Modal"; // Dein bestehendes Modal
+import Modal from "./ui/Modal";
 import api from "../services/api";
 
 export default function EmailReplyModal({ emailId, open, onClose }) {
@@ -9,10 +8,11 @@ export default function EmailReplyModal({ emailId, open, onClose }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  if (!emailId) return null; // Safety check
+  if (!open) return null; // nur auf open prüfen
 
   // --- KI-Vorschlag laden ---
   const handleAiReply = async () => {
+    if (!emailId) return;
     try {
       setAiLoading(true);
       setError(null);
@@ -28,7 +28,7 @@ export default function EmailReplyModal({ emailId, open, onClose }) {
 
   // --- Email senden ---
   const handleSend = async () => {
-    if (!body.trim()) return;
+    if (!emailId || !body.trim()) return;
     try {
       setLoading(true);
       setError(null);
@@ -43,10 +43,8 @@ export default function EmailReplyModal({ emailId, open, onClose }) {
     }
   };
 
-  if (!open) return null;
-
   return (
-    <Modal onClose={onClose} title="Antworten">
+    <Modal open={open} onClose={onClose} title="Antworten">
       <div className="space-y-4">
         {error && <div className="text-red-500 text-sm">{error}</div>}
 
