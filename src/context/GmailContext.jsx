@@ -121,24 +121,31 @@ export function GmailProvider({ children }) {
   // -----------------------------
   // INIT
   // -----------------------------
-  useEffect(() => {
-    let mounted = true;
+useEffect(() => {
+  let mounted = true;
 
-    (async () => {
-      try {
-        const status = await fetchStatus();
-        if (mounted && status.connected) {
-          await fetchEmails();
-        }
-      } finally {
-        if (mounted) setLoading(false);
+  const init = async () => {
+    try {
+      const status = await fetchStatus();
+
+      if (!mounted) return;
+
+      if (status.connected) {
+        await fetchEmails();
+
+        // 🔁 Retry nach OAuth / Sync
+        setTimeout(() => {
+          if (mounted) fetchEmails();
+        }, 3000);
       }
-    })();
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  };
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  init();
+  return () => (mounted = false);
+}, []);
 
   // -----------------------------
   // CONTEXT EXPORT
