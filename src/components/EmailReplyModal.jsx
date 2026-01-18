@@ -1,78 +1,70 @@
-import { useState } from "react";
-import { FiX } from "react-icons/fi";
-import * as api from "../services/api";
+import React, { useState, useEffect } from "react";
+import Modal from "./ui/Modal";
+import api from "../services/api";
 
-export default function EmailReplyModal({ email, onClose, onSent }) {
+export default function EmailReplyModal({ emailId, open, onClose }) {
   const [body, setBody] = useState("");
-  const [loadingAI, setLoadingAI] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
-  const handleAIReply = async () => {
-    setLoadingAI(true);
+  useEffect(() => {
+    if (open) setBody(""); // Reset beim Öffnen
+  }, [open]);
+
+  const fetchAiReply = async () => {
+    if (!emailId) return;
+    setAiLoading(true);
     try {
-      const res = await axios.post(`/gmail/emails/${email.id}/ai-reply`);
-      setBody(res.data.reply);
+      const res = await api.post(`/emails/${emailId}/ai-reply`);
+      setBody(res.reply || "");
     } catch (e) {
-      console.error("AI reply failed", e);
-      alert("KI konnte keine Antwort generieren");
+      console.error("AI Reply failed", e);
     } finally {
-      setLoadingAI(false);
+      setAiLoading(false);
     }
   };
 
-  const handleSend = async () => {
-    if (!body.trim()) return;
-    setSending(true);
+  const sendReply = async () => {
+    if (!emailId || !body.trim()) return;
+    setLoading(true);
     try {
-      await axios.post(`/gmail/emails/${email.id}/reply`, { body });
-      alert("Antwort gesendet!");
-      onSent();
+      await api.post(`/emails/${emailId}/reply`, { body });
       onClose();
     } catch (e) {
-      console.error("Send failed", e);
-      alert("Senden fehlgeschlagen");
+      console.error("Send Reply failed", e);
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-xl w-full max-w-2xl p-6 relative shadow-lg">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
-        >
-          <FiX size={20} />
-        </button>
-
-        <h3 className="text-xl font-bold mb-4">Antworten an {email.from}</h3>
-
+    <Modal open={open} onClose={onClose} title="Antworten">
+      <div className="space-y-2">
         <textarea
-          className="w-full h-48 p-3 bg-gray-800 text-white rounded resize-none focus:outline-none focus:ring focus:ring-blue-500"
+          className="w-full h-40 p-2 bg-gray-900 text-white rounded"
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          placeholder="Ihre Antwort hier…"
         />
 
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-between items-center mt-2">
           <button
-            onClick={handleAIReply}
-            disabled={loadingAI}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+            onClick={fetchAiReply}
+            disabled={aiLoading}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
           >
-            {loadingAI ? "KI generiert…" : "NILL Antworten lassen"}
+            {aiLoading ? "KI antwortet…" : "NILL Antwort vorschlagen"}
           </button>
 
           <button
-            onClick={handleSend}
-            disabled={sending || !body.trim()}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+            onClick={sendReply}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
           >
-            {sending ? "Senden…" : "Senden"}
+            {loading ? "Senden…" : "Senden"}
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

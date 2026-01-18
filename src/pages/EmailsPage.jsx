@@ -43,7 +43,6 @@ export default function EmailsPage() {
                 Keine Emails gefunden
               </li>
             )}
-
             {emails.map((mail) => (
               <li
                 key={mail.id}
@@ -51,14 +50,16 @@ export default function EmailsPage() {
                 className="px-6 py-4 cursor-pointer hover:bg-gray-800 transition"
               >
                 <div className="flex justify-between items-center mb-1">
-                  <p className="font-semibold truncate">{mail.subject || "(Kein Betreff)"}</p>
+                  <p className="font-semibold truncate">
+                    {mail.subject || "(Kein Betreff)"}
+                  </p>
                   {mail.received_at && (
                     <span className="text-xs text-gray-400">
                       {new Date(mail.received_at).toLocaleString()}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-400 truncate">{mail.from || "(Absender unbekannt)"}</p>
+                <p className="text-sm text-gray-400 truncate">{mail.from || "(unbekannt)"}</p>
               </li>
             ))}
           </ul>
@@ -79,27 +80,26 @@ export default function EmailsPage() {
               <FiArrowLeft className="mr-2" />
               Zurück
             </button>
-
             <button className="p-2 rounded hover:bg-gray-800">
               <FiMoreVertical />
             </button>
           </div>
 
           {/* Header */}
-          <h2 className="text-2xl font-bold mb-1">{activeEmail.subject || "(Kein Betreff)"}</h2>
-          <p className="text-xs text-gray-400 mb-4">{activeEmail.from || "(Absender unbekannt)"}</p>
+          <h2 className="text-2xl font-bold mb-1">
+            {activeEmail.subject || "(Kein Betreff)"}
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">{activeEmail.from || "(unbekannt)"}</p>
 
           {/* 🤖 KI BOX */}
           {ai?.status === "processing" && (
             <p className="text-gray-400 mb-4 text-sm">KI analysiert …</p>
           )}
-
           {ai?.status === "failed" && (
             <div className="mb-4 p-2 bg-red-900/30 rounded text-sm">
               KI aktuell nicht verfügbar
             </div>
           )}
-
           {ai?.status === "success" && (
             <div className="mb-6 p-3 bg-gray-800 rounded space-y-2 text-sm text-gray-100">
               {ai.summary && (
@@ -108,27 +108,22 @@ export default function EmailsPage() {
                   <p>{ai.summary}</p>
                 </div>
               )}
-
               {ai.priority && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Priorität:</span>
                   <span
-                    className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(
-                      ai.priority
-                    )}`}
+                    className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(ai.priority)}`}
                   >
                     {ai.priority}
                   </span>
                 </div>
               )}
-
               {ai.category && (
                 <div>
                   <span className="font-semibold">Kategorie:</span>
                   <span className="ml-1">{ai.category}</span>
                 </div>
               )}
-
               {ai.sentiment && (
                 <div>
                   <span className="font-semibold">Sentiment:</span>
@@ -139,30 +134,24 @@ export default function EmailsPage() {
           )}
 
           {/* ✉️ EMAIL BODY */}
-          {activeEmail.body ? (
-            <SafeEmailHtml html={activeEmail.body} />
-          ) : (
-            <p className="text-gray-400">Keine E-Mail-Daten verfügbar</p>
-          )}
+          <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
 
           {/* ======================= */}
           {/* ✉️ REPLY BUTTON */}
           {/* ======================= */}
-          {activeEmail.id && (
-            <div className="mt-4">
-              <button
-                onClick={() => setReplyOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-              >
-                Antworten
-              </button>
-            </div>
-          )}
+          <div className="mt-4">
+            <button
+              onClick={() => setReplyOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+            >
+              Antworten
+            </button>
+          </div>
 
           {/* ======================= */}
           {/* ✉️ REPLY MODAL */}
           {/* ======================= */}
-          {activeEmail.id && (
+          {activeEmail?.id && (
             <EmailReplyModal
               emailId={activeEmail.id}
               open={replyOpen}
