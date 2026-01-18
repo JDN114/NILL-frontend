@@ -48,29 +48,37 @@ export default function EmailReplyModal({ emailId, open, onClose }) {
       <div className="space-y-4">
         {error && <div className="text-red-500 text-sm">{error}</div>}
 
-        <Textarea
+        <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Schreibe deine Antwort hier..."
           rows={6}
+          className="w-full p-2 border border-gray-700 rounded bg-gray-900 text-white"
         />
 
         <div className="flex justify-between items-center">
-          <Button
+          <button
             onClick={handleAiReply}
             disabled={aiLoading}
-            variant="secondary"
+            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
           >
             {aiLoading ? "Lädt KI..." : "NILL Antworten lassen"}
-          </Button>
+          </button>
 
           <div className="flex gap-2">
-            <Button onClick={onClose} variant="secondary">
+            <button
+              onClick={onClose}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
+            >
               Abbrechen
-            </Button>
-            <Button onClick={handleSend} disabled={loading}>
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            >
               {loading ? "Senden..." : "Senden"}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
