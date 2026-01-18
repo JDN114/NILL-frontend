@@ -1,14 +1,21 @@
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { GmailContext } from "../context/GmailContext";
 import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
 
 export default function EmailsPage() {
-  const { emails, activeEmail, openEmail, closeEmail } = useContext(GmailContext);
+  const { emails, activeEmail, openEmail, closeEmail } =
+    useContext(GmailContext);
+
   const [replyOpen, setReplyOpen] = useState(false);
+
+  // Modal immer schließen, wenn neue Email geöffnet wird
+  useEffect(() => {
+    setReplyOpen(false);
+  }, [activeEmail?.id]);
 
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -32,9 +39,7 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* ======================= */}
       {/* 📥 EMAIL LIST */}
-      {/* ======================= */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           <ul className="divide-y divide-gray-800">
@@ -59,18 +64,18 @@ export default function EmailsPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-400 truncate">{mail.from || "(unbekannt)"}</p>
+                <p className="text-sm text-gray-400 truncate">
+                  {mail.from || "(unbekannt)"}
+                </p>
               </li>
             ))}
           </ul>
         </Card>
       )}
 
-      {/* ======================= */}
       {/* 📄 EMAIL DETAIL */}
-      {/* ======================= */}
       {activeEmail && (
-        <Card className="p-4 max-h-[80vh] overflow-y-auto relative email-detail-card">
+        <Card className="p-4 max-h-[80vh] overflow-y-auto relative">
           {/* Top Bar */}
           <div className="flex items-center justify-between mb-4">
             <button
@@ -89,19 +94,13 @@ export default function EmailsPage() {
           <h2 className="text-2xl font-bold mb-1">
             {activeEmail.subject || "(Kein Betreff)"}
           </h2>
-          <p className="text-xs text-gray-400 mb-4">{activeEmail.from || "(unbekannt)"}</p>
+          <p className="text-xs text-gray-400 mb-4">
+            {activeEmail.from || "(unbekannt)"}
+          </p>
 
           {/* 🤖 KI BOX */}
-          {ai?.status === "processing" && (
-            <p className="text-gray-400 mb-4 text-sm">KI analysiert …</p>
-          )}
-          {ai?.status === "failed" && (
-            <div className="mb-4 p-2 bg-red-900/30 rounded text-sm">
-              KI aktuell nicht verfügbar
-            </div>
-          )}
           {ai?.status === "success" && (
-            <div className="mb-6 p-3 bg-gray-800 rounded space-y-2 text-sm text-gray-100">
+            <div className="mb-6 p-3 bg-gray-800 rounded text-sm space-y-2">
               {ai.summary && (
                 <div>
                   <span className="font-semibold">Zusammenfassung:</span>
@@ -112,34 +111,22 @@ export default function EmailsPage() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Priorität:</span>
                   <span
-                    className={`px-2 py-0.5 rounded text-white text-xs ${priorityColor(ai.priority)}`}
+                    className={`px-2 py-0.5 rounded text-xs text-white ${priorityColor(
+                      ai.priority
+                    )}`}
                   >
                     {ai.priority}
                   </span>
                 </div>
               )}
-              {ai.category && (
-                <div>
-                  <span className="font-semibold">Kategorie:</span>
-                  <span className="ml-1">{ai.category}</span>
-                </div>
-              )}
-              {ai.sentiment && (
-                <div>
-                  <span className="font-semibold">Sentiment:</span>
-                  <span className="ml-1">{ai.sentiment}</span>
-                </div>
-              )}
             </div>
           )}
 
-          {/* ✉️ EMAIL BODY */}
+          {/* ✉️ BODY */}
           <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
 
-          {/* ======================= */}
           {/* ✉️ REPLY BUTTON */}
-          {/* ======================= */}
-          <div className="mt-4">
+          <div className="mt-6">
             <button
               onClick={() => setReplyOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
@@ -147,19 +134,15 @@ export default function EmailsPage() {
               Antworten
             </button>
           </div>
-
-          {/* ======================= */}
-          {/* ✉️ REPLY MODAL */}
-          {/* ======================= */}
-          {activeEmail?.id && (
-            <EmailReplyModal
-              emailId={activeEmail.id}
-              open={replyOpen}
-              onClose={() => setReplyOpen(false)}
-            />
-          )}
         </Card>
       )}
+
+      {/* ✉️ REPLY MODAL – IMMER GERENDERT */}
+      <EmailReplyModal
+        emailId={activeEmail?.id}
+        open={replyOpen}
+        onClose={() => setReplyOpen(false)}
+      />
     </PageLayout>
   );
 }
