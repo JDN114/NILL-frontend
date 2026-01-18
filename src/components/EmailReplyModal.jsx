@@ -1,7 +1,6 @@
 // src/components/EmailReplyModal.jsx
 import React, { useState } from "react";
 import Modal from "./ui/Modal"; // dein bestehendes Modal
-import { Button, Textarea } from "./ui"; // falls du eigene UI Komponenten hast
 import api from "../services/api";
 
 export default function EmailReplyModal({ emailId, open, onClose }) {
