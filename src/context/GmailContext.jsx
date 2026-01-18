@@ -63,24 +63,17 @@ export function GmailProvider({ children }) {
   // -----------------------------
   // EMAIL LIST
   // -----------------------------
-  const fetchEmails = async () => {
-    try {
-      if (!connected.connected) {
-        setEmails([]);
-        return [];
-      }
-
-      const res = await getGmailEmails();
-      const list = Array.isArray(res?.emails) ? res.emails : [];
-
-      setEmails(list);
-      return list;
-    } catch (err) {
-      console.error("[Gmail] fetch emails failed", err);
-      setEmails([]);
-      return [];
-    }
-  };
+const fetchEmails = async () => {
+  try {
+    const list = await getGmailEmails(); // ⬅️ ist bereits ein Array
+    setEmails(Array.isArray(list) ? list : []);
+    return list;
+  } catch (err) {
+    console.error("Failed to fetch emails:", err);
+    setEmails([]);
+    return [];
+  }
+};
 
   // -----------------------------
   // EMAIL DETAIL
