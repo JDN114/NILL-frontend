@@ -8,7 +8,18 @@ import {
   markEmailRead,
 } from "../services/api";
 
-export const GmailContext = createContext();
+export const GmailContext = createContext({
+  connected: { connected: false, email: null, expired: null },
+  emails: [],
+  activeEmail: null,
+  loading: true,
+  loadingEmail: false,
+  fetchStatus: async () => {},
+  fetchEmails: async () => [],
+  openEmail: async () => {},
+  closeEmail: () => {},
+  connectGmail: async () => {},
+});
 
 export function GmailProvider({ children }) {
   // -----------------------------
@@ -22,6 +33,7 @@ export function GmailProvider({ children }) {
 
   const [emails, setEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
 
@@ -30,19 +42,18 @@ export function GmailProvider({ children }) {
   // -----------------------------
   const fetchStatus = async () => {
     try {
-      // API gibt Boolean zurück
-      const connectedBool = await getGmailStatus();
+      const res = await getGmailStatus();
 
-      const statusObj = {
-        connected: connectedBool,
-        email: null,
-        expired: false,
+      const safeStatus = {
+        connected: !!res?.connected,
+        email: res?.email ?? null,
+        expired: res?.expired ?? null,
       };
 
-      setConnected(statusObj);
-      return statusObj;
+      setConnected(safeStatus);
+      return safeStatus;
     } catch (err) {
-      console.error("Failed to fetch Gmail status:", err);
+      console.error("[Gmail] status failed", err);
       const fallback = { connected: false, email: null, expired: null };
       setConnected(fallback);
       return fallback;
@@ -50,24 +61,25 @@ export function GmailProvider({ children }) {
   };
 
   // -----------------------------
-  // EMAIL LIST (kein Pagination)
+  // EMAIL LIST
   // -----------------------------
   const fetchEmails = async () => {
     try {
+      if (!connected.connected) {
+        setEmails([]);
+        return [];
+      }
+
       const res = await getGmailEmails();
       const list = Array.isArray(res?.emails) ? res.emails : [];
+
       setEmails(list);
       return list;
     } catch (err) {
-      console.error("Failed to fetch emails:", err);
+      console.error("[Gmail] fetch emails failed", err);
       setEmails([]);
       return [];
     }
-  };
-
-  // ❗ No-Op, damit Consumer nicht crashen
-  const loadMoreEmails = async () => {
-    console.warn("loadMoreEmails is disabled (pagination off)");
   };
 
   // -----------------------------
@@ -80,9 +92,13 @@ export function GmailProvider({ children }) {
     try {
       const data = await getGmailEmailDetail(id);
       setActiveEmail(data);
-      await markEmailRead(id);
+
+      // optional read
+      try {
+        await markEmailRead(id);
+      } catch {}
     } catch (err) {
-      console.error("Failed to open email:", err);
+      console.error("[Gmail] open email failed", err);
     } finally {
       setLoadingEmail(false);
     }
@@ -91,39 +107,38 @@ export function GmailProvider({ children }) {
   const closeEmail = () => setActiveEmail(null);
 
   // -----------------------------
-  // INIT
-  // -----------------------------
-  useEffect(() => {
-    let mounted = true;
-
-    async function init() {
-      try {
-        const status = await fetchStatus();
-        if (mounted && status?.connected) {
-          await fetchEmails();
-        }
-      } catch (err) {
-        console.error("Gmail init failed:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    init();
-    return () => (mounted = false);
-  }, []);
-
-  // -----------------------------
   // CONNECT
   // -----------------------------
   const connectGmail = async () => {
     try {
       const url = await getGmailAuthUrl();
-      window.location.href = url;
+      if (url) window.location.href = url;
     } catch (err) {
-      console.error("Failed to start Gmail connect flow:", err);
+      console.error("[Gmail] connect failed", err);
     }
   };
+
+  // -----------------------------
+  // INIT
+  // -----------------------------
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const status = await fetchStatus();
+        if (mounted && status.connected) {
+          await fetchEmails();
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // -----------------------------
   // CONTEXT EXPORT
@@ -136,9 +151,8 @@ export function GmailProvider({ children }) {
         activeEmail,
         loading,
         loadingEmail,
-
+        fetchStatus,
         fetchEmails,
-        loadMoreEmails, // 🔥 bleibt drin, No-Op
         openEmail,
         closeEmail,
         connectGmail,

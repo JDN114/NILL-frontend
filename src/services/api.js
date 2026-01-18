@@ -12,40 +12,30 @@ const API_URL = process.env.REACT_APP_API_URL || "https://api.nillai.de";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, // Cookies werden gesendet
+  withCredentials: true,
 });
 
 // ----------------------------
-// Request Interceptor: Token automatisch hinzufügen
+// Request Interceptor
 // ----------------------------
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
 // ----------------------------
-// AUTH-FUNKTIONEN
+// AUTH
 // ----------------------------
 export async function registerUser(email, password) {
   const res = await api.post("/auth/register", { email, password });
-  console.log("Register response:", res.data);
-  return res.data;
-}
-
-export async function verifyEmail(token) {
-  const res = await api.post("/auth/verify-email", { token });
-  return res.data;
-}
-
-export async function resendVerification(email) {
-  const res = await api.post("/auth/resend-verification", { email });
   return res.data;
 }
 
 export async function loginUser(email, password) {
   const res = await api.post("/auth/login", { email, password });
-  console.log("Login response:", res.data);
   localStorage.setItem("access_token", res.data.access_token);
   return res.data;
 }
@@ -55,33 +45,43 @@ export async function logoutUser() {
   await api.post("/auth/logout");
 }
 
-// Aktuellen User abrufen
 export async function getCurrentUser() {
   try {
     const res = await api.get("/auth/me");
     return res.data;
-  } catch (err) {
-    console.error("Error fetching current user:", err);
+  } catch {
     return null;
   }
 }
 
 // ----------------------------
-// GMAIL-FUNKTIONEN (optional, falls du die nutzt)
+// GMAIL
 // ----------------------------
 export async function getGmailAuthUrl() {
   const res = await api.get("/gmail/auth-url");
-  return res.data.auth_url;
+  return res.data?.auth_url || null;
 }
 
+/**
+ * Backend liefert:
+ * {
+ *   connected: boolean,
+ *   email: string | null,
+ *   expired: boolean | null
+ * }
+ */
 export async function getGmailStatus() {
   const res = await api.get("/gmail/status");
-  return res.data.connected;
+  return res.data;
 }
 
+/**
+ * Backend liefert:
+ * { emails: [...] }
+ */
 export async function getGmailEmails() {
   const res = await api.get("/gmail/emails");
-  return res.data.emails;
+  return res.data;
 }
 
 export async function getGmailEmailDetail(id) {
@@ -93,7 +93,4 @@ export async function markEmailRead(id) {
   await api.post(`/gmail/emails/${id}/read`);
 }
 
-// ----------------------------
-// Export Axios-Instanz für Admin / weitere Services
-// ----------------------------
 export default api;
