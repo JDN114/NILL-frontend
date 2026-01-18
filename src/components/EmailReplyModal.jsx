@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiX } from "react-icons/fi";
-import axios from "../lib/api"; // dein axios/fetch wrapper
+import * as api from "../services/api";
 
 export default function EmailReplyModal({ email, onClose, onSent }) {
   const [body, setBody] = useState("");
