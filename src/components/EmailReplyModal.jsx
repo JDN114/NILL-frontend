@@ -1,6 +1,6 @@
 // src/components/EmailReplyModal.jsx
 import React, { useState } from "react";
-import Modal from "./ui/Modal"; // dein bestehendes Modal
+import Modal from "./ui/Modal"; // Dein bestehendes Modal
 import api from "../services/api";
 
 export default function EmailReplyModal({ emailId, open, onClose }) {
@@ -8,6 +8,8 @@ export default function EmailReplyModal({ emailId, open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  if (!emailId) return null; // Safety check
 
   // --- KI-Vorschlag laden ---
   const handleAiReply = async () => {
