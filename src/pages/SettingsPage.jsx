@@ -7,16 +7,17 @@ import { GmailContext } from "../context/GmailContext";
 export default function SettingsPage() {
   const { connected, connectGmail, fetchStatus } = useContext(GmailContext);
 
-  // 🔁 Gmail Status beim Laden prüfen
+  // 🔁 Gmail Status beim Laden prüfen (SAFE)
   useEffect(() => {
-    fetchStatus();
-  }, []);
++   if (typeof fetchStatus === "function") {
+      fetchStatus();
++   }
+  }, [fetchStatus]);
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Einstellungen</h1>
 
-      {/* Gmail Verbindung */}
       <Card title="Gmail">
         <div className="flex items-center justify-between">
           <span className="text-sm">
@@ -49,7 +50,6 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* Coupon Card */}
       <Card title="Abonnement">
         <div className="flex items-center justify-between">
           <span className="text-sm">Hast du einen Coupon?</span>
