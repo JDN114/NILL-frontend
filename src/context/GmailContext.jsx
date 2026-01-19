@@ -11,16 +11,13 @@ import {
 export const GmailContext = createContext(null);
 
 export function GmailProvider({ children }) {
-  // -----------------------
-  // STATE
-  // -----------------------
   const [connected, setConnected] = useState({
     connected: false,
     email: null,
     expired: null,
   });
 
-  const [emails, setEmails] = useState([]);        // Inbox
+  const [emails, setEmails] = useState([]);       // Inbox
   const [sentEmails, setSentEmails] = useState([]); // Sent
   const [activeEmail, setActiveEmail] = useState(null);
   const [currentMailbox, setCurrentMailbox] = useState("inbox");
@@ -28,9 +25,9 @@ export function GmailProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
 
-  // -----------------------
-  // STATUS
-  // -----------------------
+  // ----------------------------
+  // Gmail Status
+  // ----------------------------
   const fetchStatus = useCallback(async () => {
     try {
       const res = await getGmailStatus();
@@ -48,9 +45,9 @@ export function GmailProvider({ children }) {
     }
   }, []);
 
-  // -----------------------
-  // FETCH EMAILS (Lazy + Cache)
-  // -----------------------
+  // ----------------------------
+  // Emails fetch (caching)
+  // ----------------------------
   const fetchEmails = useCallback(
     async (mailbox = "inbox") => {
       if (mailbox === "inbox" && emails.length > 0) return emails;
@@ -58,12 +55,9 @@ export function GmailProvider({ children }) {
 
       try {
         const res = await getGmailEmails(mailbox);
-        const list = res?.emails || [];
-
-        if (mailbox === "inbox") setEmails(list);
-        if (mailbox === "sent") setSentEmails(list);
-
-        return list;
+        if (mailbox === "inbox") setEmails(res.emails || []);
+        else setSentEmails(res.emails || []);
+        return res.emails || [];
       } catch (err) {
         console.error(`Failed to fetch ${mailbox} emails:`, err);
         return [];
@@ -72,9 +66,9 @@ export function GmailProvider({ children }) {
     [emails, sentEmails]
   );
 
-  // -----------------------
-  // EMAIL DETAIL
-  // -----------------------
+  // ----------------------------
+  // Email Detail
+  // ----------------------------
   const openEmail = useCallback(
     async (id, mailbox = "inbox") => {
       if (!id) return;
@@ -85,7 +79,7 @@ export function GmailProvider({ children }) {
         const data = await getGmailEmailDetail(id);
         setActiveEmail(data);
 
-        // Mark read only if inbox
+        // Nur bei Inbox als gelesen markieren
         if (mailbox === "inbox") {
           try {
             await markEmailRead(id);
@@ -100,17 +94,20 @@ export function GmailProvider({ children }) {
 
   const closeEmail = () => setActiveEmail(null);
 
-  // -----------------------
-  // INIT
-  // -----------------------
+  // ----------------------------
+  // Init
+  // ----------------------------
   useEffect(() => {
     let mounted = true;
 
     async function init() {
       const status = await fetchStatus();
+
       if (mounted && status.connected) {
-        await fetchEmails("inbox");
+        // Lade Inbox + Sent parallel (Performance)
+        await Promise.all([fetchEmails("inbox"), fetchEmails("sent")]);
       }
+
       if (mounted) setLoading(false);
     }
 
@@ -118,14 +115,21 @@ export function GmailProvider({ children }) {
     return () => (mounted = false);
   }, [fetchStatus, fetchEmails]);
 
-  // -----------------------
-  // CONNECT GMAIL
-  // -----------------------
-  const connectGmail = useCallback(async () => {
-    const url = await getGmailAuthUrl();
-    if (url) window.location.href = url;
-  }, []);
+  // ----------------------------
+  // Connect Gmail
+  // ----------------------------
+  const connectGmail = async () => {
+    try {
+      const url = await getGmailAuthUrl();
+      if (url) window.location.href = url;
+    } catch (err) {
+      console.error("Failed to start Gmail connect flow:", err);
+    }
+  };
 
+  // ----------------------------
+  // Context Value
+  // ----------------------------
   return (
     <GmailContext.Provider
       value={{
