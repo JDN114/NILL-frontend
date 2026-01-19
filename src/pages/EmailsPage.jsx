@@ -6,7 +6,7 @@ import { useContext, useEffect, useState } from "react";
 import { GmailContext } from "../context/GmailContext";
 import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
-import NewEmailModal from "../components/NewEmailModal";
+import EmailComposeModal from "../components/EmailComposeModal";
 
 export default function EmailsPage() {
   const {
