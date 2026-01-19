@@ -28,12 +28,10 @@ export default function EmailsPage() {
   const [priorityFilter, setPriorityFilter] = useState(null); // "hoch" | "mittel" | "niedrig"
   const [categoryFilter, setCategoryFilter] = useState(null); // "Privat" | "Arbeit" | "Sonstiges"
 
-  // Modal immer schließen, wenn eine neue Email geöffnet wird
   useEffect(() => {
     setReplyOpen(false);
   }, [activeEmail?.id]);
 
-  // Gesendete Emails laden (nur wenn auf Sent gewechselt)
   useEffect(() => {
     if (mailbox === "sent" && sentEmails.length === 0) {
       fetchSentEmails();
@@ -57,15 +55,15 @@ export default function EmailsPage() {
     switch ((p || "").toLowerCase()) {
       case "high":
       case "hoch":
-        return "bg-red-600";
+        return "bg-gray-600"; // neutral
       case "medium":
       case "mittel":
-        return "bg-yellow-500";
+        return "bg-gray-500";
       case "low":
       case "niedrig":
-        return "bg-green-600";
+        return "bg-gray-400";
       default:
-        return "bg-gray-600";
+        return "bg-gray-700";
     }
   };
 
@@ -117,7 +115,7 @@ export default function EmailsPage() {
                     setPriorityOpen(true);
                     setCategoryOpen(false);
                   }}
-                  className="px-4 py-2 rounded bg-purple-400 text-white hover:bg-purple-500"
+                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
                 >
                   Priorität
                 </button>
@@ -126,7 +124,7 @@ export default function EmailsPage() {
                     setCategoryOpen(true);
                     setPriorityOpen(false);
                   }}
-                  className="px-4 py-2 rounded bg-orange-400 text-white hover:bg-orange-500"
+                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
                 >
                   Kategorie
                 </button>
@@ -153,14 +151,14 @@ export default function EmailsPage() {
                     setPriorityFilter(p);
                     setPriorityOpen(false);
                   }}
-                  className="px-3 py-1 rounded bg-purple-300 text-white hover:bg-purple-400"
+                  className="px-3 py-1 rounded bg-gray-500 text-white hover:bg-gray-600"
                 >
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>
               ))}
               <button
                 onClick={() => setPriorityOpen(false)}
-                className="px-3 py-1 rounded bg-gray-400 text-white hover:bg-gray-500"
+                className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
               >
                 Abbrechen
               </button>
@@ -177,14 +175,14 @@ export default function EmailsPage() {
                     setCategoryFilter(c);
                     setCategoryOpen(false);
                   }}
-                  className="px-3 py-1 rounded bg-orange-300 text-white hover:bg-orange-400"
+                  className="px-3 py-1 rounded bg-gray-500 text-white hover:bg-gray-600"
                 >
                   {c}
                 </button>
               ))}
               <button
                 onClick={() => setCategoryOpen(false)}
-                className="px-3 py-1 rounded bg-gray-400 text-white hover:bg-gray-500"
+                className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
               >
                 Abbrechen
               </button>
