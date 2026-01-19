@@ -9,15 +9,16 @@ export default function SettingsPage() {
 
   // 🔁 Gmail Status beim Laden prüfen (SAFE)
   useEffect(() => {
-+   if (typeof fetchStatus === "function") {
+    if (typeof fetchStatus === "function") {
       fetchStatus();
-+   }
+    }
   }, [fetchStatus]);
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Einstellungen</h1>
 
+      {/* Gmail Verbindung */}
       <Card title="Gmail">
         <div className="flex items-center justify-between">
           <span className="text-sm">
@@ -50,6 +51,7 @@ export default function SettingsPage() {
         </div>
       </Card>
 
+      {/* Coupon Card */}
       <Card title="Abonnement">
         <div className="flex items-center justify-between">
           <span className="text-sm">Hast du einen Coupon?</span>
