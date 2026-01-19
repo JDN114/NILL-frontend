@@ -4,9 +4,9 @@ import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import { useContext, useEffect, useState } from "react";
 import { GmailContext } from "../context/GmailContext";
-import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
+import { FiArrowLeft, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
-import EmailComposeModal from "../components/EmailComposeModal"; // ⚡ Neues Modal
+import EmailComposeModal from "../components/EmailComposeModal";
 
 export default function EmailsPage() {
   const {
@@ -20,12 +20,17 @@ export default function EmailsPage() {
 
   const [mailbox, setMailbox] = useState("inbox"); // inbox | sent
   const [replyOpen, setReplyOpen] = useState(false);
-  const [composeOpen, setComposeOpen] = useState(false); // ⚡ Compose State
+  const [composeOpen, setComposeOpen] = useState(false);
+
+  // Filter States
+  const [priorityOpen, setPriorityOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState(null); // "hoch" | "mittel" | "niedrig"
+  const [categoryFilter, setCategoryFilter] = useState(null); // "Privat" | "Arbeit" | "Sonstiges"
 
   // Modal immer schließen, wenn eine neue Email geöffnet wird
   useEffect(() => {
     setReplyOpen(false);
-    setComposeOpen(false); // optional: Compose schließen
   }, [activeEmail?.id]);
 
   // Gesendete Emails laden (nur wenn auf Sent gewechselt)
@@ -35,7 +40,18 @@ export default function EmailsPage() {
     }
   }, [mailbox]);
 
-  const displayedEmails = mailbox === "inbox" ? emails : sentEmails;
+  // Gefilterte Emails
+  let displayedEmails = mailbox === "inbox" ? emails : sentEmails;
+  if (priorityFilter) {
+    displayedEmails = displayedEmails.filter(
+      (e) => (e.ai?.priority || "").toLowerCase() === priorityFilter
+    );
+  }
+  if (categoryFilter) {
+    displayedEmails = displayedEmails.filter(
+      (e) => (e.category || "").toLowerCase() === categoryFilter.toLowerCase()
+    );
+  }
 
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -59,40 +75,125 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* 📂 Mailbox Switch + Compose Button (nur Liste) */}
+      {/* Top Bar + Filter Buttons → NUR in Listenansicht */}
       {!activeEmail && (
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setComposeOpen(true)}
-            className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-          >
-            Neue Email
-          </button>
+        <div className="flex flex-col gap-2 mb-4">
+          <div className="flex gap-2 items-center">
+            {/* Standard Buttons */}
+            <button
+              onClick={() => {
+                setMailbox("inbox");
+                setPriorityFilter(null);
+                setCategoryFilter(null);
+              }}
+              className={`px-4 py-2 rounded ${
+                mailbox === "inbox"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-700 text-gray-200"
+              }`}
+            >
+              Posteingang
+            </button>
+            <button
+              onClick={() => {
+                setMailbox("sent");
+                setPriorityFilter(null);
+                setCategoryFilter(null);
+              }}
+              className={`px-4 py-2 rounded ${
+                mailbox === "sent"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-700 text-gray-200"
+              }`}
+            >
+              Gesendet
+            </button>
 
-          <button
-            onClick={() => setMailbox("inbox")}
-            className={`px-4 py-2 rounded ${
-              mailbox === "inbox"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-200"
-            }`}
-          >
-            Posteingang
-          </button>
-          <button
-            onClick={() => setMailbox("sent")}
-            className={`px-4 py-2 rounded ${
-              mailbox === "sent"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-200"
-            }`}
-          >
-            Gesendet
-          </button>
+            {/* Priority / Category Main Buttons */}
+            {!priorityOpen && !categoryOpen && (
+              <>
+                <button
+                  onClick={() => {
+                    setPriorityOpen(true);
+                    setCategoryOpen(false);
+                  }}
+                  className="px-4 py-2 rounded bg-purple-400 text-white hover:bg-purple-500"
+                >
+                  Priorität
+                </button>
+                <button
+                  onClick={() => {
+                    setCategoryOpen(true);
+                    setPriorityOpen(false);
+                  }}
+                  className="px-4 py-2 rounded bg-orange-400 text-white hover:bg-orange-500"
+                >
+                  Kategorie
+                </button>
+              </>
+            )}
+
+            {/* Compose Button */}
+            <button
+              onClick={() => setComposeOpen(true)}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded ml-auto"
+            >
+              <FiEdit2 />
+              Neue E-Mail
+            </button>
+          </div>
+
+          {/* Priority Filters */}
+          {priorityOpen && (
+            <div className="flex gap-2">
+              {["hoch", "mittel", "niedrig"].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => {
+                    setPriorityFilter(p);
+                    setPriorityOpen(false);
+                  }}
+                  className="px-3 py-1 rounded bg-purple-300 text-white hover:bg-purple-400"
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+              <button
+                onClick={() => setPriorityOpen(false)}
+                className="px-3 py-1 rounded bg-gray-400 text-white hover:bg-gray-500"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
+
+          {/* Category Filters */}
+          {categoryOpen && (
+            <div className="flex gap-2">
+              {["Privat", "Arbeit", "Sonstiges"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => {
+                    setCategoryFilter(c);
+                    setCategoryOpen(false);
+                  }}
+                  className="px-3 py-1 rounded bg-orange-300 text-white hover:bg-orange-400"
+                >
+                  {c}
+                </button>
+              ))}
+              <button
+                onClick={() => setCategoryOpen(false)}
+                className="px-3 py-1 rounded bg-gray-400 text-white hover:bg-gray-500"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 📥 / 📤 EMAIL LIST */}
+      {/* EMAIL LIST */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           <ul className="divide-y divide-gray-800">
@@ -101,7 +202,6 @@ export default function EmailsPage() {
                 Keine Emails gefunden
               </li>
             )}
-
             {displayedEmails.map((mail) => (
               <li
                 key={mail.id}
@@ -120,13 +220,11 @@ export default function EmailsPage() {
                       : ""}
                   </span>
                 </div>
-
                 <p className="text-sm text-gray-400 truncate">
                   {mailbox === "inbox"
                     ? mail.from || "(unbekannt)"
                     : mail.to || "(unbekannt)"}
                 </p>
-
                 {mailbox === "inbox" && mail.ai_status && (
                   <div className="mt-1 text-xs text-gray-500">
                     KI-Status: {mail.ai_status}
@@ -138,7 +236,7 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* 📄 EMAIL DETAIL */}
+      {/* EMAIL DETAIL */}
       {activeEmail && (
         <Card className="p-4 max-h-[80vh] overflow-y-auto relative">
           <div className="flex items-center justify-between mb-4">
@@ -171,7 +269,6 @@ export default function EmailsPage() {
                   <p>{ai.summary}</p>
                 </div>
               )}
-
               {ai.priority && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Priorität:</span>
@@ -202,14 +299,12 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* ✉️ REPLY MODAL */}
+      {/* MODALS */}
       <EmailReplyModal
         emailId={activeEmail?.id}
         open={replyOpen}
         onClose={() => setReplyOpen(false)}
       />
-
-      {/* ✉️ COMPOSE MODAL */}
       <EmailComposeModal
         open={composeOpen}
         onClose={() => setComposeOpen(false)}
