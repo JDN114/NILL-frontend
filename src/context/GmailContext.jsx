@@ -60,6 +60,15 @@ export function GmailProvider({ children }) {
     }
   };
 
+  const refreshInboxEmails = async () => {
+    try {
+      const res = await getGmailEmails("inbox");
+      setEmails(res.emails || []);
+    } catch {
+      setEmails([]);
+    }
+  };
+
   const fetchSentEmails = async () => {
     try {
       const res = await getGmailEmails("sent");
@@ -111,6 +120,18 @@ export function GmailProvider({ children }) {
     init();
     return () => (mounted = false);
   }, []);
+
+  // ---------------------------------
+  // Polling für KI-verarbeitete Emails
+  // ---------------------------------
+  useEffect(() => {
+    if (emails.some(e => e.ai_status === "pending")) {
+      const timer = setTimeout(() => {
+        refreshInboxEmails();
+      }, 3000); // alle 3 Sekunden prüfen
+      return () => clearTimeout(timer);
+    }
+  }, [emails]);
 
   // ---------------------------------
   // CONNECT
