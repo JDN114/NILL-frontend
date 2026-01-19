@@ -94,8 +94,10 @@ export async function getGmailStatus() {
  * GET /gmail/emails
  * → { emails: [...] }
  */
-export async function getGmailEmails() {
-  const res = await api.get("/gmail/emails");
+export async function getGmailEmails(mailbox = "inbox") {
+  const res = await api.get("/gmail/emails", {
+    params: { mailbox },
+  });
   return res.data;
 }
 

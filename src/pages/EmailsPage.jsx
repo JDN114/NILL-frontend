@@ -1,34 +1,37 @@
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { GmailContext } from "../context/GmailContext";
 import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
-import api from "../services/api";
 
 export default function EmailsPage() {
-  const { emails, activeEmail, openEmail, closeEmail } =
-    useContext(GmailContext);
+  const {
+    emails,
+    sentEmails,
+    activeEmail,
+    openEmail,
+    closeEmail,
+    fetchSentEmails,
+  } = useContext(GmailContext);
 
+  const [mailbox, setMailbox] = useState("inbox"); // inbox | sent
   const [replyOpen, setReplyOpen] = useState(false);
-  const [mailbox, setMailbox] = useState("INBOX"); // INBOX | SENT
-  const [sentEmails, setSentEmails] = useState([]);
 
-  // Modal immer schließen, wenn neue Email geöffnet wird
+  // Modal schließen, wenn neue Email geöffnet wird
   useEffect(() => {
     setReplyOpen(false);
   }, [activeEmail?.id]);
 
-  // 📤 Gesendete Emails laden
+  // Gesendete Emails laden (nur bei Bedarf)
   useEffect(() => {
-    if (mailbox === "SENT") {
-      api
-        .get("/gmail/emails/sent")
-        .then((res) => setSentEmails(res.data.emails || []))
-        .catch(console.error);
+    if (mailbox === "sent") {
+      fetchSentEmails();
     }
   }, [mailbox]);
+
+  const displayedEmails = mailbox === "inbox" ? emails : sentEmails;
 
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -48,8 +51,6 @@ export default function EmailsPage() {
 
   const ai = activeEmail?.ai;
 
-  const displayedEmails = mailbox === "INBOX" ? emails : sentEmails;
-
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
@@ -57,17 +58,21 @@ export default function EmailsPage() {
       {/* 📂 Mailbox Switch */}
       <div className="flex gap-2 mb-4">
         <button
-          onClick={() => setMailbox("INBOX")}
+          onClick={() => setMailbox("inbox")}
           className={`px-4 py-2 rounded ${
-            mailbox === "INBOX" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"
+            mailbox === "inbox"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-700 text-gray-200"
           }`}
         >
           Posteingang
         </button>
         <button
-          onClick={() => setMailbox("SENT")}
+          onClick={() => setMailbox("sent")}
           className={`px-4 py-2 rounded ${
-            mailbox === "SENT" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"
+            mailbox === "sent"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-700 text-gray-200"
           }`}
         >
           Gesendet
@@ -83,6 +88,7 @@ export default function EmailsPage() {
                 Keine Emails gefunden
               </li>
             )}
+
             {displayedEmails.map((mail) => (
               <li
                 key={mail.id}
@@ -101,9 +107,19 @@ export default function EmailsPage() {
                       : ""}
                   </span>
                 </div>
+
                 <p className="text-sm text-gray-400 truncate">
-                  {mailbox === "INBOX" ? mail.from : mail.to || "(unbekannt)"}
+                  {mailbox === "inbox"
+                    ? mail.from || "(unbekannt)"
+                    : mail.to || "(unbekannt)"}
                 </p>
+
+                {/* 🔖 Kategorie / Status NUR in der Liste */}
+                {mailbox === "inbox" && mail.ai_status && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    KI-Status: {mail.ai_status}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -132,13 +148,13 @@ export default function EmailsPage() {
             {activeEmail.subject || "(Kein Betreff)"}
           </h2>
           <p className="text-xs text-gray-400 mb-4">
-            {mailbox === "INBOX"
+            {mailbox === "inbox"
               ? activeEmail.from || "(unbekannt)"
               : activeEmail.to || "(unbekannt)"}
           </p>
 
-          {/* 🤖 KI BOX */}
-          {ai?.status === "success" && mailbox === "INBOX" && (
+          {/* 🤖 KI BOX – NUR INBOX */}
+          {mailbox === "inbox" && ai?.status === "success" && (
             <div className="mb-6 p-3 bg-gray-800 rounded text-sm space-y-2">
               {ai.summary && (
                 <div>
@@ -146,6 +162,7 @@ export default function EmailsPage() {
                   <p>{ai.summary}</p>
                 </div>
               )}
+
               {ai.priority && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Priorität:</span>
@@ -164,8 +181,8 @@ export default function EmailsPage() {
           {/* ✉️ BODY */}
           <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
 
-          {/* ✉️ REPLY BUTTON (nur Inbox) */}
-          {mailbox === "INBOX" && (
+          {/* ✉️ REPLY BUTTON – NUR INBOX */}
+          {mailbox === "inbox" && (
             <div className="mt-6">
               <button
                 onClick={() => setReplyOpen(true)}
@@ -178,7 +195,7 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* ✉️ REPLY MODAL – IMMER GERENDERT */}
+      {/* ✉️ REPLY MODAL */}
       <EmailReplyModal
         emailId={activeEmail?.id}
         open={replyOpen}
