@@ -1,5 +1,5 @@
 // src/context/GmailContext.jsx
-import React, { createContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import {
   getGmailAuthUrl,
   getGmailStatus,
@@ -11,24 +11,27 @@ import {
 export const GmailContext = createContext(null);
 
 export function GmailProvider({ children }) {
+  // ---------------------------------
+  // STATE
+  // ---------------------------------
   const [connected, setConnected] = useState({
     connected: false,
     email: null,
     expired: null,
   });
 
-  const [emails, setEmails] = useState([]);       // Inbox
-  const [sentEmails, setSentEmails] = useState([]); // Sent
+  const [emails, setEmails] = useState([]); // Inbox
+  const [sentEmails, setSentEmails] = useState([]); // Gesendet
   const [activeEmail, setActiveEmail] = useState(null);
-  const [currentMailbox, setCurrentMailbox] = useState("inbox");
+  const [currentMailbox, setCurrentMailbox] = useState("inbox"); // inbox | sent
 
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
 
-  // ----------------------------
-  // Gmail Status
-  // ----------------------------
-  const fetchStatus = useCallback(async () => {
+  // ---------------------------------
+  // STATUS
+  // ---------------------------------
+  const fetchStatus = async () => {
     try {
       const res = await getGmailStatus();
       const safe = {
@@ -43,94 +46,83 @@ export function GmailProvider({ children }) {
       setConnected(fallback);
       return fallback;
     }
-  }, []);
+  };
 
-  // ----------------------------
-  // Emails fetch (caching)
-  // ----------------------------
-  const fetchEmails = useCallback(
-    async (mailbox = "inbox") => {
-      if (mailbox === "inbox" && emails.length > 0) return emails;
-      if (mailbox === "sent" && sentEmails.length > 0) return sentEmails;
+  // ---------------------------------
+  // EMAIL LISTS
+  // ---------------------------------
+  const fetchInboxEmails = async () => {
+    try {
+      const res = await getGmailEmails("inbox");
+      setEmails(res.emails || []);
+    } catch {
+      setEmails([]);
+    }
+  };
 
-      try {
-        const res = await getGmailEmails(mailbox);
-        if (mailbox === "inbox") setEmails(res.emails || []);
-        else setSentEmails(res.emails || []);
-        return res.emails || [];
-      } catch (err) {
-        console.error(`Failed to fetch ${mailbox} emails:`, err);
-        return [];
-      }
-    },
-    [emails, sentEmails]
-  );
+  const fetchSentEmails = async () => {
+    try {
+      const res = await getGmailEmails("sent");
+      setSentEmails(res.emails || []);
+    } catch {
+      setSentEmails([]);
+    }
+  };
 
-  // ----------------------------
-  // Email Detail
-  // ----------------------------
-const openEmail = useCallback(
-  async (id, mailbox = "inbox") => {
+  // ---------------------------------
+  // EMAIL DETAIL
+  // ---------------------------------
+  const openEmail = async (id, mailbox = "inbox") => {
     if (!id) return;
     setLoadingEmail(true);
     setCurrentMailbox(mailbox);
 
     try {
-      // Mailbox mitgeben, damit Backend die richtige Email findet
-      const data = await getGmailEmailDetail(id, mailbox);
+      const data = await getGmailEmailDetail(id);
       setActiveEmail(data);
 
-      // Nur bei Inbox als gelesen markieren
+      // optional: read-mark nur für Inbox
       if (mailbox === "inbox") {
         try {
           await markEmailRead(id);
         } catch {}
       }
-    } catch (err) {
-      console.error("Failed to open email detail:", err);
     } finally {
       setLoadingEmail(false);
     }
-  },
-  []
-);
+  };
 
-  // ----------------------------
-  // Init
-  // ----------------------------
+  const closeEmail = () => setActiveEmail(null);
+
+  // ---------------------------------
+  // INIT (nur einmal beim Mount)
+  // ---------------------------------
   useEffect(() => {
     let mounted = true;
 
     async function init() {
       const status = await fetchStatus();
-
       if (mounted && status.connected) {
-        // Lade Inbox + Sent parallel (Performance)
-        await Promise.all([fetchEmails("inbox"), fetchEmails("sent")]);
+        await fetchInboxEmails();
       }
-
       if (mounted) setLoading(false);
     }
 
     init();
     return () => (mounted = false);
-  }, [fetchStatus, fetchEmails]);
+  }, []);
 
-  // ----------------------------
-  // Connect Gmail
-  // ----------------------------
+  // ---------------------------------
+  // CONNECT
+  // ---------------------------------
   const connectGmail = async () => {
-    try {
-      const url = await getGmailAuthUrl();
-      if (url) window.location.href = url;
-    } catch (err) {
-      console.error("Failed to start Gmail connect flow:", err);
-    }
+    const url = await getGmailAuthUrl();
+    if (url) window.location.href = url;
   };
 
-  // ----------------------------
-  // Context Value
-  // ----------------------------
+  // ---------------------------------
+  // CONTEXT EXPORT
+  // ---------------------------------
   return (
     <GmailContext.Provider
       value={{
@@ -142,7 +134,8 @@ const openEmail = useCallback(
         loading,
         loadingEmail,
 
-        fetchEmails,
+        fetchInboxEmails,
+        fetchSentEmails,
         openEmail,
         closeEmail,
         connectGmail,

@@ -14,22 +14,23 @@ export default function EmailsPage() {
     activeEmail,
     openEmail,
     closeEmail,
-    fetchEmails,
-    loadingEmail,
+    fetchSentEmails,
   } = useContext(GmailContext);
 
   const [mailbox, setMailbox] = useState("inbox"); // inbox | sent
   const [replyOpen, setReplyOpen] = useState(false);
 
-  // Modal schließen, wenn neue Email geöffnet wird
+  // Modal immer schließen, wenn eine neue Email geöffnet wird
   useEffect(() => {
     setReplyOpen(false);
   }, [activeEmail?.id]);
 
-  // Emails laden, sobald Mailbox wechselt
+  // Gesendete Emails laden (nur wenn auf Sent gewechselt)
   useEffect(() => {
-    fetchEmails(mailbox).catch(console.error);
-  }, [mailbox, fetchEmails]);
+    if (mailbox === "sent" && sentEmails.length === 0) {
+      fetchSentEmails();
+    }
+  }, [mailbox]);
 
   const displayedEmails = mailbox === "inbox" ? emails : sentEmails;
 
@@ -85,9 +86,7 @@ export default function EmailsPage() {
           <ul className="divide-y divide-gray-800">
             {displayedEmails.length === 0 && (
               <li className="px-6 py-6 text-center text-gray-400 text-sm">
-                {loadingEmail
-                  ? "Lade Emails…"
-                  : "Keine Emails gefunden"}
+                Keine Emails gefunden
               </li>
             )}
 
@@ -116,7 +115,7 @@ export default function EmailsPage() {
                     : mail.to || "(unbekannt)"}
                 </p>
 
-                {/* 🔖 KI Status nur in Inbox */}
+                {/* 🔖 KI-Status nur in Inbox */}
                 {mailbox === "inbox" && mail.ai_status && (
                   <div className="mt-1 text-xs text-gray-500">
                     KI-Status: {mail.ai_status}
@@ -181,11 +180,7 @@ export default function EmailsPage() {
           )}
 
           {/* ✉️ BODY */}
-          {loadingEmail ? (
-            <div className="text-gray-400 italic">Lade Email…</div>
-          ) : (
-            <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
-          )}
+          <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
 
           {/* ✉️ REPLY BUTTON – NUR INBOX */}
           {mailbox === "inbox" && (
