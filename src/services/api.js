@@ -117,9 +117,11 @@ export async function getGmailEmails(mailbox = "inbox") {
  *   }
  * }
  */
-export async function getGmailEmailDetail(id) {
+export async function getGmailEmailDetail(id, mailbox = "inbox") {
   if (!id) throw new Error("Email id missing");
-  const res = await api.get(`/gmail/emails/${id}`);
+  const res = await api.get(`/gmail/emails/${id}`, {
+    params: { mailbox }, // 👈 Mailbox als Query Param
+  });
   return res.data;
 }
 
