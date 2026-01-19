@@ -28,19 +28,34 @@ export default function EmailsPage() {
   const [priorityFilter, setPriorityFilter] = useState(null); // "hoch" | "mittel" | "niedrig"
   const [categoryFilter, setCategoryFilter] = useState(null); // "Privat" | "Arbeit" | "Sonstiges"
 
-  useEffect(() => setReplyOpen(false), [activeEmail?.id]);
+  useEffect(() => {
+    setReplyOpen(false);
+  }, [activeEmail?.id]);
 
   useEffect(() => {
-    if (mailbox === "sent" && sentEmails.length === 0) fetchSentEmails();
+    if (mailbox === "sent" && sentEmails.length === 0) {
+      fetchSentEmails();
+    }
   }, [mailbox]);
 
-  // Emails nach Filter
-  let displayedEmails = mailbox === "inbox" ? emails : sentEmails;
+  // ----------------------------
+  // Emails normalisieren (AI + DB Felder)
+  // ----------------------------
+  let displayedEmails = (mailbox === "inbox" ? emails : sentEmails).map((e) => ({
+    ...e,
+    priority: e.ai?.priority || e.priority || null,
+    category: e.category || null,
+  }));
+
+  // ----------------------------
+  // Filter anwenden
+  // ----------------------------
   if (priorityFilter) {
     displayedEmails = displayedEmails.filter(
-      (e) => (e.priority || "").toLowerCase() === priorityFilter
+      (e) => (e.priority || "").toLowerCase() === priorityFilter.toLowerCase()
     );
   }
+
   if (categoryFilter) {
     displayedEmails = displayedEmails.filter(
       (e) => (e.category || "").toLowerCase() === categoryFilter.toLowerCase()
@@ -49,10 +64,13 @@ export default function EmailsPage() {
 
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
+      case "high":
       case "hoch":
-        return "bg-gray-600";
+        return "bg-gray-600"; // neutral
+      case "medium":
       case "mittel":
         return "bg-gray-500";
+      case "low":
       case "niedrig":
         return "bg-gray-400";
       default:
@@ -66,7 +84,7 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* Top Bar + Filter Buttons → nur in Listenansicht */}
+      {/* Top Bar + Filter Buttons → NUR in Listenansicht */}
       {!activeEmail && (
         <div className="flex flex-col gap-2 mb-4">
           <div className="flex gap-2 items-center">
@@ -76,8 +94,6 @@ export default function EmailsPage() {
                 setMailbox("inbox");
                 setPriorityFilter(null);
                 setCategoryFilter(null);
-                setPriorityOpen(false);
-                setCategoryOpen(false);
               }}
               className={`px-4 py-2 rounded ${
                 mailbox === "inbox"
@@ -92,8 +108,6 @@ export default function EmailsPage() {
                 setMailbox("sent");
                 setPriorityFilter(null);
                 setCategoryFilter(null);
-                setPriorityOpen(false);
-                setCategoryOpen(false);
               }}
               className={`px-4 py-2 rounded ${
                 mailbox === "sent"
@@ -104,7 +118,7 @@ export default function EmailsPage() {
               Gesendet
             </button>
 
-            {/* Priority / Category Buttons nur wenn keiner Filter geöffnet ist */}
+            {/* Priority / Category Main Buttons */}
             {!priorityOpen && !categoryOpen && (
               <>
                 <button
@@ -112,7 +126,7 @@ export default function EmailsPage() {
                     setPriorityOpen(true);
                     setCategoryOpen(false);
                   }}
-                  className="px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
+                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
                 >
                   Priorität
                 </button>
@@ -121,7 +135,7 @@ export default function EmailsPage() {
                     setCategoryOpen(true);
                     setPriorityOpen(false);
                   }}
-                  className="px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
+                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
                 >
                   Kategorie
                 </button>
@@ -140,7 +154,7 @@ export default function EmailsPage() {
 
           {/* Priority Filters */}
           {priorityOpen && (
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-2 mt-2">
               {["hoch", "mittel", "niedrig"].map((p) => (
                 <button
                   key={p}
@@ -164,7 +178,7 @@ export default function EmailsPage() {
 
           {/* Category Filters */}
           {categoryOpen && (
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-2 mt-2">
               {["Privat", "Arbeit", "Sonstiges"].map((c) => (
                 <button
                   key={c}
