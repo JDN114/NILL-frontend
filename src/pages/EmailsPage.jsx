@@ -1,11 +1,11 @@
-// src/pages/EmailsPage.jsx
+import { useState, useEffect, useContext } from "react";
+import { FiArrowLeft, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
-import { useContext, useEffect, useState } from "react";
 import { GmailContext } from "../context/GmailContext";
-import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
+import EmailComposeModal from "../components/EmailComposeModal";
 
 export default function EmailsPage() {
   const {
@@ -19,6 +19,7 @@ export default function EmailsPage() {
 
   const [mailbox, setMailbox] = useState("inbox"); // inbox | sent
   const [replyOpen, setReplyOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   // Modal immer schließen, wenn eine neue Email geöffnet wird
   useEffect(() => {
@@ -56,27 +57,37 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* 📂 Mailbox Switch */}
-      <div className="flex gap-2 mb-4">
+      {/* 📂 Top Bar: Mailbox Switch + Compose */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMailbox("inbox")}
+            className={`px-4 py-2 rounded ${
+              mailbox === "inbox"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-200"
+            }`}
+          >
+            Posteingang
+          </button>
+          <button
+            onClick={() => setMailbox("sent")}
+            className={`px-4 py-2 rounded ${
+              mailbox === "sent"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-200"
+            }`}
+          >
+            Gesendet
+          </button>
+        </div>
+
         <button
-          onClick={() => setMailbox("inbox")}
-          className={`px-4 py-2 rounded ${
-            mailbox === "inbox"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-200"
-          }`}
+          onClick={() => setComposeOpen(true)}
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
         >
-          Posteingang
-        </button>
-        <button
-          onClick={() => setMailbox("sent")}
-          className={`px-4 py-2 rounded ${
-            mailbox === "sent"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-200"
-          }`}
-        >
-          Gesendet
+          <FiEdit2 />
+          Neue E-Mail
         </button>
       </div>
 
@@ -201,6 +212,12 @@ export default function EmailsPage() {
         emailId={activeEmail?.id}
         open={replyOpen}
         onClose={() => setReplyOpen(false)}
+      />
+
+      {/* ✉️ COMPOSE MODAL */}
+      <EmailComposeModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
       />
     </PageLayout>
   );
