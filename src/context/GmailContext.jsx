@@ -69,30 +69,31 @@ export function GmailProvider({ children }) {
   // ----------------------------
   // Email Detail
   // ----------------------------
-  const openEmail = useCallback(
-    async (id, mailbox = "inbox") => {
-      if (!id) return;
-      setLoadingEmail(true);
-      setCurrentMailbox(mailbox);
+const openEmail = useCallback(
+  async (id, mailbox = "inbox") => {
+    if (!id) return;
+    setLoadingEmail(true);
+    setCurrentMailbox(mailbox);
 
-      try {
-        const data = await getGmailEmailDetail(id);
-        setActiveEmail(data);
+    try {
+      // Mailbox mitgeben, damit Backend die richtige Email findet
+      const data = await getGmailEmailDetail(id, mailbox);
+      setActiveEmail(data);
 
-        // Nur bei Inbox als gelesen markieren
-        if (mailbox === "inbox") {
-          try {
-            await markEmailRead(id);
-          } catch {}
-        }
-      } finally {
-        setLoadingEmail(false);
+      // Nur bei Inbox als gelesen markieren
+      if (mailbox === "inbox") {
+        try {
+          await markEmailRead(id);
+        } catch {}
       }
-    },
-    []
-  );
-
-  const closeEmail = () => setActiveEmail(null);
+    } catch (err) {
+      console.error("Failed to open email detail:", err);
+    } finally {
+      setLoadingEmail(false);
+    }
+  },
+  []
+);
 
   // ----------------------------
   // Init
