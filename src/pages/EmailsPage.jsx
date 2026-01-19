@@ -1,7 +1,7 @@
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import { GmailContext } from "../context/GmailContext";
 import { FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
@@ -13,26 +13,40 @@ export default function EmailsPage() {
     activeEmail,
     openEmail,
     closeEmail,
-    fetchSentEmails,
+    fetchEmails,
+    currentMailbox,
+    loading,
+    loadingEmail,
   } = useContext(GmailContext);
 
   const [mailbox, setMailbox] = useState("inbox"); // inbox | sent
   const [replyOpen, setReplyOpen] = useState(false);
 
-  // Modal schließen, wenn neue Email geöffnet wird
+  // -----------------------
+  // Modal immer schließen, wenn neue Email geöffnet wird
+  // -----------------------
   useEffect(() => {
     setReplyOpen(false);
   }, [activeEmail?.id]);
 
-  // Gesendete Emails laden (nur bei Bedarf)
+  // -----------------------
+  // Mailbox wechseln → nur laden, wenn noch nicht vorhanden
+  // -----------------------
   useEffect(() => {
-    if (mailbox === "sent") {
-      fetchSentEmails();
-    }
-  }, [mailbox]);
+    fetchEmails(mailbox).catch(console.error);
+  }, [mailbox, fetchEmails]);
 
-  const displayedEmails = mailbox === "inbox" ? emails : sentEmails;
+  // -----------------------
+  // Emails für aktuelle Mailbox
+  // -----------------------
+  const displayedEmails = useMemo(
+    () => (mailbox === "inbox" ? emails : sentEmails),
+    [mailbox, emails, sentEmails]
+  );
 
+  // -----------------------
+  // Hilfsfunktionen
+  // -----------------------
   const priorityColor = (p) => {
     switch ((p || "").toLowerCase()) {
       case "high":
@@ -51,6 +65,9 @@ export default function EmailsPage() {
 
   const ai = activeEmail?.ai;
 
+  // -----------------------
+  // RENDER
+  // -----------------------
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
@@ -82,47 +99,50 @@ export default function EmailsPage() {
       {/* 📥 / 📤 EMAIL LIST */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
-          <ul className="divide-y divide-gray-800">
-            {displayedEmails.length === 0 && (
-              <li className="px-6 py-6 text-center text-gray-400 text-sm">
-                Keine Emails gefunden
-              </li>
-            )}
-
-            {displayedEmails.map((mail) => (
-              <li
-                key={mail.id}
-                onClick={() => openEmail(mail.id, mailbox)}
-                className="px-6 py-4 cursor-pointer hover:bg-gray-800 transition"
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <p className="font-semibold truncate">
-                    {mail.subject || "(Kein Betreff)"}
-                  </p>
-                  <span className="text-xs text-gray-400">
-                    {mail.received_at
-                      ? new Date(mail.received_at).toLocaleString()
-                      : mail.sent_at
-                      ? new Date(mail.sent_at).toLocaleString()
-                      : ""}
-                  </span>
-                </div>
-
-                <p className="text-sm text-gray-400 truncate">
-                  {mailbox === "inbox"
-                    ? mail.from || "(unbekannt)"
-                    : mail.to || "(unbekannt)"}
-                </p>
-
-                {/* 🔖 Kategorie / Status NUR in der Liste */}
-                {mailbox === "inbox" && mail.ai_status && (
-                  <div className="mt-1 text-xs text-gray-500">
-                    KI-Status: {mail.ai_status}
+          {loading ? (
+            <div className="p-6 text-center text-gray-400">Lade Emails…</div>
+          ) : (
+            <ul className="divide-y divide-gray-800">
+              {displayedEmails.length === 0 && (
+                <li className="px-6 py-6 text-center text-gray-400 text-sm">
+                  Keine Emails gefunden
+                </li>
+              )}
+              {displayedEmails.map((mail) => (
+                <li
+                  key={mail.id}
+                  onClick={() => openEmail(mail.id, mailbox)}
+                  className="px-6 py-4 cursor-pointer hover:bg-gray-800 transition"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <p className="font-semibold truncate">
+                      {mail.subject || "(Kein Betreff)"}
+                    </p>
+                    <span className="text-xs text-gray-400">
+                      {mailbox === "inbox"
+                        ? mail.received_at
+                          ? new Date(mail.received_at).toLocaleString()
+                          : ""
+                        : mail.sent_at
+                        ? new Date(mail.sent_at).toLocaleString()
+                        : ""}
+                    </span>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
+
+                  <p className="text-sm text-gray-400 truncate">
+                    {mailbox === "inbox" ? mail.from || "(unbekannt)" : mail.to || "(unbekannt)"}
+                  </p>
+
+                  {/* KI-Status nur für Inbox */}
+                  {mailbox === "inbox" && mail.ai_status && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      KI-Status: {mail.ai_status}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       )}
 
@@ -148,12 +168,10 @@ export default function EmailsPage() {
             {activeEmail.subject || "(Kein Betreff)"}
           </h2>
           <p className="text-xs text-gray-400 mb-4">
-            {mailbox === "inbox"
-              ? activeEmail.from || "(unbekannt)"
-              : activeEmail.to || "(unbekannt)"}
+            {mailbox === "inbox" ? activeEmail.from || "(unbekannt)" : activeEmail.to || "(unbekannt)"}
           </p>
 
-          {/* 🤖 KI BOX – NUR INBOX */}
+          {/* 🤖 KI BOX nur Inbox */}
           {mailbox === "inbox" && ai?.status === "success" && (
             <div className="mb-6 p-3 bg-gray-800 rounded text-sm space-y-2">
               {ai.summary && (
@@ -162,14 +180,11 @@ export default function EmailsPage() {
                   <p>{ai.summary}</p>
                 </div>
               )}
-
               {ai.priority && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Priorität:</span>
                   <span
-                    className={`px-2 py-0.5 rounded text-xs text-white ${priorityColor(
-                      ai.priority
-                    )}`}
+                    className={`px-2 py-0.5 rounded text-xs text-white ${priorityColor(ai.priority)}`}
                   >
                     {ai.priority}
                   </span>
@@ -179,9 +194,13 @@ export default function EmailsPage() {
           )}
 
           {/* ✉️ BODY */}
-          <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
+          {loadingEmail ? (
+            <div className="text-gray-400 italic">Lade Email…</div>
+          ) : (
+            <SafeEmailHtml html={activeEmail.body || "<i>Kein Inhalt</i>"} />
+          )}
 
-          {/* ✉️ REPLY BUTTON – NUR INBOX */}
+          {/* ✉️ REPLY BUTTON – nur Inbox */}
           {mailbox === "inbox" && (
             <div className="mt-6">
               <button
