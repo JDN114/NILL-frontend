@@ -1,12 +1,11 @@
-// src/pages/EmailsPage.jsx
+import { useContext, useEffect, useState } from "react";
+import { GmailContext } from "../context/GmailContext";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
-import { useContext, useEffect, useState } from "react";
-import { GmailContext } from "../context/GmailContext";
-import { FiArrowLeft, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 import EmailReplyModal from "../components/EmailReplyModal";
 import EmailComposeModal from "../components/EmailComposeModal";
+import { FiArrowLeft, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 
 export default function EmailsPage() {
   const {
@@ -18,15 +17,18 @@ export default function EmailsPage() {
     fetchSentEmails,
   } = useContext(GmailContext);
 
-  const [mailbox, setMailbox] = useState("inbox"); // inbox | sent
+  const [mailbox, setMailbox] = useState("inbox");
+
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
-  // Filter States
+  // Filter UI State
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
-  const [priorityFilter, setPriorityFilter] = useState(null); // "hoch" | "mittel" | "niedrig"
-  const [categoryFilter, setCategoryFilter] = useState(null); // "Privat" | "Arbeit" | "Sonstiges"
+
+  // Aktive Filter
+  const [priorityFilter, setPriorityFilter] = useState(null);       // "high" | "medium" | "low"
+  const [categoryGroupFilter, setCategoryGroupFilter] = useState(null); // "ARBEIT" | "PRIVAT" | "SONSTIGES"
 
   useEffect(() => {
     setReplyOpen(false);
@@ -38,40 +40,30 @@ export default function EmailsPage() {
     }
   }, [mailbox]);
 
-  // ----------------------------
-  // Emails normalisieren (AI + DB Felder)
-  // ----------------------------
-  let displayedEmails = (mailbox === "inbox" ? emails : sentEmails).map((e) => ({
-    ...e,
-    priority: e.ai?.priority || e.priority || null,
-    category: e.category || null,
-  }));
+  // -----------------------------
+  // 🔍 FILTER LOGIK (Frontend)
+  // -----------------------------
+  let displayedEmails = mailbox === "inbox" ? emails : sentEmails;
 
-  // ----------------------------
-  // Filter anwenden
-  // ----------------------------
   if (priorityFilter) {
     displayedEmails = displayedEmails.filter(
-      (e) => (e.priority || "").toLowerCase() === priorityFilter.toLowerCase()
+      (e) => (e.priority || "").toLowerCase() === priorityFilter
     );
   }
 
-  if (categoryFilter) {
+  if (categoryGroupFilter) {
     displayedEmails = displayedEmails.filter(
-      (e) => (e.category || "").toLowerCase() === categoryFilter.toLowerCase()
+      (e) => e.category_group === categoryGroupFilter
     );
   }
 
-  const priorityColor = (p) => {
+  const priorityBadge = (p) => {
     switch ((p || "").toLowerCase()) {
       case "high":
-      case "hoch":
-        return "bg-gray-600"; // neutral
+        return "bg-gray-600";
       case "medium":
-      case "mittel":
         return "bg-gray-500";
       case "low":
-      case "niedrig":
         return "bg-gray-400";
       default:
         return "bg-gray-700";
@@ -84,16 +76,18 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Postfach</h1>
 
-      {/* Top Bar + Filter Buttons → NUR in Listenansicht */}
+      {/* ========================= */}
+      {/* 🧭 TOP BAR – NUR LISTE */}
+      {/* ========================= */}
       {!activeEmail && (
         <div className="flex flex-col gap-2 mb-4">
-          <div className="flex gap-2 items-center">
-            {/* Standard Buttons */}
+          <div className="flex gap-2 items-center flex-wrap">
+            {/* Mailbox */}
             <button
               onClick={() => {
                 setMailbox("inbox");
                 setPriorityFilter(null);
-                setCategoryFilter(null);
+                setCategoryGroupFilter(null);
               }}
               className={`px-4 py-2 rounded ${
                 mailbox === "inbox"
@@ -103,11 +97,12 @@ export default function EmailsPage() {
             >
               Posteingang
             </button>
+
             <button
               onClick={() => {
                 setMailbox("sent");
                 setPriorityFilter(null);
-                setCategoryFilter(null);
+                setCategoryGroupFilter(null);
               }}
               className={`px-4 py-2 rounded ${
                 mailbox === "sent"
@@ -118,7 +113,7 @@ export default function EmailsPage() {
               Gesendet
             </button>
 
-            {/* Priority / Category Main Buttons */}
+            {/* Hauptfilter */}
             {!priorityOpen && !categoryOpen && (
               <>
                 <button
@@ -126,74 +121,83 @@ export default function EmailsPage() {
                     setPriorityOpen(true);
                     setCategoryOpen(false);
                   }}
-                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
+                  className="px-4 py-2 rounded bg-gray-600 text-white"
                 >
                   Priorität
                 </button>
+
                 <button
                   onClick={() => {
                     setCategoryOpen(true);
                     setPriorityOpen(false);
                   }}
-                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
+                  className="px-4 py-2 rounded bg-gray-600 text-white"
                 >
                   Kategorie
                 </button>
               </>
             )}
 
-            {/* Compose Button */}
+            {/* Compose */}
             <button
               onClick={() => setComposeOpen(true)}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded ml-auto"
+              className="ml-auto flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
             >
               <FiEdit2 />
               Neue E-Mail
             </button>
           </div>
 
-          {/* Priority Filters */}
+          {/* PRIORITY FILTER */}
           {priorityOpen && (
-            <div className="flex gap-2 mt-2">
-              {["hoch", "mittel", "niedrig"].map((p) => (
+            <div className="flex gap-2">
+              {[
+                { key: "high", label: "Hoch" },
+                { key: "medium", label: "Mittel" },
+                { key: "low", label: "Niedrig" },
+              ].map((p) => (
                 <button
-                  key={p}
+                  key={p.key}
                   onClick={() => {
-                    setPriorityFilter(p);
+                    setPriorityFilter(p.key);
                     setPriorityOpen(false);
                   }}
-                  className="px-3 py-1 rounded bg-gray-500 text-white hover:bg-gray-600"
+                  className="px-3 py-1 rounded bg-gray-500 text-white"
                 >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                  {p.label}
                 </button>
               ))}
               <button
                 onClick={() => setPriorityOpen(false)}
-                className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
+                className="px-3 py-1 rounded bg-gray-700 text-white"
               >
                 Abbrechen
               </button>
             </div>
           )}
 
-          {/* Category Filters */}
+          {/* CATEGORY GROUP FILTER */}
           {categoryOpen && (
-            <div className="flex gap-2 mt-2">
-              {["Privat", "Arbeit", "Sonstiges"].map((c) => (
+            <div className="flex gap-2">
+              {[
+                { key: "ARBEIT", label: "Arbeit" },
+                { key: "PRIVAT", label: "Privat" },
+                { key: "SONSTIGES", label: "Sonstiges" },
+              ].map((c) => (
                 <button
-                  key={c}
+                  key={c.key}
                   onClick={() => {
-                    setCategoryFilter(c);
+                    setCategoryGroupFilter(c.key);
                     setCategoryOpen(false);
                   }}
-                  className="px-3 py-1 rounded bg-gray-500 text-white hover:bg-gray-600"
+                  className="px-3 py-1 rounded bg-gray-500 text-white"
                 >
-                  {c}
+                  {c.label}
                 </button>
               ))}
               <button
                 onClick={() => setCategoryOpen(false)}
-                className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
+                className="px-3 py-1 rounded bg-gray-700 text-white"
               >
                 Abbrechen
               </button>
@@ -202,7 +206,9 @@ export default function EmailsPage() {
         </div>
       )}
 
-      {/* EMAIL LIST */}
+      {/* ========================= */}
+      {/* 📬 EMAIL LIST */}
+      {/* ========================= */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           <ul className="divide-y divide-gray-800">
@@ -211,6 +217,7 @@ export default function EmailsPage() {
                 Keine Emails gefunden
               </li>
             )}
+
             {displayedEmails.map((mail) => (
               <li
                 key={mail.id}
@@ -224,20 +231,24 @@ export default function EmailsPage() {
                   <span className="text-xs text-gray-400">
                     {mail.received_at
                       ? new Date(mail.received_at).toLocaleString()
-                      : mail.sent_at
-                      ? new Date(mail.sent_at).toLocaleString()
                       : ""}
                   </span>
                 </div>
+
                 <p className="text-sm text-gray-400 truncate">
                   {mailbox === "inbox"
                     ? mail.from || "(unbekannt)"
                     : mail.to || "(unbekannt)"}
                 </p>
-                {mailbox === "inbox" && mail.ai_status && (
-                  <div className="mt-1 text-xs text-gray-500">
-                    KI-Status: {mail.ai_status}
-                  </div>
+
+                {mail.priority && (
+                  <span
+                    className={`inline-block mt-1 px-2 py-0.5 text-xs rounded text-white ${priorityBadge(
+                      mail.priority
+                    )}`}
+                  >
+                    {mail.priority}
+                  </span>
                 )}
               </li>
             ))}
@@ -245,7 +256,9 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* EMAIL DETAIL */}
+      {/* ========================= */}
+      {/* 📄 EMAIL DETAIL */}
+      {/* ========================= */}
       {activeEmail && (
         <Card className="p-4 max-h-[80vh] overflow-y-auto relative">
           <div className="flex items-center justify-between mb-4">
@@ -264,6 +277,7 @@ export default function EmailsPage() {
           <h2 className="text-2xl font-bold mb-1">
             {activeEmail.subject || "(Kein Betreff)"}
           </h2>
+
           <p className="text-xs text-gray-400 mb-4">
             {mailbox === "inbox"
               ? activeEmail.from || "(unbekannt)"
@@ -276,18 +290,6 @@ export default function EmailsPage() {
                 <div>
                   <span className="font-semibold">Zusammenfassung:</span>
                   <p>{ai.summary}</p>
-                </div>
-              )}
-              {ai.priority && (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">Priorität:</span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs text-white ${priorityColor(
-                      ai.priority
-                    )}`}
-                  >
-                    {ai.priority}
-                  </span>
                 </div>
               )}
             </div>
@@ -308,12 +310,15 @@ export default function EmailsPage() {
         </Card>
       )}
 
+      {/* ========================= */}
       {/* MODALS */}
+      {/* ========================= */}
       <EmailReplyModal
         emailId={activeEmail?.id}
         open={replyOpen}
         onClose={() => setReplyOpen(false)}
       />
+
       <EmailComposeModal
         open={composeOpen}
         onClose={() => setComposeOpen(false)}
