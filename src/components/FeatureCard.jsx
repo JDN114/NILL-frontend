@@ -1,13 +1,7 @@
 // src/components/FeatureCard.jsx
 import React from "react";
 
-interface FeatureCardProps {
-  index: number;
-  title: string;
-  desc: string;
-}
-
-export default function FeatureCard({ index, title, desc }: FeatureCardProps) {
+export default function FeatureCard({ index, title, desc }) {
   return (
     <div
       className="bg-white/5 hover:bg-white/10 transition-colors rounded-xl p-5 shadow-md hover:shadow-lg flex flex-col gap-3"
