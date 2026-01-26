@@ -1,11 +1,31 @@
-import { Navigate } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
-export default function ProtectedRoute({ children }: { children: JSX.Element }) {
+type Props = {
+  children: ReactNode;
+};
+
+export default function ProtectedRoute({ children }: Props) {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  if (loading) return <div>Lade...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login", { replace: true });
+    }
+  }, [loading, user, navigate]);
 
-  return children;
+  // ⏳ Während Auth-Status noch geladen wird → nichts rendern
+  if (loading) {
+    return null; // oder <Spinner />
+  }
+
+  // ❌ Nicht eingeloggt → Redirect läuft bereits
+  if (!user) {
+    return null;
+  }
+
+  // ✅ Eingeloggt → Zugriff erlaubt
+  return <>{children}</>;
 }

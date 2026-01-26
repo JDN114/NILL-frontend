@@ -1,3 +1,4 @@
+// src/components/Sustainability.jsx
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -20,12 +21,12 @@ export default function Sustainability() {
     },
   ];
 
-  const fadeUpVariants = {
-    hidden: { opacity: 0, y: -20 },
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
 
-  const cardVariants = {
+  const cardAnim = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0 },
   };
@@ -36,14 +37,14 @@ export default function Sustainability() {
       className="py-20 bg-gradient-to-b from-[#03060a] to-[#071023] relative overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 text-center">
-        {/* Animierte Überschrift & Intro */}
+        {/* Überschrift */}
         <motion.h2
           className="text-4xl md:text-5xl font-bold text-white mb-4"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6 }}
-          variants={fadeUpVariants}
+          variants={fadeUp}
         >
           Nachhaltigkeit bei NILL
         </motion.h2>
@@ -54,11 +55,9 @@ export default function Sustainability() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          variants={fadeUpVariants}
+          variants={fadeUp}
         >
-          NILL ist bereits jetzt klimaneutral – wir warten nicht auf morgen. 
-          Unsere Server laufen zu 100% mit erneuerbarer Energie, und alles, 
-          was nicht vollständig grün betrieben werden kann, wird fachgerecht kompensiert.
+          NILL ist bereits jetzt klimaneutral – wir warten nicht auf morgen. Unsere Server laufen zu 100% mit erneuerbarer Energie, und alles, was nicht vollständig grün betrieben werden kann, wird fachgerecht kompensiert.
         </motion.p>
 
         {/* Cards */}
@@ -71,7 +70,7 @@ export default function Sustainability() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: i * 0.2 }}
-              variants={cardVariants}
+              variants={cardAnim}
             >
               <h3 className="text-xl font-semibold text-white mb-2">{c.title}</h3>
               <p className="text-gray-300 text-sm">{c.desc}</p>
@@ -85,29 +84,28 @@ export default function Sustainability() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          variants={fadeUpVariants}
+          variants={fadeUp}
         >
-          So verbinden wir leistungsstarke KI-Funktionen mit echter Verantwortung 
-          für unsere Umwelt – für eine nachhaltige Zukunft, die schon heute beginnt.
+          So verbinden wir leistungsstarke KI-Funktionen mit echter Verantwortung für unsere Umwelt – für eine nachhaltige Zukunft, die schon heute beginnt.
         </motion.p>
 
-        {/* ✅ Button jetzt mit Navigation */}
         <motion.button
-          className="mt-8 px-6 py-3 bg-[var(--brand)] text-white rounded-lg shadow-lg hover:bg-[var(--brand-hover)] transition"
+          className="mt-8 px-6 py-3 bg-[var(--brand)] text-white rounded-lg shadow-lg hover:bg-[var(--brand-hover)] transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          variants={fadeUpVariants}
-          onClick={() => navigate("/about-nill")} // Navigiert auf die About-Seite
+          variants={fadeUp}
+          onClick={() => navigate("/about-nill")}
+          aria-label="Mehr erfahren über Nachhaltigkeit"
         >
           Mehr erfahren
         </motion.button>
       </div>
 
-      {/* Dekorative Balken/Kreise */}
-      <div className="absolute top-0 left-0 w-48 h-48 bg-[var(--brand)] opacity-20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-64 h-64 bg-[var(--brand)] opacity-10 rounded-full translate-x-1/3 translate-y-1/3"></div>
+      {/* Dekorative Elemente */}
+      <div className="absolute top-0 left-0 w-48 h-48 bg-[var(--brand)] opacity-20 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-64 h-64 bg-[var(--brand)] opacity-10 rounded-full translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
     </section>
   );
 }

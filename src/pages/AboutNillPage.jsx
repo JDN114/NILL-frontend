@@ -42,6 +42,7 @@ export default function AboutNillPage() {
         >
           Über NILL
         </motion.h1>
+
         <motion.p
           className="text-gray-300 max-w-3xl mx-auto text-lg md:text-xl mb-16"
           initial={{ y: 10, opacity: 0 }}
@@ -56,14 +57,14 @@ export default function AboutNillPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((f, idx) => (
             <motion.div
-              key={idx}
+              key={f.title || idx}
               className="glass p-6 rounded-2xl shadow-lg hover:shadow-2xl transition flex flex-col items-center text-center"
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: idx * 0.1 }}
             >
-              <div className="text-[var(--accent)] mb-4">{f.icon}</div>
+              <div className="text-[var(--accent)] mb-4" aria-hidden="true">{f.icon}</div>
               <h3 className="text-xl font-semibold text-white mb-2">{f.title}</h3>
               <p className="text-gray-300 text-sm">{f.desc}</p>
             </motion.div>

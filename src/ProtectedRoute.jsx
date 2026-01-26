@@ -1,14 +1,31 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
-export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
+type Props = {
+  children: ReactNode;
+};
 
-  if (!token) {
-    // Nicht eingeloggt → zurück zum Login
-    return <Navigate to="/login" replace />;
+export default function ProtectedRoute({ children }: Props) {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login", { replace: true });
+    }
+  }, [loading, user, navigate]);
+
+  // ⏳ Während Auth-Status noch geladen wird → nichts rendern
+  if (loading) {
+    return null; // oder <Spinner />
   }
 
-  // Eingeloggt → Zugriff erlaubt
-  return children;
+  // ❌ Nicht eingeloggt → Redirect läuft bereits
+  if (!user) {
+    return null;
+  }
+
+  // ✅ Eingeloggt → Zugriff erlaubt
+  return <>{children}</>;
 }

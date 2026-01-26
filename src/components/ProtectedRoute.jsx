@@ -1,23 +1,41 @@
-// frontend/src/components/ProtectedRoute.jsx
-
+// src/components/ProtectedRoute.jsx
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { fetchMe } from "../services/auth";
 
 export default function ProtectedRoute({ children }) {
-  const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
+  const [status, setStatus] = useState("loading");
+  // loading | allowed | denied | error
 
   useEffect(() => {
-    fetchMe()
-      .then(() => setAllowed(true))
-      .catch(() => setAllowed(false))
-      .finally(() => setLoading(false));
+    let mounted = true;
+
+    const checkAuth = async () => {
+      try {
+        await fetchMe();
+        if (mounted) setStatus("allowed");
+      } catch (err) {
+        const code = err?.response?.status;
+
+        // 🔐 Nur echte Auth-Fehler blockieren
+        if (code === 401 || code === 403) {
+          if (mounted) setStatus("denied");
+        } else {
+          console.error("Auth check failed:", err);
+          if (mounted) setStatus("error");
+        }
+      }
+    };
+
+    checkAuth();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  if (loading) {
+  if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#03060a]">
         <p className="text-gray-400 text-sm">
           Authentifizierung wird geprüft…
         </p>
@@ -25,7 +43,17 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (!allowed) {
+  if (status === "error") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#03060a]">
+        <p className="text-red-400 text-sm">
+          Authentifizierungsdienst nicht erreichbar. Bitte später erneut versuchen.
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "denied") {
     return <Navigate to="/login" replace />;
   }
 

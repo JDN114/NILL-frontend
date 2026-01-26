@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import { GmailProvider } from "./context/GmailContext"; // ✅ WICHTIG
+import { GmailProvider } from "./context/GmailContext";
 
 import LandingPage from "./components/LandingPage";
 import Login from "./pages/Login";
@@ -38,8 +38,6 @@ function App() {
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/founder" element={<Founder />} />
           <Route path="/roadmap" element={<Roadmap />} />
-          <Route path="/redeem-coupon" element={<RedeemCoupon />} />
-          <Route path="/admin" element={<AdminPage />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/verification-failed" element={<VerificationFailed />} />
@@ -53,7 +51,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/dashboard/emails"
             element={
@@ -62,12 +59,31 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/dashboard/settings"
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🔒 Coupons nur für authentifizierte User */}
+          <Route
+            path="/redeem-coupon"
+            element={
+              <ProtectedRoute>
+                <RedeemCoupon />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🔒 AdminPage nur für authentifizierte User */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
               </ProtectedRoute>
             }
           />

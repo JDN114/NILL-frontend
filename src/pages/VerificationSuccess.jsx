@@ -1,36 +1,21 @@
-import React from "react";
-import { Link } from "react-router-dom"; // falls du react-router benutzt
+import { Link } from "react-router-dom";
 
-const VerificationSuccess = () => {
+export default function VerificationSuccess() {
   return (
-    <div style={styles.container}>
-      <h1 style={styles.success}>✅ Deine E-Mail wurde erfolgreich verifiziert!</h1>
-      <p style={styles.text}>
-        Du kannst dich jetzt <Link to="/login" style={styles.link}>einloggen</Link> und das volle Produkt nutzen.
+    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 px-4 text-center">
+      <h1 className="text-4xl md:text-5xl font-bold text-green-600 mb-4">
+        ✅ Deine E-Mail wurde erfolgreich verifiziert!
+      </h1>
+      <p className="text-lg md:text-xl text-gray-700">
+        Du kannst dich jetzt{" "}
+        <Link
+          to="/login"
+          className="text-green-600 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-green-400 rounded"
+        >
+          einloggen
+        </Link>{" "}
+        und das volle Produkt nutzen.
       </p>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    fontFamily: "Arial, sans-serif",
-    backgroundColor: "#f0f8ff",
-    textAlign: "center",
-    padding: "50px",
-    minHeight: "100vh",
-  },
-  success: {
-    color: "#4CAF50",
-  },
-  text: {
-    fontSize: "1.2em",
-  },
-  link: {
-    color: "#4CAF50",
-    textDecoration: "none",
-    fontWeight: "bold",
-  },
-};
-
-export default VerificationSuccess;
+}

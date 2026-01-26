@@ -1,25 +1,64 @@
+// src/components/SafeEmailHtml.jsx
+import React from "react";
 import DOMPurify from "dompurify";
 
 export default function SafeEmailHtml({ html }) {
-  if (!html) return <i>Kein Inhalt</i>;
+  if (!html) return <i className="text-gray-400">Kein Inhalt</i>;
 
-  // 1️⃣ Plain-Text erkennen
-  const isPlainText = !/<[a-z][\s\S]*>/i.test(html);
+  const isPlainText = !/<\/?[a-z][\s\S]*>/i.test(html);
 
-  // 2️⃣ Hell-Dunkel HTML Hintergrund erkennen
-  const hasLightBg = /background\s*:\s*(#fff|white)/i.test(html);
-
-  // 3️⃣ Sauberer HTML-Inhalt
   const cleanHtml = DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
-    RETURN_TRUSTED_TYPE: false,
-    ADD_TAGS: ["style", "img"],
-    ADD_ATTR: ["target", "rel", "src", "width", "height", "style"],
-    FORBID_ATTR: ["onclick", "onerror", "onload"],
-    FORBID_TAGS: ["script", "iframe", "object", "embed", "video"],
+
+    // ❌ KEIN <style> – Mail-Client-Standard
+    ADD_TAGS: ["img", "a"],
+
+    ADD_ATTR: [
+      "href",
+      "src",
+      "alt",
+      "title",
+      "width",
+      "height",
+      "target",
+      "rel",
+      "style", // erlaubt, aber weiter unten eingeschränkt
+    ],
+
+    FORBID_TAGS: [
+      "script",
+      "iframe",
+      "object",
+      "embed",
+      "video",
+      "audio",
+      "svg",
+      "math",
+      "form",
+      "input",
+      "button",
+      "textarea",
+    ],
+
+    FORBID_ATTR: [
+      "onerror",
+      "onload",
+      "onclick",
+      "onmouseover",
+      "onfocus",
+      "onmouseenter",
+    ],
+
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:https?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
   });
 
-  // 4️⃣ Dynamische Klassen setzen
+  // 🔐 target=_blank absichern
+  const securedHtml = cleanHtml.replace(
+    /<a\s+([^>]*target="_blank"[^>]*)>/gi,
+    '<a $1 rel="noopener noreferrer">'
+  );
+
   const classes = [
     "email-body-render",
     "prose",
@@ -28,8 +67,7 @@ export default function SafeEmailHtml({ html }) {
     "text-sm",
     "leading-relaxed",
     "break-words",
-    isPlainText ? "plain-text" : "",
-    hasLightBg ? "has-light-bg" : (!isPlainText ? "html-mail" : ""),
+    isPlainText ? "plain-text" : "html-mail",
   ].join(" ");
 
   return (
@@ -41,7 +79,7 @@ export default function SafeEmailHtml({ html }) {
         overflowY: "auto",
         maxHeight: "calc(88vh - 150px)",
       }}
-      dangerouslySetInnerHTML={{ __html: cleanHtml }}
+      dangerouslySetInnerHTML={{ __html: securedHtml }}
     />
   );
 }

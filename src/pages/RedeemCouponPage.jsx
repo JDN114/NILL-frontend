@@ -1,8 +1,8 @@
 // src/pages/RedeemCouponPage.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function RedeemCouponPage() {
   const navigate = useNavigate();
@@ -10,10 +10,9 @@ export default function RedeemCouponPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  const authToken = localStorage.getItem("token"); // Auth-Header
-
   const handleRedeem = async () => {
-    if (!coupon.trim()) {
+    const code = coupon.trim();
+    if (!code) {
       setMessage({ text: "❌ Bitte einen Coupon-Code eingeben", type: "error" });
       return;
     }
@@ -22,25 +21,31 @@ export default function RedeemCouponPage() {
     setMessage({ text: "", type: "" });
 
     try {
-      const res = await axios.post(
-        "http://YOUR_SERVER_IP:8000/subscription/redeem-coupon",
-        { code: coupon.trim() },
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      const res = await api.post("/subscription/redeem-coupon", { code });
 
-      if (res.data.status === "success") {
-        setMessage({ text: "🎉 Coupon erfolgreich eingelöst! Features freigeschaltet!", type: "success" });
-        setTimeout(() => navigate("/dashboard"), 1800);
+      if (res?.data?.status === "success") {
+        setMessage({
+          text: "🎉 Coupon erfolgreich eingelöst! Features freigeschaltet!",
+          type: "success",
+        });
+
+        // Kurze Verzögerung für UX, danach weiterleiten
+        setTimeout(() => navigate("/dashboard", { replace: true }), 1500);
       } else {
-        setMessage({ text: "❌ Ungültiger oder abgelaufener Coupon", type: "error" });
+        setMessage({
+          text: res?.data?.message || "❌ Ungültiger oder abgelaufener Coupon",
+          type: "error",
+        });
       }
     } catch (err) {
-      setMessage({ text: "❌ Fehler beim Einlösen des Coupons", type: "error" });
+      console.error("Coupon redeem error:", err);
+      setMessage({
+        text: "❌ Fehler beim Einlösen des Coupons. Bitte versuche es später erneut.",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -62,6 +67,7 @@ export default function RedeemCouponPage() {
           value={coupon}
           onChange={(e) => setCoupon(e.target.value)}
           className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white outline-none focus:border-[var(--accent)] transition"
+          autoComplete="off"
         />
 
         <button
@@ -78,7 +84,9 @@ export default function RedeemCouponPage() {
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className={`text-center mt-4 font-medium ${message.type === "success" ? "text-green-400" : "text-red-400"}`}
+            className={`text-center mt-4 font-medium ${
+              message.type === "success" ? "text-green-400" : "text-red-400"
+            }`}
           >
             {message.text}
           </motion.p>

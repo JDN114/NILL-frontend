@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/api";
+import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,16 +9,36 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Frontend E-Mail Regex für minimalen Check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    // Frontend Validation
+    if (!emailRegex.test(email)) {
+      setError("Bitte eine gültige E-Mail-Adresse eingeben.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setError("Passwort muss mindestens 6 Zeichen lang sein.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      await loginUser(email, password);
-      navigate("/dashboard");
+      // Backend setzt HttpOnly Cookie für Auth
+      await api.post("/auth/login", { email, password });
+
+      // Erfolgreich → Dashboard
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.message || "Login fehlgeschlagen");
+      console.error("Login Fehler:", err);
+
+      // Einheitliche Fehlermeldung (kein User Enumeration möglich)
+      setError("E-Mail oder Passwort ungültig.");
     } finally {
       setLoading(false);
     }
@@ -30,9 +50,7 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-lg space-y-6"
       >
-        <h1 className="text-3xl font-bold text-center text-white">
-          Login
-        </h1>
+        <h1 className="text-3xl font-bold text-center text-white">Login</h1>
 
         <input
           type="email"
@@ -41,6 +59,7 @@ export default function Login() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          autoComplete="email"
         />
 
         <input
@@ -50,6 +69,7 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          autoComplete="current-password"
         />
 
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -57,7 +77,11 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-lg hover:from-indigo-500 hover:to-blue-500 transition-colors disabled:opacity-50"
+          className={`w-full py-3 text-white font-semibold rounded-lg transition-colors ${
+            loading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-indigo-500 hover:to-blue-500"
+          }`}
         >
           {loading ? "Anmelden..." : "Login"}
         </button>

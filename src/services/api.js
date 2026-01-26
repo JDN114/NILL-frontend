@@ -2,36 +2,53 @@
 import axios from "axios";
 
 // --------------------------------------------------
-// BASIS-URL
+// BASIS-URL (KEIN HARDCODED PROD FALLBACK)
 // --------------------------------------------------
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  process.env.REACT_APP_API_URL ||
-  "https://api.nillai.de";
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  throw new Error(
+    "VITE_API_URL ist nicht gesetzt – Abbruch aus Sicherheitsgründen"
+  );
+}
 
 // --------------------------------------------------
 // AXIOS INSTANZ
 // --------------------------------------------------
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // 🔐 HttpOnly Cookies
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // wichtig für Cookies / CORS
+  timeout: 15000,
 });
 
 // --------------------------------------------------
-// REQUEST INTERCEPTOR – JWT
+// RESPONSE INTERCEPTOR – AUTH & FEHLER
 // --------------------------------------------------
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+
+    // 🔐 Session abgelaufen / ungültig
+    if (status === 401) {
+      // optional: global logout event
+      window.dispatchEvent(new Event("auth:logout"));
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
+
+    // ❌ KEINE sensitiven Daten loggen
+    if (import.meta.env.DEV) {
+      console.error("API Error:", {
+        url: error?.config?.url,
+        status,
+        message: error?.message,
+      });
+    }
+
+    return Promise.reject(error);
+  }
 );
 
 // --------------------------------------------------
@@ -43,15 +60,12 @@ export async function registerUser(email, password) {
 }
 
 export async function loginUser(email, password) {
+  // Backend setzt HttpOnly Cookie
   const res = await api.post("/auth/login", { email, password });
-  if (res.data?.access_token) {
-    localStorage.setItem("access_token", res.data.access_token);
-  }
   return res.data;
 }
 
 export async function logoutUser() {
-  localStorage.removeItem("access_token");
   await api.post("/auth/logout");
 }
 
@@ -59,41 +73,24 @@ export async function getCurrentUser() {
   try {
     const res = await api.get("/auth/me");
     return res.data;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
 
 // --------------------------------------------------
-// GMAIL – EXAKT PASSEND ZUM BACKEND
+// GMAIL
 // --------------------------------------------------
-
-/**
- * GET /gmail/auth-url
- * → { auth_url: string }
- */
 export async function getGmailAuthUrl() {
   const res = await api.get("/gmail/auth-url");
   return res.data?.auth_url ?? null;
 }
 
-/**
- * GET /gmail/status
- * → {
- *   connected: boolean,
- *   email: string | null,
- *   expired: boolean | null
- * }
- */
 export async function getGmailStatus() {
   const res = await api.get("/gmail/status");
   return res.data;
 }
 
-/**
- * GET /gmail/emails
- * → { emails: [...] }
- */
 export async function getGmailEmails(mailbox = "inbox") {
   const res = await api.get("/gmail/emails", {
     params: { mailbox },
@@ -101,40 +98,24 @@ export async function getGmailEmails(mailbox = "inbox") {
   return res.data;
 }
 
-/**
- * GET /gmail/emails/{id}
- * → {
- *   id,
- *   from,
- *   subject,
- *   body,
- *   ai: {
- *     status,
- *     summary,
- *     priority,
- *     category,
- *     sentiment
- *   }
- * }
- */
 export async function getGmailEmailDetail(id, mailbox = "inbox") {
-  if (!id) throw new Error("Email id missing");
+  if (!id) {
+    throw new Error("Email-ID fehlt");
+  }
+
   const res = await api.get(`/gmail/emails/${id}`, {
-    params: { mailbox }, // 👈 Mailbox als Query Param
+    params: { mailbox },
   });
+
   return res.data;
 }
 
-/**
- * POST /gmail/emails/{id}/read
- * (optional – aktuell no-op im Backend, aber safe)
- */
 export async function markEmailRead(id) {
   if (!id) return;
   try {
     await api.post(`/gmail/emails/${id}/read`);
   } catch {
-    // Backend hat evtl. keinen read-endpoint → ignorieren
+    // absichtlich still
   }
 }
 

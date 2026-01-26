@@ -22,22 +22,28 @@ export default function EmailComposeModal({ open, onClose }) {
   if (!open) return null;
 
   const handleSend = async () => {
-    if (!to.trim() || !body.trim() || loading) return;
+    const toTrim = to.trim();
+    const bodyTrim = body.trim();
+    const subjectTrim = subject.trim();
+
+    if (!toTrim || !bodyTrim || loading) return;
 
     try {
       setLoading(true);
       setError(null);
 
       await api.post("/gmail/send", {
-        to,
-        subject,
-        body,
+        to: toTrim,
+        subject: subjectTrim,
+        body: bodyTrim,
       });
 
       onClose();
     } catch (err) {
       console.error(err);
-      setError("E-Mail konnte nicht gesendet werden.");
+      setError(
+        err?.response?.data?.message || "E-Mail konnte nicht gesendet werden."
+      );
     } finally {
       setLoading(false);
     }
@@ -85,7 +91,7 @@ export default function EmailComposeModal({ open, onClose }) {
           </button>
           <button
             onClick={handleSend}
-            disabled={loading || !to.trim() || !body.trim()}
+            disabled={loading || !toTrim || !bodyTrim}
             className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded"
           >
             {loading ? "Senden…" : "Senden"}

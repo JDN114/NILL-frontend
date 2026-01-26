@@ -1,39 +1,24 @@
-import React from "react";
 import { Link } from "react-router-dom";
 
-const VerificationFailed = () => {
+export default function VerificationFailed() {
   return (
-    <div style={styles.container}>
-      <h1 style={styles.failed}>❌ Die Verifizierung ist fehlgeschlagen!</h1>
-      <p style={styles.text}>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 px-4 text-center">
+      <h1 className="text-4xl md:text-5xl font-bold text-red-600 mb-4">
+        ❌ Die Verifizierung ist fehlgeschlagen!
+      </h1>
+      <p className="text-lg md:text-xl text-gray-700 mb-2">
         Der Link ist möglicherweise abgelaufen oder ungültig.
       </p>
-      <p style={styles.text}>
-        Fordere eine neue Verifizierungs-E-Mail an <Link to="/resend-verification" style={styles.link}>hier</Link>.
+      <p className="text-lg md:text-xl text-gray-700">
+        Fordere eine neue Verifizierungs-E-Mail an{" "}
+        <Link
+          to="/resend-verification"
+          className="text-red-600 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-red-400 rounded"
+        >
+          hier
+        </Link>
+        .
       </p>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    fontFamily: "Arial, sans-serif",
-    backgroundColor: "#fff0f0",
-    textAlign: "center",
-    padding: "50px",
-    minHeight: "100vh",
-  },
-  failed: {
-    color: "#f44336",
-  },
-  text: {
-    fontSize: "1.2em",
-  },
-  link: {
-    color: "#f44336",
-    textDecoration: "none",
-    fontWeight: "bold",
-  },
-};
-
-export default VerificationFailed;
+}

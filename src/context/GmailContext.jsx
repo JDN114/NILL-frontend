@@ -36,8 +36,8 @@ export function GmailProvider({ children }) {
       const res = await getGmailStatus();
       const safe = {
         connected: Boolean(res?.connected),
-        email: res?.email ?? null,
-        expired: res?.expired ?? null,
+        email: res?.email || null,
+        expired: res?.expired || null,
       };
       setConnected(safe);
       return safe;
@@ -54,7 +54,7 @@ export function GmailProvider({ children }) {
   const fetchInboxEmails = async () => {
     try {
       const res = await getGmailEmails("inbox");
-      setEmails(res.emails || []);
+      setEmails(res?.emails || []);
     } catch {
       setEmails([]);
     }
@@ -63,7 +63,7 @@ export function GmailProvider({ children }) {
   const refreshInboxEmails = async () => {
     try {
       const res = await getGmailEmails("inbox");
-      setEmails(res.emails || []);
+      setEmails(res?.emails || []);
     } catch {
       setEmails([]);
     }
@@ -72,7 +72,7 @@ export function GmailProvider({ children }) {
   const fetchSentEmails = async () => {
     try {
       const res = await getGmailEmails("sent");
-      setSentEmails(res.emails || []);
+      setSentEmails(res?.emails || []);
     } catch {
       setSentEmails([]);
     }
@@ -88,7 +88,7 @@ export function GmailProvider({ children }) {
 
     try {
       const data = await getGmailEmailDetail(id);
-      setActiveEmail(data);
+      setActiveEmail(data || null);
 
       // optional: read-mark nur für Inbox
       if (mailbox === "inbox") {
@@ -96,6 +96,9 @@ export function GmailProvider({ children }) {
           await markEmailRead(id);
         } catch {}
       }
+    } catch (err) {
+      console.error("Fehler beim Laden der Email:", err);
+      setActiveEmail(null);
     } finally {
       setLoadingEmail(false);
     }
@@ -118,14 +121,16 @@ export function GmailProvider({ children }) {
     }
 
     init();
-    return () => (mounted = false);
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // ---------------------------------
   // Polling für KI-verarbeitete Emails
   // ---------------------------------
   useEffect(() => {
-    if (emails.some(e => e.ai_status === "pending")) {
+    if (emails.some((e) => e.ai_status === "pending")) {
       const timer = setTimeout(() => {
         refreshInboxEmails();
       }, 3000); // alle 3 Sekunden prüfen
@@ -137,8 +142,12 @@ export function GmailProvider({ children }) {
   // CONNECT
   // ---------------------------------
   const connectGmail = async () => {
-    const url = await getGmailAuthUrl();
-    if (url) window.location.href = url;
+    try {
+      const url = await getGmailAuthUrl();
+      if (url) window.location.href = url;
+    } catch (err) {
+      console.error("Fehler beim Verbinden von Gmail:", err);
+    }
   };
 
   // ---------------------------------

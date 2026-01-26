@@ -1,28 +1,36 @@
+// src/components/Header.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../assets/images/logo.png";
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="fixed w-full z-50 top-0 left-0">
-      <div className="backdrop-blur-sm bg-white/3 border-b border-white/5">
+      <div className="backdrop-blur-sm bg-white/5 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <img src={Logo} alt="NILL" className="h-10" />
+            <Link to="/">
+              <img src={Logo} alt="NILL Logo" className="h-10" />
+            </Link>
             <span className="text-white font-semibold tracking-tight">NILL</span>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm relative">
-            <a href="#home" className="text-gray-200 hover:text-white">Home</a>
+            <Link to="/" className="text-gray-200 hover:text-white">
+              Home
+            </Link>
 
             {/* Dropdown Über NILL */}
             <div className="relative group">
-              <button className="text-gray-300 hover:text-white flex items-center gap-1">
+              <button
+                type="button"
+                className="text-gray-300 hover:text-white flex items-center gap-1"
+              >
                 Über NILL
                 <svg
                   className="w-4 h-4"
@@ -35,11 +43,9 @@ export default function Header() {
                 </svg>
               </button>
 
-              {/* Desktop Dropdown */}
               <AnimatePresence>
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
-                  whileHover={{ opacity: 1, y: 0 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
@@ -67,9 +73,15 @@ export default function Header() {
               </AnimatePresence>
             </div>
 
-            <a href="#features" className="text-gray-300 hover:text-white">Features</a>
-            <a href="#sustainability" className="text-gray-300 hover:text-white">Nachhaltigkeit</a>
-            <a href="#contact" className="text-gray-300 hover:text-white">Kontakt</a>
+            <Link to="#features" className="text-gray-300 hover:text-white">
+              Features
+            </Link>
+            <Link to="#sustainability" className="text-gray-300 hover:text-white">
+              Nachhaltigkeit
+            </Link>
+            <Link to="#contact" className="text-gray-300 hover:text-white">
+              Kontakt
+            </Link>
 
             <Link
               to="/login"
@@ -87,14 +99,24 @@ export default function Header() {
 
           {/* Mobile Menu Toggle */}
           <div className="md:hidden">
-            <button onClick={() => setOpen(true)} className="p-2 rounded hover:bg-white/5">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="p-2 rounded hover:bg-white/5"
+              aria-label="Menü öffnen"
+            >
               <svg
                 className="w-6 h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
           </div>
@@ -102,23 +124,67 @@ export default function Header() {
       </div>
 
       {/* Mobile Menu */}
-      {open && (
+      {mobileOpen && (
         <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-0 w-80 h-full bg-[#071023] p-6">
-            <button onClick={() => setOpen(false)} className="mb-6 p-2 rounded text-white">
-              Close
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute right-0 top-0 w-80 h-full bg-[#071023] p-6 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="mb-6 p-2 rounded text-white"
+            >
+              Schließen
             </button>
             <ul className="flex flex-col gap-4 text-gray-200">
-              <li><a href="#home" onClick={() => setOpen(false)}>Home</a></li>
-              <li><Link to="/about-nill" onClick={() => setOpen(false)}>Über uns</Link></li>
-              <li><Link to="/founder" onClick={() => setOpen(false)}>Founder</Link></li>
-              <li><Link to="/roadmap" onClick={() => setOpen(false)}>Roadmap</Link></li>
-              <li><a href="#features" onClick={() => setOpen(false)}>Features</a></li>
-              <li><a href="#sustainability" onClick={() => setOpen(false)}>Nachhaltigkeit</a></li>
-              <li><a href="#contact" onClick={() => setOpen(false)}>Kontakt</a></li>
-              <li><Link to="/login" onClick={() => setOpen(false)}>Login</Link></li>
-              <li><Link to="/register" onClick={() => setOpen(false)}>Registrieren</Link></li>
+              <li>
+                <Link to="/" onClick={() => setMobileOpen(false)}>
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link to="/about-nill" onClick={() => setMobileOpen(false)}>
+                  Über uns
+                </Link>
+              </li>
+              <li>
+                <Link to="/founder" onClick={() => setMobileOpen(false)}>
+                  Founder
+                </Link>
+              </li>
+              <li>
+                <Link to="/roadmap" onClick={() => setMobileOpen(false)}>
+                  Roadmap
+                </Link>
+              </li>
+              <li>
+                <Link to="#features" onClick={() => setMobileOpen(false)}>
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link to="#sustainability" onClick={() => setMobileOpen(false)}>
+                  Nachhaltigkeit
+                </Link>
+              </li>
+              <li>
+                <Link to="#contact" onClick={() => setMobileOpen(false)}>
+                  Kontakt
+                </Link>
+              </li>
+              <li>
+                <Link to="/login" onClick={() => setMobileOpen(false)}>
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link to="/register" onClick={() => setMobileOpen(false)}>
+                  Registrieren
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

@@ -9,32 +9,36 @@ export function AuthProvider({ children }) {
 
   // 🔑 Quelle der Wahrheit: /auth/me
   useEffect(() => {
+    let mounted = true; // Verhindert State-Updates nach Unmount
     async function loadUser() {
       try {
         const res = await api.get("/auth/me", {
-          withCredentials: true, // 👈 extrem wichtig für OAuth-Redirects
+          withCredentials: true, // 👈 wichtig für Cookies/OAuth
         });
-        setUser(res.data);
+        if (mounted) setUser(res.data);
       } catch (err) {
-        setUser(null);
+        if (mounted) setUser(null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
     loadUser();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const logout = async () => {
     try {
       await api.post("/auth/logout", {}, { withCredentials: true });
     } catch (_) {}
-
-    localStorage.removeItem("access_token"); // optional, UX only
+    localStorage.removeItem("access_token"); // optional
     setUser(null);
   };
 
-  // ⏳ Verhindert UI-Glitches beim Initialisieren
+  // ⏳ Loading UI, verhindert Glitches
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-400">

@@ -1,3 +1,4 @@
+// src/components/Hero.jsx
 import React from "react";
 import HeroImg from "../assets/images/hero-image.png";
 import { motion } from "framer-motion";
@@ -5,6 +6,24 @@ import { Link } from "react-router-dom";
 import { FiCheckCircle, FiClock, FiCloud } from "react-icons/fi";
 
 export default function Hero() {
+  const features = [
+    {
+      icon: <FiCheckCircle className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
+      title: "99% Automatisierbar",
+      subtitle: "Weniger manuelle Arbeit"
+    },
+    {
+      icon: <FiClock className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
+      title: "24/7 Support",
+      subtitle: "Immer erreichbar"
+    },
+    {
+      icon: <FiCloud className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
+      title: "CO₂-effizient",
+      subtitle: "Green hosting & nachhaltige Server"
+    }
+  ];
+
   return (
     <section id="home" className="relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-tr from-[#071023] to-[#03060a] opacity-95" />
@@ -39,27 +58,19 @@ export default function Hero() {
 
             {/* Feature Highlights */}
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <motion.div whileHover={{ y: -5 }} className="glass p-4 rounded-xl flex items-center gap-3">
-                <FiCheckCircle className="text-[var(--accent)] w-6 h-6"/>
-                <div>
-                  <div className="font-semibold text-white">99% Automatisierbar</div>
-                  <div className="text-gray-300 text-sm">Weniger manuelle Arbeit</div>
-                </div>
-              </motion.div>
-              <motion.div whileHover={{ y: -5 }} className="glass p-4 rounded-xl flex items-center gap-3">
-                <FiClock className="text-[var(--accent)] w-6 h-6"/>
-                <div>
-                  <div className="font-semibold text-white">24/7 Support</div>
-                  <div className="text-gray-300 text-sm">Immer erreichbar</div>
-                </div>
-              </motion.div>
-              <motion.div whileHover={{ y: -5 }} className="glass p-4 rounded-xl flex items-center gap-3">
-                <FiCloud className="text-[var(--accent)] w-6 h-6"/>
-                <div>
-                  <div className="font-semibold text-white">CO₂-effizient</div>
-                  <div className="text-gray-300 text-sm">Green hosting & nachhaltige Server</div>
-                </div>
-              </motion.div>
+              {features.map((f, idx) => (
+                <motion.div
+                  key={idx}
+                  whileHover={{ y: -5 }}
+                  className="glass p-4 rounded-xl flex items-center gap-3"
+                >
+                  {f.icon}
+                  <div>
+                    <div className="font-semibold text-white">{f.title}</div>
+                    <div className="text-gray-300 text-sm">{f.subtitle}</div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
 
@@ -72,7 +83,7 @@ export default function Hero() {
           >
             <img 
               src={HeroImg} 
-              alt="Hero" 
+              alt="Illustration der NILL Plattform mit automatisierten Prozessen" 
               className="w-full h-auto rounded-xl shadow-2xl"
             />
           </motion.div>

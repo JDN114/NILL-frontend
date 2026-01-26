@@ -1,19 +1,28 @@
-// FeaturesGrid.jsx
+// src/components/FeaturesGrid.tsx
 import React from "react";
 import FeatureCard from "./FeatureCard";
 
-export default function FeaturesGrid() {
-  const features = [
-    { title: "E-Mail-Kategorisierung", desc: "Automatische Zuordnung nach Absender & Inhalt." },
-    { title: "Zusammenfassungen", desc: "Threads kurz & verständlich zusammengefasst." },
-    { title: "Autom. Antworten", desc: "Vorschläge und Templates für schnelle Antworten." },
-    { title: "Projektplanung", desc: "Automatisierte Projektplanung & Aufgabenmanagement." },
-    { title: "Buchhaltung", desc: "Buchhaltung einfach gemacht - Automatisierte Extraktion." },
-    { title: "Termine & Daten", desc: "Extrahierung von Terminen und wichtigen Fakten." },
-  ];
+interface Feature {
+  title: string;
+  desc: string;
+}
 
+const features: Feature[] = [
+  { title: "E-Mail-Kategorisierung", desc: "Automatische Zuordnung nach Absender & Inhalt." },
+  { title: "Zusammenfassungen", desc: "Threads kurz & verständlich zusammengefasst." },
+  { title: "Autom. Antworten", desc: "Vorschläge und Templates für schnelle Antworten." },
+  { title: "Projektplanung", desc: "Automatisierte Projektplanung & Aufgabenmanagement." },
+  { title: "Buchhaltung", desc: "Buchhaltung einfach gemacht - Automatisierte Extraktion." },
+  { title: "Termine & Daten", desc: "Extrahierung von Terminen und wichtigen Fakten." },
+];
+
+export default function FeaturesGrid() {
   return (
-    <section id="features" className="max-w-7xl mx-auto px-6 py-16">
+    <section
+      id="features"
+      className="max-w-7xl mx-auto px-6 py-16"
+      aria-label="Kernfeatures von NILL"
+    >
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold text-white mt-8">
           Unsere Kernfeatures
@@ -24,8 +33,13 @@ export default function FeaturesGrid() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {features.map((f, idx) => (
-          <FeatureCard key={idx} index={idx} title={f.title} desc={f.desc} />
+        {features.map((feature, idx) => (
+          <FeatureCard
+            key={idx}
+            index={idx}
+            title={feature.title}
+            desc={feature.desc}
+          />
         ))}
       </div>
     </section>

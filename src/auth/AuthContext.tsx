@@ -2,13 +2,15 @@ import {
   createContext,
   useContext,
   useEffect,
-  useState
+  useState,
+  useCallback
 } from "react";
 import api from "../services/api";
 
 type User = {
-  id: number;
+  id: string;        // ✅ UUID
   email: string;
+  is_admin?: boolean;
 };
 
 type AuthContextType = {
@@ -16,6 +18,7 @@ type AuthContextType = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchMe = async () => {
+  const fetchMe = useCallback(async () => {
     try {
       const res = await api.get("/auth/me");
       setUser(res.data);
@@ -33,28 +36,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchMe();
+    let alive = true;
 
-    const listener = () => setUser(null);
-    window.addEventListener("auth:logout", listener);
-    return () => window.removeEventListener("auth:logout", listener);
+    (async () => {
+      try {
+        const res = await api.get("/auth/me");
+        if (alive) setUser(res.data);
+      } catch {
+        if (alive) setUser(null);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
-    await api.post("/auth/login", { email, password });
-    await fetchMe();
+    try {
+      await api.post("/auth/login", { email, password });
+      await fetchMe();
+    } catch (err) {
+      setUser(null);
+      throw err; // 🔥 UI kann Fehler anzeigen
+    }
   };
 
   const logout = async () => {
-    await api.post("/auth/logout");
-    setUser(null);
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        refresh: fetchMe
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -62,6 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth outside provider");
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
   return ctx;
 };
