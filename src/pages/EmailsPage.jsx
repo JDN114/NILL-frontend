@@ -1,5 +1,7 @@
 // src/pages/EmailsPage.jsx
 import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import { GmailContext } from "../context/GmailContext";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
@@ -9,6 +11,8 @@ import EmailComposeModal from "../components/EmailComposeModal";
 import { FiArrowLeft, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 
 export default function EmailsPage() {
+  const navigate = useNavigate();
+  const { user: currentUser } = useContext(AuthContext);
   const {
     emails,
     sentEmails,
@@ -23,16 +27,24 @@ export default function EmailsPage() {
 
   const [mailbox, setMailbox] = useState("inbox");
   const [error, setError] = useState(null);
-
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
   const [priorityFilter, setPriorityFilter] = useState(null); // "high" | "medium" | "low"
   const [categoryGroupFilter, setCategoryGroupFilter] = useState(null); // "ARBEIT" | "PRIVAT" | "SONSTIGES"
 
+  // ---------------- Auth-Guard ----------------
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/login", { replace: true });
+    }
+  }, [currentUser, navigate]);
+
   // ---------------- Emails laden ----------------
   useEffect(() => {
-    const load = async () => {
+    if (!currentUser) return;
+
+    const loadEmails = async () => {
       setError(null);
       try {
         if (mailbox === "inbox") await fetchInboxEmails();
@@ -43,8 +55,8 @@ export default function EmailsPage() {
       }
     };
 
-    load();
-  }, [mailbox, fetchInboxEmails, fetchSentEmails]);
+    loadEmails();
+  }, [currentUser, mailbox, fetchInboxEmails, fetchSentEmails]);
 
   // ---------------- Filter anwenden ----------------
   let displayedEmails = mailbox === "inbox" ? emails : sentEmails;
@@ -89,9 +101,7 @@ export default function EmailsPage() {
 
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
-      {/* ========================= */}
-      {/* TOPBAR */}
-      {/* ========================= */}
+      {/* ================= TOPBAR ================= */}
       {!activeEmail && (
         <div className="flex flex-col gap-2 mb-4">
           <div className="flex gap-2 items-center flex-wrap">
@@ -158,9 +168,7 @@ export default function EmailsPage() {
         </div>
       )}
 
-      {/* ========================= */}
-      {/* EMAIL LISTE */}
-      {/* ========================= */}
+      {/* ================= EMAIL LISTE ================= */}
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           {displayedEmails.length === 0 ? (
@@ -210,9 +218,7 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* ========================= */}
-      {/* EMAIL DETAIL */}
-      {/* ========================= */}
+      {/* ================= EMAIL DETAIL ================= */}
       {activeEmail && (
         <Card className="p-4 max-h-[80vh] overflow-y-auto relative">
           <div className="flex items-center justify-between mb-4">
@@ -260,9 +266,7 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      {/* ========================= */}
-      {/* MODALS */}
-      {/* ========================= */}
+      {/* ================= MODALS ================= */}
       <EmailReplyModal
         emailId={activeEmail?.id}
         open={replyOpen}

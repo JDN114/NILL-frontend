@@ -41,9 +41,9 @@ export function GmailProvider({ children }) {
     try {
       setLoading(true);
       const res = await getGmailEmails("inbox");
-      setEmails(res?.emails || []);
-    } catch {
-      setEmails([]);
+      if (res?.emails) setEmails(res.emails);
+    } catch (err) {
+      console.error("fetchInboxEmails Fehler:", err);
     } finally {
       setLoading(false);
     }
@@ -53,9 +53,9 @@ export function GmailProvider({ children }) {
     try {
       setLoading(true);
       const res = await getGmailEmails("sent");
-      setSentEmails(res?.emails || []);
-    } catch {
-      setSentEmails([]);
+      if (res?.emails) setSentEmails(res.emails);
+    } catch (err) {
+      console.error("fetchSentEmails Fehler:", err);
     } finally {
       setLoading(false);
     }
@@ -64,9 +64,9 @@ export function GmailProvider({ children }) {
   const refreshInboxEmails = async () => {
     try {
       const res = await getGmailEmails("inbox");
-      setEmails(res?.emails || []);
+      if (res?.emails) setEmails(res.emails);
     } catch {
-      setEmails([]);
+      // still
     }
   };
 
