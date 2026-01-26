@@ -1,13 +1,9 @@
-// src/components/FeaturesGrid.tsx
+// src/components/FeaturesGrid.jsx
 import React from "react";
 import FeatureCard from "./FeatureCard";
 
-interface Feature {
-  title: string;
-  desc: string;
-}
-
-const features: Feature[] = [
+// Feature-Daten als einfaches Array von Objekten
+const features = [
   { title: "E-Mail-Kategorisierung", desc: "Automatische Zuordnung nach Absender & Inhalt." },
   { title: "Zusammenfassungen", desc: "Threads kurz & verständlich zusammengefasst." },
   { title: "Autom. Antworten", desc: "Vorschläge und Templates für schnelle Antworten." },
