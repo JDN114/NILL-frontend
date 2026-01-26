@@ -1,5 +1,6 @@
 // src/pages/EmailsPage.jsx
 import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
 import { GmailContext } from "../context/GmailContext";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
@@ -11,8 +12,9 @@ import { useNavigate } from "react-router-dom";
 
 export default function EmailsPage() {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext); // 🔹 AuthContext nutzen
   const {
-    currentUser,
+    connected,
     emails,
     sentEmails,
     activeEmail,
@@ -29,17 +31,17 @@ export default function EmailsPage() {
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
-  const [priorityFilter, setPriorityFilter] = useState(null); // "high" | "medium" | "low"
-  const [categoryGroupFilter, setCategoryGroupFilter] = useState(null); // "ARBEIT" | "PRIVAT" | "SONSTIGES"
+  const [priorityFilter, setPriorityFilter] = useState(null);
+  const [categoryGroupFilter, setCategoryGroupFilter] = useState(null);
 
   // ----------------------------
   // AUTH-GUARD
   // ----------------------------
   useEffect(() => {
-    if (!currentUser) {
+    if (!user) {
       navigate("/login", { replace: true });
     }
-  }, [currentUser, navigate]);
+  }, [user, navigate]);
 
   // ----------------------------
   // Emails laden
@@ -62,7 +64,7 @@ export default function EmailsPage() {
       }
     };
     load();
-  }, [mailbox]);
+  }, [mailbox, fetchInboxEmails, fetchSentEmails]);
 
   // ----------------------------
   // FILTER LOGIK
