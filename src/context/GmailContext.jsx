@@ -1,4 +1,3 @@
-// src/context/GmailContext.jsx
 import React, { createContext, useEffect, useState } from "react";
 import {
   getGmailAuthUrl,
@@ -11,26 +10,15 @@ import {
 export const GmailContext = createContext(null);
 
 export function GmailProvider({ children }) {
-  // ---------------------------------
-  // STATE
-  // ---------------------------------
-  const [connected, setConnected] = useState({
-    connected: false,
-    email: null,
-    expired: null,
-  });
-
-  const [emails, setEmails] = useState([]); // Inbox
-  const [sentEmails, setSentEmails] = useState([]); // Gesendet
+  const [connected, setConnected] = useState({ connected: false, email: null, expired: null });
+  const [emails, setEmails] = useState([]);
+  const [sentEmails, setSentEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
-  const [currentMailbox, setCurrentMailbox] = useState("inbox"); // inbox | sent
-
+  const [currentMailbox, setCurrentMailbox] = useState("inbox");
   const [loading, setLoading] = useState(true);
   const [loadingEmail, setLoadingEmail] = useState(false);
 
-  // ---------------------------------
-  // STATUS
-  // ---------------------------------
+  // ------------------ Status ------------------
   const fetchStatus = async () => {
     try {
       const res = await getGmailStatus();
@@ -48,15 +36,28 @@ export function GmailProvider({ children }) {
     }
   };
 
-  // ---------------------------------
-  // EMAIL LISTS
-  // ---------------------------------
+  // ------------------ Emails ------------------
   const fetchInboxEmails = async () => {
     try {
+      setLoading(true);
       const res = await getGmailEmails("inbox");
       setEmails(res?.emails || []);
     } catch {
       setEmails([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSentEmails = async () => {
+    try {
+      setLoading(true);
+      const res = await getGmailEmails("sent");
+      setSentEmails(res?.emails || []);
+    } catch {
+      setSentEmails([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,18 +70,7 @@ export function GmailProvider({ children }) {
     }
   };
 
-  const fetchSentEmails = async () => {
-    try {
-      const res = await getGmailEmails("sent");
-      setSentEmails(res?.emails || []);
-    } catch {
-      setSentEmails([]);
-    }
-  };
-
-  // ---------------------------------
-  // EMAIL DETAIL
-  // ---------------------------------
+  // ------------------ Email Detail ------------------
   const openEmail = async (id, mailbox = "inbox") => {
     if (!id) return;
     setLoadingEmail(true);
@@ -90,7 +80,6 @@ export function GmailProvider({ children }) {
       const data = await getGmailEmailDetail(id);
       setActiveEmail(data || null);
 
-      // optional: read-mark nur für Inbox
       if (mailbox === "inbox") {
         try {
           await markEmailRead(id);
@@ -106,12 +95,9 @@ export function GmailProvider({ children }) {
 
   const closeEmail = () => setActiveEmail(null);
 
-  // ---------------------------------
-  // INIT (nur einmal beim Mount)
-  // ---------------------------------
+  // ------------------ Init ------------------
   useEffect(() => {
     let mounted = true;
-
     async function init() {
       const status = await fetchStatus();
       if (mounted && status.connected) {
@@ -119,28 +105,25 @@ export function GmailProvider({ children }) {
       }
       if (mounted) setLoading(false);
     }
-
     init();
     return () => {
       mounted = false;
     };
   }, []);
 
-  // ---------------------------------
-  // Polling für KI-verarbeitete Emails
-  // ---------------------------------
+  // ------------------ Polling für AI ------------------
   useEffect(() => {
-    if (emails.some((e) => e.ai_status === "pending")) {
-      const timer = setTimeout(() => {
-        refreshInboxEmails();
-      }, 3000); // alle 3 Sekunden prüfen
-      return () => clearTimeout(timer);
-    }
+    const pending = emails.some((e) => e.ai_status === "pending");
+    if (!pending) return;
+
+    const timer = setTimeout(() => {
+      refreshInboxEmails();
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, [emails]);
 
-  // ---------------------------------
-  // CONNECT
-  // ---------------------------------
+  // ------------------ Connect ------------------
   const connectGmail = async () => {
     try {
       const url = await getGmailAuthUrl();
@@ -150,9 +133,6 @@ export function GmailProvider({ children }) {
     }
   };
 
-  // ---------------------------------
-  // CONTEXT EXPORT
-  // ---------------------------------
   return (
     <GmailContext.Provider
       value={{
