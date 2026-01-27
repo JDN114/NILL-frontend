@@ -13,12 +13,12 @@ import { FiArrowLeft, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useContext(AuthContext);
+
   const {
     emails,
     sentEmails,
     activeEmail,
-    currentMailbox,
-    loading: contextLoading,
+    initializing, // ✅ WICHTIG: nur Initialisierung blockiert die Page
     openEmail,
     closeEmail,
     fetchInboxEmails,
@@ -30,10 +30,10 @@ export default function EmailsPage() {
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
-  const [priorityFilter, setPriorityFilter] = useState(null); // "high" | "medium" | "low"
-  const [categoryGroupFilter, setCategoryGroupFilter] = useState(null); // "ARBEIT" | "PRIVAT" | "SONSTIGES"
+  const [priorityFilter, setPriorityFilter] = useState(null); // high | medium | low
+  const [categoryGroupFilter, setCategoryGroupFilter] = useState(null); // ARBEIT | PRIVAT | SONSTIGES
 
-  // ---------------- Auth-Guard ----------------
+  // ---------------- Auth Guard ----------------
   useEffect(() => {
     if (!currentUser) {
       navigate("/login", { replace: true });
@@ -47,8 +47,11 @@ export default function EmailsPage() {
     const loadEmails = async () => {
       setError(null);
       try {
-        if (mailbox === "inbox") await fetchInboxEmails();
-        else if (mailbox === "sent") await fetchSentEmails();
+        if (mailbox === "inbox") {
+          await fetchInboxEmails();
+        } else {
+          await fetchSentEmails();
+        }
       } catch (err) {
         console.error(err);
         setError("Fehler beim Laden der E-Mails");
@@ -67,6 +70,7 @@ export default function EmailsPage() {
       (e) => (e.priority || "").toLowerCase() === priorityFilter
     );
   }
+
   if (categoryGroupFilter) {
     displayedEmails = displayedEmails.filter(
       (e) => e.category_group === categoryGroupFilter
@@ -86,11 +90,13 @@ export default function EmailsPage() {
     }
   };
 
-  // ---------------- Laden abwarten ----------------
-  if (contextLoading) {
+  // ---------------- Initialisierung abwarten ----------------
+  if (initializing) {
     return (
       <PageLayout>
-        <p className="text-gray-400 text-center py-10">Lädt E-Mails…</p>
+        <p className="text-gray-400 text-center py-10">
+          Initialisiere Gmail…
+        </p>
       </PageLayout>
     );
   }
@@ -153,7 +159,9 @@ export default function EmailsPage() {
               <button
                 key={c}
                 onClick={() =>
-                  setCategoryGroupFilter(categoryGroupFilter === c ? null : c)
+                  setCategoryGroupFilter(
+                    categoryGroupFilter === c ? null : c
+                  )
                 }
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   categoryGroupFilter === c
@@ -236,6 +244,7 @@ export default function EmailsPage() {
           <h2 className="text-2xl font-bold mb-1">
             {activeEmail.subject || "(Kein Betreff)"}
           </h2>
+
           <p className="text-xs text-gray-400 mb-4">
             {mailbox === "inbox"
               ? activeEmail.from || "(unbekannt)"
@@ -272,6 +281,7 @@ export default function EmailsPage() {
         open={replyOpen}
         onClose={() => setReplyOpen(false)}
       />
+
       <EmailComposeModal
         open={composeOpen}
         onClose={() => setComposeOpen(false)}
