@@ -176,7 +176,7 @@ export default function EmailsPage() {
                 <div className="absolute z-20 mt-2 w-64 bg-[#0b0f16] border border-gray-800 rounded-xl p-4 shadow-xl animate-[fadeIn_0.15s_ease-out]">
                   <p className="text-xs text-gray-400 mb-2">Priorität</p>
                   <div className="flex gap-2 mb-4">
-                    {["high", "medium", "low"].map((p) => (
+                    {["High", "Medium", "Low"].map((p) => (
                       <button
                         key={p}
                         onClick={() =>

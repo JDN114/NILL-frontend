@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Modal from "./ui/Modal";
 import api from "../services/api";
 
@@ -21,11 +21,12 @@ export default function EmailComposeModal({ open, onClose }) {
 
   if (!open) return null;
 
-  const handleSend = async () => {
-    const toTrim = to.trim();
-    const bodyTrim = body.trim();
-    const subjectTrim = subject.trim();
+  // ✅ STABIL & RENDER-SAFE
+  const toTrim = useMemo(() => (to || "").trim(), [to]);
+  const subjectTrim = useMemo(() => (subject || "").trim(), [subject]);
+  const bodyTrim = useMemo(() => (body || "").trim(), [body]);
 
+  const handleSend = async () => {
     if (!toTrim || !bodyTrim || loading) return;
 
     try {
@@ -42,7 +43,8 @@ export default function EmailComposeModal({ open, onClose }) {
     } catch (err) {
       console.error(err);
       setError(
-        err?.response?.data?.message || "E-Mail konnte nicht gesendet werden."
+        err?.response?.data?.message ||
+          "E-Mail konnte nicht gesendet werden."
       );
     } finally {
       setLoading(false);
@@ -89,6 +91,7 @@ export default function EmailComposeModal({ open, onClose }) {
           >
             Abbrechen
           </button>
+
           <button
             onClick={handleSend}
             disabled={loading || !toTrim || !bodyTrim}
