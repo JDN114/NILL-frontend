@@ -19,9 +19,7 @@ export default function EmailComposeModal({ open, onClose }) {
     }
   }, [open]);
 
-  if (!open) return null;
-
-  // ✅ STABIL & RENDER-SAFE
+  // ✅ HOOKS IMMER AUFRUFEN
   const toTrim = useMemo(() => (to || "").trim(), [to]);
   const subjectTrim = useMemo(() => (subject || "").trim(), [subject]);
   const bodyTrim = useMemo(() => (body || "").trim(), [body]);
@@ -50,6 +48,9 @@ export default function EmailComposeModal({ open, onClose }) {
       setLoading(false);
     }
   };
+
+  // ✅ EARLY RETURN ERST NACH ALLEN HOOKS
+  if (!open) return null;
 
   return (
     <Modal open={open} onClose={onClose} title="Neue E-Mail">
