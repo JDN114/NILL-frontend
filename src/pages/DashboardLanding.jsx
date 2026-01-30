@@ -18,8 +18,12 @@ export default function DashboardLanding() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link to="/dashboard/emails" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 📧 Emails */}
+        <Link
+          to="/dashboard/emails"
+          className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+        >
           <Card
             title="Emails"
             description="Postfach, Filter & Kategorien"
@@ -27,7 +31,23 @@ export default function DashboardLanding() {
           />
         </Link>
 
-        <Link to="/dashboard/settings" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+        {/* 📊 Buchhaltung */}
+        <Link
+          to="/dashboard/accounting"
+          className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+        >
+          <Card
+            title="Buchhaltung"
+            description="Rechnungen, Einnahmen & Ausgaben"
+            className="hover:shadow-lg transition"
+          />
+        </Link>
+
+        {/* ⚙️ Einstellungen */}
+        <Link
+          to="/dashboard/settings"
+          className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+        >
           <Card
             title="Einstellungen"
             description="Gmail Verbindung & Account"

@@ -20,6 +20,7 @@ import AdminPage from "./pages/AdminPage";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
+import AccountingPage from "./pages/AccountingPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -84,6 +85,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/accounting"
+            element={
+              <ProtectedRoute>
+                <AccountingPage />
               </ProtectedRoute>
             }
           />
