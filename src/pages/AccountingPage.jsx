@@ -1,80 +1,54 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import Card from "../components/ui/Card";
-import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
+import StatsCards from "../components/accounting/StatsCards";
+import ExpensePieChart from "../components/accounting/ExpensePieChart";
+import AccountingActions from "../components/accounting/AccountingActions";
+import AccountingTable from "../components/accounting/AccountingTable";
+import TodosPanel from "../components/accounting/TodosPanel";
 import api from "../services/api";
 
 export default function AccountingPage() {
-  const [invoices, setInvoices] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [createOpen, setCreateOpen] = useState(false);
 
-  const loadInvoices = async () => {
+  useEffect(() => {
+    fetchAccountingData();
+  }, []);
+
+  const fetchAccountingData = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/accounting/invoices");
-      setInvoices(res.data);
+      const res = await api.get("/accounting/overview");
+      setData(res.data);
     } catch (err) {
       console.error(err);
-      setError("Rechnungen konnten nicht geladen werden");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadInvoices();
-  }, []);
+  if (loading) {
+    return (
+      <PageLayout>
+        <div className="text-white">Lade Buchhaltung…</div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">Buchhaltung</h1>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white"
-        >
-          Neue Rechnung
-        </button>
+      <h1 className="text-2xl font-bold text-white mb-6">Buchhaltung</h1>
+
+      <StatsCards stats={data.stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <ExpensePieChart data={data.expenseCategories} />
+        <TodosPanel todos={data.todos} />
       </div>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      <AccountingActions onRefresh={fetchAccountingData} />
 
-      <Card>
-        {loading ? (
-          <p className="text-gray-400">Lade Rechnungen…</p>
-        ) : invoices.length === 0 ? (
-          <p className="text-gray-400">Noch keine Rechnungen</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="text-gray-400 border-b border-gray-800">
-              <tr>
-                <th>Nr.</th>
-                <th>Betrag</th>
-                <th>Status</th>
-                <th>Fällig</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((inv) => (
-                <tr key={inv.id} className="border-b border-gray-800">
-                  <td>{inv.invoice_number}</td>
-                  <td>{inv.total_amount} €</td>
-                  <td>{inv.status}</td>
-                  <td>{inv.due_date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-
-      <InvoiceCreateModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={loadInvoices}
-      />
+      <AccountingTable invoices={data.invoices} />
     </PageLayout>
   );
 }
