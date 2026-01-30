@@ -1,105 +1,103 @@
 // src/pages/AccountingPage.jsx
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
-import api from "../services/api";
 import ExpensePieChart from "../components/accounting/ExpensePieChart";
+import InvoiceList from "../components/accounting/InvoiceList";
 import ReceiptUpload from "../components/accounting/ReceiptUpload";
+import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
+import api from "../services/api";
 
 export default function AccountingPage() {
-  const [expenses, setExpenses] = useState({
-    stats: [],
-    receipts: [],
-  });
+  const [stats, setStats] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  // ---------------- Daten laden ----------------
   useEffect(() => {
-    const loadExpenses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
         const res = await api.get("/accounting/dashboard");
-        setExpenses(res.data || { stats: [], receipts: [] });
+        setStats(res.data?.stats || []); // Default leer
+        setInvoices(res.data?.invoices || []);
+        setReceipts(res.data?.receipts || []);
       } catch (err) {
-        console.error("Accounting API Error:", err);
-        setError("Daten konnten nicht geladen werden.");
+        console.error("Accounting fetch error:", err);
+        setStats([]);
+        setInvoices([]);
+        setReceipts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadExpenses();
+    fetchData();
   }, []);
-
-  if (loading) {
-    return (
-      <PageLayout>
-        <p className="text-gray-400 text-center py-10">Lade Buchhaltungsdaten…</p>
-      </PageLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageLayout>
-        <p className="text-red-500 text-center py-10">{error}</p>
-      </PageLayout>
-    );
-  }
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Buchhaltung</h1>
 
-      {/* ================= Stats Sektion ================= */}
+      {/* 📊 Statistik Sektion */}
       <Card className="mb-6 p-4">
-        <h2 className="text-lg font-semibold mb-4">Ausgaben nach Kategorie</h2>
-
-        {expenses?.stats?.length > 0 ? (
-          <ExpensePieChart data={expenses.stats} />
+        <h2 className="font-semibold mb-2">Ausgaben nach Kategorie</h2>
+        {stats.length > 0 ? (
+          <ExpensePieChart data={stats} />
         ) : (
-          <p className="text-gray-400">Keine Ausgaben-Daten verfügbar</p>
+          <p className="text-gray-400 text-sm">Keine Daten vorhanden</p>
         )}
       </Card>
 
-      {/* ================= Rechnungserstellung & Upload ================= */}
+      {/* 🧾 Rechnungen */}
       <Card className="mb-6 p-4">
-        <h2 className="text-lg font-semibold mb-4">Neue Rechnung</h2>
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-semibold">Rechnungen</h2>
           <button
-            onClick={() => alert("Rechnung erstellen (Demo)") }
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+            onClick={() => setCreateOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
           >
-            Neue Rechnung erstellen
+            Neue Rechnung
           </button>
-
-          <ReceiptUpload onUpload={(newReceipt) => {
-            setExpenses((prev) => ({
-              ...prev,
-              receipts: [...prev.receipts, newReceipt]
-            }));
-          }} />
         </div>
-      </Card>
-
-      {/* ================= Rechnungen Übersicht ================= */}
-      <Card className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Rechnungen & Belege</h2>
-        {expenses?.receipts?.length > 0 ? (
-          <ul className="divide-y divide-gray-700">
-            {expenses.receipts.map((r) => (
-              <li key={r.id} className="py-2 flex justify-between items-center">
-                <span>{r.name || "(Unbekannter Beleg)"}</span>
-                <span className="text-sm text-gray-400">{r.amount ? `${r.amount} €` : ""}</span>
-              </li>
-            ))}
-          </ul>
+        {invoices.length > 0 ? (
+          <InvoiceList invoices={invoices} />
         ) : (
-          <p className="text-gray-400">Noch keine Rechnungen hochgeladen</p>
+          <p className="text-gray-400 text-sm">Noch keine Rechnungen vorhanden</p>
         )}
       </Card>
+
+      {/* 📄 Beleg Upload */}
+      <Card className="mb-6 p-4">
+        <h2 className="font-semibold mb-2">Belege hochladen</h2>
+        <ReceiptUpload
+          onUpload={(newReceipt) =>
+            setReceipts((prev) => [newReceipt, ...prev])
+          }
+        />
+        {receipts.length > 0 && (
+          <div className="mt-4">
+            {receipts.map((r) => (
+              <div
+                key={r.id}
+                className="text-sm text-gray-300 border-b border-gray-700 py-1"
+              >
+                {r.filename}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ✨ Modals */}
+      <InvoiceCreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(invoice) =>
+          setInvoices((prev) => [invoice, ...prev])
+        }
+      />
     </PageLayout>
   );
 }
