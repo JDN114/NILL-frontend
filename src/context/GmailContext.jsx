@@ -124,14 +124,30 @@ export function GmailProvider({ children }) {
   }, [emails]);
 
   // ------------------ Connect ------------------
-  const connectGmail = async () => {
-    try {
-      const url = await getGmailAuthUrl();
-      if (url) window.location.href = url;
-    } catch (err) {
-      console.error("Fehler beim Verbinden von Gmail:", err);
+// frontend/src/context/GmailContext.jsx
+const connectGmail = async () => {
+  try {
+    // ✅ Auth URL vom Backend holen, Cookies mitsenden
+    const res = await fetch("/gmail/auth-url", {
+      method: "GET",
+      credentials: "include", // sehr wichtig! schickt JWT Cookie mit
+    });
+
+    if (!res.ok) {
+      throw new Error(`Server antwortete mit ${res.status}`);
     }
-  };
+
+    const data = await res.json();
+    const url = data.auth_url;
+
+    if (url) {
+      // Weiterleitung zu Google OAuth
+      window.location.href = url;
+    }
+  } catch (err) {
+    console.error("Fehler beim Verbinden von Gmail:", err);
+  }
+};
 
   return (
     <GmailContext.Provider

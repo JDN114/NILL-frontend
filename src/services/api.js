@@ -82,8 +82,10 @@ export async function getCurrentUser() {
 // GMAIL
 // --------------------------------------------------
 export async function getGmailAuthUrl() {
-  const res = await api.get("/gmail/auth-url");
-  return res.data?.auth_url ?? null;
+  const res = await api.get("/gmail/auth-url", {
+    withCredentials: true,
+  });
+  return res.data.auth_url;
 }
 
 export async function getGmailStatus() {
