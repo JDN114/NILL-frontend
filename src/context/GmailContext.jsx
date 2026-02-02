@@ -125,24 +125,27 @@ export function GmailProvider({ children }) {
 
   // ------------------ Connect ------------------
 // ------------------ Connect ------------------
+// Connect Gmail
 const connectGmail = async () => {
   try {
     const res = await fetch("/gmail/auth-url", {
       method: "GET",
-      credentials: "include",
+      credentials: "include", // ✅ sendet JWT-Cookie
     });
 
     if (!res.ok) {
-      const text = await res.text(); // <- statt json
-      throw new Error(`Server antwortete mit ${res.status}: ${text}`);
+      throw new Error(`Server antwortete mit ${res.status}`);
     }
 
     const data = await res.json();
-    const url = data.auth_url;
 
-    if (!url) throw new Error("Keine Auth-URL erhalten");
+    if (!data || !data.auth_url) {
+      throw new Error("Backend hat keine gültige auth_url geliefert");
+    }
 
-    window.location.href = url;
+    // Weiterleitung zu Google OAuth
+    window.location.href = data.auth_url;
+
   } catch (err) {
     console.error("Fehler beim Verbinden von Gmail:", err);
   }
