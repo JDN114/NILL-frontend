@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from "react";
+#import React, { createContext, useEffect, useState } from "react";
 import {
   getGmailAuthUrl,
   getGmailStatus,
@@ -127,24 +127,21 @@ export function GmailProvider({ children }) {
 // ------------------ Connect ------------------
 const connectGmail = async () => {
   try {
-    // ✅ Auth URL vom Backend holen, Cookies mitsenden
     const res = await fetch("/gmail/auth-url", {
       method: "GET",
-      credentials: "include", // 🔹 WICHTIG! schickt JWT Cookie mit
+      credentials: "include",
     });
 
     if (!res.ok) {
-      throw new Error(`Server antwortete mit ${res.status}`);
+      const text = await res.text(); // <- statt json
+      throw new Error(`Server antwortete mit ${res.status}: ${text}`);
     }
 
     const data = await res.json();
     const url = data.auth_url;
 
-    if (!url) {
-      throw new Error("Keine Auth-URL vom Backend erhalten");
-    }
+    if (!url) throw new Error("Keine Auth-URL erhalten");
 
-    // Weiterleitung zu Google OAuth
     window.location.href = url;
   } catch (err) {
     console.error("Fehler beim Verbinden von Gmail:", err);
