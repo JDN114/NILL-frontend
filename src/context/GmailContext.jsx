@@ -159,3 +159,26 @@ const connectGmail = async () => {
     alert("Gmail-Verbindung fehlgeschlagen. Bitte neu einloggen.");
   }
 };
+ 
+  return (
+    <GmailContext.Provider
+      value={{
+        connected,
+        emails,
+        sentEmails,
+        activeEmail,
+        currentMailbox,
+        loading,
+        loadingEmail,
+
+        fetchInboxEmails,
+        fetchSentEmails,
+        openEmail,
+        closeEmail,
+        connectGmail,
+      }}
+    >
+      {children}
+    </GmailContext.Provider>
+  );
+}
