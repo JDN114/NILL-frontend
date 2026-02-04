@@ -123,7 +123,6 @@ export function GmailProvider({ children }) {
     return () => clearTimeout(timer);
   }, [emails]);
 
-  // ------------------ Connect ------------------
 // ------------------ Connect ------------------
 // Connect Gmail
 const connectGmail = async () => {
@@ -134,42 +133,29 @@ const connectGmail = async () => {
     });
 
     if (!res.ok) {
-      throw new Error(`Server antwortete mit ${res.status}`);
+      // ⛔ wichtig: KEIN res.json() bei Fehlerstatus
+      const text = await res.text();
+      throw new Error(`Server ${res.status}: ${text}`);
     }
 
-    const data = await res.json();
-
-    if (!data || !data.auth_url) {
-      throw new Error("Backend hat keine gültige auth_url geliefert");
+    // ✅ defensiv lesen
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Backend hat kein gültiges JSON geliefert");
     }
 
-    // Weiterleitung zu Google OAuth
+    if (!data?.auth_url) {
+      throw new Error("Backend hat keine auth_url geliefert");
+    }
+
+    // ✅ Weiterleitung zu Google OAuth
     window.location.href = data.auth_url;
 
   } catch (err) {
     console.error("Fehler beim Verbinden von Gmail:", err);
+    alert("Gmail konnte nicht verbunden werden. Bitte neu einloggen und erneut versuchen.");
   }
 };
-
-  return (
-    <GmailContext.Provider
-      value={{
-        connected,
-        emails,
-        sentEmails,
-        activeEmail,
-        currentMailbox,
-        loading,
-        loadingEmail,
-
-        fetchInboxEmails,
-        fetchSentEmails,
-        openEmail,
-        closeEmail,
-        connectGmail,
-      }}
-    >
-      {children}
-    </GmailContext.Provider>
-  );
-}
