@@ -124,39 +124,8 @@ export function GmailProvider({ children }) {
   }, [emails]);
 
 // ------------------ Connect ------------------
-const connectGmail = async () => {
-  try {
-    const res = await fetch("/gmail/auth-url", {
-      method: "GET",
-      credentials: "include", // ✅ sendet JWT-Cookie
-    });
-
-    // 1️⃣ Prüfe Statuscode
-    if (!res.ok) {
-      // Versuche, Fehlermeldung aus JSON zu lesen
-      let errMsg = `Server antwortete mit ${res.status}`;
-      try {
-        const errData = await res.json();
-        if (errData?.detail) errMsg = errData.detail;
-        else if (errData?.error) errMsg = errData.error;
-      } catch {}
-      throw new Error(errMsg);
-    }
-
-    // 2️⃣ JSON sicher lesen
-    const data = await res.json();
-
-    if (!data?.auth_url) {
-      throw new Error("Backend hat keine gültige auth_url geliefert");
-    }
-
-    // 3️⃣ Weiterleitung zu Google OAuth
-    window.location.href = data.auth_url;
-
-  } catch (err) {
-    console.error("Fehler beim Verbinden von Gmail:", err);
-    alert(err.message); // optional: User-Feedback
-  }
+const connectGmail = () => {
+  window.location.href = "/gmail/auth-url";
 };
  
   return (
