@@ -1,6 +1,5 @@
 import React, { createContext, useEffect, useState } from "react";
 import {
-  getGmailAuthUrl,
   getGmailStatus,
   getGmailEmails,
   getGmailEmailDetail,
@@ -123,11 +122,21 @@ export function GmailProvider({ children }) {
     return () => clearTimeout(timer);
   }, [emails]);
 
-// ------------------ Connect ------------------
-const connectGmail = () => {
-  window.location.href = "/gmail/auth-url";
-};
- 
+  // ------------------ Connect ------------------
+  const connectGmail = async () => {
+    try {
+      // 🔹 Backend vollständige URL nutzen
+      const backendUrl = import.meta.env.VITE_API_URL;
+      if (!backendUrl) throw new Error("VITE_API_URL ist nicht gesetzt");
+
+      // 🔹 Redirect direkt zum Backend Endpoint
+      window.location.href = `${backendUrl}/gmail/auth-url`;
+    } catch (err) {
+      console.error("Fehler beim Verbinden von Gmail:", err);
+      alert(err.message);
+    }
+  };
+
   return (
     <GmailContext.Provider
       value={{
@@ -138,7 +147,6 @@ const connectGmail = () => {
         currentMailbox,
         loading,
         loadingEmail,
-
         fetchInboxEmails,
         fetchSentEmails,
         openEmail,
