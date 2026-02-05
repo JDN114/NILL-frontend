@@ -1,20 +1,12 @@
 // src/services/api.js
 import axios from "axios";
 
-// --------------------------------------------------
-// BASIS-URL (KEIN HARDCODED PROD FALLBACK)
-// --------------------------------------------------
 const API_URL = import.meta.env.VITE_API_URL;
 
 if (!API_URL) {
-  throw new Error(
-    "VITE_API_URL ist nicht gesetzt – Abbruch aus Sicherheitsgründen"
-  );
+  throw new Error("VITE_API_URL ist nicht gesetzt – Abbruch aus Sicherheitsgründen");
 }
 
-// --------------------------------------------------
-// AXIOS INSTANZ
-// --------------------------------------------------
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // 🔐 HttpOnly Cookies
@@ -24,43 +16,15 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// --------------------------------------------------
-// RESPONSE INTERCEPTOR – AUTH & FEHLER
-// --------------------------------------------------
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error?.response?.status;
-
-    // 🔐 Session abgelaufen / ungültig
-    if (status === 401) {
-      // optional: global logout event
-      window.dispatchEvent(new Event("auth:logout"));
-    }
-
-    // ❌ KEINE sensitiven Daten loggen
-    if (import.meta.env.DEV) {
-      console.error("API Error:", {
-        url: error?.config?.url,
-        status,
-        message: error?.message,
-      });
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-// --------------------------------------------------
+// ------------------------------------
 // AUTH
-// --------------------------------------------------
+// ------------------------------------
 export async function registerUser(email, password) {
   const res = await api.post("/auth/register", { email, password });
   return res.data;
 }
 
 export async function loginUser(email, password) {
-  // Backend setzt HttpOnly Cookie
   const res = await api.post("/auth/login", { email, password });
   return res.data;
 }
@@ -78,14 +42,14 @@ export async function getCurrentUser() {
   }
 }
 
-// --------------------------------------------------
+// ------------------------------------
 // GMAIL
-// --------------------------------------------------
-export async function getGmailAuthUrl() {
-  const res = await api.get("/gmail/auth-url", {
-    withCredentials: true,
-  });
-  return res.data.auth_url;
+// ------------------------------------
+
+// ✅ Direkt weiterleiten: Backend gibt Redirect zurück
+export function connectGmail() {
+  // Hier kein fetch/Axios mehr – wir gehen direkt auf den Backend-Endpoint
+  window.location.href = `${API_URL}/gmail/auth-url`;
 }
 
 export async function getGmailStatus() {
@@ -94,21 +58,13 @@ export async function getGmailStatus() {
 }
 
 export async function getGmailEmails(mailbox = "inbox") {
-  const res = await api.get("/gmail/emails", {
-    params: { mailbox },
-  });
+  const res = await api.get("/gmail/emails", { params: { mailbox } });
   return res.data;
 }
 
-export async function getGmailEmailDetail(id, mailbox = "inbox") {
-  if (!id) {
-    throw new Error("Email-ID fehlt");
-  }
-
-  const res = await api.get(`/gmail/emails/${id}`, {
-    params: { mailbox },
-  });
-
+export async function getGmailEmailDetail(id) {
+  if (!id) throw new Error("Email-ID fehlt");
+  const res = await api.get(`/gmail/emails/${id}`);
   return res.data;
 }
 
@@ -117,11 +73,8 @@ export async function markEmailRead(id) {
   try {
     await api.post(`/gmail/emails/${id}/read`);
   } catch {
-    // absichtlich still
+    // still
   }
 }
 
-// --------------------------------------------------
-// DEFAULT EXPORT
-// --------------------------------------------------
 export default api;
