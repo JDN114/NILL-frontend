@@ -110,17 +110,44 @@ export function GmailProvider({ children }) {
     };
   }, []);
 
-  // ------------------ Polling für AI ------------------
-  useEffect(() => {
-    const pending = emails.some((e) => e.ai_status === "pending");
-    if (!pending) return;
+// ------------------ Intelligentes Polling ------------------
+useEffect(() => {
+  if (!connected?.connected) return;
 
-    const timer = setTimeout(() => {
+  // 🔋 Nur wenn Tab aktiv ist pollen
+  let interval;
+
+  const startPolling = () => {
+    interval = setInterval(() => {
       refreshInboxEmails();
-    }, 3000);
+    }, 60000); // alle 60 Sekunden
+  };
 
-    return () => clearTimeout(timer);
-  }, [emails]);
+  const stopPolling = () => {
+    if (interval) clearInterval(interval);
+  };
+
+  const handleVisibility = () => {
+    if (document.visibilityState === "visible") {
+      refreshInboxEmails(); // sofort beim Zurückkommen
+      startPolling();
+    } else {
+      stopPolling();
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibility);
+
+  if (document.visibilityState === "visible") {
+    startPolling();
+  }
+
+  return () => {
+    stopPolling();
+    document.removeEventListener("visibilitychange", handleVisibility);
+  };
+}, [connected]);
+
 
   // ------------------ Connect ------------------
   const connectGmail = async () => {
