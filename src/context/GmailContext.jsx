@@ -25,7 +25,7 @@ export const GmailProvider = ({ children }) => {
 
   // -------------------- Connect Gmail --------------------
   const connectGmail = () => {
-    // 🔹 Direkt öffnen, kein fetch, damit Browser Redirect folgt
+    // Direkt auf den FastAPI-Endpunkt gehen → der gibt RedirectResponse → Browser springt zu Google
     window.location.href = "/api/gmail/auth-url";
   };
 
