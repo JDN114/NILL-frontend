@@ -14,7 +14,7 @@ export const GmailProvider = ({ children }) => {
 
   // -------------------- Rate-Limit & Throttle --------------------
   const [lastFetch, setLastFetch] = useState(0);
-  const FETCH_INTERVAL = 5000; // 5 Sekunden Minimum zwischen Requests
+  const FETCH_INTERVAL = 5000; // Minimum 5 Sekunden zwischen Requests
 
   const throttleFetch = async (fetchFunc) => {
     const now = Date.now();
@@ -24,27 +24,15 @@ export const GmailProvider = ({ children }) => {
   };
 
   // -------------------- Connect Gmail --------------------
-const connectGmail = async () => {
-  try {
-    const res = await fetch("/api/gmail/auth-url");
-    
-    if (!res.ok) {
-      console.error("Failed to fetch Gmail auth URL", res.status);
-      return;
+  const connectGmail = async () => {
+    if (!user) return;
+    try {
+      // Direkt redirecten, kein JSON parsen!
+      window.location.href = "/api/gmail/auth-url";
+    } catch (err) {
+      console.error("Error connecting Gmail:", err);
     }
-
-    const data = await res.json();
-
-    // 🔹 Fix für den Redirect
-    if (data.redirected && data.url) {
-      window.location.href = data.url;
-    } else {
-      console.error("No redirect URL returned from Gmail auth endpoint", data);
-    }
-  } catch (err) {
-    console.error("Error connecting Gmail:", err);
-  }
-};
+  };
 
   // -------------------- Fetch Emails --------------------
   const fetchInboxEmails = useCallback(async () => {
@@ -63,7 +51,7 @@ const connectGmail = async () => {
         setEmails(data.emails || []);
       });
     } catch (err) {
-      console.error(err);
+      console.error("Inbox fetch error:", err);
     } finally {
       setInitializing(false);
     }
@@ -85,7 +73,7 @@ const connectGmail = async () => {
         setSentEmails(data.emails || []);
       });
     } catch (err) {
-      console.error(err);
+      console.error("Sent fetch error:", err);
     } finally {
       setInitializing(false);
     }
