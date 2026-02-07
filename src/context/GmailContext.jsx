@@ -24,24 +24,27 @@ export const GmailProvider = ({ children }) => {
   };
 
   // -------------------- Connect Gmail --------------------
-  const connectGmail = useCallback(async () => {
-    if (!user) return;
-    try {
-      const res = await fetch("/api/gmail/auth-url", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      // Google Redirect
-      if (res.redirected) {
-        window.location.href = res.url;
-      } else {
-        console.error("No redirect from Gmail auth-url");
-      }
-    } catch (err) {
-      console.error("Gmail connect failed:", err);
+const connectGmail = async () => {
+  try {
+    const res = await fetch("/api/gmail/auth-url");
+    
+    if (!res.ok) {
+      console.error("Failed to fetch Gmail auth URL", res.status);
+      return;
     }
-  }, [user]);
+
+    const data = await res.json();
+
+    // 🔹 Fix für den Redirect
+    if (data.redirected && data.url) {
+      window.location.href = data.url;
+    } else {
+      console.error("No redirect URL returned from Gmail auth endpoint", data);
+    }
+  } catch (err) {
+    console.error("Error connecting Gmail:", err);
+  }
+};
 
   // -------------------- Fetch Emails --------------------
   const fetchInboxEmails = useCallback(async () => {
