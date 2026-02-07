@@ -1,11 +1,5 @@
 // src/pages/EmailsPage.jsx
-import {
-  useContext,
-  useEffect,
-  useState,
-  useMemo,
-  useRef,
-} from "react";
+import { useContext, useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { GmailContext } from "../context/GmailContext";
@@ -14,13 +8,7 @@ import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import EmailReplyModal from "../components/EmailReplyModal";
 import EmailComposeModal from "../components/EmailComposeModal";
-import {
-  FiArrowLeft,
-  FiMoreVertical,
-  FiEdit2,
-  FiFilter,
-  FiX,
-} from "react-icons/fi";
+import { FiArrowLeft, FiFilter, FiX, FiEdit2 } from "react-icons/fi";
 
 export default function EmailsPage() {
   const navigate = useNavigate();
@@ -31,6 +19,7 @@ export default function EmailsPage() {
     sentEmails,
     activeEmail,
     initializing,
+    error,
     openEmail,
     closeEmail,
     fetchInboxEmails,
@@ -38,14 +27,12 @@ export default function EmailsPage() {
   } = useContext(GmailContext);
 
   const [mailbox, setMailbox] = useState("inbox");
-  const [error, setError] = useState(null);
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
   const [priorityFilter, setPriorityFilter] = useState(null);
   const [categoryGroupFilter, setCategoryGroupFilter] = useState(null);
 
-  // UI only
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterRef = useRef(null);
 
@@ -54,26 +41,18 @@ export default function EmailsPage() {
     if (!currentUser) navigate("/login", { replace: true });
   }, [currentUser, navigate]);
 
-  // ---------------- Emails laden ----------------
+  // ---------------- Load Emails on Mailbox Change ----------------
   useEffect(() => {
     if (!currentUser) return;
 
-    const loadEmails = async () => {
-      setError(null);
-      try {
-        mailbox === "inbox"
-          ? await fetchInboxEmails()
-          : await fetchSentEmails();
-      } catch (err) {
-        console.error(err);
-        setError("Fehler beim Laden der E-Mails");
-      }
+    const load = async () => {
+      mailbox === "inbox" ? await fetchInboxEmails() : await fetchSentEmails();
     };
 
-    loadEmails();
+    load();
   }, [currentUser, mailbox, fetchInboxEmails, fetchSentEmails]);
 
-  // ---------------- Click Outside ----------------
+  // ---------------- Click Outside für Filter ----------------
   useEffect(() => {
     const handler = (e) => {
       if (filterRef.current && !filterRef.current.contains(e.target)) {
@@ -84,31 +63,23 @@ export default function EmailsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ---------------- Filter (STABIL) ----------------
+  // ---------------- Filtered Emails ----------------
   const displayedEmails = useMemo(() => {
     let list = mailbox === "inbox" ? emails : sentEmails;
     if (!Array.isArray(list)) return [];
 
     if (priorityFilter) {
       list = list.filter(
-        (e) => (e.priority || "").toLowerCase() === priorityFilter
+        (e) => (e.priority || "").toLowerCase() === priorityFilter.toLowerCase()
       );
     }
-
     if (categoryGroupFilter) {
       list = list.filter(
         (e) => e.category_group === categoryGroupFilter
       );
     }
-
     return list;
-  }, [
-    mailbox,
-    emails,
-    sentEmails,
-    priorityFilter,
-    categoryGroupFilter,
-  ]);
+  }, [mailbox, emails, sentEmails, priorityFilter, categoryGroupFilter]);
 
   const priorityBadge = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -171,7 +142,6 @@ export default function EmailsPage() {
                 Filter
               </button>
 
-              {/* Dropdown */}
               {filtersOpen && (
                 <div className="absolute z-20 mt-2 w-64 bg-[#0b0f16] border border-gray-800 rounded-xl p-4 shadow-xl animate-[fadeIn_0.15s_ease-out]">
                   <p className="text-xs text-gray-400 mb-2">Priorität</p>
@@ -180,9 +150,7 @@ export default function EmailsPage() {
                       <button
                         key={p}
                         onClick={() =>
-                          setPriorityFilter(
-                            priorityFilter === p ? null : p
-                          )
+                          setPriorityFilter(priorityFilter === p ? null : p)
                         }
                         className={`flex-1 py-1 rounded text-sm ${
                           priorityFilter === p
