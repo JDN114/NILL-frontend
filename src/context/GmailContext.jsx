@@ -15,7 +15,7 @@ export const GmailProvider = ({ children }) => {
 
   // -------------------- Rate-Limit & Throttle --------------------
   const [lastFetch, setLastFetch] = useState(0);
-  const FETCH_INTERVAL = 5000;
+  const FETCH_INTERVAL = 5000; // 5 Sekunden Minimum zwischen Requests
 
   const throttleFetch = async (fetchFunc) => {
     const now = Date.now();
@@ -25,10 +25,49 @@ export const GmailProvider = ({ children }) => {
   };
 
   // -------------------- Connect Gmail --------------------
-  const connectGmail = () => {
-    // Browser folgt automatisch dem Redirect von FastAPI → Google
-    window.location.href = "/api/gmail/auth-url";
+  const connectGmail = async () => {
+    try {
+      // Direkt redirect vom Backend abrufen
+      const res = await fetch("/api/gmail/auth-url", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (res.redirected && res.url) {
+        // Browser direkt weiterleiten
+        window.location.href = res.url;
+      } else {
+        console.error(
+          "Keine Redirect-URL vom Gmail Auth Endpoint erhalten",
+          res
+        );
+      }
+    } catch (err) {
+      console.error("Fehler beim Verbinden von Gmail:", err);
+    }
   };
+
+  // -------------------- Gmail Status prüfen --------------------
+  const fetchStatus = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const res = await fetch("/api/gmail/emails?mailbox=inbox", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (res.status === 404) {
+        setConnected({ connected: false });
+      } else if (res.ok) {
+        setConnected({ connected: true });
+      } else {
+        setConnected({ connected: false });
+      }
+    } catch (err) {
+      setConnected({ connected: false });
+    }
+  }, [user]);
 
   // -------------------- Fetch Emails --------------------
   const fetchInboxEmails = useCallback(async () => {
@@ -40,16 +79,27 @@ export const GmailProvider = ({ children }) => {
           method: "GET",
           credentials: "include",
         });
-        if (!res.ok) throw new Error("Failed to fetch inbox emails");
+
+        if (res.status === 404) {
+          setConnected({ connected: false });
+          setEmails([]);
+          return;
+        }
+
+        if (!res.ok) throw new Error("Fehler beim Laden der Inbox");
+
         const data = await res.json();
         setEmails(data.emails || []);
+        setConnected({ connected: true });
       });
     } catch (err) {
       console.error(err);
+      setEmails([]);
+      setConnected({ connected: false });
     } finally {
       setInitializing(false);
     }
-  }, [user, lastFetch]);
+  }, [user, throttleFetch]);
 
   const fetchSentEmails = useCallback(async () => {
     if (!user) return;
@@ -60,16 +110,27 @@ export const GmailProvider = ({ children }) => {
           method: "GET",
           credentials: "include",
         });
-        if (!res.ok) throw new Error("Failed to fetch sent emails");
+
+        if (res.status === 404) {
+          setConnected({ connected: false });
+          setSentEmails([]);
+          return;
+        }
+
+        if (!res.ok) throw new Error("Fehler beim Laden der Gesendet-Emails");
+
         const data = await res.json();
         setSentEmails(data.emails || []);
+        setConnected({ connected: true });
       });
     } catch (err) {
       console.error(err);
+      setSentEmails([]);
+      setConnected({ connected: false });
     } finally {
       setInitializing(false);
     }
-  }, [user, lastFetch]);
+  }, [user, throttleFetch]);
 
   // -------------------- Active Email --------------------
   const openEmail = (id, mailbox = "inbox") => {
@@ -80,20 +141,6 @@ export const GmailProvider = ({ children }) => {
 
   const closeEmail = () => setActiveEmail(null);
 
-  // -------------------- Fetch Gmail Connection Status --------------------
-  const fetchStatus = useCallback(async () => {
-    try {
-      const res = await fetch("/api/gmail/emails", {
-        method: "GET",
-        credentials: "include",
-      });
-      // Status: verbunden, wenn API antwortet und 200 OK
-      setConnected({ connected: res.ok });
-    } catch (err) {
-      setConnected({ connected: false });
-    }
-  }, []);
-
   return (
     <GmailContext.Provider
       value={{
@@ -101,12 +148,12 @@ export const GmailProvider = ({ children }) => {
         sentEmails,
         activeEmail,
         initializing,
+        connected,
         openEmail,
         closeEmail,
         fetchInboxEmails,
         fetchSentEmails,
         connectGmail,
-        connected,
         fetchStatus,
       }}
     >
