@@ -11,7 +11,6 @@ export const GmailProvider = ({ children }) => {
   const [sentEmails, setSentEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
-
   const [connected, setConnected] = useState({ connected: false });
 
   // -------------------- Rate-Limit & Throttle --------------------
@@ -27,11 +26,12 @@ export const GmailProvider = ({ children }) => {
 
   // -------------------- Connect Gmail --------------------
   const connectGmail = () => {
-    // Browser direkt weiterleiten zum Backend, das den Google OAuth Redirect macht
+    // Direkt Browser auf den Backend-Endpunkt weiterleiten,
+    // der einen Redirect zu Google zurückliefert
     window.location.href = "/api/gmail/auth-url";
   };
 
-  // -------------------- Fetch Gmail Connection Status --------------------
+  // -------------------- Fetch Gmail-Verbindungsstatus --------------------
   const fetchStatus = useCallback(async () => {
     if (!user) return;
     try {
@@ -40,23 +40,20 @@ export const GmailProvider = ({ children }) => {
         credentials: "include",
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        setConnected({ connected: true });
+      } else {
         setConnected({ connected: false });
-        return;
       }
-
-      const data = await res.json();
-      setConnected({ connected: true });
-      setEmails(data.emails || []);
     } catch (err) {
-      console.error("Error fetching Gmail status:", err);
+      console.error("Error checking Gmail status:", err);
       setConnected({ connected: false });
     }
   }, [user]);
 
   // -------------------- Fetch Emails --------------------
   const fetchInboxEmails = useCallback(async () => {
-    if (!user || !connected.connected) return;
+    if (!user) return;
     setInitializing(true);
     try {
       await throttleFetch(async () => {
@@ -75,10 +72,10 @@ export const GmailProvider = ({ children }) => {
     } finally {
       setInitializing(false);
     }
-  }, [user, connected, throttleFetch]);
+  }, [user, throttleFetch]);
 
   const fetchSentEmails = useCallback(async () => {
-    if (!user || !connected.connected) return;
+    if (!user) return;
     setInitializing(true);
     try {
       await throttleFetch(async () => {
@@ -97,7 +94,7 @@ export const GmailProvider = ({ children }) => {
     } finally {
       setInitializing(false);
     }
-  }, [user, connected, throttleFetch]);
+  }, [user, throttleFetch]);
 
   // -------------------- Active Email --------------------
   const openEmail = (id, mailbox = "inbox") => {
@@ -115,12 +112,12 @@ export const GmailProvider = ({ children }) => {
         sentEmails,
         activeEmail,
         initializing,
+        connected,
         openEmail,
         closeEmail,
         fetchInboxEmails,
         fetchSentEmails,
         connectGmail,
-        connected,
         fetchStatus,
       }}
     >
