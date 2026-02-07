@@ -14,7 +14,7 @@ export const GmailProvider = ({ children }) => {
 
   // -------------------- Rate-Limit & Throttle --------------------
   const [lastFetch, setLastFetch] = useState(0);
-  const FETCH_INTERVAL = 5000; // Minimum 5 Sekunden zwischen Requests
+  const FETCH_INTERVAL = 5000; // 5 Sekunden Minimum zwischen Requests
 
   const throttleFetch = async (fetchFunc) => {
     const now = Date.now();
@@ -24,14 +24,9 @@ export const GmailProvider = ({ children }) => {
   };
 
   // -------------------- Connect Gmail --------------------
-  const connectGmail = async () => {
-    if (!user) return;
-    try {
-      // Direkt redirecten, kein JSON parsen!
-      window.location.href = "/api/gmail/auth-url";
-    } catch (err) {
-      console.error("Error connecting Gmail:", err);
-    }
+  const connectGmail = () => {
+    // 🔹 Direkt öffnen, kein fetch, damit Browser Redirect folgt
+    window.location.href = "/api/gmail/auth-url";
   };
 
   // -------------------- Fetch Emails --------------------
@@ -51,11 +46,11 @@ export const GmailProvider = ({ children }) => {
         setEmails(data.emails || []);
       });
     } catch (err) {
-      console.error("Inbox fetch error:", err);
+      console.error(err);
     } finally {
       setInitializing(false);
     }
-  }, [user, throttleFetch]);
+  }, [user, lastFetch]);
 
   const fetchSentEmails = useCallback(async () => {
     if (!user) return;
@@ -73,11 +68,11 @@ export const GmailProvider = ({ children }) => {
         setSentEmails(data.emails || []);
       });
     } catch (err) {
-      console.error("Sent fetch error:", err);
+      console.error(err);
     } finally {
       setInitializing(false);
     }
-  }, [user, throttleFetch]);
+  }, [user, lastFetch]);
 
   // -------------------- Active Email --------------------
   const openEmail = (id, mailbox = "inbox") => {
