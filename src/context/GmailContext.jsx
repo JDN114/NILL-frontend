@@ -13,9 +13,8 @@ export const GmailProvider = ({ children }) => {
   const [initializing, setInitializing] = useState(false);
   const [connected, setConnected] = useState({ connected: false });
 
-  // -------------------- Rate-Limit & Throttle --------------------
   const [lastFetch, setLastFetch] = useState(0);
-  const FETCH_INTERVAL = 5000; // 5 Sekunden Minimum zwischen Requests
+  const FETCH_INTERVAL = 5000;
 
   const throttleFetch = async (fetchFunc) => {
     const now = Date.now();
@@ -26,8 +25,7 @@ export const GmailProvider = ({ children }) => {
 
   // -------------------- Connect Gmail --------------------
   const connectGmail = () => {
-    // Direkt Browser auf den Backend-Endpunkt weiterleiten,
-    // der einen Redirect zu Google zurückliefert
+    // direkt weiterleiten auf Backend, das dann zu Google redirectet
     window.location.href = "/api/gmail/auth-url";
   };
 
@@ -41,7 +39,9 @@ export const GmailProvider = ({ children }) => {
       });
 
       if (res.ok) {
-        setConnected({ connected: true });
+        const data = await res.json();
+        // Connected nur, wenn wirklich Emails oder Account existiert
+        setConnected({ connected: Array.isArray(data.emails) });
       } else {
         setConnected({ connected: false });
       }
@@ -69,6 +69,7 @@ export const GmailProvider = ({ children }) => {
       });
     } catch (err) {
       console.error(err);
+      setConnected({ connected: false });
     } finally {
       setInitializing(false);
     }
@@ -91,6 +92,7 @@ export const GmailProvider = ({ children }) => {
       });
     } catch (err) {
       console.error(err);
+      setConnected({ connected: false });
     } finally {
       setInitializing(false);
     }
