@@ -1,6 +1,5 @@
 // src/context/GmailContext.jsx
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import axios from "axios";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { AuthContext } from "./AuthContext";
 
 export const GmailContext = createContext();
@@ -11,65 +10,92 @@ export const GmailProvider = ({ children }) => {
   const [emails, setEmails] = useState([]);
   const [sentEmails, setSentEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
-  const [initializing, setInitializing] = useState(true);
-  const [error, setError] = useState(null);
+  const [initializing, setInitializing] = useState(false);
 
-  // ---------------- Fetch Functions ----------------
-  const fetchInboxEmails = useCallback(async () => {
+  // -------------------- Rate-Limit & Throttle --------------------
+  const [lastFetch, setLastFetch] = useState(0);
+  const FETCH_INTERVAL = 5000; // 5 Sekunden Minimum zwischen Requests
+
+  const throttleFetch = async (fetchFunc) => {
+    const now = Date.now();
+    if (now - lastFetch < FETCH_INTERVAL) return;
+    setLastFetch(now);
+    return fetchFunc();
+  };
+
+  // -------------------- Connect Gmail --------------------
+  const connectGmail = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await axios.get("/api/gmail/emails?mailbox=inbox");
-      setEmails(res.data.emails || []);
+      const res = await fetch("/api/gmail/auth-url", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      // Google Redirect
+      if (res.redirected) {
+        window.location.href = res.url;
+      } else {
+        console.error("No redirect from Gmail auth-url");
+      }
     } catch (err) {
-      console.error("Fehler beim Laden des Posteingangs:", err);
-      setError("Fehler beim Laden des Posteingangs");
+      console.error("Gmail connect failed:", err);
     }
   }, [user]);
+
+  // -------------------- Fetch Emails --------------------
+  const fetchInboxEmails = useCallback(async () => {
+    if (!user) return;
+    setInitializing(true);
+    try {
+      await throttleFetch(async () => {
+        const res = await fetch("/api/gmail/emails?mailbox=inbox", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch inbox emails");
+
+        const data = await res.json();
+        setEmails(data.emails || []);
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setInitializing(false);
+    }
+  }, [user, throttleFetch]);
 
   const fetchSentEmails = useCallback(async () => {
     if (!user) return;
+    setInitializing(true);
     try {
-      const res = await axios.get("/api/gmail/emails?mailbox=sent");
-      setSentEmails(res.data.emails || []);
-    } catch (err) {
-      console.error("Fehler beim Laden der Gesendet-Mails:", err);
-      setError("Fehler beim Laden der Gesendet-Mails");
-    }
-  }, [user]);
+      await throttleFetch(async () => {
+        const res = await fetch("/api/gmail/emails?mailbox=sent", {
+          method: "GET",
+          credentials: "include",
+        });
 
-  // ---------------- Active Email ----------------
-  const openEmail = useCallback((id, mailbox = "inbox") => {
+        if (!res.ok) throw new Error("Failed to fetch sent emails");
+
+        const data = await res.json();
+        setSentEmails(data.emails || []);
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setInitializing(false);
+    }
+  }, [user, throttleFetch]);
+
+  // -------------------- Active Email --------------------
+  const openEmail = (id, mailbox = "inbox") => {
     const list = mailbox === "inbox" ? emails : sentEmails;
     const found = list.find((e) => e.id === id);
     if (found) setActiveEmail(found);
-  }, [emails, sentEmails]);
+  };
 
-  const closeEmail = useCallback(() => setActiveEmail(null), []);
-
-  // ---------------- Initial Load ----------------
-  useEffect(() => {
-    if (!user) return;
-    setInitializing(true);
-
-    const load = async () => {
-      await fetchInboxEmails();
-      await fetchSentEmails();
-      setInitializing(false);
-    };
-
-    load();
-  }, [user, fetchInboxEmails, fetchSentEmails]);
-
-  // ---------------- Optional: Polling alle 30s ----------------
-  useEffect(() => {
-    if (!user) return;
-    const interval = setInterval(() => {
-      fetchInboxEmails();
-      fetchSentEmails();
-    }, 30000); // alle 30 Sekunden
-
-    return () => clearInterval(interval);
-  }, [user, fetchInboxEmails, fetchSentEmails]);
+  const closeEmail = () => setActiveEmail(null);
 
   return (
     <GmailContext.Provider
@@ -78,11 +104,11 @@ export const GmailProvider = ({ children }) => {
         sentEmails,
         activeEmail,
         initializing,
-        error,
         openEmail,
         closeEmail,
         fetchInboxEmails,
         fetchSentEmails,
+        connectGmail,
       }}
     >
       {children}
