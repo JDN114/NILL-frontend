@@ -36,9 +36,7 @@ export const GmailProvider = ({ children }) => {
   // ✅ OAUTH CONNECT (KEIN FETCH!)
   // --------------------------------------------------
   const connectGmail = () => {
-    // WICHTIG:
-    // Kein fetch hier. Browser muss direkt redirecten.
-    window.location.href = "/api/gmail/auth-url";
+    window.location.href = "http://5.75.175.150:8000/gmail/auth-url";
   };
 
   // --------------------------------------------------
