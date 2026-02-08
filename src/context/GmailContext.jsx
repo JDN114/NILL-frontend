@@ -1,4 +1,4 @@
-k// src/context/GmailContext.jsx
+// src/context/GmailContext.jsx
 import React, { createContext, useState, useCallback } from "react";
 
 export const GmailContext = createContext();
