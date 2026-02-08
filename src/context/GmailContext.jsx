@@ -107,41 +107,37 @@ export const GmailProvider = ({ children }) => {
   // --------------------------------------------------
   // EMAIL DETAIL + AI POLLING
   // --------------------------------------------------
-  const openEmail = useCallback(
-    async (id) => {
-      const loadEmail = async () => {
-        try {
-          const res = await fetch(`${API_BASE}/gmail/emails/${id}`, {
-            credentials: "include",
-          });
+  const openEmail = useCallback(async (id) => {
+    const loadEmail = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/gmail/emails/${id}`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to load email detail");
+        const data = await res.json();
+        setActiveEmail(data);
+        return data;
+      } catch (err) {
+        console.error("Detail fetch error:", err);
+        return null;
+      }
+    };
 
-          if (!res.ok) throw new Error("Failed to load email detail");
-
-          const data = await res.json();
-          setActiveEmail(data);
-          return data;
-        } catch (err) {
-          console.error("Detail fetch error:", err);
-          return null;
+    setInitializing(true);
+    const firstLoad = await loadEmail();
+    setInitializing(false);
+  
+    // AI-Polling: erneut laden, bis AI fertig ist
+    if (firstLoad?.ai_status !== "success") {
+      const pollAI = async () => {
+        const refreshed = await loadEmail();
+        if (refreshed?.ai_status !== "success") {
+          setTimeout(pollAI, 1500); // alle 1.5s erneut laden
         }
       };
-
-      setInitializing(true);
-      const firstLoad = await loadEmail();
-      setInitializing(false);
-
-      if (firstLoad?.ai_status !== "success") {
-        const pollAI = async () => {
-          const refreshed = await loadEmail();
-          if (refreshed?.ai_status !== "success") {
-            setTimeout(pollAI, 1500);
-          }
-        };
-        setTimeout(pollAI, 1500);
-      }
-    },
-    []
-  );
+      setTimeout(pollAI, 1500);
+    }
+  }, []);
 
   const closeEmail = () => setActiveEmail(null);
 
