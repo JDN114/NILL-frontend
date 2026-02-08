@@ -36,7 +36,7 @@ export const GmailProvider = ({ children }) => {
   // ✅ OAUTH CONNECT (KEIN FETCH!)
   // --------------------------------------------------
   const connectGmail = () => {
-    window.location.href = "http://nillai.de/gmail/auth-url";
+    window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?";
   };
 
   // --------------------------------------------------
