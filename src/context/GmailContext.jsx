@@ -88,10 +88,25 @@ export const GmailProvider = ({ children }) => {
   // --------------------------------------------------
   // EMAIL ÖFFNEN
   // --------------------------------------------------
-  const openEmail = (id, mailbox = "inbox") => {
-    const list = mailbox === "inbox" ? emails : sentEmails;
-    const found = list.find((e) => e.id === id);
-    if (found) setActiveEmail(found);
+  const openEmail = async (id) => {
+    try {
+      setInitializing(true);
+
+      const res = await fetch(
+        `${API_BASE}/gmail/emails/${id}`,
+        { credentials: "include" }
+      );
+
+      if (!res.ok) throw new Error("Failed to load email detail");
+
+      const data = await res.json();
+      setActiveEmail(data);
+
+    } catch (err) {
+      console.error("Detail fetch error:", err);
+    } finally {
+      setInitializing(false);
+    }
   };
 
   const closeEmail = () => setActiveEmail(null);
