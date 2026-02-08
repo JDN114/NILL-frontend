@@ -36,7 +36,7 @@ export const GmailProvider = ({ children }) => {
   // ✅ OAUTH CONNECT (KEIN FETCH!)
   // --------------------------------------------------
   const connectGmail = () => {
-    window.location.href = "http://5.75.175.150:8000/gmail/auth-url";
+    window.location.href = "http://nillai.de/gmail/auth-url";
   };
 
   // --------------------------------------------------
