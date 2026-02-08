@@ -13,13 +13,12 @@ import { FiArrowLeft, FiFilter, FiX, FiEdit2 } from "react-icons/fi";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useContext(AuthContext);
-
   const {
+    connected,
     emails,
     sentEmails,
     activeEmail,
     initializing,
-    error,
     openEmail,
     closeEmail,
     fetchInboxEmails,
@@ -27,14 +26,12 @@ export default function EmailsPage() {
   } = useContext(GmailContext);
 
   const [mailbox, setMailbox] = useState("inbox");
-  const [replyOpen, setReplyOpen] = useState(false);
-  const [composeOpen, setComposeOpen] = useState(false);
-
   const [priorityFilter, setPriorityFilter] = useState(null);
   const [categoryGroupFilter, setCategoryGroupFilter] = useState(null);
-
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterRef = useRef(null);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   // ---------------- Auth Guard ----------------
   useEffect(() => {
@@ -43,14 +40,13 @@ export default function EmailsPage() {
 
   // ---------------- Load Emails on Mailbox Change ----------------
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !connected?.connected) return;
 
     const load = async () => {
       mailbox === "inbox" ? await fetchInboxEmails() : await fetchSentEmails();
     };
-
     load();
-  }, [currentUser, mailbox, fetchInboxEmails, fetchSentEmails]);
+  }, [currentUser, mailbox, connected, fetchInboxEmails, fetchSentEmails]);
 
   // ---------------- Click Outside für Filter ----------------
   useEffect(() => {
@@ -74,9 +70,7 @@ export default function EmailsPage() {
       );
     }
     if (categoryGroupFilter) {
-      list = list.filter(
-        (e) => e.category_group === categoryGroupFilter
-      );
+      list = list.filter((e) => e.category_group === categoryGroupFilter);
     }
     return list;
   }, [mailbox, emails, sentEmails, priorityFilter, categoryGroupFilter]);
@@ -94,12 +88,23 @@ export default function EmailsPage() {
     }
   };
 
+  // ---------------- Refresh & Load More ----------------
+  const handleRefresh = () => {
+    if (!connected?.connected) return;
+    mailbox === "inbox" ? fetchInboxEmails() : fetchSentEmails();
+  };
+
+  const handleLoadMore = () => {
+    if (!connected?.connected) return;
+    const lastId = displayedEmails.slice(-1)[0]?.id || "";
+    if (mailbox === "inbox") fetchInboxEmails({ append: true, after_id: lastId });
+    else fetchSentEmails({ append: true, after_id: lastId });
+  };
+
   if (initializing) {
     return (
       <PageLayout>
-        <p className="text-gray-400 text-center py-10">
-          Initialisiere Gmail…
-        </p>
+        <p className="text-gray-400 text-center py-10">Initialisiere Gmail…</p>
       </PageLayout>
     );
   }
@@ -108,9 +113,10 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Postfach</h1>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      {!connected?.connected && (
+        <p className="text-center py-6 text-red-400">Gmail nicht verbunden</p>
+      )}
 
-      {/* ================= TOPBAR ================= */}
       {!activeEmail && (
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2">
@@ -195,7 +201,6 @@ export default function EmailsPage() {
             </button>
           </div>
 
-          {/* Active Filters */}
           {(priorityFilter || categoryGroupFilter) && (
             <div className="flex gap-2 flex-wrap">
               {priorityFilter && (
@@ -222,6 +227,17 @@ export default function EmailsPage() {
       )}
 
       {/* ================= EMAIL LIST ================= */}
+      {!activeEmail && displayedEmails.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={handleRefresh}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+      )}
+
       {!activeEmail && (
         <Card className="p-0 overflow-hidden">
           {displayedEmails.length === 0 ? (
@@ -233,13 +249,11 @@ export default function EmailsPage() {
               {displayedEmails.map((mail) => (
                 <li
                   key={mail.id}
-                  onClick={() => openEmail(mail.id, mailbox)}
+                  onClick={() => openEmail(mail.id)}
                   className="px-6 py-4 cursor-pointer hover:bg-gray-800"
                 >
                   <div className="flex justify-between mb-1">
-                    <p className="font-semibold truncate">
-                      {mail.subject || "(Kein Betreff)"}
-                    </p>
+                    <p className="font-semibold truncate">{mail.subject || "(Kein Betreff)"}</p>
                     <span className="text-xs text-gray-400">
                       {mail.received_at
                         ? new Date(mail.received_at).toLocaleString()
@@ -262,6 +276,16 @@ export default function EmailsPage() {
               ))}
             </ul>
           )}
+          {displayedEmails.length > 0 && (
+            <div className="p-4 flex justify-center">
+              <button
+                onClick={handleLoadMore}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
+              >
+                Mehr laden
+              </button>
+            </div>
+          )}
         </Card>
       )}
 
@@ -275,9 +299,7 @@ export default function EmailsPage() {
             <FiArrowLeft className="mr-2" /> Zurück
           </button>
 
-          <h2 className="text-2xl font-bold mb-1">
-            {activeEmail.subject}
-          </h2>
+          <h2 className="text-2xl font-bold mb-1">{activeEmail.subject}</h2>
 
           <SafeEmailHtml html={activeEmail.body} />
 
