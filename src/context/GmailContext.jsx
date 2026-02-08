@@ -1,5 +1,5 @@
 // src/context/GmailContext.jsx
-import React, { createContext, useState, useCallback, useRef } from "react";
+import React, { createContext, useState, useCallback, useEffect, useRef } from "react";
 
 export const GmailContext = createContext();
 
@@ -12,8 +12,8 @@ export const GmailProvider = ({ children }) => {
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
 
-  // Cache für Status: max. 1x/min
-  const lastStatusRef = useRef({ time: 0, connected: null });
+  // 🔹 Last status fetch timestamp, um Polling zu limitieren
+  const lastStatusFetch = useRef(0);
 
   // --------------------------------------------------
   // STATUS CHECK
@@ -21,62 +21,54 @@ export const GmailProvider = ({ children }) => {
   const fetchStatus = useCallback(async () => {
     try {
       const now = Date.now();
-      // Cache prüfen (60s)
-      if (now - lastStatusRef.current.time < 60_000 && lastStatusRef.current.connected !== null) {
-        setConnected({ connected: lastStatusRef.current.connected });
-        return lastStatusRef.current.connected;
-      }
+      // nur max. alle 60 Sekunden abfragen
+      if (now - lastStatusFetch.current < 60000) return;
+      lastStatusFetch.current = now;
 
       const res = await fetch(`${API_BASE}/gmail/status`, {
         credentials: "include",
       });
 
-      if (!res.ok) {
-        setConnected({ connected: false });
-        lastStatusRef.current = { time: now, connected: false };
-        return false;
-      }
-
       const data = await res.json().catch(() => ({ connected: false }));
+      console.log("💡 Gmail status raw response:", data);
       setConnected(data);
-      lastStatusRef.current = { time: now, connected: data.connected };
-      return data.connected;
     } catch (err) {
       console.error("Gmail status error:", err);
       setConnected({ connected: false });
-      lastStatusRef.current = { time: Date.now(), connected: false };
-      return false;
     }
   }, []);
 
   // --------------------------------------------------
-  // OAUTH CONNECT / DISCONNECT
+  // OAUTH CONNECT
   // --------------------------------------------------
   const connectGmail = () => {
     window.location.href = `${API_BASE}/gmail/auth-url`;
   };
 
-  const disconnectGmail = async () => {
+  // --------------------------------------------------
+  // OAUTH DISCONNECT (Soft Disconnect)
+  // --------------------------------------------------
+  const disconnectGmail = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/gmail/disconnect`, {
         method: "POST",
         credentials: "include",
       });
+
       if (!res.ok) throw new Error("Failed to disconnect Gmail");
 
-      // Soft disconnect im Frontend reflektieren
+      // State sauber zurücksetzen
       setConnected({ connected: false });
       setEmails([]);
       setSentEmails([]);
       setActiveEmail(null);
-      lastStatusRef.current = { time: Date.now(), connected: false };
     } catch (err) {
       console.error("Gmail disconnect error:", err);
     }
-  };
+  }, []);
 
   // --------------------------------------------------
-  // INBOX & SENT
+  // INBOX LADEN
   // --------------------------------------------------
   const fetchInboxEmails = useCallback(async () => {
     setInitializing(true);
@@ -84,8 +76,8 @@ export const GmailProvider = ({ children }) => {
       const res = await fetch(`${API_BASE}/gmail/emails?mailbox=inbox`, {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Inbox fetch failed");
 
+      if (!res.ok) throw new Error("Inbox fetch failed");
       const data = await res.json().catch(() => ({ emails: [] }));
       setEmails(data.emails || []);
     } catch (err) {
@@ -95,14 +87,17 @@ export const GmailProvider = ({ children }) => {
     }
   }, []);
 
+  // --------------------------------------------------
+  // SENT LADEN
+  // --------------------------------------------------
   const fetchSentEmails = useCallback(async () => {
     setInitializing(true);
     try {
       const res = await fetch(`${API_BASE}/gmail/emails?mailbox=sent`, {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Sent fetch failed");
 
+      if (!res.ok) throw new Error("Sent fetch failed");
       const data = await res.json().catch(() => ({ emails: [] }));
       setSentEmails(data.emails || []);
     } catch (err) {
@@ -113,7 +108,7 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   // --------------------------------------------------
-  // EMAIL DETAIL + AI-POLLING
+  // EMAIL DETAIL + AI POLLING
   // --------------------------------------------------
   const openEmail = useCallback(async (id) => {
     const loadEmail = async () => {
@@ -122,7 +117,6 @@ export const GmailProvider = ({ children }) => {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to load email detail");
-
         const data = await res.json();
         setActiveEmail(data);
         return data;
@@ -149,6 +143,13 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   const closeEmail = () => setActiveEmail(null);
+
+  // --------------------------------------------------
+  // Automatisches Laden des Status beim Mount
+  // --------------------------------------------------
+  useEffect(() => {
+    fetchStatus(); // einmalig beim Laden
+  }, [fetchStatus]);
 
   return (
     <GmailContext.Provider
