@@ -1,3 +1,4 @@
+// src/pages/SettingsPage.jsx
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
@@ -5,10 +6,11 @@ import Card from "../components/ui/Card";
 import { GmailContext } from "../context/GmailContext";
 
 export default function SettingsPage() {
-  const { connected, connectGmail, fetchStatus } = useContext(GmailContext);
+  const { connected, connectGmail, disconnectGmail, fetchStatus } =
+    useContext(GmailContext);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
-  // 🔁 Gmail Status beim Laden prüfen (SAFE)
+  // 🔁 Gmail Status beim Laden prüfen
   useEffect(() => {
     let mounted = true;
 
@@ -25,8 +27,28 @@ export default function SettingsPage() {
     };
 
     loadStatus();
-    return () => (mounted = false);
+
+    // Optional: Status regelmäßig updaten
+    const interval = setInterval(loadStatus, 10000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [fetchStatus]);
+
+  // 🔁 Verbinden / Abmelden
+  const handleButtonClick = async () => {
+    if (connected?.connected) {
+      setLoadingStatus(true);
+      try {
+        await disconnectGmail();
+      } finally {
+        setLoadingStatus(false);
+      }
+    } else {
+      connectGmail(); // leitet zu Google weiter
+    }
+  };
 
   return (
     <PageLayout>
@@ -52,23 +74,25 @@ export default function SettingsPage() {
             </strong>
           </span>
 
-          {!connected?.connected && (
-            <button
-              onClick={connectGmail}
-              disabled={loadingStatus}
-              className={`
-                bg-[var(--nill-primary)]
-                text-white
-                px-4 py-2
-                rounded
-                hover:bg-[var(--nill-primary-hover)]
-                transition
-                ${loadingStatus ? "opacity-50 cursor-not-allowed" : ""}
-              `}
-            >
-              {loadingStatus ? "Lädt…" : "Gmail verbinden"}
-            </button>
-          )}
+          <button
+            onClick={handleButtonClick}
+            disabled={loadingStatus}
+            className={`
+              bg-[var(--nill-primary)]
+              text-white
+              px-4 py-2
+              rounded
+              hover:bg-[var(--nill-primary-hover)]
+              transition
+              ${loadingStatus ? "opacity-50 cursor-not-allowed" : ""}
+            `}
+          >
+            {loadingStatus
+              ? "Lädt…"
+              : connected?.connected
+              ? "Abmelden"
+              : "Gmail verbinden"}
+          </button>
         </div>
       </Card>
 

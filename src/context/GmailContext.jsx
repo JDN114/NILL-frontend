@@ -26,7 +26,7 @@ export const GmailProvider = ({ children }) => {
         return;
       }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ connected: false }));
       setConnected(data);
     } catch (err) {
       console.error("Gmail status error:", err);
@@ -42,19 +42,39 @@ export const GmailProvider = ({ children }) => {
   };
 
   // --------------------------------------------------
+  // OAUTH DISCONNECT
+  // --------------------------------------------------
+  const disconnectGmail = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/gmail/disconnect`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to disconnect Gmail");
+
+      setConnected({ connected: false });
+      setEmails([]);
+      setSentEmails([]);
+      setActiveEmail(null);
+    } catch (err) {
+      console.error("Gmail disconnect error:", err);
+    }
+  };
+
+  // --------------------------------------------------
   // INBOX LADEN
   // --------------------------------------------------
   const fetchInboxEmails = useCallback(async () => {
     setInitializing(true);
     try {
-      const res = await fetch(
-        `${API_BASE}/gmail/emails?mailbox=inbox`,
-        { credentials: "include" }
-      );
+      const res = await fetch(`${API_BASE}/gmail/emails?mailbox=inbox`, {
+        credentials: "include",
+      });
 
       if (!res.ok) throw new Error("Inbox fetch failed");
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ emails: [] }));
       setEmails(data.emails || []);
     } catch (err) {
       console.error("Inbox error:", err);
@@ -69,14 +89,13 @@ export const GmailProvider = ({ children }) => {
   const fetchSentEmails = useCallback(async () => {
     setInitializing(true);
     try {
-      const res = await fetch(
-        `${API_BASE}/gmail/emails?mailbox=sent`,
-        { credentials: "include" }
-      );
+      const res = await fetch(`${API_BASE}/gmail/emails?mailbox=sent`, {
+        credentials: "include",
+      });
 
       if (!res.ok) throw new Error("Sent fetch failed");
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ emails: [] }));
       setSentEmails(data.emails || []);
     } catch (err) {
       console.error("Sent error:", err);
@@ -86,28 +105,43 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   // --------------------------------------------------
-  // EMAIL ÖFFNEN
+  // EMAIL DETAIL + AI POLLING
   // --------------------------------------------------
-  const openEmail = async (id) => {
-    try {
+  const openEmail = useCallback(
+    async (id) => {
+      const loadEmail = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/gmail/emails/${id}`, {
+            credentials: "include",
+          });
+
+          if (!res.ok) throw new Error("Failed to load email detail");
+
+          const data = await res.json();
+          setActiveEmail(data);
+          return data;
+        } catch (err) {
+          console.error("Detail fetch error:", err);
+          return null;
+        }
+      };
+
       setInitializing(true);
-
-      const res = await fetch(
-        `${API_BASE}/gmail/emails/${id}`,
-        { credentials: "include" }
-      );
-
-      if (!res.ok) throw new Error("Failed to load email detail");
-
-      const data = await res.json();
-      setActiveEmail(data);
-
-    } catch (err) {
-      console.error("Detail fetch error:", err);
-    } finally {
+      const firstLoad = await loadEmail();
       setInitializing(false);
-    }
-  };
+
+      if (firstLoad?.ai_status !== "success") {
+        const pollAI = async () => {
+          const refreshed = await loadEmail();
+          if (refreshed?.ai_status !== "success") {
+            setTimeout(pollAI, 1500);
+          }
+        };
+        setTimeout(pollAI, 1500);
+      }
+    },
+    []
+  );
 
   const closeEmail = () => setActiveEmail(null);
 
@@ -116,6 +150,7 @@ export const GmailProvider = ({ children }) => {
       value={{
         connected,
         connectGmail,
+        disconnectGmail, // ✅ neu
         fetchStatus,
         emails,
         sentEmails,
