@@ -36,7 +36,7 @@ export const GmailProvider = ({ children }) => {
   // ✅ OAUTH CONNECT (KEIN FETCH!)
   // --------------------------------------------------
   const connectGmail = () => {
-    window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?";
+    window.location.href = ""https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)";
   };
 
   // --------------------------------------------------
