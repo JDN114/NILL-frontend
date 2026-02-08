@@ -1,4 +1,3 @@
-// src/pages/SettingsPage.jsx
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
@@ -10,7 +9,6 @@ export default function SettingsPage() {
     useContext(GmailContext);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
-  // 🔁 Gmail Status beim Laden prüfen (mit Cache aus Context)
   useEffect(() => {
     let mounted = true;
 
@@ -18,7 +16,7 @@ export default function SettingsPage() {
       if (typeof fetchStatus !== "function") return;
       setLoadingStatus(true);
       try {
-        await fetchStatus(); // Context cached max. 1x/min
+        await fetchStatus(); // max 1x/min
       } catch (err) {
         console.error("Fehler beim Laden des Gmail-Status:", err);
       } finally {
@@ -27,26 +25,23 @@ export default function SettingsPage() {
     };
 
     loadStatus();
-
-    // Optional: Status alle Minute automatisch updaten
-    const interval = setInterval(loadStatus, 60_000);
+    const interval = setInterval(loadStatus, 60_000); // nur 1x/min
     return () => {
       mounted = false;
       clearInterval(interval);
     };
   }, [fetchStatus]);
 
-  // 🔁 Verbinden / Abmelden
   const handleButtonClick = async () => {
-    if (connected?.connected) {
-      setLoadingStatus(true);
-      try {
-        await disconnectGmail(); // soft disconnect
-      } finally {
-        setLoadingStatus(false);
+    setLoadingStatus(true);
+    try {
+      if (connected?.connected) {
+        await disconnectGmail();
+      } else {
+        connectGmail();
       }
-    } else {
-      connectGmail(); // leitet zu Google weiter
+    } finally {
+      setLoadingStatus(false);
     }
   };
 
@@ -54,17 +49,12 @@ export default function SettingsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6">Einstellungen</h1>
 
-      {/* -------------------- */}
-      {/* Gmail Verbindung */}
-      {/* -------------------- */}
       <Card title="Gmail">
         <div className="flex items-center justify-between">
           <span className="text-sm">
             Status:{" "}
             <strong
-              className={
-                connected?.connected ? "text-green-500" : "text-red-500"
-              }
+              className={connected?.connected ? "text-green-500" : "text-red-500"}
             >
               {loadingStatus
                 ? "Lade…"
@@ -96,9 +86,6 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* -------------------- */}
-      {/* Coupon Card */}
-      {/* -------------------- */}
       <Card title="Abonnement">
         <div className="flex items-center justify-between">
           <span className="text-sm">Hast du einen Coupon?</span>
