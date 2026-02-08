@@ -1,11 +1,9 @@
-import React, { createContext, useState, useCallback } from "react";
+// src/context/GmailContext.jsx
+import React, { createContext, useState, useCallback, useRef } from "react";
 
 export const GmailContext = createContext();
 
 const API_BASE = "https://api.nillai.de";
-
-// Status-Cache Timestamp
-let lastStatusCheck = 0;
 
 export const GmailProvider = ({ children }) => {
   const [connected, setConnected] = useState(null);
@@ -14,16 +12,13 @@ export const GmailProvider = ({ children }) => {
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
 
-  // --------------------------------------------------
-  // STATUS CHECK
-  // --------------------------------------------------
-  const fetchStatus = useCallback(async (force = false) => {
-    const now = Date.now();
-    if (!force && now - lastStatusCheck < 60_000) {
-      // max. 1x pro Minute
-      return;
-    }
+  // Ref, um zu wissen, ob der User manuell getrennt hat
+  const manualDisconnected = useRef(false);
 
+  // --------------------------------------------------
+  // STATUS CHECK vom Backend
+  // --------------------------------------------------
+  const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/gmail/status`, {
         credentials: "include",
@@ -35,11 +30,14 @@ export const GmailProvider = ({ children }) => {
       }
 
       const data = await res.json().catch(() => ({ connected: false }));
-      setConnected(data);
-      lastStatusCheck = now;
+
+      // Wenn User manuell getrennt hat, überschreibe nicht
+      if (!manualDisconnected.current) {
+        setConnected(data);
+      }
     } catch (err) {
       console.error("Gmail status error:", err);
-      setConnected({ connected: false });
+      if (!manualDisconnected.current) setConnected({ connected: false });
     }
   }, []);
 
@@ -47,6 +45,7 @@ export const GmailProvider = ({ children }) => {
   // OAUTH CONNECT
   // --------------------------------------------------
   const connectGmail = () => {
+    manualDisconnected.current = false; // wieder verbinden erlaubt
     window.location.href = `${API_BASE}/gmail/auth-url`;
   };
 
@@ -55,11 +54,7 @@ export const GmailProvider = ({ children }) => {
   // --------------------------------------------------
   const disconnectGmail = async () => {
     try {
-      // Sofort Frontend-Status ändern
-      setConnected({ connected: false });
-      setEmails([]);
-      setSentEmails([]);
-      setActiveEmail(null);
+      manualDisconnected.current = true; // verhindert, dass Pollings Status wieder überschreiben
 
       const res = await fetch(`${API_BASE}/gmail/disconnect`, {
         method: "POST",
@@ -68,7 +63,10 @@ export const GmailProvider = ({ children }) => {
 
       if (!res.ok) throw new Error("Failed to disconnect Gmail");
 
-      lastStatusCheck = 0; // Cache zurücksetzen
+      setConnected({ connected: false });
+      setEmails([]);
+      setSentEmails([]);
+      setActiveEmail(null);
     } catch (err) {
       console.error("Gmail disconnect error:", err);
     }
@@ -117,7 +115,7 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   // --------------------------------------------------
-  // EMAIL DETAIL + AI POLLING
+  // EMAIL DETAIL + AI-POLLING (polling beeinflusst jetzt nicht mehr connected)
   // --------------------------------------------------
   const openEmail = useCallback(async (id) => {
     const loadEmail = async () => {
@@ -139,11 +137,12 @@ export const GmailProvider = ({ children }) => {
     const firstLoad = await loadEmail();
     setInitializing(false);
 
+    // AI-Polling: erneut laden, bis AI fertig ist
     if (firstLoad?.ai_status !== "success") {
       const pollAI = async () => {
         const refreshed = await loadEmail();
         if (refreshed?.ai_status !== "success") {
-          setTimeout(pollAI, 1500);
+          setTimeout(pollAI, 1500); // alle 1.5s erneut laden
         }
       };
       setTimeout(pollAI, 1500);
