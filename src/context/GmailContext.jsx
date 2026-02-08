@@ -3,6 +3,8 @@ import React, { createContext, useState, useCallback } from "react";
 
 export const GmailContext = createContext();
 
+const API_BASE = "https://api.nillai.de";
+
 export const GmailProvider = ({ children }) => {
   const [connected, setConnected] = useState(null);
   const [emails, setEmails] = useState([]);
@@ -11,11 +13,11 @@ export const GmailProvider = ({ children }) => {
   const [initializing, setInitializing] = useState(false);
 
   // --------------------------------------------------
-  // ✅ STATUS CHECK
+  // STATUS CHECK
   // --------------------------------------------------
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/gmail/status", {
+      const res = await fetch(`${API_BASE}/gmail/status`, {
         credentials: "include",
       });
 
@@ -33,10 +35,10 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   // --------------------------------------------------
-  // ✅ OAUTH CONNECT (KEIN FETCH!)
+  // OAUTH CONNECT
   // --------------------------------------------------
   const connectGmail = () => {
-    window.location.href = "https://api.nillai.de/gmail/auth-url";
+    window.location.href = `${API_BASE}/gmail/auth-url`;
   };
 
   // --------------------------------------------------
@@ -45,18 +47,17 @@ export const GmailProvider = ({ children }) => {
   const fetchInboxEmails = useCallback(async () => {
     setInitializing(true);
     try {
-      const res = await fetch("/api/gmail/emails?mailbox=inbox", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${API_BASE}/gmail/emails?mailbox=inbox`,
+        { credentials: "include" }
+      );
 
-      if (!res.ok) {
-        throw new Error("Inbox fetch failed");
-      }
+      if (!res.ok) throw new Error("Inbox fetch failed");
 
       const data = await res.json();
       setEmails(data.emails || []);
     } catch (err) {
-      console.error(err);
+      console.error("Inbox error:", err);
     } finally {
       setInitializing(false);
     }
@@ -68,18 +69,17 @@ export const GmailProvider = ({ children }) => {
   const fetchSentEmails = useCallback(async () => {
     setInitializing(true);
     try {
-      const res = await fetch("/api/gmail/emails?mailbox=sent", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${API_BASE}/gmail/emails?mailbox=sent`,
+        { credentials: "include" }
+      );
 
-      if (!res.ok) {
-        throw new Error("Sent fetch failed");
-      }
+      if (!res.ok) throw new Error("Sent fetch failed");
 
       const data = await res.json();
       setSentEmails(data.emails || []);
     } catch (err) {
-      console.error(err);
+      console.error("Sent error:", err);
     } finally {
       setInitializing(false);
     }
