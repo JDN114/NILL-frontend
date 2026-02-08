@@ -12,68 +12,71 @@ export const GmailProvider = ({ children }) => {
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
 
-  // Ref, um zu wissen, ob der User manuell getrennt hat
-  const manualDisconnected = useRef(false);
+  // Cache für Status: max. 1x/min
+  const lastStatusRef = useRef({ time: 0, connected: null });
 
   // --------------------------------------------------
-  // STATUS CHECK vom Backend
+  // STATUS CHECK
   // --------------------------------------------------
   const fetchStatus = useCallback(async () => {
     try {
+      const now = Date.now();
+      // Cache prüfen (60s)
+      if (now - lastStatusRef.current.time < 60_000 && lastStatusRef.current.connected !== null) {
+        setConnected({ connected: lastStatusRef.current.connected });
+        return lastStatusRef.current.connected;
+      }
+
       const res = await fetch(`${API_BASE}/gmail/status`, {
         credentials: "include",
       });
 
       if (!res.ok) {
         setConnected({ connected: false });
-        return;
+        lastStatusRef.current = { time: now, connected: false };
+        return false;
       }
 
       const data = await res.json().catch(() => ({ connected: false }));
-
-      // Wenn User manuell getrennt hat, überschreibe nicht
-      if (!manualDisconnected.current) {
-        setConnected(data);
-      }
+      setConnected(data);
+      lastStatusRef.current = { time: now, connected: data.connected };
+      return data.connected;
     } catch (err) {
       console.error("Gmail status error:", err);
-      if (!manualDisconnected.current) setConnected({ connected: false });
+      setConnected({ connected: false });
+      lastStatusRef.current = { time: Date.now(), connected: false };
+      return false;
     }
   }, []);
 
   // --------------------------------------------------
-  // OAUTH CONNECT
+  // OAUTH CONNECT / DISCONNECT
   // --------------------------------------------------
   const connectGmail = () => {
-    manualDisconnected.current = false; // wieder verbinden erlaubt
     window.location.href = `${API_BASE}/gmail/auth-url`;
   };
 
-  // --------------------------------------------------
-  // OAUTH DISCONNECT
-  // --------------------------------------------------
   const disconnectGmail = async () => {
     try {
-      manualDisconnected.current = true; // verhindert, dass Pollings Status wieder überschreiben
-
       const res = await fetch(`${API_BASE}/gmail/disconnect`, {
         method: "POST",
         credentials: "include",
       });
-
       if (!res.ok) throw new Error("Failed to disconnect Gmail");
 
+      // Soft disconnect im Frontend reflektieren
       setConnected({ connected: false });
       setEmails([]);
       setSentEmails([]);
       setActiveEmail(null);
+      lastStatusRef.current = { time: Date.now(), connected: false };
     } catch (err) {
       console.error("Gmail disconnect error:", err);
     }
   };
 
   // --------------------------------------------------
-  // INBOX LADEN
+  // INBOX & SENT
   // --------------------------------------------------
   const fetchInboxEmails = useCallback(async () => {
     setInitializing(true);
@@ -81,7 +84,6 @@ export const GmailProvider = ({ children }) => {
       const res = await fetch(`${API_BASE}/gmail/emails?mailbox=inbox`, {
         credentials: "include",
       });
-
       if (!res.ok) throw new Error("Inbox fetch failed");
 
       const data = await res.json().catch(() => ({ emails: [] }));
@@ -93,16 +95,12 @@ export const GmailProvider = ({ children }) => {
     }
   }, []);
 
-  // --------------------------------------------------
-  // SENT LADEN
-  // --------------------------------------------------
   const fetchSentEmails = useCallback(async () => {
     setInitializing(true);
     try {
       const res = await fetch(`${API_BASE}/gmail/emails?mailbox=sent`, {
         credentials: "include",
       });
-
       if (!res.ok) throw new Error("Sent fetch failed");
 
       const data = await res.json().catch(() => ({ emails: [] }));
@@ -115,7 +113,7 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   // --------------------------------------------------
-  // EMAIL DETAIL + AI-POLLING (polling beeinflusst jetzt nicht mehr connected)
+  // EMAIL DETAIL + AI-POLLING
   // --------------------------------------------------
   const openEmail = useCallback(async (id) => {
     const loadEmail = async () => {
@@ -124,6 +122,7 @@ export const GmailProvider = ({ children }) => {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to load email detail");
+
         const data = await res.json();
         setActiveEmail(data);
         return data;
@@ -142,7 +141,7 @@ export const GmailProvider = ({ children }) => {
       const pollAI = async () => {
         const refreshed = await loadEmail();
         if (refreshed?.ai_status !== "success") {
-          setTimeout(pollAI, 1500); // alle 1.5s erneut laden
+          setTimeout(pollAI, 1500);
         }
       };
       setTimeout(pollAI, 1500);
