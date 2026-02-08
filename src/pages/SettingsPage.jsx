@@ -10,7 +10,7 @@ export default function SettingsPage() {
     useContext(GmailContext);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
-  // 🔁 Gmail Status beim Laden prüfen
+  // 🔁 Gmail Status beim Laden prüfen (mit Cache aus Context)
   useEffect(() => {
     let mounted = true;
 
@@ -18,7 +18,7 @@ export default function SettingsPage() {
       if (typeof fetchStatus !== "function") return;
       setLoadingStatus(true);
       try {
-        await fetchStatus();
+        await fetchStatus(); // Context cached max. 1x/min
       } catch (err) {
         console.error("Fehler beim Laden des Gmail-Status:", err);
       } finally {
@@ -28,8 +28,8 @@ export default function SettingsPage() {
 
     loadStatus();
 
-    // Optional: Status regelmäßig updaten
-    const interval = setInterval(loadStatus, 10000);
+    // Optional: Status alle Minute automatisch updaten
+    const interval = setInterval(loadStatus, 60_000);
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -41,7 +41,7 @@ export default function SettingsPage() {
     if (connected?.connected) {
       setLoadingStatus(true);
       try {
-        await disconnectGmail();
+        await disconnectGmail(); // soft disconnect
       } finally {
         setLoadingStatus(false);
       }
