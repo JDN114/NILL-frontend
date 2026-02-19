@@ -10,7 +10,9 @@ export const GmailProvider = ({ children }) => {
   const [sentEmails, setSentEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
-
+  const [inboxNextToken, setInboxNextToken] = useState(null);
+  const [sentNextToken, setSentNextToken] = useState(null);
+  
   const lastStatusFetch = useRef(0);
 
   // --------------------------------------------------
@@ -69,19 +71,28 @@ export const GmailProvider = ({ children }) => {
   // INBOX / SENT EMAILS
   // --------------------------------------------------
   const fetchInboxEmails = useCallback(
-    async (params = {}) => {
+    async ({ append = false } = {}) => {
       if (!connected?.connected) return;
 
       setInitializing(true);
+
       try {
-        const query = new URLSearchParams(params).toString();
-        const res = await fetch(`${API_BASE}/gmail/emails?mailbox=inbox&${query}`, {
-          credentials: "include",
-        });
+        const token = append ? inboxNextToken : null;
+
+        const res = await fetch(
+          `${API_BASE}/gmail/emails?mailbox=inbox${
+            token ? `&page_token=${token}` : ""
+          }`,
+          { credentials: "include" }
+        );
+
         if (!res.ok) throw new Error("Inbox fetch failed");
 
-        const data = await res.json().catch(() => ({ emails: [] }));
-        if (params.append) {
+        const data = await res.json();
+
+        setInboxNextToken(data.next_page_token || null);
+
+        if (append) {
           setEmails((prev) => [...prev, ...(data.emails || [])]);
         } else {
           setEmails(data.emails || []);
@@ -92,9 +103,9 @@ export const GmailProvider = ({ children }) => {
         setInitializing(false);
       }
     },
-    [connected]
+    [connected, inboxNextToken]
   );
-
+  
   const fetchSentEmails = useCallback(
     async (params = {}) => {
       if (!connected?.connected) return;
