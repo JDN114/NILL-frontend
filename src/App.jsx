@@ -22,6 +22,11 @@ import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
 import AccountingPage from "./pages/AccountingPage";
 
+/* 🔥 Workflow Imports */
+import WorkflowLanding from "./pages/WorkflowLanding";
+import WorkflowTasks from "./pages/WorkflowTasks";
+import WorkflowTime from "./pages/WorkflowTime";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -29,7 +34,8 @@ function App() {
     <GmailProvider>
       <Router>
         <Routes>
-          {/* Öffentlich */}
+
+          {/* ================= Öffentlich ================= */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
@@ -43,7 +49,8 @@ function App() {
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/verification-failed" element={<VerificationFailed />} />
 
-          {/* 🔒 Geschützt */}
+          {/* ================= Geschützt ================= */}
+
           <Route
             path="/dashboard"
             element={
@@ -52,6 +59,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/emails"
             element={
@@ -60,31 +68,12 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/settings"
             element={
               <ProtectedRoute>
                 <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* 🔒 Coupons nur für authentifizierte User */}
-          <Route
-            path="/redeem-coupon"
-            element={
-              <ProtectedRoute>
-                <RedeemCoupon />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* 🔒 AdminPage nur für authentifizierte User */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminPage />
               </ProtectedRoute>
             }
           />
@@ -97,6 +86,56 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* 🔒 Coupons */}
+          <Route
+            path="/redeem-coupon"
+            element={
+              <ProtectedRoute>
+                <RedeemCoupon />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🔒 Admin */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ================= Workflow ================= */}
+
+          <Route
+            path="/workflow"
+            element={
+              <ProtectedRoute>
+                <WorkflowLanding />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/workflow/tasks"
+            element={
+              <ProtectedRoute>
+                <WorkflowTasks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/workflow/time"
+            element={
+              <ProtectedRoute>
+                <WorkflowTime />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </Router>
     </GmailProvider>
