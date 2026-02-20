@@ -1,139 +1,82 @@
-import { useEffect, useState, useCallback } from "react";
-import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment from "moment";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import { Button } from "../components/ui/Button";
+import Calendar from "react-calendar";
+import api from "../lib/api";
+import 'react-calendar/dist/Calendar.css';
 
-const localizer = momentLocalizer(moment);
-const API_BASE = "https://api.nillai.de";
-
-export default function CalendarLanding() {
+export default function CalendarPage() {
   const [events, setEvents] = useState([]);
-  const [upcoming, setUpcoming] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // --------------------------------------------------
-  // Lade alle Termine für react-big-calendar (z. B. nächsten Monat)
-  // --------------------------------------------------
-  const fetchCalendarEvents = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  async function fetchEvents() {
     try {
-      const today = moment().startOf("month").format("YYYY-MM-DD");
-      const endMonth = moment().endOf("month").format("YYYY-MM-DD");
-
-      const res = await fetch(
-        `${API_BASE}/calendar/events?start=${today}&end=${endMonth}`,
-        { credentials: "include" }
-      );
-      if (!res.ok) throw new Error("Fehler beim Laden der Events");
-      const data = await res.json();
-      setEvents(
-        data.events.map((e) => ({
-          id: e.id,
-          title: e.title,
-          start: new Date(e.start),
-          end: new Date(e.end),
-        }))
-      );
+      const res = await api.get("/calendar/events/upcoming", { params: { days: 30 } });
+      setEvents(res.data || []);
+      setError(false);
     } catch (err) {
       console.error("Calendar fetch error:", err);
+      setEvents([]);
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  // --------------------------------------------------
-  // Lade die kommenden 5 Termine für rechte Spalte
-  // --------------------------------------------------
-  const fetchUpcoming = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/calendar/events/upcoming?days=30&limit=5`, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Fehler beim Laden der kommenden Termine");
-      const data = await res.json();
-      setUpcoming(data);
-    } catch (err) {
-      console.error("Upcoming events fetch error:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCalendarEvents();
-    fetchUpcoming();
-  }, [fetchCalendarEvents, fetchUpcoming]);
-
-  // --------------------------------------------------
-  // Handler für neuen Termin
-  // --------------------------------------------------
-  const handleAddEvent = () => {
-    const title = prompt("Titel des Termins:");
-    const dateStr = prompt("Datum (YYYY-MM-DD):");
-    if (!title || !dateStr) return;
-
-    fetch(`${API_BASE}/calendar/events`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, start: dateStr, end: dateStr }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Termin konnte nicht erstellt werden");
-        return res.json();
-      })
-      .then(() => {
-        fetchCalendarEvents();
-        fetchUpcoming();
-      })
-      .catch(console.error);
-  };
+  const nextEvents = events.filter(e => new Date(e.date) >= new Date()).slice(0, 5);
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Kalender</h1>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* 📅 Kalender Links */}
-        <div className="flex-1 bg-[#0a1120] p-4 rounded-lg shadow-inner">
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: 600 }}
-            views={["month", "week", "day"]}
-            popup
-          />
+      {loading && <p className="text-gray-400">Lade Termine...</p>}
+      {!loading && error && (
+        <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg text-red-400">
+          Termine konnten nicht geladen werden.
         </div>
+      )}
 
-        {/* 📋 Rechte Spalte: nächste Termine */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-white">Nächste Termine</h2>
-            <Button onClick={handleAddEvent}>Termin eintragen</Button>
+      {!loading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-lg border border-white/5">
+            <Calendar
+              value={selectedDate}
+              onChange={setSelectedDate}
+              tileClassName={({ date }) =>
+                events.some(e => new Date(e.date).toDateString() === date.toDateString())
+                  ? "bg-[var(--accent)]/20 rounded"
+                  : ""
+              }
+            />
           </div>
 
-          <div className="bg-[#0a1120] p-4 rounded-lg shadow-inner flex-1 overflow-y-auto">
-            {loading ? (
-              <p className="text-gray-400">Lade Termine...</p>
-            ) : upcoming.length === 0 ? (
-              <p className="text-gray-400">Keine Termine geplant</p>
+          <div className="bg-[#0a1120] p-4 rounded-lg border border-white/5 flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-semibold text-white">Nächste Termine</h2>
+              <button className="px-3 py-1 bg-[var(--accent)] rounded text-white text-sm hover:bg-opacity-80 transition">
+                Termin eintragen
+              </button>
+            </div>
+            {nextEvents.length === 0 ? (
+              <p className="text-gray-400">Keine bevorstehenden Termine.</p>
             ) : (
-              <ul className="space-y-2">
-                {upcoming.map((e) => (
-                  <li key={e.id} className="bg-[#111827] p-3 rounded-md shadow-sm text-white">
-                    <p className="font-medium">{e.title}</p>
-                    <p className="text-gray-400 text-sm">
-                      {new Date(e.start).toLocaleString()} - {new Date(e.end).toLocaleString()}
-                    </p>
+              <ul className="space-y-2 overflow-y-auto max-h-[300px]">
+                {nextEvents.map(e => (
+                  <li key={e.id} className="bg-[#111827] p-2 rounded border border-white/5">
+                    <p className="font-semibold">{e.title}</p>
+                    <p className="text-gray-400 text-sm">{new Date(e.date).toLocaleString()}</p>
                   </li>
                 ))}
               </ul>
             )}
           </div>
         </div>
-      </div>
+      )}
     </PageLayout>
   );
 }
