@@ -12,10 +12,18 @@
 }
 
 /* Page background and base */
-html, body, #root { height: 100%; }
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  background: #03060a; /* unterster Farbwert deines Gradients */
+}
+
 body {
   @apply bg-gradient-to-b from-[#071023] to-[#03060a] text-gray-100 antialiased;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  margin: 0;
+  overscroll-behavior-y: none;
 }
 
 /* Utility animations */

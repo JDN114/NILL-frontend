@@ -7,7 +7,7 @@ export default function DashboardLanding() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Dashboard</h1>
 
-      {/* 🔙 Zurück zur allgemeinen Landingpage */}
+      {/* 🔙 Zur Landingpage */}
       <div className="mb-6 flex justify-center">
         <Link to="/">
           <button
@@ -18,7 +18,8 @@ export default function DashboardLanding() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 🔳 Dashboard Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {/* 📧 Emails */}
         <Link
           to="/dashboard/emails"
@@ -39,6 +40,30 @@ export default function DashboardLanding() {
           <Card
             title="Buchhaltung"
             description="Rechnungen, Einnahmen & Ausgaben"
+            className="hover:shadow-lg transition"
+          />
+        </Link>
+
+        {/* 📅 Kalender */}
+        <Link
+          to="/dashboard/calendar"
+          className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+        >
+          <Card
+            title="Kalender"
+            description="Termine, Planung & Events"
+            className="hover:shadow-lg transition"
+          />
+        </Link>
+
+        {/* ⚙️ Workflow / Prozesse */}
+        <Link
+          to="/dashboard/workflow"
+          className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+        >
+          <Card
+            title="Workflow"
+            description="Tasks, Prozesse & Rollen"
             className="hover:shadow-lg transition"
           />
         </Link>
