@@ -13,8 +13,7 @@ export default function DashboardLanding() {
   // Backend API: Check if onboarding should be shown
   async function checkOnboarding() {
     try {
-      const res = await fetch("/api/me/onboarding-status", { credentials: "include" });
-
+      const res = await fetch("/onboarding-status", { credentials: "include" });
       if (!res.ok) {
         console.warn("Backend returned non-OK:", res.status);
         return;
