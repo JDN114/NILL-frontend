@@ -6,13 +6,13 @@ export default function Pricing() {
     {
       id: "base",
       title: "Base",
-      price: "0€",
+      price: "1,50€",
       description: "Für Einzelpersonen und den Einstieg.",
       features: [
         "Email Integration",
         "E-Mail Zusammenfassungen",
         "Kategorisierung",
-        "Daten- & Fakten-Extraktion",
+        "KI Analyse",
       ],
     },
     {
@@ -25,7 +25,7 @@ export default function Pricing() {
         "Alles aus Base",
         "Automatisiertes Antworten",
         "Spam-Auto-Löschung",
-        "Buchhaltungsfunktionen",
+        "integrierter smarter Kalender",
       ],
     },
     {
@@ -36,8 +36,8 @@ export default function Pricing() {
       features: [
         "Alle Funktionen von Advanced",
         "Erweiterte KI-Features",
-        "Priorisierter Support",
-        "Individuelle Anpassungen",
+        "Buchhaltungsfunktion",
+        "Teamerstellung und Verwaltung ",
       ],
     },
   ];

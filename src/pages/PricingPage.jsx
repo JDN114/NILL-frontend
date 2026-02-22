@@ -12,14 +12,13 @@ export default function PricingPage() {
     {
       id: "base",
       title: "Base",
-      monthlyPrice: 0,
-      yearlyPrice: 0,
+      monthlyPrice: 1,50,
+      yearlyPrice: 12,
       description: "Ideal für Einzelpersonen und Einstieg.",
       features: [
         "Email Integration",
         "E-Mail Zusammenfassungen",
         "Kategorisierung",
-        "Daten- & Fakten-Extraktion",
       ],
     },
     {
@@ -33,7 +32,7 @@ export default function PricingPage() {
         "Alles aus Base",
         "Automatisiertes Antworten",
         "Spam-Auto-Löschung nach 30 Tagen",
-        "Buchhaltungsfunktionen",
+        "integrierter smarter Kalender",
       ],
     },
     {
@@ -45,8 +44,8 @@ export default function PricingPage() {
       features: [
         "Alle Funktionen von Advanced",
         "Erweiterte KI-Features",
-        "Priorisierter Support",
-        "Individuelle Anpassungen",
+        "Buchhaltungsfunktion",
+        "Teamerstellung und Verwaltung",
       ],
     },
   ];
