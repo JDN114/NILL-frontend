@@ -25,6 +25,7 @@ import KalenderLanding from "./pages/KalenderLanding";
 import WorkflowLanding from "./pages/WorkflowLanding";
 import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
+import PricingPage from "./pages/PricingPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -47,6 +48,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/verification-failed" element={<VerificationFailed />} />
+          <Route path="/Pricing" element={<Pricing />} />
 
           {/* ================= Geschützt ================= */}
 
