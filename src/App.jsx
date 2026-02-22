@@ -25,7 +25,7 @@ import KalenderLanding from "./pages/KalenderLanding";
 import WorkflowLanding from "./pages/WorkflowLanding";
 import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
-import PricingPage from "./pages/PricingPage";
+import Pricing from "./pages/PricingPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
