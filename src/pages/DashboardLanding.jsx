@@ -16,19 +16,17 @@ export default function DashboardLanding() {
   // ----------------------------
   async function checkOnboarding() {
     try {
-      const res = await api.get("/me/onboarding-status"); // <-- wie Login
+      const res = await api.get("/me/onboarding-status");
+      console.log("Onboarding Status:", res.data);
 
       if (res.data.is_subscription_active && !res.data.has_seen_onboarding) {
+        console.log("Opening Welcome Modal");
         setShowWelcome(true);
       }
     } catch (err) {
-      console.error("Fehler beim Abfragen des Onboarding-Status:", err);
+      console.error("Fehler beim Abfragen:", err);
     }
   }
-
-  useEffect(() => {
-    checkOnboarding();
-  }, []);
 
   // ----------------------------
   // Wird aufgerufen, wenn Welcome Modal geschlossen wird
