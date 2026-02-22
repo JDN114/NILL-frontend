@@ -110,7 +110,7 @@ function App() {
           {/* ================= Workflow ================= */}
 
           <Route
-            path="/workflow"
+            path="/dashboard/workflow"
             element={
               <ProtectedRoute>
                 <WorkflowLanding />
@@ -119,7 +119,7 @@ function App() {
           />
 
           <Route
-            path="/workflow/tasks"
+            path="/dashboard/workflow/tasks"
             element={
               <ProtectedRoute>
                 <WorkflowTasks />
@@ -128,7 +128,7 @@ function App() {
           />
 
           <Route
-            path="/workflow/time"
+            path="/dashboard/workflow/time"
             element={
               <ProtectedRoute>
                 <WorkflowTime />
