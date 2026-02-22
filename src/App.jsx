@@ -21,8 +21,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
 import AccountingPage from "./pages/AccountingPage";
-
-/* 🔥 Workflow Imports */
+import KalenderLanding from "./pages/KalenderLanding";
 import WorkflowLanding from "./pages/WorkflowLanding";
 import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
@@ -107,7 +106,15 @@ function App() {
             }
           />
 
-          {/* ================= Workflow ================= */}
+          {/* 🔒 Kalender */}
+          <Route
+            path="/dashboard/Kalender"
+            element={
+              <ProtectedRoute>
+                <KalenderLanding />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/dashboard/workflow"
