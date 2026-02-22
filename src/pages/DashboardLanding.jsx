@@ -10,10 +10,11 @@ export default function DashboardLanding() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
+  // ----------------------------
   // Backend API: Check if onboarding should be shown
+  // ----------------------------
   async function checkOnboarding() {
     try {
-      // 🔹 Await beim fetch und Ergebnis zu res zuweisen
       const res = await fetch("/me/onboarding-status", { credentials: "include" });
 
       if (!res.ok) {
@@ -29,7 +30,6 @@ export default function DashboardLanding() {
 
       const data = await res.json();
 
-      // 🔹 Modal öffnen nur, wenn Subscription aktiv ist und Onboarding noch nicht gesehen
       if (data.is_subscription_active && !data.has_seen_onboarding) {
         setShowWelcome(true);
       }
@@ -39,18 +39,20 @@ export default function DashboardLanding() {
     }
   }
 
-  // Wird aufgerufen, wenn Welcome Modal geschlossen wird
+  useEffect(() => {
+    checkOnboarding();
+  }, []);
+
+  // ----------------------------
+  // Welcome Modal schließen → Guided Tour starten + DB flag setzen
+  // ----------------------------
   const handleWelcomeClose = async () => {
     setShowWelcome(false);
 
-    // Smooth Übergang zur Guided Tour
-    setTimeout(() => {
-      setShowTour(true);
-    }, 400);
+    setTimeout(() => setShowTour(true), 400);
 
-    // Backend flag setzen, dass das Onboarding nun gesehen wurde
     try {
-      await fetch("/api/me/onboarding-complete", {
+      await fetch("/me/onboarding-complete", {
         method: "POST",
         credentials: "include",
       });
@@ -59,9 +61,7 @@ export default function DashboardLanding() {
     }
   };
 
-  const handleTourFinish = () => {
-    setShowTour(false);
-  };
+  const handleTourFinish = () => setShowTour(false);
 
   return (
     <>
@@ -85,9 +85,7 @@ export default function DashboardLanding() {
         {/* 🔙 Zur Landingpage */}
         <div className="mb-6 flex justify-center">
           <Link to="/">
-            <button
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            >
+            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
               Zur Landingpage
             </button>
           </Link>
@@ -95,62 +93,21 @@ export default function DashboardLanding() {
 
         {/* 🔳 Dashboard Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          
-          <Link
-            to="/dashboard/emails"
-            className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
-          >
-            <Card
-              title="Emails"
-              description="Postfach, Filter & Kategorien"
-              className="hover:shadow-lg transition"
-            />
+          <Link to="/dashboard/emails" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+            <Card title="Emails" description="Postfach, Filter & Kategorien" className="hover:shadow-lg transition" />
           </Link>
-
-          <Link
-            to="/dashboard/accounting"
-            className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
-          >
-            <Card
-              title="Buchhaltung"
-              description="Rechnungen, Einnahmen & Ausgaben"
-              className="hover:shadow-lg transition"
-            />
+          <Link to="/dashboard/accounting" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+            <Card title="Buchhaltung" description="Rechnungen, Einnahmen & Ausgaben" className="hover:shadow-lg transition" />
           </Link>
-
-          <Link
-            to="/dashboard/calendar"
-            className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
-          >
-            <Card
-              title="Kalender"
-              description="Termine, Planung & Events"
-              className="hover:shadow-lg transition"
-            />
+          <Link to="/dashboard/calendar" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+            <Card title="Kalender" description="Termine, Planung & Events" className="hover:shadow-lg transition" />
           </Link>
-
-          <Link
-            to="/dashboard/workflow"
-            className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
-          >
-            <Card
-              title="Team"
-              description="Tasks, Prozesse & Rollen"
-              className="hover:shadow-lg transition"
-            />
+          <Link to="/dashboard/workflow" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+            <Card title="Team" description="Tasks, Prozesse & Rollen" className="hover:shadow-lg transition" />
           </Link>
-
-          <Link
-            to="/dashboard/settings"
-            className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
-          >
-            <Card
-              title="Einstellungen"
-              description="Gmail Verbindung & Account"
-              className="hover:shadow-lg transition"
-            />
+          <Link to="/dashboard/settings" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+            <Card title="Einstellungen" description="Gmail Verbindung & Account" className="hover:shadow-lg transition" />
           </Link>
-
         </div>
       </PageLayout>
     </>
