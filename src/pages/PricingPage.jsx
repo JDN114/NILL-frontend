@@ -12,7 +12,7 @@ export default function PricingPage() {
     {
       id: "base",
       title: "Base",
-      monthlyPrice: 1.50,
+      monthlyPrice: 1.500,
       yearlyPrice: 12,
       description: "Ideal für Einzelpersonen und Einstieg.",
       features: [
