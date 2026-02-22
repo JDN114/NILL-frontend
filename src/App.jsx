@@ -48,7 +48,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/verification-failed" element={<VerificationFailed />} />
-          <Route path="/Pricing" element={<Pricing />} />
+          <Route path="/pricing" element={<Pricing />} />
 
           {/* ================= Geschützt ================= */}
 
