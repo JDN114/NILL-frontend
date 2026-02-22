@@ -13,7 +13,9 @@ export default function DashboardLanding() {
   // Backend API: Check if onboarding should be shown
   async function checkOnboarding() {
     try {
-      const res = await fetch("/onboarding-status", { credentials: "include" });
+      // 🔹 Await beim fetch und Ergebnis zu res zuweisen
+      const res = await fetch("/me/onboarding-status", { credentials: "include" });
+
       if (!res.ok) {
         console.warn("Backend returned non-OK:", res.status);
         return;
@@ -27,9 +29,11 @@ export default function DashboardLanding() {
 
       const data = await res.json();
 
+      // 🔹 Modal öffnen nur, wenn Subscription aktiv ist und Onboarding noch nicht gesehen
       if (data.is_subscription_active && !data.has_seen_onboarding) {
         setShowWelcome(true);
       }
+
     } catch (err) {
       console.error("Fehler beim Abfragen des Onboarding-Status:", err);
     }
