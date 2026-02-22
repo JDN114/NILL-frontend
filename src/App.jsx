@@ -108,7 +108,7 @@ function App() {
 
           {/* 🔒 Kalender */}
           <Route
-            path="/dashboard/Kalender"
+            path="/dashboard/calendar"
             element={
               <ProtectedRoute>
                 <KalenderLanding />
