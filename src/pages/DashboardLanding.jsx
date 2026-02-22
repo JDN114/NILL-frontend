@@ -11,26 +11,30 @@ export default function DashboardLanding() {
   const [showTour, setShowTour] = useState(false);
 
   // Backend API: Check if onboarding should be shown
-  useEffect(() => {
-    async function checkOnboarding() {
-      try {
-        const res = await fetch("/api/me/onboarding-status", {
-          credentials: "include", // falls cookie-based auth
-        });
+  async function checkOnboarding() {
+    try {
+      const res = await fetch("/api/me/onboarding-status", { credentials: "include" });
 
-        if (!res.ok) return;
-        const data = await res.json();
-
-        if (data.is_subscription_active && !data.has_seen_onboarding) {
-          setShowWelcome(true);
-        }
-      } catch (err) {
-        console.error("Fehler beim Abfragen des Onboarding-Status:", err);
+      if (!res.ok) {
+        console.warn("Backend returned non-OK:", res.status);
+        return;
       }
-    }
 
-    checkOnboarding();
-  }, []);
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.warn("Backend response is not JSON:", contentType);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.is_subscription_active && !data.has_seen_onboarding) {
+        setShowWelcome(true);
+      }
+    } catch (err) {
+      console.error("Fehler beim Abfragen des Onboarding-Status:", err);
+    }
+  }
 
   // Wird aufgerufen, wenn Welcome Modal geschlossen wird
   const handleWelcomeClose = async () => {
