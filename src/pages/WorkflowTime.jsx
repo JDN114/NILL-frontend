@@ -1,243 +1,111 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
+import api from "../lib/api";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 
-const API_BASE = "https://api.nillai.de";
-
-export default function WorkflowTime() {
+export default function WorkflowTimePage() {
   const [entries, setEntries] = useState([]);
-  const [activeEntry, setActiveEntry] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
 
   useEffect(() => {
-    fetchEntries();
-  }, []);
+    fetchTimeEntries();
+  }, [selectedMonth]);
 
-  async function fetchEntries() {
-    try {
-      const res = await fetch(`${API_BASE}/workflow/time`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-
-      const items = data.items || [];
-      setEntries(items);
-
-      const running = items.find((e) => !e.end_time);
-      setActiveEntry(running || null);
-    } catch (err) {
-      console.error("Time fetch error:", err);
-    }
-  }
-
-  async function clockIn() {
+  async function fetchTimeEntries() {
     setLoading(true);
     try {
-      await fetch(`${API_BASE}/workflow/time/clock-in`, {
-        method: "POST",
-        credentials: "include",
+      const res = await api.get("/workflow/time", {
+        params: {
+          start: format(startOfMonth(selectedMonth), "yyyy-MM-dd"),
+          end: format(endOfMonth(selectedMonth), "yyyy-MM-dd"),
+        },
       });
-      fetchEntries();
+      setEntries(res.data?.entries || []);
+      setError(false);
     } catch (err) {
-      console.error("Clock in error:", err);
+      console.error("Workflow Time fetch error:", err);
+      setEntries([]);
+      setError(true);
     } finally {
       setLoading(false);
     }
   }
 
-  async function clockOut() {
-    setLoading(true);
-    try {
-      await fetch(`${API_BASE}/workflow/time/clock-out`, {
-        method: "POST",
-        credentials: "include",
-      });
-      fetchEntries();
-    } catch (err) {
-      console.error("Clock out error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const totalHours = entries.reduce((sum, e) => sum + (e.hours || 0), 0);
 
-  function getDurationSeconds(start, end) {
-    return (new Date(end) - new Date(start)) / 1000;
-  }
-
-  function formatSeconds(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    return `${h}h ${m}m`;
-  }
-
-  /* ================= BERECHNUNGEN ================= */
-
-  const now = new Date();
-
-  const monthlySeconds = useMemo(() => {
-    return entries.reduce((acc, e) => {
-      if (!e.end_time) return acc;
-
-      const start = new Date(e.start_time);
-      if (
-        start.getMonth() === now.getMonth() &&
-        start.getFullYear() === now.getFullYear()
-      ) {
-        return acc + getDurationSeconds(e.start_time, e.end_time);
-      }
-
-      return acc;
-    }, 0);
-  }, [entries]);
-
-  const weeklySeconds = useMemo(() => {
-    const weekStart = new Date();
-    weekStart.setDate(now.getDate() - now.getDay());
-
-    return entries.reduce((acc, e) => {
-      if (!e.end_time) return acc;
-
-      const start = new Date(e.start_time);
-      if (start >= weekStart) {
-        return acc + getDurationSeconds(e.start_time, e.end_time);
-      }
-
-      return acc;
-    }, 0);
-  }, [entries]);
-
-  const todaySeconds = useMemo(() => {
-    return entries.reduce((acc, e) => {
-      if (!e.end_time) return acc;
-
-      const start = new Date(e.start_time);
-      if (
-        start.getDate() === now.getDate() &&
-        start.getMonth() === now.getMonth()
-      ) {
-        return acc + getDurationSeconds(e.start_time, e.end_time);
-      }
-
-      return acc;
-    }, 0);
-  }, [entries]);
+  const handleMonthChange = (delta) => {
+    const newMonth = new Date(selectedMonth);
+    newMonth.setMonth(newMonth.getMonth() + delta);
+    setSelectedMonth(newMonth);
+  };
 
   return (
     <PageLayout>
-      <h1 className="text-2xl font-bold mb-6 text-white">
-        Arbeitszeit
-      </h1>
+      <h1 className="text-2xl font-bold mb-6 text-white">Zeiterfassung</h1>
 
-      {/* KPI SECTION */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <KpiCard label="Heute" value={formatSeconds(todaySeconds)} />
-        <KpiCard label="Diese Woche" value={formatSeconds(weeklySeconds)} />
-        <KpiCard label="Dieser Monat" value={formatSeconds(monthlySeconds)} />
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleMonthChange(-1)}
+            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white hover:bg-opacity-90 transition"
+          >
+            ← Vorheriger Monat
+          </button>
+          <span className="font-semibold text-white">{format(selectedMonth, "MMMM yyyy")}</span>
+          <button
+            onClick={() => handleMonthChange(1)}
+            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white hover:bg-opacity-90 transition"
+          >
+            Nächster Monat →
+          </button>
+        </div>
+        <div className="font-semibold text-white">
+          Gesamtstunden: {totalHours.toFixed(2)}
+        </div>
       </div>
 
-      {/* STATUS CARD */}
-      <div className="bg-[#0a1120] p-6 rounded-lg border border-white/5 mb-10">
-        {activeEntry ? (
-          <>
-            <p className="text-green-400 font-semibold">
-              Eingestempelt
-            </p>
-            <p className="text-gray-400 text-sm mt-1">
-              Seit:{" "}
-              {new Date(activeEntry.start_time).toLocaleTimeString()}
-            </p>
-            <button
-              onClick={clockOut}
-              disabled={loading}
-              className="mt-4 bg-red-600 px-4 py-2 rounded-lg text-white hover:opacity-90 transition"
-            >
-              Ausstempeln
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="text-gray-400 font-semibold">
-              Nicht eingestempelt
-            </p>
-            <button
-              onClick={clockIn}
-              disabled={loading}
-              className="mt-4 bg-[var(--accent)] px-4 py-2 rounded-lg text-white hover:opacity-90 transition"
-            >
-              Einstempeln
-            </button>
-          </>
-        )}
-      </div>
+      {loading && <p className="text-gray-400">Lade Zeiteinträge...</p>}
+      {!loading && error && (
+        <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg text-red-400">
+          Zeiteinträge konnten nicht geladen werden.
+        </div>
+      )}
 
-      {/* MONATSÜBERSICHT */}
-      <h2 className="text-lg font-semibold text-white mb-4">
-        Einträge im aktuellen Monat
-      </h2>
+      {!loading && !error && entries.length === 0 && (
+        <p className="text-gray-400">Keine Zeiteinträge vorhanden für diesen Monat.</p>
+      )}
 
-      <div className="space-y-3">
-        {entries
-          .filter((e) => {
-            const start = new Date(e.start_time);
-            return (
-              start.getMonth() === now.getMonth() &&
-              start.getFullYear() === now.getFullYear()
-            );
-          })
-          .map((entry) => (
-            <TimeRow key={entry.id} entry={entry} />
+      {!loading && !error && entries.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {entries.map((e) => (
+            <div
+              key={e.id}
+              className="bg-[#0a1120] p-4 rounded-lg border border-white/5 flex justify-between items-center"
+            >
+              <div>
+                <p className="font-semibold">{e.taskTitle || "Allgemein"}</p>
+                <p className="text-gray-400 text-sm">
+                  {format(new Date(e.date), "dd.MM.yyyy")}
+                </p>
+              </div>
+              <p className="px-2 py-1 text-sm rounded bg-yellow-500/20 text-yellow-400">
+                {e.hours?.toFixed(2) || 0} h
+              </p>
+            </div>
           ))}
+        </div>
+      )}
+
+      <div className="mt-6 flex justify-end">
+        <button
+          className="px-4 py-2 bg-[var(--accent)] rounded text-white hover:bg-opacity-90 transition"
+          onClick={() => alert("Feature zum Hinzufügen von Zeiteinträgen noch implementieren")}
+        >
+          Neuer Eintrag
+        </button>
       </div>
     </PageLayout>
-  );
-}
-
-/* ================= COMPONENTS ================= */
-
-function KpiCard({ label, value }) {
-  return (
-    <div className="bg-[#0a1120] p-5 rounded-lg border border-white/5">
-      <p className="text-gray-400 text-sm">{label}</p>
-      <p className="text-2xl font-bold text-white mt-1">{value}</p>
-    </div>
-  );
-}
-
-function TimeRow({ entry }) {
-  function getDurationSeconds(start, end) {
-    return (new Date(end) - new Date(start)) / 1000;
-  }
-
-  function formatSeconds(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    return `${h}h ${m}m`;
-  }
-
-  const duration =
-    entry.end_time &&
-    formatSeconds(
-      getDurationSeconds(entry.start_time, entry.end_time)
-    );
-
-  return (
-    <div className="bg-[#0a1120] p-4 rounded-lg border border-white/5 flex justify-between items-center">
-      <div>
-        <div className="text-white text-sm">
-          {new Date(entry.start_time).toLocaleDateString()}
-        </div>
-        <div className="text-gray-400 text-xs">
-          {new Date(entry.start_time).toLocaleTimeString()} –{" "}
-          {entry.end_time
-            ? new Date(entry.end_time).toLocaleTimeString()
-            : "Laufend"}
-        </div>
-      </div>
-
-      <div className="text-sm text-gray-300">
-        {duration || (
-          <span className="text-yellow-400">Aktiv</span>
-        )}
-      </div>
-    </div>
   );
 }
