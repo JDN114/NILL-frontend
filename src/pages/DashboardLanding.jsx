@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
@@ -7,30 +7,49 @@ import WelcomeToNILLModal from "../components/WelcomeToNILLModal";
 import GuidedTourModal from "../components/GuidedTourModal";
 
 export default function DashboardLanding() {
-  const location = useLocation();
-
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
+  // Backend API: Check if onboarding should be shown
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const isCheckoutSuccess = params.get("checkout") === "success";
+    async function checkOnboarding() {
+      try {
+        const res = await fetch("/api/me/onboarding-status", {
+          credentials: "include", // falls cookie-based auth
+        });
 
-    if (isCheckoutSuccess) {
-      setShowWelcome(true);
+        if (!res.ok) return;
+        const data = await res.json();
 
-      // Entfernt ?checkout=success aus der URL
-      window.history.replaceState({}, document.title, "/dashboard");
+        if (data.is_subscription_active && !data.has_seen_onboarding) {
+          setShowWelcome(true);
+        }
+      } catch (err) {
+        console.error("Fehler beim Abfragen des Onboarding-Status:", err);
+      }
     }
-  }, [location]);
 
-  const handleWelcomeClose = () => {
+    checkOnboarding();
+  }, []);
+
+  // Wird aufgerufen, wenn Welcome Modal geschlossen wird
+  const handleWelcomeClose = async () => {
     setShowWelcome(false);
 
-    // Smooth Übergang zur Tour
+    // Smooth Übergang zur Guided Tour
     setTimeout(() => {
       setShowTour(true);
     }, 400);
+
+    // Backend flag setzen, dass das Onboarding nun gesehen wurde
+    try {
+      await fetch("/api/me/onboarding-complete", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Fehler beim Setzen von has_seen_onboarding:", err);
+    }
   };
 
   const handleTourFinish = () => {
