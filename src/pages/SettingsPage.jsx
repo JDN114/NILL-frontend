@@ -11,18 +11,17 @@ export default function SettingsPage() {
 
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [showProviderModal, setShowProviderModal] = useState(false);
-
   const [subscription, setSubscription] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
 
-  /* ---------------------------------- */
-  /* Load Gmail Status                  */
-  /* ---------------------------------- */
+  // ------------------------
+  // Gmail Status laden
+  // ------------------------
   useEffect(() => {
     let mounted = true;
 
     const loadStatus = async () => {
-      if (typeof fetchStatus !== "function") return;
+      if (!fetchStatus) return;
       setLoadingStatus(true);
       try {
         await fetchStatus();
@@ -34,14 +33,12 @@ export default function SettingsPage() {
     };
 
     loadStatus();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [fetchStatus]);
 
-  /* ---------------------------------- */
-  /* Load Subscription Info             */
-  /* ---------------------------------- */
+  // ------------------------
+  // Subscription Info laden
+  // ------------------------
   useEffect(() => {
     const loadSubscription = async () => {
       try {
@@ -53,31 +50,17 @@ export default function SettingsPage() {
         setLoadingSub(false);
       }
     };
-
     loadSubscription();
   }, []);
 
-  /* ---------------------------------- */
-  /* Email Connect Handler              */
-  /* ---------------------------------- */
   const handleProviderSelect = async (provider) => {
     setShowProviderModal(false);
-
-    if (provider === "gmail") {
-      connectGmail();
-    }
-
-    // später:
-    // if (provider === "outlook") { ... }
+    if (provider === "gmail") connectGmail();
   };
 
   const handleDisconnect = async () => {
     setLoadingStatus(true);
-    try {
-      await disconnectGmail();
-    } finally {
-      setLoadingStatus(false);
-    }
+    try { await disconnectGmail(); } finally { setLoadingStatus(false); }
   };
 
   return (
@@ -86,56 +69,47 @@ export default function SettingsPage() {
 
         {/* HEADER */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Einstellungen
-          </h1>
-          <p className="text-gray-400">
-            Verwalte dein Konto, dein Abonnement und deine Integrationen.
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">Einstellungen</h1>
+          <p className="text-gray-400">Verwalte dein Konto, Abonnement und Integrationen.</p>
         </div>
 
         {/* ===================================== */}
         {/* EMAIL ACCOUNTS */}
         {/* ===================================== */}
         <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
 
-            {/* Connected Account */}
-            {connected?.connected && (
-              <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
-                <div>
-                  <p className="text-sm text-gray-400">Gmail</p>
-                  <p className="font-semibold text-white">
-                    Verbunden
-                  </p>
-                </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    connected?.connected ? "bg-green-500" : "bg-red-500"
+                  }`}
+                />
+                <span className="text-white font-medium">
+                  {connected?.connected ? "Verbunden" : "Nicht verbunden"}
+                </span>
+              </div>
 
+              {connected?.connected ? (
                 <button
                   onClick={handleDisconnect}
                   className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition"
                 >
                   Trennen
                 </button>
-              </div>
-            )}
-
-            {/* Connect Button */}
-            {!connected?.connected && (
-              <button
-                onClick={() => setShowProviderModal(true)}
-                className="
-                  w-full py-3 rounded-xl font-medium
-                  bg-[var(--nill-primary)]
-                  hover:bg-[var(--nill-primary-hover)]
-                  text-white transition
-                "
-              >
-                E-Mail Konto verbinden
-              </button>
-            )}
+              ) : (
+                <button
+                  onClick={() => setShowProviderModal(true)}
+                  className="px-4 py-2 rounded-xl bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
+                >
+                  E-Mail verbinden
+                </button>
+              )}
+            </div>
 
             <p className="text-xs text-gray-500">
-              Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).
+              Mehrere E-Mail Konten folgen bald.
             </p>
           </div>
         </Card>
@@ -145,68 +119,37 @@ export default function SettingsPage() {
         {/* ===================================== */}
         <Card title="Abonnement" className="rounded-2xl shadow-md">
           {loadingSub ? (
-            <p className="text-gray-400">Lade Abonnement...</p>
+            <p className="text-gray-400">Lade Abonnement…</p>
           ) : subscription ? (
-            <div className="space-y-6">
-
-              {/* Email */}
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">Account E-Mail</p>
-                  <p className="font-semibold text-white">
-                    {subscription.email}
-                  </p>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-400">Account E-Mail</p>
+                <p className="font-semibold text-white">{subscription.email || "-"}</p>
               </div>
 
-              {/* Plan */}
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-400">Aktueller Plan</p>
-                  <p className="font-semibold text-white">
-                    {subscription.plan}
-                  </p>
-                </div>
-
-                <span className="px-3 py-1 rounded-full text-sm bg-green-500/10 text-green-400">
-                  {subscription.plan}
-                </span>
+              <div>
+                <p className="text-sm text-gray-400">Aktueller Plan</p>
+                <p className="font-semibold text-white">{subscription.plan_name || "Kein Plan"}</p>
               </div>
 
-              {/* Next Billing */}
               {subscription.next_billing_date && (
                 <div>
-                  <p className="text-sm text-gray-400">
-                    Nächste Abbuchung
-                  </p>
+                  <p className="text-sm text-gray-400">Nächste Abbuchung</p>
                   <p className="font-semibold text-white">
-                    {new Date(
-                      subscription.next_billing_date
-                    ).toLocaleDateString("de-DE")}
+                    {new Date(subscription.next_billing_date).toLocaleDateString("de-DE")}
                   </p>
                 </div>
               )}
 
-              {/* Coupon */}
-              <div className="pt-4">
-                <Link
-                  to="/redeem-coupon"
-                  className="
-                    px-5 py-2 rounded-xl font-medium
-                    bg-[var(--nill-primary)]
-                    hover:bg-[var(--nill-primary-hover)]
-                    text-white transition
-                  "
-                >
-                  Coupon einlösen
-                </Link>
-              </div>
-
+              <Link
+                to="/redeem-coupon"
+                className="px-5 py-2 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition inline-block mt-2"
+              >
+                Coupon einlösen
+              </Link>
             </div>
           ) : (
-            <p className="text-red-400">
-              Abonnement-Daten konnten nicht geladen werden.
-            </p>
+            <p className="text-red-400">Abonnement-Daten konnten nicht geladen werden.</p>
           )}
         </Card>
 
@@ -215,15 +158,11 @@ export default function SettingsPage() {
         {/* ===================================== */}
         <Card title="Account" className="rounded-2xl shadow-md">
           <div className="space-y-6">
-
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-400">Passwort</p>
-                <p className="font-semibold text-white">
-                  Passwort ändern
-                </p>
+                <p className="font-semibold text-white">Passwort ändern</p>
               </div>
-
               <Link
                 to="/reset-password"
                 className="px-4 py-2 rounded-xl bg-gray-700 hover:bg-gray-600 text-white transition"
@@ -231,28 +170,24 @@ export default function SettingsPage() {
                 Ändern
               </Link>
             </div>
-
           </div>
         </Card>
 
         {/* ===================================== */}
-        {/* DANGER ZONE */}
+        {/* DANGER ZONE – weniger prominent */}
         {/* ===================================== */}
         <Card
           title="Gefahrenbereich"
-          className="rounded-2xl shadow-md border border-red-900/40"
+          className="rounded-2xl shadow-md border border-red-900/20 bg-gray-800/30"
         >
           <div className="flex justify-between items-center">
             <div>
-              <p className="font-semibold text-red-500">
-                Account dauerhaft löschen
-              </p>
+              <p className="font-semibold text-red-500">Account dauerhaft löschen</p>
               <p className="text-sm text-gray-400">
                 Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
             </div>
-
-            <button className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white transition">
+            <button className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition text-sm">
               Löschen
             </button>
           </div>
@@ -267,12 +202,9 @@ export default function SettingsPage() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
 
-            <h2 className="text-xl font-bold text-white">
-              E-Mail Anbieter auswählen
-            </h2>
+            <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
 
             <div className="space-y-4">
-
               <button
                 onClick={() => handleProviderSelect("gmail")}
                 className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
@@ -286,7 +218,6 @@ export default function SettingsPage() {
               >
                 Microsoft Outlook (bald verfügbar)
               </button>
-
             </div>
 
             <button
@@ -295,7 +226,6 @@ export default function SettingsPage() {
             >
               Abbrechen
             </button>
-
           </div>
         </div>
       )}
