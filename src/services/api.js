@@ -43,12 +43,22 @@ export async function getCurrentUser() {
 }
 
 // ------------------------------------
+// PASSWORD & ACCOUNT
+// ------------------------------------
+export async function changePassword(oldPassword, newPassword) {
+  const res = await api.post("/me/change-password", { old_password: oldPassword, new_password: newPassword });
+  return res.data;
+}
+
+export async function deleteAccount(password) {
+  const res = await api.delete("/me/delete-account", { data: { password } });
+  return res.data;
+}
+
+// ------------------------------------
 // GMAIL
 // ------------------------------------
-
-// ✅ Direkt weiterleiten: Backend gibt Redirect zurück
 export function connectGmail() {
-  // Hier kein fetch/Axios mehr – wir gehen direkt auf den Backend-Endpoint
   window.location.href = `${API_URL}/gmail/auth-url`;
 }
 

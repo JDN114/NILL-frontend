@@ -5,56 +5,53 @@ import Card from "../components/ui/Card";
 import { GmailContext } from "../context/GmailContext";
 import api from "../services/api";
 
+// Modals für Passwort ändern und Account löschen
+import ChangePasswordModal from "../components/ChangePasswordModal";
+import DeleteAccountModal from "../components/DeleteAccountModal";
+
 export default function SettingsPage() {
   const { connected, connectGmail, disconnectGmail, fetchStatus } = useContext(GmailContext);
 
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [showProviderModal, setShowProviderModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [subscription, setSubscription] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
 
-  /* ---------------------------------- */
-  /* Load Gmail Status                  */
-  /* ---------------------------------- */
+  // ----------------------------------
+  // Load Gmail Status
+  // ----------------------------------
   useEffect(() => {
     let mounted = true;
-
     const loadStatus = async () => {
       if (typeof fetchStatus !== "function") return;
       setLoadingStatus(true);
-      try {
-        await fetchStatus();
-      } catch (err) {
-        console.error("Fehler beim Laden des Gmail-Status:", err);
-      } finally {
-        if (mounted) setLoadingStatus(false);
-      }
+      try { await fetchStatus(); } catch (err) { console.error(err); }
+      finally { if (mounted) setLoadingStatus(false); }
     };
-
     loadStatus();
     return () => { mounted = false; };
   }, [fetchStatus]);
 
-  /* ---------------------------------- */
-  /* Load Subscription Info             */
-  /* ---------------------------------- */
+  // ----------------------------------
+  // Load Subscription Info
+  // ----------------------------------
   useEffect(() => {
     const loadSubscription = async () => {
       try {
         const res = await api.get("/me/subscription");
         setSubscription(res.data);
-      } catch (err) {
-        console.error("Fehler beim Laden der Subscription:", err);
-      } finally {
-        setLoadingSub(false);
-      }
+      } catch (err) { console.error(err); }
+      finally { setLoadingSub(false); }
     };
     loadSubscription();
   }, []);
 
-  /* ---------------------------------- */
-  /* Email Connect Handlers             */
-  /* ---------------------------------- */
+  // ----------------------------------
+  // Email Connect Handlers
+  // ----------------------------------
   const handleProviderSelect = async (provider) => {
     setShowProviderModal(false);
     if (provider === "gmail") connectGmail();
@@ -78,23 +75,19 @@ export default function SettingsPage() {
         {/* EMAIL */}
         <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
           <div className="flex flex-col gap-6">
-
             {connected?.connected ? (
               <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-400">Gmail</p>
                   <p className="font-semibold text-white">Verbunden</p>
                 </div>
-                <button onClick={handleDisconnect} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition">
-                  Trennen
-                </button>
+                <button onClick={handleDisconnect} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition">Trennen</button>
               </div>
             ) : (
               <button onClick={() => setShowProviderModal(true)} className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition">
                 E-Mail Konto verbinden
               </button>
             )}
-
             <p className="text-xs text-gray-500">Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).</p>
           </div>
         </Card>
@@ -115,7 +108,9 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-400">Aktueller Plan</p>
                   <p className="font-semibold text-white">{subscription.plan}</p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-sm bg-green-500/10 text-green-400">{subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}</span>
+                <span className="px-3 py-1 rounded-full text-sm bg-green-500/10 text-green-400">
+                  {subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}
+                </span>
               </div>
 
               {subscription.next_billing_date && (
@@ -135,26 +130,19 @@ export default function SettingsPage() {
         </Card>
 
         {/* ACCOUNT */}
-        <Card title="Account" className="rounded-2xl shadow-md">
-          <div className="space-y-6">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Passwort</p>
-                <p className="font-semibold text-white">Passwort ändern</p>
-              </div>
-              <Link to="/reset-password" className="px-4 py-2 rounded-xl bg-gray-700 hover:bg-gray-600 text-white transition">Ändern</Link>
-            </div>
-          </div>
+        <Card title="Account" className="rounded-2xl shadow-md space-y-4">
+          <button onClick={() => setShowPasswordModal(true)} className="w-full py-3 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition">
+            Passwort ändern
+          </button>
+          <button onClick={() => setShowDeleteModal(true)} className="w-full py-3 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition">
+            Account löschen
+          </button>
         </Card>
 
-        {/* DANGER ZONE – weniger prominent */}
+        {/* DANGER ZONE – etwas dezenter */}
         <Card title="Gefahrenbereich" className="rounded-2xl shadow-md border border-red-900/20 bg-gray-800">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="font-semibold text-red-500">Account dauerhaft löschen</p>
-              <p className="text-sm text-gray-400">Diese Aktion kann nicht rückgängig gemacht werden.</p>
-            </div>
-            <button className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white transition">Löschen</button>
+            <p className="text-sm text-gray-400">Gefahrenbereich für administrative Aktionen</p>
           </div>
         </Card>
 
@@ -173,6 +161,12 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* PASSWORT MODAL */}
+      <ChangePasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
+
+      {/* ACCOUNT DELETE MODAL */}
+      <DeleteAccountModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} />
 
     </PageLayout>
   );
