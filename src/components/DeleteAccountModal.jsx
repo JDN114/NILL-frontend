@@ -12,7 +12,9 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     setLoading(true);
     setError(null);
     try {
-      await api.delete("/me/delete-account", { data: { password } });
+      // ❗ POST statt DELETE
+      await api.post("/me/delete-account", { password });
+
       // Optional: nach Löschung ausloggen / redirect
       window.location.href = "/";
     } catch (err) {
