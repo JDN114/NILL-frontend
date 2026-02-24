@@ -184,11 +184,44 @@ export default function SettingsPage() {
 
       </div>
 
+      {/* -------------------------------- */}
+      {/* PROVIDER MODAL */}
+      {/* -------------------------------- */}
+      {showProviderModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
+            <div className="space-y-4">
+              <button
+                onClick={() => handleProviderSelect("gmail")}
+                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
+              >
+                Google (Gmail)
+              </button>
+              <button
+                disabled
+                className="w-full py-3 rounded-xl bg-gray-800 text-gray-500 cursor-not-allowed"
+              >
+                Microsoft Outlook (bald verfügbar)
+              </button>
+            </div>
+            <button
+              onClick={() => setShowProviderModal(false)}
+              className="text-sm text-gray-400 hover:text-white transition"
+            >
+              Abbrechen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PASSWORT MODAL */}
       <ChangePasswordModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
       />
 
+      {/* ACCOUNT DELETE MODAL */}
       <DeleteAccountModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
