@@ -49,9 +49,7 @@ export default function SettingsPage() {
       }
     };
     loadStatus();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [fetchStatus]);
 
   // ----------------------------------
@@ -74,7 +72,7 @@ export default function SettingsPage() {
   // ----------------------------------
   // Provider Connect
   // ----------------------------------
-  const handleProviderSelect = async (provider) => {
+  const handleProviderSelect = (provider) => {
     setShowProviderModal(false);
 
     try {
@@ -83,8 +81,8 @@ export default function SettingsPage() {
       }
 
       if (provider === "outlook") {
-        const res = await api.get("/outlook/auth-url");
-        window.location.href = res.data.auth_url;
+        // 🚀 Browser direkt weiterleiten, kein Axios
+        window.location.href = "/outlook/auth-url";
       }
 
     } catch (err) {
@@ -137,7 +135,6 @@ export default function SettingsPage() {
                 E-Mail Konto verbinden
               </button>
             )}
-
             <p className="text-xs text-gray-500">
               Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).
             </p>
@@ -214,8 +211,7 @@ export default function SettingsPage() {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-400">
-              Aktionen in diesem Bereich sind dauerhaft und können nicht
-              rückgängig gemacht werden.
+              Aktionen in diesem Bereich sind dauerhaft und können nicht rückgängig gemacht werden.
             </p>
 
             <button
