@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
       if (provider === "outlook") {
         // 🚀 Browser direkt weiterleiten, kein Axios
-        window.location.href = "/outlook/auth-url";
+        window.location.href = "https://api.nillai.de/outlook/auth-url";
       }
 
     } catch (err) {
