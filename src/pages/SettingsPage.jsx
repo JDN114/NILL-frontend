@@ -40,12 +40,18 @@ export default function SettingsPage() {
     const loadStatus = async () => {
       if (typeof fetchStatus !== "function") return;
       setLoadingStatus(true);
-      try { await fetchStatus(); } 
-      catch (err) { console.error(err); }
-      finally { if (mounted) setLoadingStatus(false); }
+      try {
+        await fetchStatus();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (mounted) setLoadingStatus(false);
+      }
     };
     loadStatus();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [fetchStatus]);
 
   // ----------------------------------
@@ -56,21 +62,43 @@ export default function SettingsPage() {
       try {
         const res = await api.get("/me/subscription");
         setSubscription(res.data);
-      } catch (err) { console.error(err); }
-      finally { setLoadingSub(false); }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingSub(false);
+      }
     };
     loadSubscription();
   }, []);
 
+  // ----------------------------------
+  // Provider Connect
+  // ----------------------------------
   const handleProviderSelect = async (provider) => {
     setShowProviderModal(false);
-    if (provider === "gmail") connectGmail();
+
+    try {
+      if (provider === "gmail") {
+        connectGmail();
+      }
+
+      if (provider === "outlook") {
+        const res = await api.get("/outlook/auth-url");
+        window.location.href = res.data.auth_url;
+      }
+
+    } catch (err) {
+      console.error("Provider Connect Fehler:", err);
+    }
   };
 
   const handleDisconnect = async () => {
     setLoadingStatus(true);
-    try { await disconnectGmail(); } 
-    finally { setLoadingStatus(false); }
+    try {
+      await disconnectGmail();
+    } finally {
+      setLoadingStatus(false);
+    }
   };
 
   return (
@@ -80,7 +108,9 @@ export default function SettingsPage() {
         {/* HEADER */}
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Einstellungen</h1>
-          <p className="text-gray-400">Verwalte dein Konto, dein Abonnement und deine Integrationen.</p>
+          <p className="text-gray-400">
+            Verwalte dein Konto, dein Abonnement und deine Integrationen.
+          </p>
         </div>
 
         {/* EMAIL */}
@@ -92,16 +122,25 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-400">Gmail</p>
                   <p className="font-semibold text-white">Verbunden</p>
                 </div>
-                <button onClick={handleDisconnect} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition">
+                <button
+                  onClick={handleDisconnect}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition"
+                >
                   Trennen
                 </button>
               </div>
             ) : (
-              <button onClick={() => setShowProviderModal(true)} className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition">
+              <button
+                onClick={() => setShowProviderModal(true)}
+                className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
+              >
                 E-Mail Konto verbinden
               </button>
             )}
-            <p className="text-xs text-gray-500">Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).</p>
+
+            <p className="text-xs text-gray-500">
+              Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).
+            </p>
           </div>
         </Card>
 
@@ -136,13 +175,18 @@ export default function SettingsPage() {
               )}
 
               <div className="pt-4">
-                <Link to="/redeem-coupon" className="px-5 py-2 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition">
+                <Link
+                  to="/redeem-coupon"
+                  className="px-5 py-2 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
+                >
                   Coupon einlösen
                 </Link>
               </div>
             </div>
           ) : (
-            <p className="text-red-400">Abonnement-Daten konnten nicht geladen werden.</p>
+            <p className="text-red-400">
+              Abonnement-Daten konnten nicht geladen werden.
+            </p>
           )}
         </Card>
 
@@ -170,7 +214,8 @@ export default function SettingsPage() {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-400">
-              Aktionen in diesem Bereich sind dauerhaft und können nicht rückgängig gemacht werden.
+              Aktionen in diesem Bereich sind dauerhaft und können nicht
+              rückgängig gemacht werden.
             </p>
 
             <button
@@ -184,13 +229,14 @@ export default function SettingsPage() {
 
       </div>
 
-      {/* -------------------------------- */}
       {/* PROVIDER MODAL */}
-      {/* -------------------------------- */}
       {showProviderModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
+            <h2 className="text-xl font-bold text-white">
+              E-Mail Anbieter auswählen
+            </h2>
+
             <div className="space-y-4">
               <button
                 onClick={() => handleProviderSelect("gmail")}
@@ -198,13 +244,15 @@ export default function SettingsPage() {
               >
                 Google (Gmail)
               </button>
+
               <button
-                disabled
-                className="w-full py-3 rounded-xl bg-gray-800 text-gray-500 cursor-not-allowed"
+                onClick={() => handleProviderSelect("outlook")}
+                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
               >
-                Microsoft Outlook (bald verfügbar)
+                Microsoft Outlook
               </button>
             </div>
+
             <button
               onClick={() => setShowProviderModal(false)}
               className="text-sm text-gray-400 hover:text-white transition"
@@ -215,18 +263,15 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* PASSWORT MODAL */}
       <ChangePasswordModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
       />
 
-      {/* ACCOUNT DELETE MODAL */}
       <DeleteAccountModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
       />
-
     </PageLayout>
   );
 }
