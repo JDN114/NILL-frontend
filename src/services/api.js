@@ -87,4 +87,62 @@ export async function markEmailRead(id) {
   }
 }
 
+// ------------------------------------
+// OUTLOOK
+// ------------------------------------
+export function connectOutlook() {
+  window.location.href = `${API_URL}/outlook/auth-url`;
+}
+
+export async function getOutlookStatus() {
+  try {
+    const res = await api.get("/outlook/status");
+    return res.data;
+  } catch {
+    return { connected: false };
+  }
+}
+
+export async function getOutlookEmails() {
+  const res = await api.get("/outlook/emails");
+  return res.data;
+}
+
+export async function getOutlookEmailDetail(id) {
+  if (!id) throw new Error("Email-ID fehlt");
+  const res = await api.get(`/outlook/emails/${id}`);
+  return res.data;
+}
+
+
+// ------------------------------------
+// UNIFIED EMAIL FETCH (SAFE VERSION)
+// ------------------------------------
+export async function getEmails() {
+  try {
+
+    // 1. Gmail prüfen
+    const gmailStatus = await getGmailStatus().catch(() => ({ connected: false }));
+
+    if (gmailStatus?.connected) {
+      const data = await getGmailEmails("inbox");
+      return data?.emails || [];
+    }
+
+    // 2. Outlook prüfen
+    const outlookStatus = await getOutlookStatus().catch(() => ({ connected: false }));
+
+    if (outlookStatus?.connected) {
+      const data = await getOutlookEmails();
+      return data?.emails || [];
+    }
+
+    // nichts verbunden
+    return [];
+
+  } catch (err) {
+    console.error("Unified email fetch error:", err);
+    return [];
+  }
+}
 export default api;
