@@ -1,394 +1,158 @@
-import { useContext, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import PageLayout from "../components/layout/PageLayout";
-import Card from "../components/ui/Card";
-import { GmailContext } from "../context/GmailContext";
-import api, { logoutUser } from "../services/api";
-
-import ChangePasswordModal from "../components/ChangePasswordModal";
-import DeleteAccountModal from "../components/DeleteAccountModal";
+import React, { useEffect, useState } from "react";
 
 export default function SettingsPage() {
-
-  const navigate = useNavigate();
-
-  // Gmail Context
-  const {
-    connected: gmailStatus,
-    connectGmail,
-    disconnectGmail,
-    fetchStatus: fetchGmailStatus
-  } = useContext(GmailContext);
-
-  // Outlook State
+  const [gmailConnected, setGmailConnected] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
-  const [loadingOutlook, setLoadingOutlook] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // UI State
-  const [showProviderModal, setShowProviderModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Subscription
-  const [subscription, setSubscription] = useState(null);
-  const [loadingSub, setLoadingSub] = useState(true);
-
-  // ----------------------------------
-  // Logout
-  // ----------------------------------
-
-  const handleLogout = async () => {
+  const fetchStatus = async () => {
     try {
-      await logoutUser();
-      navigate("/login");
+      const token = localStorage.getItem("access_token");
+
+      const [gmailRes, outlookRes] = await Promise.all([
+        fetch("/api/gmail/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/outlook/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const gmailData = await gmailRes.json();
+      const outlookData = await outlookRes.json();
+
+      setGmailConnected(gmailData.connected === true);
+      setOutlookConnected(outlookData.connected === true);
     } catch (err) {
-      console.error("Logout Fehler:", err);
-    }
-  };
-
-  // ----------------------------------
-  // Fetch Gmail Status
-  // ----------------------------------
-
-  useEffect(() => {
-    if (fetchGmailStatus) {
-      fetchGmailStatus();
-    }
-  }, []);
-
-  // ----------------------------------
-  // Fetch Outlook Status
-  // ----------------------------------
-
-  const fetchOutlookStatus = async () => {
-
-    try {
-
-      const res = await fetch(
-        "https://api.nillai.de/outlook/status",
-        {
-          credentials: "include"
-        }
-      );
-
-      const data = await res.json();
-
-      setOutlookConnected(data.connected === true);
-
-    } catch (err) {
-
-      console.error("Outlook status error:", err);
-      setOutlookConnected(false);
-
+      console.error("Status fetch failed:", err);
     } finally {
-
-      setLoadingOutlook(false);
-
+      setLoading(false);
     }
-
   };
 
   useEffect(() => {
-    fetchOutlookStatus();
+    fetchStatus();
   }, []);
 
-  // ----------------------------------
-  // Fetch Subscription
-  // ----------------------------------
+  const openPopup = (url) => {
+    const popup = window.open(
+      url,
+      "connect_email",
+      "width=500,height=650"
+    );
 
-  useEffect(() => {
-
-    const loadSubscription = async () => {
-
-      try {
-
-        const res = await api.get("/me/subscription");
-
-        setSubscription(res.data);
-
-      } catch (err) {
-
-        console.error(err);
-
-      } finally {
-
-        setLoadingSub(false);
-
+    const interval = setInterval(() => {
+      if (!popup || popup.closed) {
+        clearInterval(interval);
+        fetchStatus();
       }
-
-    };
-
-    loadSubscription();
-
-  }, []);
-
-  // ----------------------------------
-  // Connect Outlook
-  // ----------------------------------
-
-  const connectOutlook = () => {
-
-    window.location.href =
-      "https://api.nillai.de/outlook/auth-url";
-
+    }, 500);
   };
 
-  // ----------------------------------
-  // Provider Modal Selection
-  // ----------------------------------
-
-  const handleProviderSelect = (provider) => {
-
-    setShowProviderModal(false);
-
-    if (provider === "gmail") {
-
-      connectGmail();
-
+  const connectGmail = async () => {
+    if (outlookConnected) {
+      alert("Bitte trenne zuerst Outlook.");
+      return;
     }
 
-    if (provider === "outlook") {
+    const token = localStorage.getItem("access_token");
 
-      connectOutlook();
+    const res = await fetch("/api/gmail/auth-url", {
+      headers: { Authorization: `Bearer ${token}` },
+      redirect: "manual",
+    });
 
-    }
-
+    const url = res.headers.get("Location");
+    if (url) openPopup(url);
   };
 
-  // ----------------------------------
-  // Disconnect Outlook (optional endpoint later)
-  // ----------------------------------
-
-  const disconnectOutlook = async () => {
-
-    try {
-
-      await api.post("/outlook/disconnect");
-
-      setOutlookConnected(false);
-
-    } catch (err) {
-
-      console.error(err);
-
+  const connectOutlook = async () => {
+    if (gmailConnected) {
+      alert("Bitte trenne zuerst Gmail.");
+      return;
     }
 
+    const token = localStorage.getItem("access_token");
+
+    const res = await fetch("/api/outlook/auth-url", {
+      headers: { Authorization: `Bearer ${token}` },
+      redirect: "manual",
+    });
+
+    const url = res.headers.get("Location");
+    if (url) openPopup(url);
   };
 
-  // ----------------------------------
-  // UI
-  // ----------------------------------
+  if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
+
+  const anyConnected = gmailConnected || outlookConnected;
 
   return (
-
-    <PageLayout>
-
-      <div className="max-w-4xl space-y-12">
-
-        {/* HEADER */}
-
-        <div>
-
-          <h1 className="text-3xl font-bold text-white mb-2">
-
-            Einstellungen
-
-          </h1>
-
-          <p className="text-gray-400">
-
-            Verwalte dein Konto und deine Integrationen.
-
-          </p>
-
-        </div>
-
-
-        {/* EMAIL PROVIDERS */}
-
-        <Card title="E-Mail Konten">
-
-          <div className="space-y-4">
-
-
-            {/* Gmail */}
-
-            <div className="flex justify-between items-center bg-gray-800 p-4 rounded-xl">
-
-              <div>
-
-                <p className="text-sm text-gray-400">
-
-                  Google Gmail
-
-                </p>
-
-                <p className="font-semibold text-white">
-
-                  {gmailStatus?.connected
-                    ? "Verbunden"
-                    : "Nicht verbunden"}
-
-                </p>
-
-              </div>
-
-              {gmailStatus?.connected ? (
-
-                <button
-                  onClick={disconnectGmail}
-                  className="bg-red-600 px-4 py-2 rounded-xl"
-                >
-                  Trennen
-                </button>
-
-              ) : (
-
-                <button
-                  onClick={() => handleProviderSelect("gmail")}
-                  className="bg-blue-600 px-4 py-2 rounded-xl"
-                >
-                  Verbinden
-                </button>
-
-              )}
-
-            </div>
-
-
-            {/* Outlook */}
-
-            <div className="flex justify-between items-center bg-gray-800 p-4 rounded-xl">
-
-              <div>
-
-                <p className="text-sm text-gray-400">
-
-                  Microsoft Outlook
-
-                </p>
-
-                <p className="font-semibold text-white">
-
-                  {loadingOutlook
-                    ? "Checking..."
-                    : outlookConnected
-                      ? "Verbunden"
-                      : "Nicht verbunden"}
-
-                </p>
-
-              </div>
-
-              {outlookConnected ? (
-
-                <button
-                  onClick={disconnectOutlook}
-                  className="bg-red-600 px-4 py-2 rounded-xl"
-                >
-                  Trennen
-                </button>
-
-              ) : (
-
-                <button
-                  onClick={() => handleProviderSelect("outlook")}
-                  className="bg-blue-600 px-4 py-2 rounded-xl"
-                >
-                  Verbinden
-                </button>
-
-              )}
-
-            </div>
-
-          </div>
-
-        </Card>
-
-
-        {/* SUBSCRIPTION */}
-
-        <Card title="Abonnement">
-
-          {loadingSub ? (
-
-            <p>Lade...</p>
-
-          ) : subscription ? (
-
-            <div>
-
-              <p>Email: {subscription.email}</p>
-
-              <p>Plan: {subscription.plan}</p>
-
-            </div>
-
-          ) : (
-
-            <p>Fehler</p>
-
-          )}
-
-        </Card>
-
-
-        {/* ACCOUNT */}
-
-        <Card title="Account">
-
-          <div className="space-y-4">
+    <div style={{ padding: 20, maxWidth: 500 }}>
+      <h2>Email Integration</h2>
+
+      {/* Gmail */}
+      <div
+        style={{
+          border: "1px solid #ddd",
+          padding: 16,
+          borderRadius: 8,
+          marginBottom: 12,
+        }}
+      >
+        <h3>Gmail</h3>
+
+        {gmailConnected ? (
+          <span style={{ color: "green" }}>✅ Connected</span>
+        ) : (
+          <>
+            <span style={{ color: "gray", marginRight: 10 }}>
+              Not connected
+            </span>
 
             <button
-              onClick={() => setShowPasswordModal(true)}
-              className="w-full bg-gray-700 py-3 rounded-xl"
+              onClick={connectGmail}
+              disabled={anyConnected}
             >
-              Passwort ändern
+              Connect Gmail
             </button>
-
-            <button
-              onClick={handleLogout}
-              className="w-full bg-gray-800 py-3 rounded-xl"
-            >
-              Ausloggen
-            </button>
-
-          </div>
-
-        </Card>
-
-
-        {/* DELETE */}
-
-        <Card title="Gefahrenbereich">
-
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="w-full bg-red-700 py-3 rounded-xl"
-          >
-            Account löschen
-          </button>
-
-        </Card>
-
+          </>
+        )}
       </div>
 
+      {/* Outlook */}
+      <div
+        style={{
+          border: "1px solid #ddd",
+          padding: 16,
+          borderRadius: 8,
+        }}
+      >
+        <h3>Outlook</h3>
 
-      {/* MODALS */}
+        {outlookConnected ? (
+          <span style={{ color: "green" }}>✅ Connected</span>
+        ) : (
+          <>
+            <span style={{ color: "gray", marginRight: 10 }}>
+              Not connected
+            </span>
 
-      <ChangePasswordModal
-        isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-      />
+            <button
+              onClick={connectOutlook}
+              disabled={anyConnected}
+            >
+              Connect Outlook
+            </button>
+          </>
+        )}
+      </div>
 
-      <DeleteAccountModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-      />
-
-    </PageLayout>
-
+      {anyConnected && (
+        <div style={{ marginTop: 10, color: "#666" }}>
+          Only one email account can be connected at a time.
+        </div>
+      )}
+    </div>
   );
-
 }
