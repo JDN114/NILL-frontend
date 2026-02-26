@@ -9,20 +9,34 @@ import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
-  const { connected, connectGmail, disconnectGmail, fetchStatus } = useContext(GmailContext);
 
-  const [loadingStatus, setLoadingStatus] = useState(false);
+  const navigate = useNavigate();
+
+  // Gmail Context
+  const {
+    connected: gmailStatus,
+    connectGmail,
+    disconnectGmail,
+    fetchStatus: fetchGmailStatus
+  } = useContext(GmailContext);
+
+  // Outlook State
+  const [outlookConnected, setOutlookConnected] = useState(false);
+  const [loadingOutlook, setLoadingOutlook] = useState(true);
+
+  // UI State
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Subscription
   const [subscription, setSubscription] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
 
   // ----------------------------------
-  // Logout Handler
+  // Logout
   // ----------------------------------
+
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -33,231 +47,335 @@ export default function SettingsPage() {
   };
 
   // ----------------------------------
-  // Load Gmail Status
+  // Fetch Gmail Status
   // ----------------------------------
-  useEffect(() => {
-    let mounted = true;
-    const loadStatus = async () => {
-      if (typeof fetchStatus !== "function") return;
-      setLoadingStatus(true);
-      try {
-        await fetchStatus();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (mounted) setLoadingStatus(false);
-      }
-    };
-    loadStatus();
-    return () => { mounted = false; };
-  }, [fetchStatus]);
 
-  // ----------------------------------
-  // Load Subscription Info
-  // ----------------------------------
   useEffect(() => {
-    const loadSubscription = async () => {
-      try {
-        const res = await api.get("/me/subscription");
-        setSubscription(res.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingSub(false);
-      }
-    };
-    loadSubscription();
+    if (fetchGmailStatus) {
+      fetchGmailStatus();
+    }
   }, []);
 
   // ----------------------------------
-  // Provider Connect
+  // Fetch Outlook Status
   // ----------------------------------
-  const handleProviderSelect = (provider) => {
-    setShowProviderModal(false);
+
+  const fetchOutlookStatus = async () => {
 
     try {
-      if (provider === "gmail") {
-        connectGmail();
-      }
 
-      if (provider === "outlook") {
-        // 🚀 Browser direkt weiterleiten, kein Axios
-        window.location.href = "https://api.nillai.de/outlook/auth-url";
-      }
+      const res = await fetch(
+        "https://api.nillai.de/outlook/status",
+        {
+          credentials: "include"
+        }
+      );
+
+      const data = await res.json();
+
+      setOutlookConnected(data.connected === true);
 
     } catch (err) {
-      console.error("Provider Connect Fehler:", err);
+
+      console.error("Outlook status error:", err);
+      setOutlookConnected(false);
+
+    } finally {
+
+      setLoadingOutlook(false);
+
     }
+
   };
 
-  const handleDisconnect = async () => {
-    setLoadingStatus(true);
-    try {
-      await disconnectGmail();
-    } finally {
-      setLoadingStatus(false);
-    }
+  useEffect(() => {
+    fetchOutlookStatus();
+  }, []);
+
+  // ----------------------------------
+  // Fetch Subscription
+  // ----------------------------------
+
+  useEffect(() => {
+
+    const loadSubscription = async () => {
+
+      try {
+
+        const res = await api.get("/me/subscription");
+
+        setSubscription(res.data);
+
+      } catch (err) {
+
+        console.error(err);
+
+      } finally {
+
+        setLoadingSub(false);
+
+      }
+
+    };
+
+    loadSubscription();
+
+  }, []);
+
+  // ----------------------------------
+  // Connect Outlook
+  // ----------------------------------
+
+  const connectOutlook = () => {
+
+    window.location.href =
+      "https://api.nillai.de/outlook/auth-url";
+
   };
+
+  // ----------------------------------
+  // Provider Modal Selection
+  // ----------------------------------
+
+  const handleProviderSelect = (provider) => {
+
+    setShowProviderModal(false);
+
+    if (provider === "gmail") {
+
+      connectGmail();
+
+    }
+
+    if (provider === "outlook") {
+
+      connectOutlook();
+
+    }
+
+  };
+
+  // ----------------------------------
+  // Disconnect Outlook (optional endpoint later)
+  // ----------------------------------
+
+  const disconnectOutlook = async () => {
+
+    try {
+
+      await api.post("/outlook/disconnect");
+
+      setOutlookConnected(false);
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+
+  };
+
+  // ----------------------------------
+  // UI
+  // ----------------------------------
 
   return (
+
     <PageLayout>
+
       <div className="max-w-4xl space-y-12">
 
         {/* HEADER */}
+
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Einstellungen</h1>
+
+          <h1 className="text-3xl font-bold text-white mb-2">
+
+            Einstellungen
+
+          </h1>
+
           <p className="text-gray-400">
-            Verwalte dein Konto, dein Abonnement und deine Integrationen.
+
+            Verwalte dein Konto und deine Integrationen.
+
           </p>
+
         </div>
 
-        {/* EMAIL */}
-        <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
-          <div className="flex flex-col gap-6">
-            {connected?.connected ? (
-              <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
-                <div>
-                  <p className="text-sm text-gray-400">Gmail</p>
-                  <p className="font-semibold text-white">Verbunden</p>
-                </div>
+
+        {/* EMAIL PROVIDERS */}
+
+        <Card title="E-Mail Konten">
+
+          <div className="space-y-4">
+
+
+            {/* Gmail */}
+
+            <div className="flex justify-between items-center bg-gray-800 p-4 rounded-xl">
+
+              <div>
+
+                <p className="text-sm text-gray-400">
+
+                  Google Gmail
+
+                </p>
+
+                <p className="font-semibold text-white">
+
+                  {gmailStatus?.connected
+                    ? "Verbunden"
+                    : "Nicht verbunden"}
+
+                </p>
+
+              </div>
+
+              {gmailStatus?.connected ? (
+
                 <button
-                  onClick={handleDisconnect}
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition"
+                  onClick={disconnectGmail}
+                  className="bg-red-600 px-4 py-2 rounded-xl"
                 >
                   Trennen
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowProviderModal(true)}
-                className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
-              >
-                E-Mail Konto verbinden
-              </button>
-            )}
-            <p className="text-xs text-gray-500">
-              Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).
-            </p>
-          </div>
-        </Card>
 
-        {/* SUBSCRIPTION */}
-        <Card title="Abonnement" className="rounded-2xl shadow-md">
-          {loadingSub ? (
-            <p className="text-gray-400">Lade Abonnement...</p>
-          ) : subscription ? (
-            <div className="space-y-6">
-              <div>
-                <p className="text-sm text-gray-400">Account E-Mail</p>
-                <p className="font-semibold text-white">{subscription.email}</p>
-              </div>
+              ) : (
 
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-400">Aktueller Plan</p>
-                  <p className="font-semibold text-white">{subscription.plan}</p>
-                </div>
-                <span className="px-3 py-1 rounded-full text-sm bg-green-500/10 text-green-400">
-                  {subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}
-                </span>
-              </div>
+                <button
+                  onClick={() => handleProviderSelect("gmail")}
+                  className="bg-blue-600 px-4 py-2 rounded-xl"
+                >
+                  Verbinden
+                </button>
 
-              {subscription.next_billing_date && (
-                <div>
-                  <p className="text-sm text-gray-400">Nächste Abbuchung</p>
-                  <p className="font-semibold text-white">
-                    {new Date(subscription.next_billing_date).toLocaleDateString("de-DE")}
-                  </p>
-                </div>
               )}
 
-              <div className="pt-4">
-                <Link
-                  to="/redeem-coupon"
-                  className="px-5 py-2 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
-                >
-                  Coupon einlösen
-                </Link>
-              </div>
             </div>
-          ) : (
-            <p className="text-red-400">
-              Abonnement-Daten konnten nicht geladen werden.
-            </p>
-          )}
+
+
+            {/* Outlook */}
+
+            <div className="flex justify-between items-center bg-gray-800 p-4 rounded-xl">
+
+              <div>
+
+                <p className="text-sm text-gray-400">
+
+                  Microsoft Outlook
+
+                </p>
+
+                <p className="font-semibold text-white">
+
+                  {loadingOutlook
+                    ? "Checking..."
+                    : outlookConnected
+                      ? "Verbunden"
+                      : "Nicht verbunden"}
+
+                </p>
+
+              </div>
+
+              {outlookConnected ? (
+
+                <button
+                  onClick={disconnectOutlook}
+                  className="bg-red-600 px-4 py-2 rounded-xl"
+                >
+                  Trennen
+                </button>
+
+              ) : (
+
+                <button
+                  onClick={() => handleProviderSelect("outlook")}
+                  className="bg-blue-600 px-4 py-2 rounded-xl"
+                >
+                  Verbinden
+                </button>
+
+              )}
+
+            </div>
+
+          </div>
+
         </Card>
+
+
+        {/* SUBSCRIPTION */}
+
+        <Card title="Abonnement">
+
+          {loadingSub ? (
+
+            <p>Lade...</p>
+
+          ) : subscription ? (
+
+            <div>
+
+              <p>Email: {subscription.email}</p>
+
+              <p>Plan: {subscription.plan}</p>
+
+            </div>
+
+          ) : (
+
+            <p>Fehler</p>
+
+          )}
+
+        </Card>
+
 
         {/* ACCOUNT */}
-        <Card title="Account" className="rounded-2xl shadow-md space-y-4">
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            className="w-full py-3 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition"
-          >
-            Passwort ändern
-          </button>
 
-          <button
-            onClick={handleLogout}
-            className="w-full py-3 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition"
-          >
-            Ausloggen
-          </button>
-        </Card>
+        <Card title="Account">
 
-        {/* DANGER ZONE */}
-        <Card
-          title="Gefahrenbereich"
-          className="rounded-2xl shadow-md border border-red-900/30 bg-gray-800"
-        >
           <div className="space-y-4">
-            <p className="text-sm text-gray-400">
-              Aktionen in diesem Bereich sind dauerhaft und können nicht rückgängig gemacht werden.
-            </p>
 
             <button
-              onClick={() => setShowDeleteModal(true)}
-              className="w-full py-3 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition"
+              onClick={() => setShowPasswordModal(true)}
+              className="w-full bg-gray-700 py-3 rounded-xl"
             >
-              Account dauerhaft löschen
+              Passwort ändern
             </button>
+
+            <button
+              onClick={handleLogout}
+              className="w-full bg-gray-800 py-3 rounded-xl"
+            >
+              Ausloggen
+            </button>
+
           </div>
+
+        </Card>
+
+
+        {/* DELETE */}
+
+        <Card title="Gefahrenbereich">
+
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full bg-red-700 py-3 rounded-xl"
+          >
+            Account löschen
+          </button>
+
         </Card>
 
       </div>
 
-      {/* PROVIDER MODAL */}
-      {showProviderModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-white">
-              E-Mail Anbieter auswählen
-            </h2>
 
-            <div className="space-y-4">
-              <button
-                onClick={() => handleProviderSelect("gmail")}
-                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
-              >
-                Google (Gmail)
-              </button>
-
-              <button
-                onClick={() => handleProviderSelect("outlook")}
-                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
-              >
-                Microsoft Outlook
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowProviderModal(false)}
-              className="text-sm text-gray-400 hover:text-white transition"
-            >
-              Abbrechen
-            </button>
-          </div>
-        </div>
-      )}
+      {/* MODALS */}
 
       <ChangePasswordModal
         isOpen={showPasswordModal}
@@ -268,6 +386,9 @@ export default function SettingsPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
       />
+
     </PageLayout>
+
   );
+
 }
