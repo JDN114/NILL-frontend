@@ -1,205 +1,97 @@
-import React,
-{
-  createContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from "react";
-
+import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import api from "../services/api";
 
 export const OutlookContext = createContext({
   connected: false,
   loading: false,
   emails: [],
-
   fetchStatus: () => {},
   fetchEmails: () => {},
-
   connectOutlook: () => {},
   disconnectOutlook: () => {},
 });
 
-export const OutlookProvider = ({ children }) =>
-{
+export const OutlookProvider = ({ children }) => {
   const [connected, setConnected] = useState(false);
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const lastFetch = useRef(0);
 
   // =====================================================
   // FETCH STATUS
   // =====================================================
-  const fetchStatus = useCallback(async (force = false) =>
-  {
+  const fetchStatus = useCallback(async (force = false) => {
     const now = Date.now();
-
-    if (!force && now - lastFetch.current < 5000)
-    {
-      console.log("[OutlookContext] Status cached, skipping");
-      return;
-    }
-
+    if (!force && now - lastFetch.current < 5000) return;
     lastFetch.current = now;
 
-    console.log("[OutlookContext] Fetching status...");
-
     setLoading(true);
-
-    try
-    {
+    try {
       const res = await api.get("/outlook/status");
-
-      console.log("[OutlookContext] Status response:", res.data);
-
-      const isConnected = res.data?.connected === true;
-
-      setConnected(isConnected);
-
-      console.log("[OutlookContext] Connected =", isConnected);
-    }
-    catch (err)
-    {
-      console.error("[OutlookContext] Status error:", err);
-
+      setConnected(res.data?.connected === true);
+    } catch {
       setConnected(false);
-    }
-    finally
-    {
+    } finally {
       setLoading(false);
     }
-
   }, []);
 
   // =====================================================
   // CONNECT (redirect to FastAPI auth-url)
   // =====================================================
-  const connectOutlook = useCallback(async () =>
-  {
-    console.log("[OutlookContext] Starting OAuth flow");
-
-    try
-    {
-      /*
-      IMPORTANT:
-      Your backend returns RedirectResponse.
-      Browser must navigate directly.
-      */
-
-      window.location.href =
-        `${api.defaults.baseURL}/outlook/auth-url`;
-
-    }
-    catch (err)
-    {
-      console.error("[OutlookContext] Connect error:", err);
-    }
-
+  const connectOutlook = useCallback(async () => {
+    window.location.href = `${api.defaults.baseURL}/outlook/auth-url`;
   }, []);
 
   // =====================================================
   // DISCONNECT
   // =====================================================
-  const disconnectOutlook = useCallback(async () =>
-  {
-    console.log("[OutlookContext] Disconnect called");
-
+  const disconnectOutlook = useCallback(async () => {
     setLoading(true);
-
-    try
-    {
-      const res = await api.post("/outlook/disconnect");
-
-      console.log("[OutlookContext] Disconnect response:", res.data);
-
+    try {
+      await api.post("/outlook/disconnect");
       setConnected(false);
-
       setEmails([]);
-
       await fetchStatus(true);
-    }
-    catch (err)
-    {
-      console.error("[OutlookContext] Disconnect error:", err);
-    }
-    finally
-    {
+    } finally {
       setLoading(false);
     }
-
   }, [fetchStatus]);
 
   // =====================================================
   // FETCH EMAILS
   // =====================================================
-  const fetchEmails = useCallback(async () =>
-  {
-    console.log("[OutlookContext] Fetch emails");
-
-    if (!connected)
-    {
-      console.log("[OutlookContext] Not connected, abort");
-
-      return;
-    }
+  const fetchEmails = useCallback(async () => {
+    if (!connected) return;
 
     setLoading(true);
-
-    try
-    {
+    try {
       const res = await api.get("/outlook/emails");
-
-      console.log(
-        "[OutlookContext] Emails received:",
-        res.data?.emails?.length
-      );
-
       setEmails(res.data.emails || []);
-    }
-    catch (err)
-    {
-      console.error("[OutlookContext] Email fetch error:", err);
-    }
-    finally
-    {
+    } finally {
       setLoading(false);
     }
-
   }, [connected]);
 
   // =====================================================
   // AUTO LOAD STATUS ON START
   // =====================================================
-  useEffect(() =>
-  {
-    console.log("[OutlookContext] Provider mounted");
-
+  useEffect(() => {
     fetchStatus(true);
-
   }, [fetchStatus]);
 
-  // =====================================================
-  // PROVIDER VALUE
-  // =====================================================
-  const value =
-  {
-    connected,
-    loading,
-    emails,
-
-    fetchStatus,
-    fetchEmails,
-
-    connectOutlook,
-    disconnectOutlook,
-  };
-
-  console.log("[OutlookContext] Provider state:", value);
-
   return (
-    <OutlookContext.Provider value={value}>
+    <OutlookContext.Provider
+      value={{
+        connected,
+        loading,
+        emails,
+        fetchStatus,
+        fetchEmails,
+        connectOutlook,
+        disconnectOutlook,
+      }}
+    >
       {children}
     </OutlookContext.Provider>
   );

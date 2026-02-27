@@ -1,41 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { getEmails } from "../services/api";
+import React, { useEffect, useContext } from "react";
 import EmailCard from "./EmailCard";
+import { OutlookContext } from "../context/OutlookContext";
+import { GmailContext } from "../context/GmailContext";
 
 export default function EmailList() {
-  const [emails, setEmails] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const outlook = useContext(OutlookContext);
+  const gmail = useContext(GmailContext);
 
+  // Entscheide, welcher Provider aktiv ist
+  const provider = outlook.connected ? outlook : gmail.connected?.connected ? gmail : null;
+
+  // Lade Emails automatisch beim Mount
   useEffect(() => {
-    let isMounted = true; // Cleanup flag
+    if (!provider) return;
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getEmails();
-        if (isMounted) setEmails(data);
-      } catch (err) {
-        console.error(err);
-        if (isMounted)
-          setError(
-            err?.response?.data?.message || "Fehler beim Laden der E-Mails."
-          );
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
+    if (provider === outlook) {
+      outlook.fetchEmails();
+    } else if (provider === gmail) {
+      gmail.fetchInboxEmails();
+    }
+  }, [provider, outlook, gmail]);
 
-    fetchData();
+  if (!provider) return <p className="text-gray-400">Kein E-Mail-Konto verbunden.</p>;
 
-    return () => {
-      isMounted = false; // Prevent setState after unmount
-    };
-  }, []);
+  const loading = provider.loading ?? provider.initializing ?? false;
+  const emails = provider.emails ?? [];
 
   if (loading) return <p className="text-gray-400">E-Mails werden geladen…</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-  if (emails.length === 0) return <p className="text-gray-400">Keine E-Mails vorhanden.</p>;
+  if (!emails || emails.length === 0) return <p className="text-gray-400">Keine E-Mails vorhanden.</p>;
 
   return (
     <div>
