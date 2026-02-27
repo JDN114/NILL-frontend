@@ -3,7 +3,8 @@ import api from "../services/api";
 
 export const OutlookContext = createContext({
   connected: false,
-  loading: false,
+  loadingStatus: false,
+  loadingEmails: false,
   emails: [],
   fetchStatus: () => {},
   fetchEmails: () => {},
@@ -14,7 +15,8 @@ export const OutlookContext = createContext({
 export const OutlookProvider = ({ children }) => {
   const [connected, setConnected] = useState(false);
   const [emails, setEmails] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [loadingEmails, setLoadingEmails] = useState(false);
   const lastFetch = useRef(0);
 
   // =====================================================
@@ -25,14 +27,14 @@ export const OutlookProvider = ({ children }) => {
     if (!force && now - lastFetch.current < 5000) return;
     lastFetch.current = now;
 
-    setLoading(true);
+    setLoadingStatus(true);
     try {
       const res = await api.get("/outlook/status");
       setConnected(res.data?.connected === true);
     } catch {
       setConnected(false);
     } finally {
-      setLoading(false);
+      setLoadingStatus(false);
     }
   }, []);
 
@@ -47,14 +49,14 @@ export const OutlookProvider = ({ children }) => {
   // DISCONNECT
   // =====================================================
   const disconnectOutlook = useCallback(async () => {
-    setLoading(true);
+    setLoadingEmails(true);
     try {
       await api.post("/outlook/disconnect");
       setConnected(false);
       setEmails([]);
       await fetchStatus(true);
     } finally {
-      setLoading(false);
+      setLoadingEmails(false);
     }
   }, [fetchStatus]);
 
@@ -64,12 +66,12 @@ export const OutlookProvider = ({ children }) => {
   const fetchEmails = useCallback(async () => {
     if (!connected) return;
 
-    setLoading(true);
+    setLoadingEmails(true);
     try {
       const res = await api.get("/outlook/emails");
       setEmails(res.data.emails || []);
     } finally {
-      setLoading(false);
+      setLoadingEmails(false);
     }
   }, [connected]);
 
@@ -84,7 +86,8 @@ export const OutlookProvider = ({ children }) => {
     <OutlookContext.Provider
       value={{
         connected,
-        loading,
+        loadingStatus,
+        loadingEmails,
         emails,
         fetchStatus,
         fetchEmails,
