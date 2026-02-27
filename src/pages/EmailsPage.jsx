@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useMemo, useRef } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { GmailContext } from "../context/GmailContext";
@@ -17,18 +17,11 @@ export default function EmailsPage() {
   const gmail = useContext(GmailContext);
   const outlook = useContext(OutlookContext);
 
-  // ---------------- Determine active provider ----------------
-  const provider =
-    outlook.connected
-      ? outlook
-      : gmail.connected?.connected
-      ? gmail
-      : null;
-
-  const emails = provider?.emails || [];
-  const initializing = provider?.loading ?? provider?.initializing ?? false;
+  // ---------------- Aktiver Provider ----------------
+  const provider = outlook.connected ? outlook : gmail.connected ? gmail : null;
 
   const [mailbox, setMailbox] = useState("inbox");
+  const [loading, setLoading] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState(null);
   const [categoryGroupFilter, setCategoryGroupFilter] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -36,25 +29,31 @@ export default function EmailsPage() {
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
 
+  const emails = provider?.emails ?? [];
+
   // ---------------- Auth Guard ----------------
   useEffect(() => {
     if (!currentUser) navigate("/login", { replace: true });
   }, [currentUser, navigate]);
 
-  // ---------------- Load Emails on Mailbox Change ----------------
+  // ---------------- Load Emails on Mount & Mailbox Change ----------------
   useEffect(() => {
     if (!provider) return;
 
-    const load = async () => {
-      if (provider === outlook) {
-        provider.fetchEmails?.();
-      } else if (provider === gmail) {
-        mailbox === "inbox"
-          ? provider.fetchInboxEmails?.()
-          : provider.fetchSentEmails?.();
+    const loadEmails = async () => {
+      try {
+        setLoading(true);
+        if (provider === outlook) await provider.fetchEmails?.();
+        else if (provider === gmail) {
+          if (mailbox === "inbox") await provider.fetchInboxEmails?.();
+          else await provider.fetchSentEmails?.();
+        }
+      } finally {
+        setLoading(false);
       }
     };
-    load();
+
+    loadEmails();
   }, [provider, mailbox]);
 
   // ---------------- Click Outside für Filter ----------------
@@ -69,60 +68,55 @@ export default function EmailsPage() {
   }, []);
 
   // ---------------- Filtered Emails ----------------
-  const displayedEmails = useMemo(() => {
-    let list = emails;
-    if (!Array.isArray(list)) return [];
-
-    if (priorityFilter) {
-      list = list.filter(
-        (e) => (e.priority || "").toLowerCase() === priorityFilter.toLowerCase()
-      );
-    }
-    if (categoryGroupFilter) {
-      list = list.filter((e) => e.category_group === categoryGroupFilter);
-    }
-    return list;
-  }, [emails, priorityFilter, categoryGroupFilter]);
+  const displayedEmails = emails.filter((e) => {
+    if (priorityFilter && (e.priority || "").toLowerCase() !== priorityFilter.toLowerCase()) return false;
+    if (categoryGroupFilter && e.category_group !== categoryGroupFilter) return false;
+    return true;
+  });
 
   const priorityBadge = (p) => {
     switch ((p || "").toLowerCase()) {
-      case "high":
-        return "bg-red-600";
-      case "medium":
-        return "bg-yellow-500";
-      case "low":
-        return "bg-green-500";
-      default:
-        return "bg-gray-700";
+      case "high": return "bg-red-600";
+      case "medium": return "bg-yellow-500";
+      case "low": return "bg-green-500";
+      default: return "bg-gray-700";
     }
   };
 
   // ---------------- Refresh & Load More ----------------
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     if (!provider) return;
-    if (provider === outlook) provider.fetchEmails?.();
-    else if (provider === gmail)
-      mailbox === "inbox"
-        ? provider.fetchInboxEmails?.()
-        : provider.fetchSentEmails?.();
+    setLoading(true);
+    try {
+      if (provider === outlook) await provider.fetchEmails?.();
+      else if (provider === gmail) {
+        if (mailbox === "inbox") await provider.fetchInboxEmails?.();
+        else await provider.fetchSentEmails?.();
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
     if (!provider) return;
     const lastId = displayedEmails.slice(-1)[0]?.id || "";
-    if (provider === outlook) provider.fetchEmails?.({ append: true });
-    else if (provider === gmail)
-      mailbox === "inbox"
-        ? provider.fetchInboxEmails?.({ append: true, after_id: lastId })
-        : provider.fetchSentEmails?.({ append: true, after_id: lastId });
+    setLoading(true);
+    try {
+      if (provider === outlook) await provider.fetchEmails?.({ append: true });
+      else if (provider === gmail) {
+        if (mailbox === "inbox") await provider.fetchInboxEmails?.({ append: true, after_id: lastId });
+        else await provider.fetchSentEmails?.({ append: true, after_id: lastId });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (initializing) {
+  if (loading) {
     return (
       <PageLayout>
-        <p className="text-gray-400 text-center py-10">
-          E-Mails werden geladen…
-        </p>
+        <p className="text-gray-400 text-center py-10">E-Mails werden geladen…</p>
       </PageLayout>
     );
   }
