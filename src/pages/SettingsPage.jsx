@@ -3,16 +3,30 @@ import { Link, useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import { GmailContext } from "../context/GmailContext";
-import api, { logoutUser } from "../services/api";
+import api, {
+  logoutUser,
+  getOutlookStatus,
+  disconnectOutlook,
+} from "../services/api";
 
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { connected, connectGmail, disconnectGmail, fetchStatus } = useContext(GmailContext);
+
+  const {
+    connected,
+    connectGmail,
+    disconnectGmail,
+    fetchStatus,
+  } = useContext(GmailContext);
 
   const [loadingStatus, setLoadingStatus] = useState(false);
+
+  // NEW: Outlook state
+  const [outlookConnected, setOutlookConnected] = useState(false);
+
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -21,7 +35,7 @@ export default function SettingsPage() {
   const [loadingSub, setLoadingSub] = useState(true);
 
   // ----------------------------------
-  // Logout Handler
+  // Logout
   // ----------------------------------
   const handleLogout = async () => {
     try {
@@ -33,27 +47,44 @@ export default function SettingsPage() {
   };
 
   // ----------------------------------
-  // Load Gmail Status
+  // Load Provider Status
   // ----------------------------------
   useEffect(() => {
     let mounted = true;
+
     const loadStatus = async () => {
-      if (typeof fetchStatus !== "function") return;
       setLoadingStatus(true);
+
       try {
-        await fetchStatus();
+        // Gmail Status
+        if (typeof fetchStatus === "function") {
+          await fetchStatus();
+        }
+
+        // Outlook Status
+        const outlook = await getOutlookStatus();
+
+        if (mounted) {
+          setOutlookConnected(outlook.connected);
+        }
+
       } catch (err) {
-        console.error(err);
+        console.error("Status load error:", err);
       } finally {
         if (mounted) setLoadingStatus(false);
       }
     };
+
     loadStatus();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
+
   }, [fetchStatus]);
 
   // ----------------------------------
-  // Load Subscription Info
+  // Load Subscription
   // ----------------------------------
   useEffect(() => {
     const loadSubscription = async () => {
@@ -66,11 +97,12 @@ export default function SettingsPage() {
         setLoadingSub(false);
       }
     };
+
     loadSubscription();
   }, []);
 
   // ----------------------------------
-  // Provider Connect
+  // Connect Provider
   // ----------------------------------
   const handleProviderSelect = (provider) => {
     setShowProviderModal(false);
@@ -81,8 +113,8 @@ export default function SettingsPage() {
       }
 
       if (provider === "outlook") {
-        // 🚀 Browser direkt weiterleiten, kein Axios
-        window.location.href = "https://api.nillai.de/outlook/auth-url";
+        window.location.href =
+          `${import.meta.env.VITE_API_URL}/outlook/auth-url`;
       }
 
     } catch (err) {
@@ -90,42 +122,89 @@ export default function SettingsPage() {
     }
   };
 
+  // ----------------------------------
+  // Disconnect Provider
+  // ----------------------------------
   const handleDisconnect = async () => {
     setLoadingStatus(true);
+
     try {
-      await disconnectGmail();
+      if (outlookConnected) {
+
+        await disconnectOutlook();
+        setOutlookConnected(false);
+
+      } else if (connected?.connected) {
+
+        await disconnectGmail();
+
+      }
+
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoadingStatus(false);
     }
   };
 
+  const anyConnected =
+    outlookConnected || connected?.connected;
+
+  const providerName =
+    outlookConnected
+      ? "Microsoft Outlook"
+      : connected?.connected
+      ? "Gmail"
+      : null;
+
+  // ----------------------------------
+  // UI
+  // ----------------------------------
   return (
     <PageLayout>
       <div className="max-w-4xl space-y-12">
 
         {/* HEADER */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Einstellungen</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Einstellungen
+          </h1>
+
           <p className="text-gray-400">
             Verwalte dein Konto, dein Abonnement und deine Integrationen.
           </p>
         </div>
 
         {/* EMAIL */}
-        <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
+        <Card
+          title="E-Mail Konten"
+          className="rounded-2xl shadow-md"
+        >
           <div className="flex flex-col gap-6">
-            {connected?.connected ? (
+
+            {anyConnected ? (
               <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
+
                 <div>
-                  <p className="text-sm text-gray-400">Gmail</p>
-                  <p className="font-semibold text-white">Verbunden</p>
+
+                  <p className="text-sm text-gray-400">
+                    {providerName}
+                  </p>
+
+                  <p className="font-semibold text-white">
+                    Verbunden
+                  </p>
+
                 </div>
+
                 <button
                   onClick={handleDisconnect}
+                  disabled={loadingStatus}
                   className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition"
                 >
                   Trennen
                 </button>
+
               </div>
             ) : (
               <button
@@ -135,39 +214,69 @@ export default function SettingsPage() {
                 E-Mail Konto verbinden
               </button>
             )}
+
             <p className="text-xs text-gray-500">
               Du kannst mehrere E-Mail Konten verbinden (bald verfügbar).
             </p>
+
           </div>
         </Card>
 
         {/* SUBSCRIPTION */}
-        <Card title="Abonnement" className="rounded-2xl shadow-md">
+        <Card
+          title="Abonnement"
+          className="rounded-2xl shadow-md"
+        >
           {loadingSub ? (
-            <p className="text-gray-400">Lade Abonnement...</p>
+            <p className="text-gray-400">
+              Lade Abonnement...
+            </p>
           ) : subscription ? (
             <div className="space-y-6">
+
               <div>
-                <p className="text-sm text-gray-400">Account E-Mail</p>
-                <p className="font-semibold text-white">{subscription.email}</p>
+                <p className="text-sm text-gray-400">
+                  Account E-Mail
+                </p>
+
+                <p className="font-semibold text-white">
+                  {subscription.email}
+                </p>
               </div>
 
               <div className="flex justify-between items-center">
+
                 <div>
-                  <p className="text-sm text-gray-400">Aktueller Plan</p>
-                  <p className="font-semibold text-white">{subscription.plan}</p>
+                  <p className="text-sm text-gray-400">
+                    Aktueller Plan
+                  </p>
+
+                  <p className="font-semibold text-white">
+                    {subscription.plan}
+                  </p>
                 </div>
+
                 <span className="px-3 py-1 rounded-full text-sm bg-green-500/10 text-green-400">
-                  {subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}
+                  {subscription.is_subscription_active
+                    ? "Aktiv"
+                    : "Inaktiv"}
                 </span>
+
               </div>
 
               {subscription.next_billing_date && (
                 <div>
-                  <p className="text-sm text-gray-400">Nächste Abbuchung</p>
-                  <p className="font-semibold text-white">
-                    {new Date(subscription.next_billing_date).toLocaleDateString("de-DE")}
+
+                  <p className="text-sm text-gray-400">
+                    Nächste Abbuchung
                   </p>
+
+                  <p className="font-semibold text-white">
+                    {new Date(
+                      subscription.next_billing_date
+                    ).toLocaleDateString("de-DE")}
+                  </p>
+
                 </div>
               )}
 
@@ -179,6 +288,7 @@ export default function SettingsPage() {
                   Coupon einlösen
                 </Link>
               </div>
+
             </div>
           ) : (
             <p className="text-red-400">
@@ -188,7 +298,11 @@ export default function SettingsPage() {
         </Card>
 
         {/* ACCOUNT */}
-        <Card title="Account" className="rounded-2xl shadow-md space-y-4">
+        <Card
+          title="Account"
+          className="rounded-2xl shadow-md space-y-4"
+        >
+
           <button
             onClick={() => setShowPasswordModal(true)}
             className="w-full py-3 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition"
@@ -202,6 +316,7 @@ export default function SettingsPage() {
           >
             Ausloggen
           </button>
+
         </Card>
 
         {/* DANGER ZONE */}
@@ -209,7 +324,9 @@ export default function SettingsPage() {
           title="Gefahrenbereich"
           className="rounded-2xl shadow-md border border-red-900/30 bg-gray-800"
         >
+
           <div className="space-y-4">
+
             <p className="text-sm text-gray-400">
               Aktionen in diesem Bereich sind dauerhaft und können nicht rückgängig gemacht werden.
             </p>
@@ -220,20 +337,26 @@ export default function SettingsPage() {
             >
               Account dauerhaft löschen
             </button>
+
           </div>
+
         </Card>
 
       </div>
 
       {/* PROVIDER MODAL */}
       {showProviderModal && (
+
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+
           <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
+
             <h2 className="text-xl font-bold text-white">
               E-Mail Anbieter auswählen
             </h2>
 
             <div className="space-y-4">
+
               <button
                 onClick={() => handleProviderSelect("gmail")}
                 className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
@@ -247,6 +370,7 @@ export default function SettingsPage() {
               >
                 Microsoft Outlook
               </button>
+
             </div>
 
             <button
@@ -255,8 +379,11 @@ export default function SettingsPage() {
             >
               Abbrechen
             </button>
+
           </div>
+
         </div>
+
       )}
 
       <ChangePasswordModal
@@ -268,6 +395,7 @@ export default function SettingsPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
       />
+
     </PageLayout>
   );
 }
