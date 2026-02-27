@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+kimport { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import PageLayout from "../components/layout/PageLayout";
@@ -15,6 +15,9 @@ import DeleteAccountModal from "../components/DeleteAccountModal";
 export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  console.log("[SettingsPage] Render start");
+  console.log("[SettingsPage] Location key:", location.key);
 
   // -------------------------------
   // Contexts
@@ -33,6 +36,9 @@ export default function SettingsPage() {
     fetchStatus: fetchOutlookStatus,
   } = useContext(OutlookContext);
 
+  console.log("[SettingsPage] Gmail context:", gmailConnected);
+  console.log("[SettingsPage] Outlook context:", outlookConnected);
+
   // -------------------------------
   // Local state
   // -------------------------------
@@ -48,51 +54,82 @@ export default function SettingsPage() {
   // Logout
   // -------------------------------
   const handleLogout = async () => {
+    console.log("[SettingsPage] Logout clicked");
     try {
       await logoutUser();
+      console.log("[SettingsPage] Logout success, redirecting");
       navigate("/login");
     } catch (err) {
-      console.error("Logout Fehler:", err);
+      console.error("[SettingsPage] Logout Fehler:", err);
     }
   };
 
   // -------------------------------
-  // Load Provider Status (Gmail + Outlook)
-  // VERY IMPORTANT: reload after OAuth redirect
+  // Load Provider Status
   // -------------------------------
   useEffect(() => {
     let mounted = true;
 
+    console.log("[SettingsPage] useEffect loadStatus triggered");
+
     const loadStatus = async () => {
+      console.log("[SettingsPage] Loading provider status...");
       setLoadingStatus(true);
+
       try {
-        if (typeof fetchGmailStatus === "function") await fetchGmailStatus();
-        if (typeof fetchOutlookStatus === "function") await fetchOutlookStatus();
+        if (typeof fetchGmailStatus === "function") {
+          console.log("[SettingsPage] Fetching Gmail status...");
+          const gmailResult = await fetchGmailStatus();
+          console.log("[SettingsPage] Gmail status result:", gmailResult);
+        } else {
+          console.warn("[SettingsPage] fetchGmailStatus is not a function");
+        }
+
+        if (typeof fetchOutlookStatus === "function") {
+          console.log("[SettingsPage] Fetching Outlook status...");
+          const outlookResult = await fetchOutlookStatus();
+          console.log("[SettingsPage] Outlook status result:", outlookResult);
+        } else {
+          console.warn("[SettingsPage] fetchOutlookStatus is not a function");
+        }
+
       } catch (err) {
-        console.error("Status load error:", err);
+        console.error("[SettingsPage] Status load error:", err);
       } finally {
-        if (mounted) setLoadingStatus(false);
+        if (mounted) {
+          console.log("[SettingsPage] Provider status loading finished");
+          setLoadingStatus(false);
+        }
       }
     };
 
     loadStatus();
-    return () => { mounted = false; };
+
+    return () => {
+      console.log("[SettingsPage] Cleanup loadStatus effect");
+      mounted = false;
+    };
   }, [fetchGmailStatus, fetchOutlookStatus, location.key]);
 
   // -------------------------------
   // Load Subscription
   // -------------------------------
   useEffect(() => {
+    console.log("[SettingsPage] Loading subscription...");
+
     const loadSubscription = async () => {
       try {
         const res = await api.get("/me/subscription");
+        console.log("[SettingsPage] Subscription result:", res.data);
         setSubscription(res.data);
       } catch (err) {
-        console.error(err);
+        console.error("[SettingsPage] Subscription load error:", err);
       } finally {
+        console.log("[SettingsPage] Subscription loading finished");
         setLoadingSub(false);
       }
     };
+
     loadSubscription();
   }, []);
 
@@ -100,22 +137,45 @@ export default function SettingsPage() {
   // Connect Provider
   // -------------------------------
   const handleProviderSelect = (provider) => {
+    console.log("[SettingsPage] Provider selected:", provider);
+
     setShowProviderModal(false);
-    if (provider === "gmail") connectGmail();
-    if (provider === "outlook") connectOutlook();
+
+    if (provider === "gmail") {
+      console.log("[SettingsPage] Connecting Gmail...");
+      connectGmail();
+    }
+
+    if (provider === "outlook") {
+      console.log("[SettingsPage] Connecting Outlook...");
+      connectOutlook();
+    }
   };
 
   // -------------------------------
   // Disconnect Provider
   // -------------------------------
   const handleDisconnect = async () => {
+    console.log("[SettingsPage] Disconnect clicked");
+
     setLoadingStatus(true);
+
     try {
-      if (outlookConnected) await disconnectOutlook();
-      else if (gmailConnected?.connected) await disconnectGmail();
+      if (outlookConnected) {
+        console.log("[SettingsPage] Disconnecting Outlook...");
+        await disconnectOutlook();
+        console.log("[SettingsPage] Outlook disconnected");
+      } else if (gmailConnected?.connected) {
+        console.log("[SettingsPage] Disconnecting Gmail...");
+        await disconnectGmail();
+        console.log("[SettingsPage] Gmail disconnected");
+      } else {
+        console.warn("[SettingsPage] No provider connected");
+      }
     } catch (err) {
-      console.error("Disconnect error:", err);
+      console.error("[SettingsPage] Disconnect error:", err);
     } finally {
+      console.log("[SettingsPage] Disconnect finished");
       setLoadingStatus(false);
     }
   };
@@ -124,11 +184,20 @@ export default function SettingsPage() {
   // Unified provider state
   // -------------------------------
   const anyConnected = outlookConnected || gmailConnected?.connected;
+
   const providerName = outlookConnected
     ? "Microsoft Outlook"
     : gmailConnected?.connected
     ? "Gmail"
     : null;
+
+  console.log("[SettingsPage] Unified state:", {
+    anyConnected,
+    providerName,
+    gmailConnected,
+    outlookConnected,
+    loadingStatus,
+  });
 
   // -------------------------------
   // Render
@@ -164,7 +233,10 @@ export default function SettingsPage() {
               </div>
             ) : (
               <button
-                onClick={() => setShowProviderModal(true)}
+                onClick={() => {
+                  console.log("[SettingsPage] Open provider modal");
+                  setShowProviderModal(true);
+                }}
                 className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
               >
                 E-Mail Konto verbinden
@@ -195,6 +267,7 @@ export default function SettingsPage() {
                   {subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}
                 </span>
               </div>
+
               {subscription.next_billing_date && (
                 <div>
                   <p className="text-sm text-gray-400">Nächste Abbuchung</p>
@@ -203,6 +276,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               )}
+
               <div className="pt-4">
                 <Link
                   to="/redeem-coupon"
@@ -213,18 +287,24 @@ export default function SettingsPage() {
               </div>
             </div>
           ) : (
-            <p className="text-red-400">Abonnement-Daten konnten nicht geladen werden.</p>
+            <p className="text-red-400">
+              Abonnement-Daten konnten nicht geladen werden.
+            </p>
           )}
         </Card>
 
         {/* ACCOUNT */}
         <Card title="Account" className="rounded-2xl shadow-md space-y-4">
           <button
-            onClick={() => setShowPasswordModal(true)}
+            onClick={() => {
+              console.log("[SettingsPage] Open password modal");
+              setShowPasswordModal(true);
+            }}
             className="w-full py-3 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition"
           >
             Passwort ändern
           </button>
+
           <button
             onClick={handleLogout}
             className="w-full py-3 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition"
@@ -239,41 +319,58 @@ export default function SettingsPage() {
             <p className="text-sm text-gray-400">
               Aktionen in diesem Bereich sind dauerhaft und können nicht rückgängig gemacht werden.
             </p>
+
             <button
-              onClick={() => setShowDeleteModal(true)}
+              onClick={() => {
+                console.log("[SettingsPage] Open delete modal");
+                setShowDeleteModal(true);
+              }}
               className="w-full py-3 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition"
             >
               Account dauerhaft löschen
             </button>
           </div>
         </Card>
+
       </div>
 
-      {/* PROVIDER MODAL */}
+      {/* Modals unchanged */}
       {showProviderModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
+
+            <h2 className="text-xl font-bold text-white">
+              E-Mail Anbieter auswählen
+            </h2>
+
             <div className="space-y-4">
+
               <button
                 onClick={() => handleProviderSelect("gmail")}
                 className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
               >
                 Google (Gmail)
               </button>
+
               <button
                 onClick={() => handleProviderSelect("outlook")}
                 className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
               >
                 Microsoft Outlook
               </button>
+
             </div>
+
             <button
-              onClick={() => setShowProviderModal(false)}
+              onClick={() => {
+                console.log("[SettingsPage] Close provider modal");
+                setShowProviderModal(false);
+              }}
               className="text-sm text-gray-400 hover:text-white transition"
             >
               Abbrechen
             </button>
+
           </div>
         </div>
       )}
@@ -282,10 +379,12 @@ export default function SettingsPage() {
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
       />
+
       <DeleteAccountModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
       />
+
     </PageLayout>
   );
 }
