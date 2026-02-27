@@ -1,8 +1,8 @@
-// src/pages/EmailsPage.jsx
 import { useContext, useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { GmailContext } from "../context/GmailContext";
+import { OutlookContext } from "../context/OutlookContext";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import SafeEmailHtml from "../components/SafeEmailHtml";
@@ -13,17 +13,20 @@ import { FiArrowLeft, FiFilter, FiX, FiEdit2 } from "react-icons/fi";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useContext(AuthContext);
-  const {
-    connected,
-    emails,
-    sentEmails,
-    activeEmail,
-    initializing,
-    openEmail,
-    closeEmail,
-    fetchInboxEmails,
-    fetchSentEmails,
-  } = useContext(GmailContext);
+
+  const gmail = useContext(GmailContext);
+  const outlook = useContext(OutlookContext);
+
+  // ---------------- Determine active provider ----------------
+  const provider =
+    outlook.connected
+      ? outlook
+      : gmail.connected?.connected
+      ? gmail
+      : null;
+
+  const emails = provider?.emails || [];
+  const initializing = provider?.loading ?? provider?.initializing ?? false;
 
   const [mailbox, setMailbox] = useState("inbox");
   const [priorityFilter, setPriorityFilter] = useState(null);
@@ -40,13 +43,19 @@ export default function EmailsPage() {
 
   // ---------------- Load Emails on Mailbox Change ----------------
   useEffect(() => {
-    if (!currentUser || !connected?.connected) return;
+    if (!provider) return;
 
     const load = async () => {
-      mailbox === "inbox" ? await fetchInboxEmails() : await fetchSentEmails();
+      if (provider === outlook) {
+        provider.fetchEmails?.();
+      } else if (provider === gmail) {
+        mailbox === "inbox"
+          ? provider.fetchInboxEmails?.()
+          : provider.fetchSentEmails?.();
+      }
     };
     load();
-  }, [currentUser, mailbox, connected, fetchInboxEmails, fetchSentEmails]);
+  }, [provider, mailbox]);
 
   // ---------------- Click Outside für Filter ----------------
   useEffect(() => {
@@ -61,7 +70,7 @@ export default function EmailsPage() {
 
   // ---------------- Filtered Emails ----------------
   const displayedEmails = useMemo(() => {
-    let list = mailbox === "inbox" ? emails : sentEmails;
+    let list = emails;
     if (!Array.isArray(list)) return [];
 
     if (priorityFilter) {
@@ -73,7 +82,7 @@ export default function EmailsPage() {
       list = list.filter((e) => e.category_group === categoryGroupFilter);
     }
     return list;
-  }, [mailbox, emails, sentEmails, priorityFilter, categoryGroupFilter]);
+  }, [emails, priorityFilter, categoryGroupFilter]);
 
   const priorityBadge = (p) => {
     switch ((p || "").toLowerCase()) {
@@ -90,21 +99,30 @@ export default function EmailsPage() {
 
   // ---------------- Refresh & Load More ----------------
   const handleRefresh = () => {
-    if (!connected?.connected) return;
-    mailbox === "inbox" ? fetchInboxEmails() : fetchSentEmails();
+    if (!provider) return;
+    if (provider === outlook) provider.fetchEmails?.();
+    else if (provider === gmail)
+      mailbox === "inbox"
+        ? provider.fetchInboxEmails?.()
+        : provider.fetchSentEmails?.();
   };
 
   const handleLoadMore = () => {
-    if (!connected?.connected) return;
+    if (!provider) return;
     const lastId = displayedEmails.slice(-1)[0]?.id || "";
-    if (mailbox === "inbox") fetchInboxEmails({ append: true, after_id: lastId });
-    else fetchSentEmails({ append: true, after_id: lastId });
+    if (provider === outlook) provider.fetchEmails?.({ append: true });
+    else if (provider === gmail)
+      mailbox === "inbox"
+        ? provider.fetchInboxEmails?.({ append: true, after_id: lastId })
+        : provider.fetchSentEmails?.({ append: true, after_id: lastId });
   };
 
   if (initializing) {
     return (
       <PageLayout>
-        <p className="text-gray-400 text-center py-10">Initialisiere Gmail…</p>
+        <p className="text-gray-400 text-center py-10">
+          E-Mails werden geladen…
+        </p>
       </PageLayout>
     );
   }
@@ -113,11 +131,13 @@ export default function EmailsPage() {
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Postfach</h1>
 
-      {!connected?.connected && (
-        <p className="text-center py-6 text-red-400">Gmail nicht verbunden</p>
+      {!provider && (
+        <p className="text-center py-6 text-red-400">
+          Kein E-Mail-Konto verbunden
+        </p>
       )}
 
-      {!activeEmail && (
+      {!provider?.activeEmail && (
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2">
             {["inbox", "sent"].map((box) => (
@@ -227,18 +247,7 @@ export default function EmailsPage() {
       )}
 
       {/* ================= EMAIL LIST ================= */}
-      {!activeEmail && displayedEmails.length > 0 && (
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={handleRefresh}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            🔄 Refresh
-          </button>
-        </div>
-      )}
-
-      {!activeEmail && (
+      {!provider?.activeEmail && (
         <Card className="p-0 overflow-hidden">
           {displayedEmails.length === 0 ? (
             <p className="text-center p-6 text-gray-400">
@@ -249,11 +258,13 @@ export default function EmailsPage() {
               {displayedEmails.map((mail) => (
                 <li
                   key={mail.id}
-                  onClick={() => openEmail(mail.id)}
+                  onClick={() => provider.openEmail?.(mail.id)}
                   className="px-6 py-4 cursor-pointer hover:bg-gray-800"
                 >
                   <div className="flex justify-between mb-1">
-                    <p className="font-semibold truncate">{mail.subject || "(Kein Betreff)"}</p>
+                    <p className="font-semibold truncate">
+                      {mail.subject || "(Kein Betreff)"}
+                    </p>
                     <span className="text-xs text-gray-400">
                       {mail.received_at
                         ? new Date(mail.received_at).toLocaleString()
@@ -261,7 +272,7 @@ export default function EmailsPage() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-400 truncate">
-                    {mailbox === "inbox" ? mail.from : mail.to}
+                    {mailbox === "inbox" ? mail.from : mail.to || ""}
                   </p>
                   {mail.priority && (
                     <span
@@ -290,18 +301,20 @@ export default function EmailsPage() {
       )}
 
       {/* ================= EMAIL DETAIL ================= */}
-      {activeEmail && (
+      {provider?.activeEmail && (
         <Card className="p-4 max-h-[80vh] overflow-y-auto">
           <button
-            onClick={closeEmail}
+            onClick={provider.closeEmail}
             className="flex items-center text-sm text-gray-400 mb-4"
           >
             <FiArrowLeft className="mr-2" /> Zurück
           </button>
 
-          <h2 className="text-2xl font-bold mb-1">{activeEmail.subject}</h2>
+          <h2 className="text-2xl font-bold mb-1">
+            {provider.activeEmail.subject}
+          </h2>
 
-          <SafeEmailHtml html={activeEmail.body} />
+          <SafeEmailHtml html={provider.activeEmail.body} />
 
           <button
             onClick={() => setReplyOpen(true)}
@@ -313,7 +326,7 @@ export default function EmailsPage() {
       )}
 
       <EmailReplyModal
-        emailId={activeEmail?.id}
+        emailId={provider?.activeEmail?.id}
         open={replyOpen}
         onClose={() => setReplyOpen(false)}
       />
