@@ -114,6 +114,10 @@ export async function getOutlookEmailDetail(id) {
   return res.data;
 }
 
+export async function disconnectOutlook() {
+  const res = await api.post("/outlook/disconnect");
+  return res.data;
+}
 
 // ------------------------------------
 // UNIFIED EMAIL FETCH (SAFE VERSION)
