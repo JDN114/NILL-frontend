@@ -22,22 +22,30 @@ export const OutlookProvider = ({ children }) => {
   // =====================================================
   // FETCH STATUS
   // =====================================================
+  const statusFetchingRef = useRef(false);
+
   const fetchStatus = useCallback(async (force = false) => {
     const now = Date.now();
-    if (!force && now - lastFetch.current < 5000) return;
+
+    // verhindert Dauerfeuer
+    if (statusFetchingRef.current) return;
+
+    // verhindert zu häufige calls
+    if (!force && now - lastFetch.current < 10000) return;
+
+    statusFetchingRef.current = true;
     lastFetch.current = now;
 
-    setLoadingStatus(true);
     try {
       const res = await api.get("/outlook/status");
       setConnected(res.data?.connected === true);
     } catch {
       setConnected(false);
     } finally {
-      setLoadingStatus(false);
+      statusFetchingRef.current = false;
     }
   }, []);
-
+  
   // =====================================================
   // CONNECT (redirect to FastAPI auth-url)
   // =====================================================
@@ -63,15 +71,19 @@ export const OutlookProvider = ({ children }) => {
   // =====================================================
   // FETCH EMAILS
   // =====================================================
+  const emailsFetchingRef = useRef(false);
+
   const fetchEmails = useCallback(async () => {
     if (!connected) return;
+    if (emailsFetchingRef.current) return;
 
-    setLoadingEmails(true);
+    emailsFetchingRef.current = true;
+
     try {
       const res = await api.get("/outlook/emails");
       setEmails(res.data.emails || []);
     } finally {
-      setLoadingEmails(false);
+      emailsFetchingRef.current = false;
     }
   }, [connected]);
 
