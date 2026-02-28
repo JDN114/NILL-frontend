@@ -1,4 +1,10 @@
-import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import api from "../services/api";
 
 export const OutlookContext = createContext({
@@ -17,83 +23,167 @@ export const OutlookProvider = ({ children }) => {
   const [emails, setEmails] = useState([]);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [loadingEmails, setLoadingEmails] = useState(false);
-  const lastFetch = useRef(0);
+
+  const lastStatusFetch = useRef(0);
+
+  const statusFetchingRef = useRef(false);
+  const emailsFetchingRef = useRef(false);
+  const emailsBlockedRef = useRef(false);
 
   // =====================================================
   // FETCH STATUS
   // =====================================================
-  const statusFetchingRef = useRef(false);
-
   const fetchStatus = useCallback(async (force = false) => {
     const now = Date.now();
 
-    // verhindert Dauerfeuer
     if (statusFetchingRef.current) return;
 
-    // verhindert zu häufige calls
-    if (!force && now - lastFetch.current < 10000) return;
+    if (!force && now - lastStatusFetch.current < 10000) return;
 
     statusFetchingRef.current = true;
-    lastFetch.current = now;
+    lastStatusFetch.current = now;
+
+    setLoadingStatus(true);
 
     try {
       const res = await api.get("/outlook/status");
-      setConnected(res.data?.connected === true);
-    } catch {
+
+      const isConnected = res.data?.connected === true;
+
+      setConnected(isConnected);
+
+    } catch (err) {
+
+      console.error("Outlook status error:", err?.message);
+
       setConnected(false);
+
     } finally {
+
+      setLoadingStatus(false);
       statusFetchingRef.current = false;
+
     }
+
   }, []);
-  
+
   // =====================================================
-  // CONNECT (redirect to FastAPI auth-url)
+  // FETCH EMAILS (FIXED)
   // =====================================================
-  const connectOutlook = useCallback(async () => {
-    window.location.href = `${api.defaults.baseURL}/outlook/auth-url`;
+  const fetchEmails = useCallback(async () => {
+
+    if (!connected) return;
+
+    if (emailsFetchingRef.current) return;
+
+    if (emailsBlockedRef.current) return;
+
+    emailsFetchingRef.current = true;
+
+    setLoadingEmails(true);
+
+    try {
+
+      const res = await api.get("/outlook/emails");
+
+      if (res?.data?.emails) {
+
+        setEmails(res.data.emails);
+
+      }
+
+    } catch (err) {
+
+      if (err?.response?.status === 429) {
+
+        console.warn("Outlook rate limited — blocking requests temporarily");
+
+        emailsBlockedRef.current = true;
+
+        setTimeout(() => {
+
+          emailsBlockedRef.current = false;
+
+        }, 30000);
+
+      } else {
+
+        console.error("Outlook emails fetch failed:", err?.message);
+
+      }
+
+    } finally {
+
+      setLoadingEmails(false);
+
+      emailsFetchingRef.current = false;
+
+    }
+
+  }, [connected]);
+
+  // =====================================================
+  // AUTO LOAD EMAILS WHEN CONNECTED
+  // =====================================================
+  useEffect(() => {
+
+    if (connected) {
+
+      fetchEmails();
+
+    }
+
+  }, [connected, fetchEmails]);
+
+  // =====================================================
+  // CONNECT
+  // =====================================================
+  const connectOutlook = useCallback(() => {
+
+    window.location.href =
+      `${api.defaults.baseURL}/outlook/auth-url`;
+
   }, []);
 
   // =====================================================
   // DISCONNECT
   // =====================================================
   const disconnectOutlook = useCallback(async () => {
+
     setLoadingEmails(true);
+
     try {
+
       await api.post("/outlook/disconnect");
+
       setConnected(false);
+
       setEmails([]);
-      await fetchStatus(true);
+
+    } catch (err) {
+
+      console.error("Disconnect failed:", err?.message);
+
     } finally {
+
       setLoadingEmails(false);
+
     }
-  }, [fetchStatus]);
+
+  }, []);
 
   // =====================================================
-  // FETCH EMAILS
-  // =====================================================
-  const emailsFetchingRef = useRef(false);
-
-  const fetchEmails = useCallback(async () => {
-    if (!connected) return;
-    if (emailsFetchingRef.current) return;
-
-    emailsFetchingRef.current = true;
-
-    try {
-      const res = await api.get("/outlook/emails");
-      setEmails(res.data.emails || []);
-    } finally {
-      emailsFetchingRef.current = false;
-    }
-  }, [connected]);
-
-  // =====================================================
-  // AUTO LOAD STATUS ON START
+  // INITIAL LOAD
   // =====================================================
   useEffect(() => {
+
     fetchStatus(true);
+
   }, [fetchStatus]);
 
+  // =====================================================
+  // CONTEXT
+  // =====================================================
   return (
     <OutlookContext.Provider
       value={{
