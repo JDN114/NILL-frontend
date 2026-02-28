@@ -1,397 +1,197 @@
-import { useContext, useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { GmailContext } from "../context/GmailContext";
-import { OutlookContext } from "../context/OutlookContext";
-import PageLayout from "../components/layout/PageLayout";
-import Card from "../components/ui/Card";
-import SafeEmailHtml from "../components/SafeEmailHtml";
-import EmailReplyModal from "../components/EmailReplyModal";
-import EmailComposeModal from "../components/EmailComposeModal";
-import { FiArrowLeft, FiFilter, FiX, FiEdit2 } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+
+interface Email {
+  id: string;
+  subject: string;
+  from: string;
+  received_at: string;
+  summary?: string;
+  priority?: string;
+  category?: string;
+  category_group?: string;
+  sentiment?: string;
+  ai_status?: string;
+  body?: string;
+}
 
 export default function EmailsPage() {
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [loadingList, setLoadingList] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const navigate = useNavigate();
-  const { user: currentUser } = useContext(AuthContext);
+  // -------------------
+  // Load email list
+  // -------------------
+  const loadEmails = async () => {
+    console.log("Loading email list...");
+    setLoadingList(true);
+    setError(null);
 
-  const gmail = useContext(GmailContext);
-  const outlook = useContext(OutlookContext);
+    try {
+      const res = await fetch("/api/emails");
 
-  // ✅ STABILE Provider Auswahl
-  const provider =
-    outlook.connected === true
-      ? outlook
-      : gmail.connected === true
-      ? gmail
-      : null;
+      console.log("List response status:", res.status);
 
-  const [mailbox, setMailbox] = useState("inbox");
-  const [loading, setLoading] = useState(false);
-  const [priorityFilter, setPriorityFilter] = useState(null);
-  const [categoryGroupFilter, setCategoryGroupFilter] = useState(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const filterRef = useRef(null);
-
-  const [replyOpen, setReplyOpen] = useState(false);
-  const [composeOpen, setComposeOpen] = useState(false);
-
-  const emails = provider?.emails ?? [];
-
-  // =====================================================
-  // AUTH GUARD
-  // =====================================================
-
-  useEffect(() => {
-
-    if (!currentUser)
-      navigate("/login", { replace: true });
-
-  }, [currentUser, navigate]);
-
-
-  // =====================================================
-  // EMAIL LOAD (FIXED - NO MORE INFINITE CALLS)
-  // =====================================================
-
-  useEffect(() => {
-
-    const loadEmails = async () => {
-
-      try {
-
-        setLoading(true);
-
-        if (outlook.connected) {
-
-          await outlook.fetchEmails?.();
-
-        }
-
-        else if (gmail.connected) {
-
-          if (mailbox === "inbox")
-            await gmail.fetchInboxEmails?.();
-          else
-            await gmail.fetchSentEmails?.();
-
-        }
-
+      if (!res.ok) {
+        throw new Error(`Failed to load emails (${res.status})`);
       }
 
-      finally {
+      const data = await res.json();
 
-        setLoading(false);
+      console.log("Emails loaded:", data.length);
 
+      setEmails(data);
+    } catch (err: any) {
+      console.error("Error loading emails:", err);
+      setError(err.message);
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  // -------------------
+  // Load email detail
+  // -------------------
+  const loadEmailDetail = async (id: string) => {
+    console.log("Loading email detail:", id);
+
+    setLoadingDetail(true);
+
+    try {
+      const res = await fetch(`/api/emails/${id}`);
+
+      console.log("Detail response status:", res.status);
+
+      if (!res.ok) {
+        throw new Error(`Failed to load email detail (${res.status})`);
       }
 
-    };
+      const data = await res.json();
 
-    if (outlook.connected || gmail.connected)
-      loadEmails();
+      console.log("Detail loaded:", data);
 
-  }, [
-    outlook.connected,
-    gmail.connected,
-    mailbox
-  ]);
-
-
-  // =====================================================
-  // CLICK OUTSIDE FILTER
-  // =====================================================
+      setSelectedEmail(data);
+    } catch (err: any) {
+      console.error("Error loading email detail:", err);
+      setError(err.message);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
 
   useEffect(() => {
-
-    const handler = (e) => {
-
-      if (filterRef.current && !filterRef.current.contains(e.target))
-        setFiltersOpen(false);
-
-    };
-
-    document.addEventListener("mousedown", handler);
-
-    return () =>
-      document.removeEventListener("mousedown", handler);
-
+    loadEmails();
   }, []);
 
-
-  // =====================================================
-  // FILTER
-  // =====================================================
-
-  const displayedEmails = emails.filter((e) => {
-
-    if (
-      priorityFilter &&
-      (e.priority || "").toLowerCase() !== priorityFilter.toLowerCase()
-    )
-      return false;
-
-    if (
-      categoryGroupFilter &&
-      e.category_group !== categoryGroupFilter
-    )
-      return false;
-
-    return true;
-
-  });
-
-
-  const priorityBadge = (p) => {
-
-    switch ((p || "").toLowerCase()) {
-
-      case "high":
-        return "bg-red-600";
-
-      case "medium":
-        return "bg-yellow-500";
-
-      case "low":
-        return "bg-green-500";
-
-      default:
-        return "bg-gray-700";
-
-    }
-
-  };
-
-
-  // =====================================================
-  // REFRESH
-  // =====================================================
-
-  const handleRefresh = async () => {
-
-    if (!provider) return;
-
-    setLoading(true);
-
-    try {
-
-      if (outlook.connected)
-        await outlook.fetchEmails?.();
-
-      else if (gmail.connected) {
-
-        if (mailbox === "inbox")
-          await gmail.fetchInboxEmails?.();
-        else
-          await gmail.fetchSentEmails?.();
-
-      }
-
-    }
-
-    finally {
-
-      setLoading(false);
-
-    }
-
-  };
-
-
-  // =====================================================
-  // LOAD MORE
-  // =====================================================
-
-  const handleLoadMore = async () => {
-
-    if (!provider) return;
-
-    setLoading(true);
-
-    try {
-
-      if (outlook.connected)
-        await outlook.fetchEmails?.();
-
-      else if (gmail.connected) {
-
-        if (mailbox === "inbox")
-          await gmail.fetchInboxEmails?.({ append: true });
-        else
-          await gmail.fetchSentEmails?.({ append: true });
-
-      }
-
-    }
-
-    finally {
-
-      setLoading(false);
-
-    }
-
-  };
-
-
-  // =====================================================
-  // LOADING STATE
-  // =====================================================
-
-  if (loading) {
-
-    return (
-
-      <PageLayout>
-
-        <p className="text-gray-400 text-center py-10">
-          E-Mails werden geladen…
-        </p>
-
-      </PageLayout>
-
-    );
-
-  }
-
-
-  // =====================================================
+  // -------------------
   // UI
-  // =====================================================
-
+  // -------------------
   return (
+    <div style={{ display: "flex", height: "100%" }}>
+      
+      {/* LEFT: EMAIL LIST */}
+      <div
+        style={{
+          width: "40%",
+          borderRight: "1px solid #ddd",
+          overflowY: "auto",
+        }}
+      >
+        <h2>Emails</h2>
 
-    <PageLayout>
+        {loadingList && <div>Loading emails...</div>}
 
-      <h1 className="text-2xl font-bold mb-6 text-white">
-        Postfach
-      </h1>
-
-
-      {!provider && (
-
-        <p className="text-center py-6 text-red-400">
-          Kein E-Mail-Konto verbunden
-        </p>
-
-      )}
-
-
-      {/* Toolbar */}
-
-      <div className="flex items-center gap-2 mb-4">
-
-        {["inbox", "sent"].map((box) => (
-
-          <button
-            key={box}
-            onClick={() => {
-
-              setMailbox(box);
-              setPriorityFilter(null);
-              setCategoryGroupFilter(null);
-
-            }}
-            className={`px-4 py-2 rounded ${
-              mailbox === box
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-200 hover:bg-gray-600"
-            }`}
-          >
-
-            {box === "inbox"
-              ? "Posteingang"
-              : "Gesendet"}
-
-          </button>
-
-        ))}
-
-
-        <button
-          onClick={handleRefresh}
-          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
-        >
-          Aktualisieren
-        </button>
-
-
-        <button
-          onClick={() => setComposeOpen(true)}
-          className="ml-auto flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-
-          <FiEdit2 />
-          Neue E-Mail
-
-        </button>
-
-      </div>
-
-
-      {/* Email List */}
-
-      <Card className="p-0 overflow-hidden">
-
-        {displayedEmails.length === 0 ? (
-
-          <p className="text-center p-6 text-gray-400">
-            Keine E-Mails gefunden
-          </p>
-
-        ) : (
-
-          <ul className="divide-y divide-gray-800">
-
-            {displayedEmails.map((mail) => (
-
-              <li
-                key={mail.id}
-                className="px-6 py-4 hover:bg-gray-800"
-              >
-
-                <div className="flex justify-between mb-1">
-
-                  <p className="font-semibold truncate">
-                    {mail.subject || "(Kein Betreff)"}
-                  </p>
-
-                  <span className="text-xs text-gray-400">
-                    {mail.date
-                      ? new Date(mail.date).toLocaleString()
-                      : ""}
-                  </span>
-
-                </div>
-
-                <p className="text-sm text-gray-400 truncate">
-                  {mail.from}
-                </p>
-
-              </li>
-
-            ))}
-
-          </ul>
-
+        {error && (
+          <div style={{ color: "red" }}>
+            Error: {error}
+          </div>
         )}
 
-      </Card>
+        {emails.map((email) => (
+          <div
+            key={email.id}
+            onClick={() => loadEmailDetail(email.id)}
+            style={{
+              padding: "12px",
+              borderBottom: "1px solid #eee",
+              cursor: "pointer",
+              background:
+                selectedEmail?.id === email.id
+                  ? "#f0f0f0"
+                  : "transparent",
+            }}
+          >
+            <div>
+              <strong>{email.subject}</strong>
+            </div>
 
+            <div style={{ fontSize: "0.9em", color: "#666" }}>
+              {email.from}
+            </div>
 
-      <EmailReplyModal
-        emailId={provider?.activeEmail?.id}
-        open={replyOpen}
-        onClose={() => setReplyOpen(false)}
-      />
+            <div style={{ fontSize: "0.8em", color: "#999" }}>
+              {email.received_at}
+            </div>
+          </div>
+        ))}
+      </div>
 
+      {/* RIGHT: DETAIL VIEW */}
+      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+        {!selectedEmail && (
+          <div>Select an email</div>
+        )}
 
-      <EmailComposeModal
-        open={composeOpen}
-        onClose={() => setComposeOpen(false)}
-      />
+        {loadingDetail && (
+          <div>Loading detail...</div>
+        )}
 
-    </PageLayout>
+        {selectedEmail && !loadingDetail && (
+          <div>
+            <h2>{selectedEmail.subject}</h2>
 
+            <div>
+              <strong>From:</strong> {selectedEmail.from}
+            </div>
+
+            <div>
+              <strong>Date:</strong> {selectedEmail.received_at}
+            </div>
+
+            <hr />
+
+            <h3>Summary</h3>
+            <div>
+              {selectedEmail.summary || "No summary yet"}
+            </div>
+
+            <h3>Classification</h3>
+
+            <div>Priority: {selectedEmail.priority}</div>
+            <div>Category: {selectedEmail.category}</div>
+            <div>Group: {selectedEmail.category_group}</div>
+            <div>Sentiment: {selectedEmail.sentiment}</div>
+
+            <hr />
+
+            <h3>Body</h3>
+            <div
+              style={{
+                whiteSpace: "pre-wrap",
+                marginTop: "10px",
+              }}
+            >
+              {selectedEmail.body}
+            </div>
+
+            <div style={{ marginTop: "20px", color: "#888" }}>
+              AI Status: {selectedEmail.ai_status}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
-
 }
