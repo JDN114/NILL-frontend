@@ -101,7 +101,6 @@ export default function EmailsPage() {
       </PageLayout>
     );
 
-  // UI
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">
@@ -184,58 +183,67 @@ export default function EmailsPage() {
           {/* ========================= */}
           {/* KI Ergebnisse */}
           {/* ========================= */}
-          {activeEmail.ai_status === "done" && (
-            <div className="mt-6 p-4 bg-gray-800 rounded space-y-4">
-              <h3 className="text-lg font-semibold mb-2">KI Insights</h3>
+          <div className="mt-6 p-4 bg-gray-800 rounded space-y-4">
+            <h3 className="text-lg font-semibold mb-2">KI Insights</h3>
 
-              {activeEmail.summary && (
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-300">Zusammenfassung:</h4>
-                  <p className="text-gray-200">{activeEmail.summary}</p>
-                </div>
-              )}
-
-              <div className="flex gap-2 flex-wrap">
-                {activeEmail.priority && (
-                  <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
-                    Priority: {activeEmail.priority}
-                  </span>
-                )}
-                {activeEmail.category && (
-                  <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
-                    Kategorie: {activeEmail.category}
-                  </span>
-                )}
-                {activeEmail.category_group && (
-                  <span className="bg-green-600 text-white px-2 py-1 rounded text-xs">
-                    Gruppe: {activeEmail.category_group}
-                  </span>
-                )}
+            {activeEmail.ai_status === "pending" && (
+              <div className="flex items-center justify-center py-6">
+                <div className="w-8 h-8 border-4 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="ml-3 text-gray-400">Analyse läuft…</span>
               </div>
+            )}
 
-              {activeEmail.action_items?.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-300">Action Items:</h4>
-                  <ul className="list-disc list-inside text-gray-200">
-                    {activeEmail.action_items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            {activeEmail.ai_status === "done" && (
+              <>
+                {activeEmail.summary && (
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-300">Zusammenfassung:</h4>
+                    <p className="text-gray-200">{activeEmail.summary}</p>
+                  </div>
+                )}
 
-              {activeEmail.detected_dates?.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-300">Erkannte Termine:</h4>
-                  <ul className="list-disc list-inside text-gray-200">
-                    {activeEmail.detected_dates.map((date, idx) => (
-                      <li key={idx}>{new Date(date).toLocaleString()}</li>
-                    ))}
-                  </ul>
+                <div className="flex gap-2 flex-wrap">
+                  {activeEmail.priority && (
+                    <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
+                      Priority: {activeEmail.priority}
+                    </span>
+                  )}
+                  {activeEmail.category && (
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                      Kategorie: {activeEmail.category}
+                    </span>
+                  )}
+                  {activeEmail.category_group && (
+                    <span className="bg-green-600 text-white px-2 py-1 rounded text-xs">
+                      Gruppe: {activeEmail.category_group}
+                    </span>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
+
+                {activeEmail.action_items?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-300">Action Items:</h4>
+                    <ul className="list-disc list-inside text-gray-200">
+                      {activeEmail.action_items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {activeEmail.detected_dates?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-300">Erkannte Termine:</h4>
+                    <ul className="list-disc list-inside text-gray-200">
+                      {activeEmail.detected_dates.map((date, idx) => (
+                        <li key={idx}>{new Date(date).toLocaleString()}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           <button
             onClick={() => setReplyOpen(true)}
