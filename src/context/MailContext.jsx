@@ -9,12 +9,18 @@ export const MailProvider = ({ children }) => {
   const outlook = useContext(OutlookContext);
   const initializedRef = useRef(false);
 
+  // =====================================
+  // Aktueller Provider
+  // =====================================
   const provider = useMemo(() => {
     if (outlook?.connected?.connected) return "outlook";
     if (gmail?.connected?.connected) return "gmail";
     return null;
   }, [outlook?.connected?.connected, gmail?.connected?.connected]);
 
+  // =====================================
+  // Emails
+  // =====================================
   const emails = useMemo(() => {
     if (!provider) return [];
     if (provider === "outlook") return outlook.emails ?? [];
@@ -25,13 +31,18 @@ export const MailProvider = ({ children }) => {
   const inboxEmails = useMemo(() => emails.filter((m) => m.mailbox === "inbox"), [emails]);
   const sentEmails = useMemo(() => emails.filter((m) => m.mailbox === "sent"), [emails]);
 
-  const activeEmail =
-    provider === "outlook"
-      ? outlook.activeEmail ?? null
-      : provider === "gmail"
-      ? gmail.activeEmail ?? null
-      : null;
+  // =====================================
+  // Active Email (immer live aus Context)
+  // =====================================
+  const activeEmail = useMemo(() => {
+    if (provider === "outlook") return outlook.activeEmail ?? null;
+    if (provider === "gmail") return gmail.activeEmail ?? null;
+    return null;
+  }, [provider, outlook.activeEmail, gmail.activeEmail]);
 
+  // =====================================
+  // Fetch Emails
+  // =====================================
   const fetchEmails = async (box = null) => {
     try {
       if (provider === "outlook") {
@@ -52,6 +63,9 @@ export const MailProvider = ({ children }) => {
     }
   };
 
+  // =====================================
+  // Open / Close Email
+  // =====================================
   const openEmail = async (id) => {
     if (!id) return null;
     if (provider === "outlook") return outlook.openEmail(id);
@@ -64,12 +78,18 @@ export const MailProvider = ({ children }) => {
     if (provider === "gmail") return gmail.closeEmail();
   };
 
+  // =====================================
+  // Initial Load
+  // =====================================
   useEffect(() => {
     if (!provider || initializedRef.current) return;
     initializedRef.current = true;
     fetchEmails();
   }, [provider]);
 
+  // =====================================
+  // Provider Context
+  // =====================================
   return (
     <MailContext.Provider
       value={{
