@@ -44,22 +44,21 @@ export default function EmailsPage() {
   // =====================================================
   // INITIAL EMAIL LOAD
   // =====================================================
-  const initializedRef = useRef(false);
   useEffect(() => {
     if (!connected) return;
     if (initializedRef.current) return;
     initializedRef.current = true;
-
+ 
     const load = async () => {
       setLoading(true);
       try {
-        const fetched = await fetchEmails({ mailbox });
+        const fetched = await fetchEmails(); // <-- ohne { mailbox }
 
-        // Filter doppelte IDs (Outlook)
+        // Filter doppelte IDs (Outlook) & nach mailbox
         const uniqueEmails = [];
         const seen = new Set();
         for (const mail of fetched) {
-          if (!seen.has(mail?.id)) {
+          if (!seen.has(mail?.id) && mail?.mailbox === mailbox) {
             seen.add(mail?.id);
             uniqueEmails.push(mail);
           }
@@ -76,19 +75,17 @@ export default function EmailsPage() {
     load();
   }, [connected, mailbox, fetchEmails]);
 
-  // =====================================================
-  // REFRESH
-  // =====================================================
+  // === REFRESH ===
   const handleRefresh = async () => {
     if (!connected) return;
     setLoading(true);
     try {
-      const fetched = await fetchEmails({ mailbox });
+      const fetched = await fetchEmails(); // <-- ohne { mailbox }
 
       const uniqueEmails = [];
       const seen = new Set();
       for (const mail of fetched) {
-        if (!seen.has(mail?.id)) {
+        if (!seen.has(mail?.id) && mail?.mailbox === mailbox) {
           seen.add(mail?.id);
           uniqueEmails.push(mail);
         }
@@ -101,7 +98,6 @@ export default function EmailsPage() {
       setLoading(false);
     }
   };
-
   // =====================================================
   // OPEN EMAIL
   // =====================================================
