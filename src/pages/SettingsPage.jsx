@@ -161,11 +161,11 @@ export default function SettingsPage() {
     setLoadingStatus(true);
 
     try {
-      if (outlookConnected) {
+      if (outlookIsConnected) {
         console.log("[SettingsPage] Disconnecting Outlook...");
         await disconnectOutlook();
         console.log("[SettingsPage] Outlook disconnected");
-      } else if (gmailConnected?.connected) {
+        } else if (gmailIsConnected) {
         console.log("[SettingsPage] Disconnecting Gmail...");
         await disconnectGmail();
         console.log("[SettingsPage] Gmail disconnected");
@@ -183,20 +183,28 @@ export default function SettingsPage() {
   // -------------------------------
   // Unified provider state
   // -------------------------------
-  const anyConnected = outlookConnected || gmailConnected?.connected;
+  // normalize values (handle boolean OR object)
+  const gmailIsConnected =
+    gmailConnected === true ||
+    gmailConnected?.connected === true;
 
-  const providerName = outlookConnected
+  const outlookIsConnected =
+    outlookConnected === true ||
+    outlookConnected?.connected === true;
+
+  const anyConnected = gmailIsConnected || outlookIsConnected;
+
+  const providerName = outlookIsConnected
     ? "Microsoft Outlook"
-    : gmailConnected?.connected
+    : gmailIsConnected
     ? "Gmail"
     : null;
 
-  console.log("[SettingsPage] Unified state:", {
+  console.log("[SettingsPage] Normalized state:", {
+    gmailIsConnected,
+    outlookIsConnected,
     anyConnected,
     providerName,
-    gmailConnected,
-    outlookConnected,
-    loadingStatus,
   });
 
   // -------------------------------
