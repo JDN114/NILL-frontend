@@ -8,73 +8,54 @@ import React, {
 
 import api from "../services/api";
 
-export const OutlookContext = createContext({
-
-  connected: false,
-
-  loadingStatus: false,
-  loadingEmails: false,
-  loadingDetail: false,
-
-  emails: [],
-  activeEmail: null,
-
-  fetchStatus: () => {},
-  fetchEmails: () => {},
-
-  openEmail: () => {},
-  closeEmail: () => {},
-
-  connectOutlook: () => {},
-  disconnectOutlook: () => {},
-
-});
+export const OutlookContext = createContext();
 
 export const OutlookProvider = ({ children }) => {
 
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(null);
 
   const [emails, setEmails] = useState([]);
+
   const [activeEmail, setActiveEmail] = useState(null);
 
-  const [loadingStatus, setLoadingStatus] = useState(false);
-  const [loadingEmails, setLoadingEmails] = useState(false);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [initializing, setInitializing] =
+    useState(false);
 
   const lastStatusFetch = useRef(0);
 
-  const statusFetchingRef = useRef(false);
-  const emailsFetchingRef = useRef(false);
-
-  const emailsBlockedRef = useRef(false);
-
   // =====================================================
-  // FETCH STATUS
+  // STATUS CHECK
   // =====================================================
 
-  const fetchStatus = useCallback(async (force = false) => {
-
-    const now = Date.now();
-
-    if (statusFetchingRef.current)
-      return;
-
-    if (!force && now - lastStatusFetch.current < 10000)
-      return;
-
-    statusFetchingRef.current = true;
-    lastStatusFetch.current = now;
-
-    setLoadingStatus(true);
+  const fetchStatus = useCallback(async () => {
 
     try {
 
-      const res = await api.get("/outlook/status");
+      const now = Date.now();
 
-      const isConnected =
-        res.data?.connected === true;
+      if (
+        now - lastStatusFetch.current
+        < 60000
+      ) return;
 
-      setConnected(isConnected);
+      lastStatusFetch.current = now;
+
+      const res =
+        await api.get("/outlook/status");
+
+      const data = res.data || {
+        connected: false
+      };
+
+      setConnected(data);
+
+      if (!data.connected) {
+
+        setEmails([]);
+
+        setActiveEmail(null);
+
+      }
 
     } catch (err) {
 
@@ -83,13 +64,13 @@ export const OutlookProvider = ({ children }) => {
         err?.message
       );
 
-      setConnected(false);
+      setConnected({
+        connected: false
+      });
 
-    } finally {
+      setEmails([]);
 
-      setLoadingStatus(false);
-
-      statusFetchingRef.current = false;
+      setActiveEmail(null);
 
     }
 
@@ -99,101 +80,120 @@ export const OutlookProvider = ({ children }) => {
   // FETCH EMAIL LIST
   // =====================================================
 
-  const fetchEmails = useCallback(async () => {
+  const fetchEmails = useCallback(
+    async () => {
 
-    if (!connected)
-      return;
+      if (!connected?.connected)
+        return;
 
-    if (emailsFetchingRef.current)
-      return;
+      setInitializing(true);
 
-    if (emailsBlockedRef.current)
-      return;
+      try {
 
-    emailsFetchingRef.current = true;
+        const res =
+          await api.get(
+            "/outlook/emails"
+          );
 
-    setLoadingEmails(true);
-
-    try {
-
-      const res =
-        await api.get("/outlook/emails");
-
-      if (res?.data?.emails) {
-
-        setEmails(res.data.emails);
-
-      }
-
-    } catch (err) {
-
-      if (err?.response?.status === 429) {
-
-        console.warn(
-          "Outlook rate limited — blocking temporarily"
+        setEmails(
+          res.data?.emails || []
         );
 
-        emailsBlockedRef.current = true;
-
-        setTimeout(() => {
-
-          emailsBlockedRef.current = false;
-
-        }, 30000);
-
-      } else {
+      } catch (err) {
 
         console.error(
-          "Outlook emails fetch failed:",
+          "Outlook fetch error:",
           err?.message
         );
 
+      } finally {
+
+        setInitializing(false);
+
       }
 
-    } finally {
-
-      setLoadingEmails(false);
-
-      emailsFetchingRef.current = false;
-
-    }
-
-  }, [connected]);
+    },
+    [connected]
+  );
 
   // =====================================================
-  // OPEN EMAIL (DETAIL)
+  // OPEN EMAIL DETAIL
   // =====================================================
 
-  const openEmail = useCallback(async (emailId) => {
+  const openEmail = useCallback(
+    async (id) => {
 
-    if (!emailId)
-      return;
+      if (!id)
+        return;
 
-    setLoadingDetail(true);
+      const loadEmail =
+        async () => {
 
-    try {
+          try {
 
-      const res =
-        await api.get(
-          `/outlook/emails/${emailId}`
-        );
+            const res =
+              await api.get(
+                `/outlook/emails/${id}`
+              );
 
-      setActiveEmail(res.data);
+            setActiveEmail(
+              res.data
+            );
 
-    } catch (err) {
+            return res.data;
 
-      console.error(
-        "Outlook detail fetch failed:",
-        err?.message
-      );
+          } catch (err) {
 
-    } finally {
+            console.error(
+              "Detail error:",
+              err?.message
+            );
 
-      setLoadingDetail(false);
+            return null;
 
-    }
+          }
 
-  }, []);
+        };
+
+      setInitializing(true);
+
+      const first =
+        await loadEmail();
+
+      setInitializing(false);
+
+      if (
+        first?.ai_status
+        !== "success"
+      ) {
+
+        const poll =
+          async () => {
+
+            const refreshed =
+              await loadEmail();
+
+            if (
+              refreshed?.ai_status
+              !== "success"
+            ) {
+
+              setTimeout(
+                poll,
+                1500
+              );
+
+            }
+
+          };
+
+        setTimeout(poll, 1500);
+
+      }
+
+    },
+    []
+  );
 
   // =====================================================
   // CLOSE EMAIL
@@ -209,12 +209,12 @@ export const OutlookProvider = ({ children }) => {
   // CONNECT
   // =====================================================
 
-  const connectOutlook = useCallback(() => {
+  const connectOutlook = () => {
 
     window.location.href =
       `${api.defaults.baseURL}/outlook/auth-url`;
 
-  }, []);
+  };
 
   // =====================================================
   // DISCONNECT
@@ -223,15 +223,15 @@ export const OutlookProvider = ({ children }) => {
   const disconnectOutlook =
     useCallback(async () => {
 
-      setLoadingEmails(true);
-
       try {
 
         await api.post(
           "/outlook/disconnect"
         );
 
-        setConnected(false);
+        setConnected({
+          connected: false
+        });
 
         setEmails([]);
 
@@ -240,38 +240,23 @@ export const OutlookProvider = ({ children }) => {
       } catch (err) {
 
         console.error(
-          "Disconnect failed:",
+          "Disconnect error:",
           err?.message
         );
-
-      } finally {
-
-        setLoadingEmails(false);
 
       }
 
     }, []);
 
   // =====================================================
-  // AUTO LOAD STATUS
+  // INITIAL STATUS LOAD
   // =====================================================
 
   useEffect(() => {
 
-    fetchStatus(true);
+    fetchStatus();
 
   }, [fetchStatus]);
-
-  // =====================================================
-  // AUTO LOAD EMAILS AFTER CONNECT
-  // =====================================================
-
-  useEffect(() => {
-
-    if (connected)
-      fetchEmails();
-
-  }, [connected, fetchEmails]);
 
   // =====================================================
   // PROVIDER
@@ -285,20 +270,22 @@ export const OutlookProvider = ({ children }) => {
 
         connected,
 
-        loadingStatus,
-        loadingEmails,
-        loadingDetail,
-
         emails,
+
         activeEmail,
 
+        initializing,
+
         fetchStatus,
+
         fetchEmails,
 
         openEmail,
+
         closeEmail,
 
         connectOutlook,
+
         disconnectOutlook,
 
       }}
