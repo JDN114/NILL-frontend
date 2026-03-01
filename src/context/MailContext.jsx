@@ -2,7 +2,8 @@ import React, {
   createContext,
   useContext,
   useMemo,
-  useCallback,
+  useRef,
+  useEffect,
 } from "react";
 
 import { GmailContext } from "./GmailContext";
@@ -15,40 +16,25 @@ export const MailProvider = ({ children }) => {
   const gmail = useContext(GmailContext);
   const outlook = useContext(OutlookContext);
 
-  // =====================================================
-  // SAFE CONNECTED CHECK
-  // =====================================================
+  const initializedRef = useRef(false);
 
-  const gmailConnected =
-    gmail?.connected?.connected === true;
-
-  const outlookConnected =
-    outlook?.connected?.connected === true;
-
-  // =====================================================
-  // PROVIDER DETECTION
-  // Outlook priority over Gmail
-  // =====================================================
-
+  // decide provider
   const provider = useMemo(() => {
 
-    if (outlookConnected)
+    if (outlook?.connected?.connected)
       return "outlook";
 
-    if (gmailConnected)
+    if (gmail?.connected?.connected)
       return "gmail";
 
     return null;
 
-  }, [gmailConnected, outlookConnected]);
+  }, [
+    outlook?.connected?.connected,
+    gmail?.connected?.connected
+  ]);
 
-  // =====================================================
-  // UNIFIED STATE
-  // =====================================================
-
-  const connected =
-    provider !== null;
-
+  // unified emails
   const emails = useMemo(() => {
 
     if (provider === "outlook")
@@ -59,76 +45,53 @@ export const MailProvider = ({ children }) => {
 
     return [];
 
-  }, [
-    provider,
-    gmail.emails,
-    outlook.emails,
-  ]);
+  }, [provider, outlook.emails, gmail.emails]);
 
-  const activeEmail = useMemo(() => {
+  // unified active email
+  const activeEmail =
+    provider === "outlook"
+      ? outlook.activeEmail
+      : provider === "gmail"
+      ? gmail.activeEmail
+      : null;
+
+  // unified fetch — SAFE
+  const fetchEmails = async () => {
 
     if (provider === "outlook")
-      return outlook.activeEmail;
+      await outlook.fetchEmails();
 
     if (provider === "gmail")
-      return gmail.activeEmail;
+      await gmail.fetchInboxEmails();
 
-    return null;
+  };
 
-  }, [
-    provider,
-    gmail.activeEmail,
-    outlook.activeEmail,
-  ]);
+  // FETCH ONLY ONCE
+  useEffect(() => {
 
-  const initializing =
-    gmail.initializing ||
-    outlook.initializing ||
-    false;
+    if (!provider)
+      return;
 
-  // =====================================================
-  // UNIFIED ACTIONS
-  // =====================================================
+    if (initializedRef.current)
+      return;
 
-  const fetchEmails = useCallback(
-    async (options = {}) => {
+    initializedRef.current = true;
 
-      if (provider === "outlook") {
+    fetchEmails();
 
-        return outlook.fetchEmails();
+  }, [provider]);
 
-      }
+  const openEmail = async (id) => {
 
-      if (provider === "gmail") {
+    if (provider === "outlook")
+      return outlook.openEmail(id);
 
-        if (options.mailbox === "sent")
-          return gmail.fetchSentEmails(options);
+    if (provider === "gmail")
+      return gmail.openEmail(id);
 
-        return gmail.fetchInboxEmails(options);
+  };
 
-      }
-
-    },
-    [provider, gmail, outlook]
-  );
-
-  const openEmail = useCallback(
-    async (id) => {
-
-      if (!id)
-        return;
-
-      if (provider === "outlook")
-        return outlook.openEmail(id);
-
-      if (provider === "gmail")
-        return gmail.openEmail(id);
-
-    },
-    [provider, gmail, outlook]
-  );
-
-  const closeEmail = useCallback(() => {
+  const closeEmail = () => {
 
     if (provider === "outlook")
       return outlook.closeEmail();
@@ -136,42 +99,17 @@ export const MailProvider = ({ children }) => {
     if (provider === "gmail")
       return gmail.closeEmail();
 
-  }, [provider, gmail, outlook]);
-
-  const connect = useCallback(() => {
-
-    if (provider === "outlook")
-      return outlook.connectOutlook();
-
-    return gmail.connectGmail();
-
-  }, [provider, gmail, outlook]);
-
-  const disconnect = useCallback(() => {
-
-    if (provider === "outlook")
-      return outlook.disconnectOutlook();
-
-    if (provider === "gmail")
-      return gmail.disconnectGmail();
-
-  }, [provider, gmail, outlook]);
-
-  // =====================================================
-  // FINAL VALUE
-  // =====================================================
+  };
 
   const value = {
 
-    provider,          // "gmail" | "outlook" | null
+    provider,
 
-    connected,         // true | false
+    connected: provider !== null,
 
     emails,
 
     activeEmail,
-
-    initializing,
 
     fetchEmails,
 
@@ -179,20 +117,11 @@ export const MailProvider = ({ children }) => {
 
     closeEmail,
 
-    connect,
-
-    disconnect,
-
   };
 
   return (
-
     <MailContext.Provider value={value}>
-
       {children}
-
     </MailContext.Provider>
-
   );
-
 };
