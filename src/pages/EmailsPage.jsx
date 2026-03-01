@@ -13,15 +13,21 @@ import EmailComposeModal from "../components/EmailComposeModal";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const { provider, connected, activeEmail: contextActiveEmail, fetchEmails, openEmail, closeEmail, initializing } =
-    useContext(MailContext);
+  const { 
+    provider, 
+    connected, 
+    activeEmail, // jetzt direkt vom Context
+    fetchEmails, 
+    openEmail, 
+    closeEmail, 
+    initializing 
+  } = useContext(MailContext);
 
   const [mailbox, setMailbox] = useState("inbox");
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filteredEmails, setFilteredEmails] = useState([]);
-  const [activeEmail, setActiveEmail] = useState(null);
 
   const pollingRef = useRef(null);
 
@@ -62,8 +68,7 @@ export default function EmailsPage() {
     if (!id || (activeEmail && activeEmail.id === id) || loading) return;
     setLoading(true);
     try {
-      const mail = await openEmail(id);
-      setActiveEmail(mail); // lokal setzen
+      await openEmail(id); // Context-State wird automatisch gesetzt
       startPollingAI(id);
     } catch (err) {
       console.error("Fehler beim Öffnen der Mail:", err);
@@ -74,7 +79,6 @@ export default function EmailsPage() {
 
   const handleCloseEmail = () => {
     stopPollingAI();
-    setActiveEmail(null);
     closeEmail();
   };
 
@@ -85,9 +89,8 @@ export default function EmailsPage() {
     stopPollingAI();
     pollingRef.current = setInterval(async () => {
       try {
-        const updated = await openEmail(emailId);
-        setActiveEmail(updated); // hier das Update für React
-        if (updated?.ai_status === "done") stopPollingAI();
+        await openEmail(emailId); // activeEmail im Context wird geupdatet
+        if (activeEmail?.ai_status === "done") stopPollingAI();
       } catch (err) {
         console.error("Polling Error:", err);
         stopPollingAI();
@@ -119,6 +122,12 @@ export default function EmailsPage() {
         <p className="text-red-400">Kein E-Mail-Konto verbunden</p>
       </PageLayout>
     );
+
+  // =====================================================
+  // Debug-Logging aktiv (kann nach Fix entfernt werden)
+  // =====================================================
+  console.log("activeEmail:", activeEmail);
+  console.log("filteredEmails:", filteredEmails);
 
   // =====================================================
   // UI
@@ -213,7 +222,7 @@ export default function EmailsPage() {
               </div>
             )}
 
-            {activeEmail.ai_status === "done" && (
+            {activeEmail.ai_status === "done" || activeEmail.ai_status === "success" ? (
               <>
                 {activeEmail.summary && (
                   <div>
@@ -262,7 +271,7 @@ export default function EmailsPage() {
                   </div>
                 )}
               </>
-            )}
+            ) : null}
           </div>
 
           <button
