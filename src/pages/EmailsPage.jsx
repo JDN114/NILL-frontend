@@ -61,37 +61,39 @@ export default function EmailsPage() {
   // =====================================================
   // INITIAL EMAIL LOAD
   // =====================================================
+const initializedRef = useRef(false);
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (!connected)
-      return;
+  if (!connected)
+    return;
 
-    const load = async () => {
+  if (initializedRef.current)
+    return;
 
-      setLoading(true);
+  initializedRef.current = true;
 
-      try {
+  const load = async () => {
 
-        await fetchEmails({
-          mailbox,
-        });
+    setLoading(true);
 
-      } finally {
+    try {
 
-        setLoading(false);
+      await fetchEmails({
+        mailbox,
+      });
 
-      }
+    } finally {
 
-    };
+      setLoading(false);
 
-    load();
+    }
 
-  }, [
-    connected,
-    mailbox,
-    fetchEmails,
-  ]);
+  };
+
+  load();
+
+}, [connected]);
 
   // =====================================================
   // REFRESH

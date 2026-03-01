@@ -1,301 +1,127 @@
 import React, {
   createContext,
-  useState,
-  useEffect,
-  useCallback,
+  useContext,
+  useMemo,
   useRef,
+  useEffect,
 } from "react";
 
-import api from "../services/api";
+import { GmailContext } from "./GmailContext";
+import { OutlookContext } from "./OutlookContext";
 
-export const OutlookContext = createContext();
+export const MailContext = createContext(null);
 
-export const OutlookProvider = ({ children }) => {
+export const MailProvider = ({ children }) => {
 
-  const [connected, setConnected] = useState(null);
+  const gmail = useContext(GmailContext);
+  const outlook = useContext(OutlookContext);
 
-  const [emails, setEmails] = useState([]);
+  const initializedRef = useRef(false);
 
-  const [activeEmail, setActiveEmail] = useState(null);
+  // decide provider
+  const provider = useMemo(() => {
 
-  const [initializing, setInitializing] =
-    useState(false);
+    if (outlook?.connected?.connected)
+      return "outlook";
 
-  const lastStatusFetch = useRef(0);
+    if (gmail?.connected?.connected)
+      return "gmail";
 
-  // =====================================================
-  // STATUS CHECK
-  // =====================================================
+    return null;
 
-  const fetchStatus = useCallback(async () => {
+  }, [
+    outlook?.connected?.connected,
+    gmail?.connected?.connected
+  ]);
 
-    try {
+  // unified emails
+  const emails = useMemo(() => {
 
-      const now = Date.now();
+    if (provider === "outlook")
+      return outlook.emails || [];
 
-      if (
-        now - lastStatusFetch.current
-        < 60000
-      ) return;
+    if (provider === "gmail")
+      return gmail.emails || [];
 
-      lastStatusFetch.current = now;
+    return [];
 
-      const res =
-        await api.get("/outlook/status");
+  }, [provider, outlook.emails, gmail.emails]);
 
-      const data = res.data || {
-        connected: false
-      };
+  // unified active email
+  const activeEmail =
+    provider === "outlook"
+      ? outlook.activeEmail
+      : provider === "gmail"
+      ? gmail.activeEmail
+      : null;
 
-      setConnected(data);
+  // unified fetch — SAFE
+  const fetchEmails = async () => {
 
-      if (!data.connected) {
+    if (provider === "outlook")
+      await outlook.fetchEmails();
 
-        setEmails([]);
-
-        setActiveEmail(null);
-
-      }
-
-    } catch (err) {
-
-      console.error(
-        "Outlook status error:",
-        err?.message
-      );
-
-      setConnected({
-        connected: false
-      });
-
-      setEmails([]);
-
-      setActiveEmail(null);
-
-    }
-
-  }, []);
-
-  // =====================================================
-  // FETCH EMAIL LIST
-  // =====================================================
-
-  const fetchEmails = useCallback(
-    async () => {
-
-      if (!connected?.connected)
-        return;
-
-      setInitializing(true);
-
-      try {
-
-        const res =
-          await api.get(
-            "/outlook/emails"
-          );
-
-        setEmails(
-          res.data?.emails || []
-        );
-
-      } catch (err) {
-
-        console.error(
-          "Outlook fetch error:",
-          err?.message
-        );
-
-      } finally {
-
-        setInitializing(false);
-
-      }
-
-    },
-    [connected]
-  );
-
-  // =====================================================
-  // OPEN EMAIL DETAIL
-  // =====================================================
-
-  const openEmail = useCallback(
-    async (id) => {
-
-      if (!id)
-        return;
-
-      const loadEmail =
-        async () => {
-
-          try {
-
-            const res =
-              await api.get(
-                `/outlook/emails/${id}`
-              );
-
-            setActiveEmail(
-              res.data
-            );
-
-            return res.data;
-
-          } catch (err) {
-
-            console.error(
-              "Detail error:",
-              err?.message
-            );
-
-            return null;
-
-          }
-
-        };
-
-      setInitializing(true);
-
-      const first =
-        await loadEmail();
-
-      setInitializing(false);
-
-      if (
-        first?.ai_status
-        !== "success"
-      ) {
-
-        const poll =
-          async () => {
-
-            const refreshed =
-              await loadEmail();
-
-            if (
-              refreshed?.ai_status
-              !== "success"
-            ) {
-
-              setTimeout(
-                poll,
-                1500
-              );
-
-            }
-
-          };
-
-        setTimeout(poll, 1500);
-
-      }
-
-    },
-    []
-  );
-
-  // =====================================================
-  // CLOSE EMAIL
-  // =====================================================
-
-  const closeEmail = useCallback(() => {
-
-    setActiveEmail(null);
-
-  }, []);
-
-  // =====================================================
-  // CONNECT
-  // =====================================================
-
-  const connectOutlook = () => {
-
-    window.location.href =
-      `${api.defaults.baseURL}/outlook/auth-url`;
+    if (provider === "gmail")
+      await gmail.fetchInboxEmails();
 
   };
 
-  // =====================================================
-  // DISCONNECT
-  // =====================================================
-
-  const disconnectOutlook =
-    useCallback(async () => {
-
-      try {
-
-        await api.post(
-          "/outlook/disconnect"
-        );
-
-        setConnected({
-          connected: false
-        });
-
-        setEmails([]);
-
-        setActiveEmail(null);
-
-      } catch (err) {
-
-        console.error(
-          "Disconnect error:",
-          err?.message
-        );
-
-      }
-
-    }, []);
-
-  // =====================================================
-  // INITIAL STATUS LOAD
-  // =====================================================
-
+  // FETCH ONLY ONCE
   useEffect(() => {
 
-    fetchStatus();
+    if (!provider)
+      return;
 
-  }, [fetchStatus]);
+    if (initializedRef.current)
+      return;
 
-  // =====================================================
-  // PROVIDER
-  // =====================================================
+    initializedRef.current = true;
+
+    fetchEmails();
+
+  }, [provider]);
+
+  const openEmail = async (id) => {
+
+    if (provider === "outlook")
+      return outlook.openEmail(id);
+
+    if (provider === "gmail")
+      return gmail.openEmail(id);
+
+  };
+
+  const closeEmail = () => {
+
+    if (provider === "outlook")
+      return outlook.closeEmail();
+
+    if (provider === "gmail")
+      return gmail.closeEmail();
+
+  };
+
+  const value = {
+
+    provider,
+
+    connected: provider !== null,
+
+    emails,
+
+    activeEmail,
+
+    fetchEmails,
+
+    openEmail,
+
+    closeEmail,
+
+  };
 
   return (
-
-    <OutlookContext.Provider
-
-      value={{
-
-        connected,
-
-        emails,
-
-        activeEmail,
-
-        initializing,
-
-        fetchStatus,
-
-        fetchEmails,
-
-        openEmail,
-
-        closeEmail,
-
-        connectOutlook,
-
-        disconnectOutlook,
-
-      }}
-
-    >
-
+    <MailContext.Provider value={value}>
       {children}
-
-    </OutlookContext.Provider>
-
+    </MailContext.Provider>
   );
-
 };
