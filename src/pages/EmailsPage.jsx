@@ -1,9 +1,8 @@
-import { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../context/AuthContext";
-import { GmailContext } from "../context/GmailContext";
-import { OutlookContext } from "../context/OutlookContext";
+import { MailContext } from "../context/MailContext";
 
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
@@ -13,44 +12,29 @@ import EmailComposeModal from "../components/EmailComposeModal";
 
 import {
   FiArrowLeft,
-  FiEdit2
+  FiEdit2,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 export default function EmailsPage() {
 
   const navigate = useNavigate();
 
-  const { user: currentUser } =
-    useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
-  const gmail =
-    useContext(GmailContext);
-
-  const outlook =
-    useContext(OutlookContext);
-
-  // =====================================================
-  // STABLE PROVIDER
-  // =====================================================
-
-  const provider =
-    outlook.connected === true
-      ? outlook
-      : gmail.connected === true
-      ? gmail
-      : null;
-
-  const emails =
-    provider?.emails ?? [];
-
-  const activeEmail =
-    provider?.activeEmail ?? null;
+  const {
+    provider,
+    connected,
+    emails,
+    activeEmail,
+    initializing,
+    fetchEmails,
+    openEmail,
+    closeEmail,
+  } = useContext(MailContext);
 
   const [mailbox, setMailbox] =
     useState("inbox");
-
-  const [loading, setLoading] =
-    useState(false);
 
   const [replyOpen, setReplyOpen] =
     useState(false);
@@ -58,8 +42,8 @@ export default function EmailsPage() {
   const [composeOpen, setComposeOpen] =
     useState(false);
 
-  const filterRef =
-    useRef(null);
+  const [loading, setLoading] =
+    useState(false);
 
   // =====================================================
   // AUTH GUARD
@@ -67,64 +51,47 @@ export default function EmailsPage() {
 
   useEffect(() => {
 
-    if (!currentUser)
-      navigate("/login", { replace: true });
+    if (!user)
+      navigate("/login", {
+        replace: true,
+      });
 
-  }, [currentUser, navigate]);
-
+  }, [user, navigate]);
 
   // =====================================================
-  // LOAD EMAILS
+  // INITIAL EMAIL LOAD
   // =====================================================
 
   useEffect(() => {
 
-    const loadEmails =
-      async () => {
+    if (!connected)
+      return;
 
-        if (!provider)
-          return;
+    const load = async () => {
 
-        try {
+      setLoading(true);
 
-          setLoading(true);
+      try {
 
-          if (outlook.connected) {
+        await fetchEmails({
+          mailbox,
+        });
 
-            await outlook.fetchEmails();
+      } finally {
 
-          }
+        setLoading(false);
 
-          else if (gmail.connected) {
+      }
 
-            if (mailbox === "inbox")
-              await gmail.fetchInboxEmails();
+    };
 
-            else
-              await gmail.fetchSentEmails();
-
-          }
-
-        }
-
-        finally {
-
-          setLoading(false);
-
-        }
-
-      };
-
-    if (provider)
-      loadEmails();
+    load();
 
   }, [
-    provider,
+    connected,
     mailbox,
-    outlook.connected,
-    gmail.connected
+    fetchEmails,
   ]);
-
 
   // =====================================================
   // REFRESH
@@ -133,36 +100,24 @@ export default function EmailsPage() {
   const handleRefresh =
     async () => {
 
-      if (!provider)
+      if (!connected)
         return;
 
       setLoading(true);
 
       try {
 
-        if (outlook.connected)
-          await outlook.fetchEmails();
+        await fetchEmails({
+          mailbox,
+        });
 
-        else if (gmail.connected) {
-
-          if (mailbox === "inbox")
-            await gmail.fetchInboxEmails();
-
-          else
-            await gmail.fetchSentEmails();
-
-        }
-
-      }
-
-      finally {
+      } finally {
 
         setLoading(false);
 
       }
 
     };
-
 
   // =====================================================
   // OPEN EMAIL
@@ -171,13 +126,9 @@ export default function EmailsPage() {
   const handleOpenEmail =
     async (id) => {
 
-      if (!provider)
-        return;
-
-      await provider.openEmail(id);
+      await openEmail(id);
 
     };
-
 
   // =====================================================
   // CLOSE EMAIL
@@ -186,16 +137,18 @@ export default function EmailsPage() {
   const handleCloseEmail =
     () => {
 
-      provider?.closeEmail();
+      closeEmail();
 
     };
-
 
   // =====================================================
   // LOADING STATE
   // =====================================================
 
-  if (loading) {
+  if (
+    initializing ||
+    loading
+  ) {
 
     return (
 
@@ -211,9 +164,32 @@ export default function EmailsPage() {
 
   }
 
+  // =====================================================
+  // NO PROVIDER
+  // =====================================================
+
+  if (!connected) {
+
+    return (
+
+      <PageLayout>
+
+        <h1 className="text-2xl font-bold mb-6 text-white">
+          Postfach
+        </h1>
+
+        <p className="text-red-400">
+          Kein E-Mail-Konto verbunden
+        </p>
+
+      </PageLayout>
+
+    );
+
+  }
 
   // =====================================================
-  // UI
+  // MAIN UI
   // =====================================================
 
   return (
@@ -221,17 +197,16 @@ export default function EmailsPage() {
     <PageLayout>
 
       <h1 className="text-2xl font-bold mb-6 text-white">
+
         Postfach
+
+        <span className="text-sm text-gray-400 ml-3">
+
+          ({provider})
+
+        </span>
+
       </h1>
-
-
-      {!provider && (
-
-        <p className="text-red-400">
-          Kein E-Mail-Konto verbunden
-        </p>
-
-      )}
 
 
       {/* ========================= */}
@@ -246,39 +221,43 @@ export default function EmailsPage() {
 
           <div className="flex items-center gap-2 mb-4">
 
-            {["inbox", "sent"].map((box) => (
+            {["inbox", "sent"].map(
+              (box) => (
 
-              <button
+                <button
 
-                key={box}
+                  key={box}
 
-                onClick={() =>
-                  setMailbox(box)
-                }
+                  onClick={() =>
+                    setMailbox(box)
+                  }
 
-                className={`px-4 py-2 rounded ${
-                  mailbox === box
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-700 text-gray-200 hover:bg-gray-600"
-                }`}
+                  className={`px-4 py-2 rounded ${
+                    mailbox === box
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+                  }`}
 
-              >
+                >
 
-                {box === "inbox"
-                  ? "Posteingang"
-                  : "Gesendet"}
+                  {box === "inbox"
+                    ? "Posteingang"
+                    : "Gesendet"}
 
-              </button>
+                </button>
 
-            ))}
+              )
+            )}
 
             <button
 
               onClick={handleRefresh}
 
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
+              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center gap-2"
 
             >
+
+              <FiRefreshCw />
 
               Aktualisieren
 
@@ -320,50 +299,54 @@ export default function EmailsPage() {
 
               <ul className="divide-y divide-gray-800">
 
-                {emails.map((mail) => (
+                {emails.map(
+                  (mail) => (
 
-                  <li
+                    <li
 
-                    key={mail.id}
+                      key={mail.id}
 
-                    onClick={() =>
-                      handleOpenEmail(mail.id)
-                    }
+                      onClick={() =>
+                        handleOpenEmail(
+                          mail.id
+                        )
+                      }
 
-                    className="px-6 py-4 hover:bg-gray-800 cursor-pointer"
+                      className="px-6 py-4 hover:bg-gray-800 cursor-pointer"
 
-                  >
+                    >
 
-                    <div className="flex justify-between mb-1">
+                      <div className="flex justify-between mb-1">
 
-                      <p className="font-semibold truncate">
+                        <p className="font-semibold truncate">
 
-                        {mail.subject ||
-                          "(Kein Betreff)"}
+                          {mail.subject ||
+                            "(Kein Betreff)"}
+
+                        </p>
+
+                        <span className="text-xs text-gray-400">
+
+                          {mail.received_at
+                            ? new Date(
+                                mail.received_at
+                              ).toLocaleString()
+                            : ""}
+
+                        </span>
+
+                      </div>
+
+                      <p className="text-sm text-gray-400 truncate">
+
+                        {mail.from}
 
                       </p>
 
-                      <span className="text-xs text-gray-400">
+                    </li>
 
-                        {mail.received_at
-                          ? new Date(
-                              mail.received_at
-                            ).toLocaleString()
-                          : ""}
-
-                      </span>
-
-                    </div>
-
-                    <p className="text-sm text-gray-400 truncate">
-
-                      {mail.from}
-
-                    </p>
-
-                  </li>
-
-                ))}
+                  )
+                )}
 
               </ul>
 
@@ -386,7 +369,9 @@ export default function EmailsPage() {
 
           <button
 
-            onClick={handleCloseEmail}
+            onClick={
+              handleCloseEmail
+            }
 
             className="flex items-center text-gray-400 mb-4"
 
@@ -442,6 +427,10 @@ export default function EmailsPage() {
       )}
 
 
+      {/* ========================= */}
+      {/* MODALS */}
+      {/* ========================= */}
+
       <EmailReplyModal
 
         emailId={
@@ -455,7 +444,6 @@ export default function EmailsPage() {
         }
 
       />
-
 
       <EmailComposeModal
 
