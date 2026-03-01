@@ -67,71 +67,80 @@ export const GmailProvider = ({ children }) => {
     }
   }, []);
 
-  // --------------------------------------------------
-  // INBOX / SENT EMAILS
-  // --------------------------------------------------
-  const fetchInboxEmails = useCallback(
-    async ({ append = false } = {}) => {
-      if (!connected?.connected) return;
+// --------------------------------------------------
+// INBOX / SENT EMAILS MIT MAILBOX
+// --------------------------------------------------
+const fetchInboxEmails = useCallback(
+  async ({ append = false } = {}) => {
+    if (!connected?.connected) return;
 
-      setInitializing(true);
+    setInitializing(true);
 
-      try {
-        const token = append ? inboxNextToken : null;
+    try {
+      const token = append ? inboxNextToken : null;
 
-        const res = await fetch(
-          `${API_BASE}/gmail/emails?mailbox=inbox${
-            token ? `&page_token=${token}` : ""
-          }`,
-          { credentials: "include" }
-        );
+      const res = await fetch(
+        `${API_BASE}/gmail/emails?mailbox=inbox${token ? `&page_token=${token}` : ""}`,
+        { credentials: "include" }
+      );
 
-        if (!res.ok) throw new Error("Inbox fetch failed");
+      if (!res.ok) throw new Error("Inbox fetch failed");
 
-        const data = await res.json();
+      const data = await res.json();
+      setInboxNextToken(data.next_page_token || null);
 
-        setInboxNextToken(data.next_page_token || null);
+      // Mailbox-Feld setzen
+      const inboxMails = (data.emails || []).map((m) => ({ ...m, mailbox: "inbox" }));
 
-        if (append) {
-          setEmails((prev) => [...prev, ...(data.emails || [])]);
-        } else {
-          setEmails(data.emails || []);
-        }
-      } catch (err) {
-        console.error("Inbox error:", err);
-      } finally {
-        setInitializing(false);
+      if (append) {
+        setEmails((prev) => [...prev, ...inboxMails]);
+      } else {
+        setEmails(inboxMails);
       }
-    },
-    [connected, inboxNextToken]
-  );
-  
-  const fetchSentEmails = useCallback(
-    async (params = {}) => {
-      if (!connected?.connected) return;
+    } catch (err) {
+      console.error("Inbox error:", err);
+    } finally {
+      setInitializing(false);
+    }
+  },
+  [connected, inboxNextToken]
+);
 
-      setInitializing(true);
-      try {
-        const query = new URLSearchParams(params).toString();
-        const res = await fetch(`${API_BASE}/gmail/emails?mailbox=sent&${query}`, {
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error("Sent fetch failed");
+const fetchSentEmails = useCallback(
+  async ({ append = false } = {}) => {
+    if (!connected?.connected) return;
 
-        const data = await res.json().catch(() => ({ emails: [] }));
-        if (params.append) {
-          setSentEmails((prev) => [...prev, ...(data.emails || [])]);
-        } else {
-          setSentEmails(data.emails || []);
-        }
-      } catch (err) {
-        console.error("Sent error:", err);
-      } finally {
-        setInitializing(false);
+    setInitializing(true);
+    try {
+      const token = append ? sentNextToken : null;
+
+      const res = await fetch(
+        `${API_BASE}/gmail/emails?mailbox=sent${token ? `&page_token=${token}` : ""}`,
+        { credentials: "include" }
+      );
+
+      if (!res.ok) throw new Error("Sent fetch failed");
+
+      const data = await res.json();
+
+      setSentNextToken(data.next_page_token || null);
+
+      // Mailbox-Feld setzen
+      const sentMails = (data.emails || []).map((m) => ({ ...m, mailbox: "sent" }));
+
+      if (append) {
+        setSentEmails((prev) => [...prev, ...sentMails]);
+      } else {
+        setSentEmails(sentMails);
       }
-    },
-    [connected]
-  );
+    } catch (err) {
+      console.error("Sent error:", err);
+    } finally {
+      setInitializing(false);
+    }
+  },
+  [connected, sentNextToken]
+);
 
   // --------------------------------------------------
   // EMAIL DETAIL + AI POLLING
