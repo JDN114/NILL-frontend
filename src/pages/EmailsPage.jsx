@@ -41,20 +41,22 @@ export default function EmailsPage() {
   // =====================================================
   // Emails laden & filtern nach mailbox
   // =====================================================
-  const loadAndFilterEmails = async () => {
-    if (!connected) return [];
-    setLoading(true);
-    try {
-      const fetched = (await fetchEmails(mailbox)) ?? [];
-      setFilteredEmails(fetched);
-      return fetched;
-    } catch (err) {
-      console.error("Fehler beim Laden der Emails:", err);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
+const loadAndFilterEmails = async () => {
+  if (!connected) return [];
+  setLoading(true);
+  try {
+    const res = await fetchEmails(mailbox);
+    const fetched = res?.emails ?? [];
+    console.log("Fetched Emails:", fetched); // Debug
+    setFilteredEmails(fetched);
+    return fetched;
+  } catch (err) {
+    console.error("Fehler beim Laden der Emails:", err);
+    return [];
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (!connected) return;
