@@ -13,7 +13,7 @@ import EmailComposeModal from "../components/EmailComposeModal";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const { provider, connected, activeEmail, fetchEmails, openEmail, closeEmail, initializing } =
+  const { provider, connected, activeEmail: contextActiveEmail, fetchEmails, openEmail, closeEmail, initializing } =
     useContext(MailContext);
 
   const [mailbox, setMailbox] = useState("inbox");
@@ -21,6 +21,8 @@ export default function EmailsPage() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filteredEmails, setFilteredEmails] = useState([]);
+  const [activeEmail, setActiveEmail] = useState(null);
+
   const pollingRef = useRef(null);
 
   // =====================================================
@@ -60,7 +62,8 @@ export default function EmailsPage() {
     if (!id || (activeEmail && activeEmail.id === id) || loading) return;
     setLoading(true);
     try {
-      await openEmail(id);
+      const mail = await openEmail(id);
+      setActiveEmail(mail); // lokal setzen
       startPollingAI(id);
     } catch (err) {
       console.error("Fehler beim Öffnen der Mail:", err);
@@ -71,6 +74,7 @@ export default function EmailsPage() {
 
   const handleCloseEmail = () => {
     stopPollingAI();
+    setActiveEmail(null);
     closeEmail();
   };
 
@@ -81,8 +85,9 @@ export default function EmailsPage() {
     stopPollingAI();
     pollingRef.current = setInterval(async () => {
       try {
-        await openEmail(emailId); // Context-State wird automatisch aktualisiert
-        if (activeEmail?.ai_status === "done") stopPollingAI();
+        const updated = await openEmail(emailId);
+        setActiveEmail(updated); // hier das Update für React
+        if (updated?.ai_status === "done") stopPollingAI();
       } catch (err) {
         console.error("Polling Error:", err);
         stopPollingAI();
@@ -260,10 +265,17 @@ export default function EmailsPage() {
             )}
           </div>
 
-          <EmailReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
-          <EmailComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
+          <button
+            onClick={() => setReplyOpen(true)}
+            className="mt-6 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
+          >
+            Antworten
+          </button>
         </Card>
       )}
+
+      <EmailReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
+      <EmailComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
     </PageLayout>
   );
 }
