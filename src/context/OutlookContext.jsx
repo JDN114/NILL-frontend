@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+kimport React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import api from "../services/api";
 
 export const OutlookContext = createContext();
@@ -36,24 +36,42 @@ export const OutlookProvider = ({ children }) => {
   }, []);
 
   // =====================================================
-  // FETCH EMAIL LIST (robust)
+  // FETCH EMAIL LIST (robust + Inbox/Sent)
   // =====================================================
   const fetchEmails = useCallback(async () => {
     if (!connected?.connected) return [];
+
     setInitializing(true);
     try {
       const res = await api.get("/outlook/emails");
       const rawEmails = res?.data?.emails ?? [];
+
       const safeEmails = Array.isArray(rawEmails)
-        ? rawEmails.map((m) => ({
-            id: m?.id ?? Math.random().toString(),
-            subject: m?.subject ?? "(Kein Betreff)",
-            from: m?.from?.emailAddress?.name ?? "(Absender unbekannt)",
-            received_at: m?.receivedDateTime ?? null,
-            body: m?.body?.content ?? "<p>Kein Inhalt</p>",
-            mailbox: m?.folder ?? "inbox",
-          }))
+        ? rawEmails.map((m) => {
+            // Robust fallback für Absender
+            let sender = "(Absender unbekannt)";
+            if (m?.from?.emailAddress?.name) sender = m.from.emailAddress.name;
+            else if (m?.from?.emailAddress?.address) sender = m.from.emailAddress.address;
+            else if (m?.from?.name) sender = m.from.name;
+            else if (typeof m?.from === "string") sender = m.from;
+
+            // Robust fallback für Datum
+            const received = m?.receivedDateTime ?? m?.received_at ?? null;
+
+            // Inbox/Sent
+            const mailbox = m?.folder?.toLowerCase() === "sentitems" ? "sent" : "inbox";
+
+            return {
+              id: m?.id ?? Math.random().toString(),
+              subject: m?.subject ?? "(Kein Betreff)",
+              from: sender,
+              received_at: received,
+              body: m?.body?.content ?? "<p>Kein Inhalt</p>",
+              mailbox,
+            };
+          })
         : [];
+
       setEmails(safeEmails);
       return safeEmails;
     } catch (err) {
