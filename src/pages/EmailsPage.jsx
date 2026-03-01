@@ -74,21 +74,26 @@ useEffect(() => {
   initializedRef.current = true;
 
   const load = async () => {
-
     setLoading(true);
-
     try {
+      const fetched = await fetchEmails({ mailbox });
 
-      await fetchEmails({
-        mailbox,
-      });
+      // Filter doppelte IDs (Outlook)
+      const uniqueEmails = [];
+      const seen = new Set();
+      for (const mail of fetched) {
+        if (!seen.has(mail.id)) {
+          seen.add(mail.id);
+          uniqueEmails.push(mail);
+        }
+      }
+
+      // Emails im Context setzen (replace original)
+      emails.splice(0, emails.length, ...uniqueEmails);
 
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   load();
@@ -124,13 +129,20 @@ useEffect(() => {
   // =====================================================
   // OPEN EMAIL
   // =====================================================
+  const handleOpenEmail = async (id) => {
+    // Nur öffnen, wenn es nicht die aktuell aktive Mail ist
+    if (activeEmail?.id === id) return;
 
-  const handleOpenEmail =
-    async (id) => {
-
+    // Verhindere parallele Calls
+    if (loading) return;
+ 
+    setLoading(true);
+    try {
       await openEmail(id);
-
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // =====================================================
   // CLOSE EMAIL
