@@ -19,7 +19,6 @@ export default function EmailsPage() {
   const {
     provider,
     connected,
-    emails,
     activeEmail,
     initializing,
     fetchEmails,
@@ -32,12 +31,14 @@ export default function EmailsPage() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Lokaler State für eindeutige Emails
+  const [localEmails, setLocalEmails] = useState([]);
+
   // =====================================================
   // AUTH GUARD
   // =====================================================
   useEffect(() => {
-    if (!user)
-      navigate("/login", { replace: true });
+    if (!user) navigate("/login", { replace: true });
   }, [user, navigate]);
 
   // =====================================================
@@ -64,8 +65,7 @@ export default function EmailsPage() {
           }
         }
 
-        // Emails im Context ersetzen
-        emails.splice(0, emails.length, ...uniqueEmails);
+        setLocalEmails(uniqueEmails);
       } catch (err) {
         console.error("Fehler beim Laden der Emails:", err);
       } finally {
@@ -74,7 +74,7 @@ export default function EmailsPage() {
     };
 
     load();
-  }, [connected]);
+  }, [connected, mailbox, fetchEmails]);
 
   // =====================================================
   // REFRESH
@@ -83,7 +83,18 @@ export default function EmailsPage() {
     if (!connected) return;
     setLoading(true);
     try {
-      await fetchEmails({ mailbox });
+      const fetched = await fetchEmails({ mailbox });
+
+      const uniqueEmails = [];
+      const seen = new Set();
+      for (const mail of fetched) {
+        if (!seen.has(mail?.id)) {
+          seen.add(mail?.id);
+          uniqueEmails.push(mail);
+        }
+      }
+
+      setLocalEmails(uniqueEmails);
     } catch (err) {
       console.error("Fehler beim Aktualisieren der Emails:", err);
     } finally {
@@ -183,13 +194,13 @@ export default function EmailsPage() {
 
           {/* Email List */}
           <Card className="p-0 overflow-hidden">
-            {emails.length === 0 ? (
+            {localEmails.length === 0 ? (
               <p className="text-center p-6 text-gray-400">
                 Keine E-Mails gefunden
               </p>
             ) : (
               <ul className="divide-y divide-gray-800">
-                {emails.map((mail) => (
+                {localEmails.map((mail) => (
                   <li
                     key={mail?.id ?? Math.random()}
                     onClick={() => handleOpenEmail(mail?.id)}
