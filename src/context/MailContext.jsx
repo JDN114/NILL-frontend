@@ -10,21 +10,48 @@ export const MailProvider = ({ children }) => {
 
   const initializedRef = useRef(false);
 
+  // =====================================================
   // Entscheide Provider
+  // =====================================================
   const provider = useMemo(() => {
     if (outlook?.connected?.connected) return "outlook";
     if (gmail?.connected?.connected) return "gmail";
     return null;
   }, [outlook?.connected?.connected, gmail?.connected?.connected]);
 
-  // Vereinheitlichte Emails
+  // =====================================================
+  // Einheitliche Emails: inbox / sent
+  // =====================================================
   const emails = useMemo(() => {
-    if (provider === "outlook") return outlook.emails ?? [];
-    if (provider === "gmail") return gmail.emails ?? [];
-    return [];
-  }, [provider, outlook.emails, gmail.emails]);
+    if (!provider) return [];
 
+    if (provider === "outlook") {
+      // Outlook liefert mailbox direkt: inbox/sent
+      return outlook.emails ?? [];
+    }
+
+    if (provider === "gmail") {
+      // Gmail: emails = inbox, sentEmails = sent
+      return [...(gmail.emails ?? []), ...(gmail.sentEmails ?? [])];
+    }
+
+    return [];
+  }, [provider, outlook.emails, gmail.emails, gmail.sentEmails]);
+
+  // Get filtered by mailbox
+  const inboxEmails = useMemo(
+    () => emails.filter((m) => m.mailbox === "inbox"),
+    [emails]
+  );
+
+  const sentEmails = useMemo(
+    () => emails.filter((m) => m.mailbox === "sent"),
+    [emails]
+  );
+
+  // =====================================================
   // Aktive Email
+  // =====================================================
   const activeEmail =
     provider === "outlook"
       ? outlook.activeEmail ?? null
@@ -32,16 +59,24 @@ export const MailProvider = ({ children }) => {
       ? gmail.activeEmail ?? null
       : null;
 
-  // Einheitliches fetchEmails, gibt Array zurück
-  const fetchEmails = async () => {
+  // =====================================================
+  // Einheitliches fetchEmails, optional nach mailbox
+  // =====================================================
+  const fetchEmails = async (box = null) => {
     try {
       if (provider === "outlook") {
-        await outlook.fetchEmails();
-        return outlook.emails ?? [];
+        const fetched = await outlook.fetchEmails();
+        if (!box) return fetched;
+        return fetched.filter((m) => m.mailbox === box);
       }
       if (provider === "gmail") {
-        await gmail.fetchInboxEmails();
-        return gmail.emails ?? [];
+        // Inbox
+        if (box === "inbox") await gmail.fetchInboxEmails();
+        // Sent
+        else if (box === "sent") await gmail.fetchSentEmails();
+        // return combined or filtered
+        const all = [...(gmail.emails ?? []), ...(gmail.sentEmails ?? [])];
+        return box ? all.filter((m) => m.mailbox === box) : all;
       }
       return [];
     } catch (err) {
@@ -50,7 +85,9 @@ export const MailProvider = ({ children }) => {
     }
   };
 
+  // =====================================================
   // Open / Close Email
+  // =====================================================
   const openEmail = async (id) => {
     if (!id) return null;
     if (provider === "outlook") return outlook.openEmail(id);
@@ -63,7 +100,9 @@ export const MailProvider = ({ children }) => {
     if (provider === "gmail") return gmail.closeEmail();
   };
 
+  // =====================================================
   // Fetch nur einmal beim Provider-Wechsel
+  // =====================================================
   useEffect(() => {
     if (!provider || initializedRef.current) return;
     initializedRef.current = true;
@@ -76,6 +115,8 @@ export const MailProvider = ({ children }) => {
         provider,
         connected: provider !== null,
         emails,
+        inboxEmails,
+        sentEmails,
         activeEmail,
         fetchEmails,
         openEmail,
