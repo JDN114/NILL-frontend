@@ -1,4 +1,4 @@
-kimport React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import api from "../services/api";
 
 export const OutlookContext = createContext();
