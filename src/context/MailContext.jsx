@@ -36,11 +36,24 @@ export const MailProvider = ({ children }) => {
       return box ? fetched.filter((m) => m.mailbox === box) : fetched;
     }
     if (provider === "gmail") {
-      if (box === "inbox") await gmail.fetchInboxEmails();
-      else if (box === "sent") await gmail.fetchSentEmails();
-      const all = [...(gmail.emails ?? []), ...(gmail.sentEmails ?? [])];
-      return box ? all.filter((m) => m.mailbox === box) : all;
+      let inbox = gmail.emails ?? [];
+      let sent = gmail.sentEmails ?? [];
+
+      if (box === "inbox") {
+        inbox = await gmail.fetchInboxEmails();
+      }
+      else if (box === "sent") {
+        sent = await gmail.fetchSentEmails();
+      }
+      else {
+        inbox = await gmail.fetchInboxEmails();
+        sent = await gmail.fetchSentEmails();
+      }
+
+      const all = [...inbox, ...sent];
+      return box ? all.filter(m => m.mailbox === box) : all;
     }
+
     return [];
   };
 

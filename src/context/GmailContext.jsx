@@ -72,7 +72,7 @@ export const GmailProvider = ({ children }) => {
 // --------------------------------------------------
 const fetchInboxEmails = useCallback(
   async ({ append = false } = {}) => {
-    if (!connected?.connected) return;
+    if (!connected?.connected) return [];
 
     setInitializing(true);
 
@@ -89,16 +89,22 @@ const fetchInboxEmails = useCallback(
       const data = await res.json();
       setInboxNextToken(data.next_page_token || null);
 
-      // Mailbox-Feld setzen
-      const inboxMails = (data.emails || []).map((m) => ({ ...m, mailbox: "inbox" }));
+      const inboxMails = (data.emails || []).map((m) => ({
+        ...m,
+        mailbox: "inbox",
+      }));
 
       if (append) {
         setEmails((prev) => [...prev, ...inboxMails]);
       } else {
         setEmails(inboxMails);
       }
+
+      return inboxMails; // ⭐⭐⭐ KRITISCHER FIX
+
     } catch (err) {
       console.error("Inbox error:", err);
+      return [];
     } finally {
       setInitializing(false);
     }
@@ -108,9 +114,10 @@ const fetchInboxEmails = useCallback(
 
 const fetchSentEmails = useCallback(
   async ({ append = false } = {}) => {
-    if (!connected?.connected) return;
+    if (!connected?.connected) return [];
 
     setInitializing(true);
+
     try {
       const token = append ? sentNextToken : null;
 
@@ -125,23 +132,28 @@ const fetchSentEmails = useCallback(
 
       setSentNextToken(data.next_page_token || null);
 
-      // Mailbox-Feld setzen
-      const sentMails = (data.emails || []).map((m) => ({ ...m, mailbox: "sent" }));
+      const sentMails = (data.emails || []).map((m) => ({
+        ...m,
+        mailbox: "sent",
+      }));
 
       if (append) {
         setSentEmails((prev) => [...prev, ...sentMails]);
       } else {
         setSentEmails(sentMails);
       }
+
+      return sentMails; // ⭐⭐⭐ KRITISCHER FIX
+
     } catch (err) {
       console.error("Sent error:", err);
+      return [];
     } finally {
       setInitializing(false);
     }
   },
   [connected, sentNextToken]
 );
-
   // --------------------------------------------------
   // EMAIL DETAIL + AI POLLING
   // --------------------------------------------------
