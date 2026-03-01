@@ -13,22 +13,15 @@ import EmailComposeModal from "../components/EmailComposeModal";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const {
-    provider,
-    connected,
-    emails = [],
-    activeEmail,
-    initializing,
-    fetchEmails,
-    openEmail,
-    closeEmail,
-  } = useContext(MailContext);
+  const { provider, connected, activeEmail: contextActiveEmail, fetchEmails, openEmail, closeEmail, initializing } =
+    useContext(MailContext);
 
   const [mailbox, setMailbox] = useState("inbox");
   const [replyOpen, setReplyOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filteredEmails, setFilteredEmails] = useState([]);
+  const [activeEmail, setActiveEmail] = useState(null);
 
   const pollingRef = useRef(null);
 
@@ -46,13 +39,9 @@ export default function EmailsPage() {
     if (!connected) return [];
     setLoading(true);
     try {
-      const fetched = (await fetchEmails()) ?? [];
-      const seen = new Set();
-      const filtered = fetched.filter(
-        (mail) => mail?.id && !seen.has(mail.id) && mail?.mailbox === mailbox && seen.add(mail.id)
-      );
-      setFilteredEmails(filtered);
-      return filtered;
+      const fetched = (await fetchEmails(mailbox)) ?? [];
+      setFilteredEmails(fetched);
+      return fetched;
     } catch (err) {
       console.error("Fehler beim Laden der Emails:", err);
       return [];
@@ -61,29 +50,20 @@ export default function EmailsPage() {
     }
   };
 
-  // Initial Load oder Mailboxwechsel
   useEffect(() => {
     if (!connected) return;
     loadAndFilterEmails();
   }, [connected, mailbox]);
 
   // =====================================================
-  // Refresh Button
-  // =====================================================
-  const handleRefresh = async () => {
-    await loadAndFilterEmails();
-  };
-
-  // =====================================================
   // Open / Close Email
   // =====================================================
   const handleOpenEmail = async (id) => {
-    if (!id || activeEmail?.id === id || loading) return;
+    if (!id || (activeEmail && activeEmail.id === id) || loading) return;
     setLoading(true);
     try {
-      await openEmail(id);
-
-      // Polling starten, falls KI noch nicht fertig ist
+      const mail = await openEmail(id);
+      setActiveEmail(mail); // lokal setzen
       startPollingAI(id);
     } catch (err) {
       console.error("Fehler beim Öffnen der Mail:", err);
@@ -94,6 +74,7 @@ export default function EmailsPage() {
 
   const handleCloseEmail = () => {
     stopPollingAI();
+    setActiveEmail(null);
     closeEmail();
   };
 
@@ -101,19 +82,17 @@ export default function EmailsPage() {
   // KI Polling
   // =====================================================
   const startPollingAI = (emailId) => {
-    stopPollingAI(); // sicherstellen, dass kein doppeltes Polling läuft
+    stopPollingAI();
     pollingRef.current = setInterval(async () => {
-      if (!emailId) return;
       try {
-        const updatedEmail = await openEmail(emailId);
-        if (updatedEmail?.ai_status === "done") {
-          stopPollingAI();
-        }
+        const updated = await openEmail(emailId);
+        setActiveEmail(updated); // hier das Update für React
+        if (updated?.ai_status === "done") stopPollingAI();
       } catch (err) {
-        console.error("Fehler beim KI-Polling:", err);
+        console.error("Polling Error:", err);
         stopPollingAI();
       }
-    }, 3000); // alle 3 Sekunden prüfen
+    }, 3000);
   };
 
   const stopPollingAI = () => {
@@ -169,7 +148,7 @@ export default function EmailsPage() {
             ))}
 
             <button
-              onClick={handleRefresh}
+              onClick={async () => await loadAndFilterEmails()}
               className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
             >
               Aktualisieren
@@ -191,17 +170,17 @@ export default function EmailsPage() {
               <ul className="divide-y divide-gray-800">
                 {filteredEmails.map((mail) => (
                   <li
-                    key={mail?.id ?? Math.random()}
-                    onClick={() => handleOpenEmail(mail?.id)}
+                    key={mail.id}
+                    onClick={() => handleOpenEmail(mail.id)}
                     className="px-6 py-4 hover:bg-gray-800 cursor-pointer"
                   >
                     <div className="flex justify-between mb-1">
-                      <p className="font-semibold truncate">{mail?.subject ?? "(Kein Betreff)"}</p>
+                      <p className="font-semibold truncate">{mail.subject ?? "(Kein Betreff)"}</p>
                       <span className="text-xs text-gray-400">
-                        {mail?.received_at ? new Date(mail.received_at).toLocaleString() : ""}
+                        {mail.received_at ? new Date(mail.received_at).toLocaleString() : ""}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-400 truncate">{mail?.from ?? "(Absender unbekannt)"}</p>
+                    <p className="text-sm text-gray-400 truncate">{mail.from ?? "(Absender unbekannt)"}</p>
                   </li>
                 ))}
               </ul>
@@ -223,9 +202,7 @@ export default function EmailsPage() {
 
           <SafeEmailHtml html={activeEmail.body ?? "<p>Kein Inhalt</p>"} />
 
-          {/* ========================= */}
-          {/* KI Ergebnisse */}
-          {/* ========================= */}
+          {/* KI Insights */}
           <div className="mt-6 p-4 bg-gray-800 rounded space-y-4">
             <h3 className="text-lg font-semibold mb-2">KI Insights</h3>
 
