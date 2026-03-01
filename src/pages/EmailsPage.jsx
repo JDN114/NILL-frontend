@@ -10,8 +10,6 @@ import SafeEmailHtml from "../components/SafeEmailHtml";
 import EmailReplyModal from "../components/EmailReplyModal";
 import EmailComposeModal from "../components/EmailComposeModal";
 
-import { FiArrowLeft, FiEdit2, FiRefreshCw } from "react-icons/fi";
-
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -32,14 +30,18 @@ export default function EmailsPage() {
   const [loading, setLoading] = useState(false);
   const [filteredEmails, setFilteredEmails] = useState([]);
 
-  const initializedRef = useRef(false);
+  const pollingRef = useRef(null);
 
+  // =====================================================
   // Auth Guard
+  // =====================================================
   useEffect(() => {
     if (!user) navigate("/login", { replace: true });
   }, [user, navigate]);
 
+  // =====================================================
   // Emails laden & filtern nach mailbox
+  // =====================================================
   const loadAndFilterEmails = async () => {
     if (!connected) return [];
     setLoading(true);
@@ -65,17 +67,24 @@ export default function EmailsPage() {
     loadAndFilterEmails();
   }, [connected, mailbox]);
 
+  // =====================================================
   // Refresh Button
+  // =====================================================
   const handleRefresh = async () => {
     await loadAndFilterEmails();
   };
 
+  // =====================================================
   // Open / Close Email
+  // =====================================================
   const handleOpenEmail = async (id) => {
     if (!id || activeEmail?.id === id || loading) return;
     setLoading(true);
     try {
       await openEmail(id);
+
+      // Polling starten, falls KI noch nicht fertig ist
+      startPollingAI(id);
     } catch (err) {
       console.error("Fehler beim Öffnen der Mail:", err);
     } finally {
@@ -83,9 +92,40 @@ export default function EmailsPage() {
     }
   };
 
-  const handleCloseEmail = () => closeEmail();
+  const handleCloseEmail = () => {
+    stopPollingAI();
+    closeEmail();
+  };
 
+  // =====================================================
+  // KI Polling
+  // =====================================================
+  const startPollingAI = (emailId) => {
+    stopPollingAI(); // sicherstellen, dass kein doppeltes Polling läuft
+    pollingRef.current = setInterval(async () => {
+      if (!emailId) return;
+      try {
+        const updatedEmail = await openEmail(emailId);
+        if (updatedEmail?.ai_status === "done") {
+          stopPollingAI();
+        }
+      } catch (err) {
+        console.error("Fehler beim KI-Polling:", err);
+        stopPollingAI();
+      }
+    }, 3000); // alle 3 Sekunden prüfen
+  };
+
+  const stopPollingAI = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  // =====================================================
   // Loading / No Provider
+  // =====================================================
   if (initializing || loading)
     return (
       <PageLayout>
@@ -101,6 +141,9 @@ export default function EmailsPage() {
       </PageLayout>
     );
 
+  // =====================================================
+  // UI
+  // =====================================================
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">
@@ -127,16 +170,16 @@ export default function EmailsPage() {
 
             <button
               onClick={handleRefresh}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center gap-2"
+              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
             >
-              <FiRefreshCw /> Aktualisieren
+              Aktualisieren
             </button>
 
             <button
               onClick={() => setComposeOpen(true)}
-              className="ml-auto flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+              className="ml-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
             >
-              <FiEdit2 /> Neue E-Mail
+              Neue E-Mail
             </button>
           </div>
 
@@ -169,8 +212,8 @@ export default function EmailsPage() {
 
       {activeEmail && (
         <Card className="p-6 space-y-6">
-          <button onClick={handleCloseEmail} className="flex items-center text-gray-400 mb-4">
-            <FiArrowLeft className="mr-2" /> Zurück
+          <button onClick={handleCloseEmail} className="text-gray-400 mb-4">
+            Zurück
           </button>
 
           <div className="space-y-2">
