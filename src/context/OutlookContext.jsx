@@ -10,9 +10,6 @@ export const OutlookProvider = ({ children }) => {
   const [initializing, setInitializing] = useState(false);
   const lastStatusFetch = useRef(0);
 
-  // =====================================================
-  // STATUS CHECK
-  // =====================================================
   const fetchStatus = useCallback(async () => {
     try {
       const now = Date.now();
@@ -35,9 +32,6 @@ export const OutlookProvider = ({ children }) => {
     }
   }, []);
 
-  // =====================================================
-  // FETCH EMAIL LIST (robust + Inbox/Sent)
-  // =====================================================
   const fetchEmails = useCallback(async () => {
     if (!connected?.connected) return [];
 
@@ -48,25 +42,15 @@ export const OutlookProvider = ({ children }) => {
 
       const safeEmails = Array.isArray(rawEmails)
         ? rawEmails.map((m) => {
-            // Robust fallback für Absender
-            let sender = "(Absender unbekannt)";
-            if (m?.from?.emailAddress?.name) sender = m.from.emailAddress.name;
-            else if (m?.from?.emailAddress?.address) sender = m.from.emailAddress.address;
-            else if (m?.from?.name) sender = m.from.name;
-            else if (typeof m?.from === "string") sender = m.from;
-
-            // Robust fallback für Datum
-            const received = m?.receivedDateTime ?? m?.received_at ?? null;
-
-            // Inbox/Sent
-            const mailbox = m?.folder?.toLowerCase() === "sentitems" ? "sent" : "inbox";
-
+            const sender = m?.from || "(Absender unbekannt)";
+            const received = m?.received_at ?? m?.date ?? null;
+            const mailbox = m?.mailbox || (m?.folder?.toLowerCase() === "sentitems" ? "sent" : "inbox");
             return {
               id: m?.id ?? Math.random().toString(),
               subject: m?.subject ?? "(Kein Betreff)",
-              from: sender,
+              from: typeof sender === "string" ? sender : `${sender.name} <${sender.address}>`,
               received_at: received,
-              body: m?.body?.content ?? "<p>Kein Inhalt</p>",
+              body: m?.body ?? "<p>Kein Inhalt</p>",
               mailbox,
             };
           })
@@ -82,11 +66,8 @@ export const OutlookProvider = ({ children }) => {
     }
   }, [connected]);
 
-  // =====================================================
-  // OPEN EMAIL DETAIL
-  // =====================================================
   const openEmail = useCallback(async (id) => {
-    if (!id) return;
+    if (!id) return null;
     setInitializing(true);
     try {
       const res = await api.get(`/outlook/emails/${id}`);
@@ -101,14 +82,8 @@ export const OutlookProvider = ({ children }) => {
     }
   }, []);
 
-  // =====================================================
-  // CLOSE EMAIL
-  // =====================================================
   const closeEmail = useCallback(() => setActiveEmail(null), []);
 
-  // =====================================================
-  // CONNECT/DISCONNECT
-  // =====================================================
   const connectOutlook = () => {
     window.location.href = `${api.defaults.baseURL}/outlook/auth-url`;
   };
@@ -124,9 +99,6 @@ export const OutlookProvider = ({ children }) => {
     }
   }, []);
 
-  // =====================================================
-  // INITIAL STATUS LOAD
-  // =====================================================
   useEffect(() => {
     fetchStatus();
   }, [fetchStatus]);
