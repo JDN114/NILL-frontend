@@ -8,8 +8,12 @@ export const OutlookProvider = ({ children }) => {
   const [emails, setEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const lastStatusFetch = useRef(0);
 
+  // =========================
+  // Status Check
+  // =========================
   const fetchStatus = useCallback(async () => {
     try {
       const now = Date.now();
@@ -32,6 +36,9 @@ export const OutlookProvider = ({ children }) => {
     }
   }, []);
 
+  // =========================
+  // Fetch Emails List
+  // =========================
   const fetchEmails = useCallback(async () => {
     if (!connected?.connected) return [];
 
@@ -44,7 +51,8 @@ export const OutlookProvider = ({ children }) => {
         ? rawEmails.map((m) => {
             const sender = m?.from || "(Absender unbekannt)";
             const received = m?.received_at ?? m?.date ?? null;
-            const mailbox = m?.mailbox || (m?.folder?.toLowerCase() === "sentitems" ? "sent" : "inbox");
+            const mailbox =
+              m?.mailbox || (m?.folder?.toLowerCase() === "sentitems" ? "sent" : "inbox");
             return {
               id: m?.id ?? Math.random().toString(),
               subject: m?.subject ?? "(Kein Betreff)",
@@ -52,6 +60,15 @@ export const OutlookProvider = ({ children }) => {
               received_at: received,
               body: m?.body ?? "<p>Kein Inhalt</p>",
               mailbox,
+
+              // ===== KI-Felder =====
+              ai_status: m?.ai_status ?? "pending",
+              summary: m?.summary ?? null,
+              priority: m?.priority ?? null,
+              category: m?.category ?? null,
+              category_group: m?.category_group ?? null,
+              action_items: m?.action_items ?? [],
+              detected_dates: m?.detected_dates ?? [],
             };
           })
         : [];
@@ -66,14 +83,44 @@ export const OutlookProvider = ({ children }) => {
     }
   }, [connected]);
 
+  // =========================
+  // Open Single Email
+  // =========================
   const openEmail = useCallback(async (id) => {
     if (!id) return null;
     setInitializing(true);
     try {
       const res = await api.get(`/outlook/emails/${id}`);
       const mail = res?.data;
-      setActiveEmail(mail || null);
-      return mail || null;
+
+      if (!mail) return null;
+
+      // Mapping KI-Felder
+      const active = {
+        id: mail.id,
+        subject: mail.subject ?? "(Kein Betreff)",
+        from:
+          typeof mail.from === "string" ? mail.from : `${mail.from?.name} <${mail.from?.address}>`,
+        received_at: mail.received_at,
+        body: mail.body ?? "<p>Kein Inhalt</p>",
+        mailbox: mail.mailbox ?? (mail.folder?.toLowerCase() === "sentitems" ? "sent" : "inbox"),
+
+        // ===== KI-Felder =====
+        ai_status: mail.ai_status ?? "pending",
+        summary: mail.summary ?? null,
+        priority: mail.priority ?? null,
+        category: mail.category ?? null,
+        category_group: mail.category_group ?? null,
+        action_items: mail.action_items ?? [],
+        detected_dates: mail.detected_dates ?? [],
+      };
+
+      setActiveEmail(active);
+
+      // Optional: KI-Loader automatisch setzen, solange Status "pending"
+      setAiLoading(active.ai_status === "pending");
+
+      return active;
     } catch (err) {
       console.error("Detail error:", err?.message);
       return null;
@@ -82,8 +129,14 @@ export const OutlookProvider = ({ children }) => {
     }
   }, []);
 
-  const closeEmail = useCallback(() => setActiveEmail(null), []);
+  const closeEmail = useCallback(() => {
+    setActiveEmail(null);
+    setAiLoading(false);
+  }, []);
 
+  // =========================
+  // Connect / Disconnect
+  // =========================
   const connectOutlook = () => {
     window.location.href = `${api.defaults.baseURL}/outlook/auth-url`;
   };
@@ -110,6 +163,7 @@ export const OutlookProvider = ({ children }) => {
         emails,
         activeEmail,
         initializing,
+        aiLoading, // <--- KI-Loader Flag
         fetchStatus,
         fetchEmails,
         openEmail,
