@@ -1,4 +1,3 @@
-// src/pages/AccountingPage.jsx
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
@@ -19,15 +18,19 @@ export default function AccountingPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await api.get("/accounting/dashboard");
-        setStats(res.data?.stats || []); // Default leer
-        setInvoices(res.data?.invoices || []);
-        setReceipts(res.data?.receipts || []);
+
+        // ✅ Alle API-Calls einzeln, korrekt
+        const [statsRes, invoicesRes] = await Promise.all([
+          api.get("/accounting/stats"),
+          api.get("/accounting/invoices"),
+        ]);
+
+        setStats(statsRes.data || []);
+        setInvoices(invoicesRes.data || []);
       } catch (err) {
         console.error("Accounting fetch error:", err);
         setStats([]);
         setInvoices([]);
-        setReceipts([]);
       } finally {
         setLoading(false);
       }
@@ -62,9 +65,20 @@ export default function AccountingPage() {
           </button>
         </div>
         {invoices.length > 0 ? (
-          <InvoiceList invoices={invoices} />
+          <InvoiceList
+            invoices={invoices}
+            onUpdated={(updatedInvoice) => {
+              setInvoices((prev) =>
+                prev.map((inv) =>
+                  inv.id === updatedInvoice.id ? updatedInvoice : inv
+                )
+              );
+            }}
+          />
         ) : (
-          <p className="text-gray-400 text-sm">Noch keine Rechnungen vorhanden</p>
+          <p className="text-gray-400 text-sm">
+            Noch keine Rechnungen vorhanden
+          </p>
         )}
       </Card>
 
@@ -83,7 +97,7 @@ export default function AccountingPage() {
                 key={r.id}
                 className="text-sm text-gray-300 border-b border-gray-700 py-1"
               >
-                {r.filename}
+                {r.filename || r.title || "Unbenannter Beleg"}
               </div>
             ))}
           </div>
