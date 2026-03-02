@@ -1,6 +1,4 @@
 import Modal from "../ui/Modal";
-import ReceiptDropzone from "./ReceiptDropzone";
-import ReceiptForm from "./ReceiptForm";
 import { useState } from "react";
 import api from "../../services/api";
 
@@ -20,12 +18,11 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      // Backend Endpoint für AI-Extraktion + Invoice-Erstellung
       const res = await api.post("/accounting/invoices/from-photo", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setInvoice(res.data); // AI-extracted + created invoice
+      setInvoice(res.data);
       setFile(selectedFile);
     } catch (err) {
       console.error(err);
@@ -35,6 +32,11 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileChange = (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    handleUpload(e.target.files[0]);
   };
 
   const handleClose = () => {
@@ -53,10 +55,21 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
       )}
 
       {!invoice ? (
-        <ReceiptDropzone
-          onFileSelected={handleUpload}
-          loading={loading}
-        />
+        <div className="flex flex-col gap-4 items-center">
+          {/* Datei-Auswahl Button */}
+          <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer">
+            Datei auswählen
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+              disabled={loading}
+            />
+          </label>
+
+          <p className="text-gray-400 text-sm">oder ziehe die Datei hierher</p>
+        </div>
       ) : (
         <ReceiptForm
           invoice={invoice}
