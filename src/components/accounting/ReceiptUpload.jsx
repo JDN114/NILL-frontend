@@ -20,19 +20,17 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const res = await api.post(
-        "/accounting/invoices/from-photo",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      // Backend Endpoint für AI-Extraktion + Invoice-Erstellung
+      const res = await api.post("/accounting/invoices/from-photo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       setInvoice(res.data); // AI-extracted + created invoice
       setFile(selectedFile);
     } catch (err) {
       console.error(err);
       setError(
-        err?.response?.data?.detail ||
-          "Beleg konnte nicht verarbeitet werden."
+        err?.response?.data?.detail || "Beleg konnte nicht verarbeitet werden."
       );
     } finally {
       setLoading(false);
@@ -55,12 +53,15 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
       )}
 
       {!invoice ? (
-        <ReceiptDropzone onFileSelected={handleUpload} loading={loading} />
+        <ReceiptDropzone
+          onFileSelected={handleUpload}
+          loading={loading}
+        />
       ) : (
         <ReceiptForm
           invoice={invoice}
-          onSaved={(updated) => {
-            onCreated?.(updated);
+          onSaved={(updatedInvoice) => {
+            onCreated?.(updatedInvoice);
             handleClose();
           }}
           onCancel={handleClose}
