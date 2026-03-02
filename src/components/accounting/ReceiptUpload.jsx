@@ -1,4 +1,6 @@
+// src/components/accounting/ReceiptUploadModal.jsx
 import Modal from "../ui/Modal";
+import ReceiptForm from "./ReceiptForm";
 import { useState } from "react";
 import api from "../../services/api";
 
@@ -22,7 +24,7 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setInvoice(res.data);
+      setInvoice(res.data); // AI-extracted + created invoice
       setFile(selectedFile);
     } catch (err) {
       console.error(err);
