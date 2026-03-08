@@ -1,182 +1,138 @@
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
-import ExpensePieChart from "../components/accounting/ExpensePieChart";
 import InvoiceList from "../components/accounting/InvoiceList";
 import ReceiptUploadModal from "../components/accounting/ReceiptUpload";
 import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
 import api from "../services/api";
 
-export default function AccountingPage() {
+export default function AccountingPage(){
 
-  const [stats,setStats]=useState([]);
-  const [invoices,setInvoices]=useState([]);
-  const [loading,setLoading]=useState(true);
+const [invoices,setInvoices]=useState([]);
+const [stats,setStats]=useState([]);
 
-  const [createOpen,setCreateOpen]=useState(false);
-  const [uploadOpen,setUploadOpen]=useState(false);
+const [createOpen,setCreateOpen]=useState(false);
+const [uploadOpen,setUploadOpen]=useState(false);
 
 
-  const loadData=async()=>{
+const loadData=async()=>{
 
-    try{
+const invoicesRes=await api.get("/accounting/invoices");
+const statsRes=await api.get("/accounting/stats");
 
-      const [statsRes,invoicesRes]=await Promise.all([
-        api.get("/accounting/stats"),
-        api.get("/accounting/invoices")
-      ]);
+setInvoices(invoicesRes.data);
+setStats(statsRes.data);
 
-      setStats(statsRes.data||[]);
-      setInvoices(invoicesRes.data||[]);
+};
 
-    }catch(err){
 
-      console.error("Accounting fetch error:",err);
+useEffect(()=>{
 
-    }finally{
+loadData();
 
-      setLoading(false);
+const interval=setInterval(loadData,5000);
 
-    }
+return()=>clearInterval(interval);
 
-  };
+},[]);
 
 
-  useEffect(()=>{
+return(
 
-    loadData();
+<PageLayout>
 
-  },[]);
+<h1 className="text-2xl font-bold mb-6 text-white">
+Buchhaltung
+</h1>
 
 
-  // AI updates automatisch refreshen
-  useEffect(()=>{
+<div className="grid grid-cols-3 gap-4 mb-6">
 
-    const interval=setInterval(()=>{
+{stats.map((s,i)=>(
 
-      loadData();
+<Card key={i} className="p-4">
 
-    },5000);
+<p className="text-sm text-gray-400">
+{s.label}
+</p>
 
-    return ()=>clearInterval(interval);
+<p className="text-xl font-bold">
+{s.value}
+</p>
 
-  },[]);
+</Card>
 
+))}
 
-  return (
+</div>
 
-    <PageLayout>
 
-      <h1 className="text-2xl font-bold mb-6 text-white">
-        Buchhaltung
-      </h1>
+<Card className="mb-6 p-4">
 
+<div className="flex justify-between mb-4">
 
-      {/* 📊 Statistik */}
+<h2 className="font-semibold">
+Rechnungen
+</h2>
 
-      <Card className="mb-6 p-4">
+<div className="flex gap-2">
 
-        <h2 className="font-semibold mb-2">
-          Ausgaben nach Kategorie
-        </h2>
+<button
+onClick={()=>setCreateOpen(true)}
+className="bg-blue-600 px-3 py-1 rounded text-sm"
+>
+Neue Rechnung
+</button>
 
-        {stats.length>0?(
-          <ExpensePieChart data={stats}/>
-        ):(
-          <p className="text-gray-400 text-sm">
-            Keine Daten vorhanden
-          </p>
-        )}
+<button
+onClick={()=>setUploadOpen(true)}
+className="bg-green-600 px-3 py-1 rounded text-sm"
+>
+Beleg scannen
+</button>
 
-      </Card>
+</div>
 
+</div>
 
 
-      {/* 🧾 Rechnungen */}
+<InvoiceList
+invoices={invoices}
+onUpdated={(inv)=>{
 
-      <Card className="mb-6 p-4">
+setInvoices(prev =>
+prev.map(i => i.id===inv.id ? inv : i)
+);
 
-        <div className="flex justify-between items-center mb-4">
+}}
+/>
 
-          <h2 className="font-semibold">
-            Rechnungen
-          </h2>
+</Card>
 
-          <div className="flex gap-2">
 
-            <button
-              onClick={()=>setCreateOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
-            >
-              + Neue Rechnung
-            </button>
+<InvoiceCreateModal
+open={createOpen}
+onClose={()=>setCreateOpen(false)}
+onCreated={(inv)=>{
 
-            <button
-              onClick={()=>setUploadOpen(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-            >
-              + Beleg scannen
-            </button>
+setInvoices(prev=>[inv,...prev]);
 
-          </div>
+}}
+/>
 
-        </div>
 
+<ReceiptUploadModal
+open={uploadOpen}
+onClose={()=>setUploadOpen(false)}
+onCreated={(inv)=>{
 
-        {loading?(
-          <p className="text-gray-400 text-sm">
-            Lade Rechnungen...
-          </p>
-        ):invoices.length>0?(
-          <InvoiceList
-            invoices={invoices}
-            onUpdated={(updated)=>{
+setInvoices(prev=>[inv,...prev]);
 
-              setInvoices(prev=>
-                prev.map(inv=>
-                  inv.id===updated.id?updated:inv
-                )
-              );
+}}
+/>
 
-            }}
-          />
-        ):(
-          <p className="text-gray-400 text-sm">
-            Noch keine Rechnungen vorhanden
-          </p>
-        )}
+</PageLayout>
 
-      </Card>
-
-
-
-      {/* ✨ Modals */}
-
-      <InvoiceCreateModal
-        open={createOpen}
-        onClose={()=>setCreateOpen(false)}
-        onCreated={(invoice)=>{
-
-          setInvoices(prev=>[invoice,...prev]);
-
-        }}
-      />
-
-
-      <ReceiptUploadModal
-        open={uploadOpen}
-        onClose={()=>setUploadOpen(false)}
-        onCreated={(invoice)=>{
-
-          setInvoices(prev=>[invoice,...prev]);
-
-        }}
-      />
-
-
-
-    </PageLayout>
-
-  );
+)
 
 }
