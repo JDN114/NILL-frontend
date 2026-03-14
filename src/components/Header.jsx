@@ -7,88 +7,93 @@ import Logo from "../assets/images/logo.png";
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Animation Variants
-  const fadeSlideDown = { hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } };
-  const pulseBtn = { scale: [1, 1.05, 1], transition: { duration: 1.2, repeat: Infinity } };
-
   return (
     <header className="fixed w-full z-50 top-0 left-0">
-      <div className="backdrop-blur-md bg-black/20 border-b border-white/10">
+      <div className="backdrop-blur-sm bg-white/5 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
             <Link to="/">
               <img src={Logo} alt="NILL Logo" className="h-10" />
             </Link>
-            <span className="text-white font-semibold tracking-tight text-lg md:text-xl">
-              NILL
-            </span>
+            <span className="text-white font-semibold tracking-tight">NILL</span>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm relative">
-            <Link to="/" className="text-gray-200 hover:text-white transition-colors duration-200">
+            <Link to="/" className="text-gray-200 hover:text-white transition">
               Home
             </Link>
 
             {/* Dropdown Über NILL */}
             <div className="relative group">
-              <motion.button
+              <button
                 type="button"
-                whileHover={{ scale: 1.05 }}
                 className="text-gray-300 hover:text-white flex items-center gap-1 transition"
               >
                 Über NILL
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
                 </svg>
-              </motion.button>
+              </button>
 
               <AnimatePresence>
                 <motion.div
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  variants={fadeSlideDown}
-                  transition={{ duration: 0.25 }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
                   className="absolute top-full left-0 mt-2 w-44 bg-black/80 backdrop-blur-xl rounded-md shadow-lg border border-white/10 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
                 >
-                  {[
-                    { label: "Über uns", link: "/about-nill" },
-                    { label: "Founder", link: "/founder" },
-                    { label: "Roadmap", link: "/roadmap" }
-                  ].map((item, idx) => (
-                    <Link
-                      key={idx}
-                      to={item.link}
-                      className="block px-4 py-2 text-gray-200 hover:bg-white/10 rounded transition-colors duration-200"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                  <Link to="/about-nill" className="block px-4 py-2 text-gray-200 hover:bg-white/10">
+                    Über uns
+                  </Link>
+                  <Link to="/founder" className="block px-4 py-2 text-gray-200 hover:bg-white/10">
+                    Founder
+                  </Link>
+                  <Link to="/roadmap" className="block px-4 py-2 text-gray-200 hover:bg-white/10">
+                    Roadmap
+                  </Link>
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            {["Features", "Nachhaltigkeit", "Kontakt"].map((item, idx) => (
-              <Link
-                key={idx}
-                to={`#${item.toLowerCase()}`}
-                className="text-gray-300 hover:text-white transition-colors duration-200"
-              >
-                {item}
-              </Link>
-            ))}
+            <Link to="#features" className="text-gray-300 hover:text-white transition">
+              Features
+            </Link>
+            <Link to="#sustainability" className="text-gray-300 hover:text-white transition">
+              Nachhaltigkeit
+            </Link>
+            <Link to="#contact" className="text-gray-300 hover:text-white transition">
+              Kontakt
+            </Link>
 
-            {/* Buttons */}
-            <motion.div className="flex items-center gap-2">
-              <motion(Link) to="/login" whileHover={{ scale: 1.05 }} className="px-3 py-2 border border-white/10 rounded text-white transition">
-                Login
-              </motion(Link)>
-              <motion(Link) to="/register" animate={pulseBtn} className="px-3 py-2 rounded bg-[var(--brand)] text-white transition">
-                Registrieren
-              </motion(Link)>
-            </motion.div>
+            {/* Desktop Buttons */}
+            <div className="flex items-center gap-2">
+              <motion.div whileHover={{ scale: 1.05 }} className="inline-block">
+                <Link
+                  to="/login"
+                  className="px-3 py-2 border border-white/10 rounded text-white transition"
+                >
+                  Login
+                </Link>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.05 }} className="inline-block">
+                <Link
+                  to="/register"
+                  className="px-3 py-2 rounded bg-[var(--brand)] text-white transition"
+                >
+                  Registrieren
+                </Link>
+              </motion.div>
+            </div>
           </nav>
 
           {/* Mobile Menu Toggle */}
@@ -99,8 +104,18 @@ export default function Header() {
               className="p-2 rounded hover:bg-white/5 transition"
               aria-label="Menü öffnen"
             >
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
           </div>
@@ -116,17 +131,20 @@ export default function Header() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50"
           >
+            {/* Overlay */}
             <div
               className="absolute inset-0 bg-black/70"
               onClick={() => setMobileOpen(false)}
               aria-hidden="true"
             />
+
+            {/* Menu Panel */}
             <motion.div
-              initial={{ x: "100%" }}
+              initial={{ x: 80 }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="absolute right-0 top-0 w-80 h-full bg-[#071023] p-6 overflow-y-auto shadow-xl"
+              exit={{ x: 80 }}
+              transition={{ duration: 0.3 }}
+              className="absolute right-0 top-0 w-80 h-full bg-[#071023] p-6 overflow-y-auto"
             >
               <button
                 type="button"
@@ -135,6 +153,7 @@ export default function Header() {
               >
                 Schließen
               </button>
+
               <ul className="flex flex-col gap-4 text-gray-200">
                 {[
                   { label: "Home", link: "/" },
@@ -148,7 +167,7 @@ export default function Header() {
                   { label: "Registrieren", link: "/register" },
                 ].map((item, idx) => (
                   <li key={idx}>
-                    <Link to={item.link} onClick={() => setMobileOpen(false)}>
+                    <Link to={item.link} onClick={() => setMobileOpen(false)} className="block py-2">
                       {item.label}
                     </Link>
                   </li>
