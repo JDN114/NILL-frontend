@@ -10,40 +10,47 @@ import GuidedTourModal from "../components/GuidedTourModal";
 export default function DashboardLanding() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [userName, setUserName] = useState("");  
+  const [notifications, setNotifications] = useState([]);
 
   // ----------------------------
-  // Backend API: Check if onboarding should be shown
+  // Backend API: User info & onboarding
   // ----------------------------
-  async function checkOnboarding() {
-    try {
-      const res = await api.get("/me/onboarding-status");
-      console.log("Onboarding Status:", res.data);
-
-      if (res.data.is_subscription_active && !res.data.has_seen_onboarding) {
-        console.log("Opening Welcome Modal");
-        setShowWelcome(true);
-      }
-    } catch (err) {
-      console.error("Fehler beim Abfragen:", err);
-    }
-  }
-
-  // 🔥 DAS HAT GEFEHLT
   useEffect(() => {
-    checkOnboarding();
+    const loadUserAndOnboarding = async () => {
+      try {
+        const res = await api.get("/me/profile");
+        setUserName(res.data.name || "User");
+
+        const onboard = await api.get("/me/onboarding-status");
+        if (onboard.data.is_subscription_active && !onboard.data.has_seen_onboarding) {
+          setShowWelcome(true);
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden von User/Onboarding:", err);
+      }
+    };
+    loadUserAndOnboarding();
   }, []);
 
   // ----------------------------
-  // Wird aufgerufen, wenn Welcome Modal geschlossen wird
+  // Notifications laden
   // ----------------------------
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const res = await api.get("/me/notifications?limit=5");
+        setNotifications(res.data);
+      } catch (err) {
+        console.error("Fehler beim Laden der Benachrichtigungen:", err);
+      }
+    };
+    loadNotifications();
+  }, []);
+
   const handleWelcomeClose = async () => {
     setShowWelcome(false);
-
-    // Smooth Übergang zur Guided Tour
-    setTimeout(() => {
-      setShowTour(true);
-    }, 400);
-
+    setTimeout(() => setShowTour(true), 400);
     try {
       await api.post("/me/onboarding-complete");
     } catch (err) {
@@ -51,77 +58,61 @@ export default function DashboardLanding() {
     }
   };
 
-  const handleTourFinish = () => {
-    setShowTour(false);
-  };
+  const handleTourFinish = () => setShowTour(false);
 
   return (
     <>
-      <WelcomeToNILLModal
-        isOpen={showWelcome}
-        onClose={handleWelcomeClose}
-      />
-
-      <GuidedTourModal
-        isOpen={showTour}
-        onFinish={handleTourFinish}
-      />
+      <WelcomeToNILLModal isOpen={showWelcome} onClose={handleWelcomeClose} />
+      <GuidedTourModal isOpen={showTour} onFinish={handleTourFinish} />
 
       <PageLayout>
-        <h1 className="text-2xl font-bold mb-6 text-white">
-          Dashboard
-        </h1>
+        {/* ------------------ Hero Section ------------------ */}
+        <div className="mb-10 relative p-6 bg-gradient-to-r from-purple-700 to-blue-600 rounded-2xl text-white shadow-lg overflow-hidden">
+          <h1 className="text-3xl md:text-4xl font-bold animate-fade-in">
+            Willkommen zurück, {userName}!
+          </h1>
+          <p className="mt-2 text-lg animate-fade-in delay-200">
+            Dein Dashboard für E-Mails, Buchhaltung und Team-Management
+          </p>
 
-        <div className="mb-6 flex justify-center">
-          <Link to="/">
-            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
-              Zur Landingpage
-            </button>
-          </Link>
+          {notifications.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {notifications.map((note, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white/10 px-4 py-2 rounded-lg text-sm animate-slide-up"
+                >
+                  {note.message}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Optional: kleine animierte Kreise als Dekoration */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full animate-pulse-slow"></div>
         </div>
 
+        {/* ------------------ Navigation Cards ------------------ */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
           <Link to="/dashboard/emails" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card
-              title="Emails"
-              description="Postfach, Filter & Kategorien"
-              className="hover:shadow-lg transition"
-            />
+            <Card title="Emails" description="Postfach, Filter & Kategorien" className="hover:shadow-lg transition animate-fade-in" />
           </Link>
 
           <Link to="/dashboard/accounting" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card
-              title="Buchhaltung"
-              description="Rechnungen, Einnahmen & Ausgaben"
-              className="hover:shadow-lg transition"
-            />
+            <Card title="Buchhaltung" description="Rechnungen, Einnahmen & Ausgaben" className="hover:shadow-lg transition animate-fade-in delay-100" />
           </Link>
 
           <Link to="/dashboard/calendar" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card
-              title="Kalender"
-              description="Termine, Planung & Events"
-              className="hover:shadow-lg transition"
-            />
+            <Card title="Kalender" description="Termine, Planung & Events" className="hover:shadow-lg transition animate-fade-in delay-200" />
           </Link>
 
           <Link to="/dashboard/workflow" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card
-              title="Team"
-              description="Tasks, Prozesse & Rollen"
-              className="hover:shadow-lg transition"
-            />
+            <Card title="Team" description="Tasks, Prozesse & Rollen" className="hover:shadow-lg transition animate-fade-in delay-300" />
           </Link>
 
           <Link to="/dashboard/settings" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card
-              title="Einstellungen"
-              description="Gmail Verbindung & Account"
-              className="hover:shadow-lg transition"
-            />
+            <Card title="Einstellungen" description="Gmail Verbindung & Account" className="hover:shadow-lg transition animate-fade-in delay-400" />
           </Link>
-
         </div>
       </PageLayout>
     </>
