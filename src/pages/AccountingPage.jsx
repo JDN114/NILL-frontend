@@ -18,6 +18,7 @@ XAxis,
 YAxis
 } from "recharts";
 
+
 export default function AccountingPage(){
 
 const [invoices,setInvoices]=useState([]);
@@ -37,7 +38,10 @@ const map={};
 
 data.forEach(i=>{
 
+if(!i.invoice_date) return;
+
 const d=new Date(i.invoice_date);
+
 const key=`${d.getFullYear()}-${d.getMonth()+1}`;
 
 if(!map[key]) map[key]=0;
@@ -56,12 +60,23 @@ total:v
 
 const loadData=async()=>{
 
-const invoicesRes=await api.get("/accounting/invoices");
-const statsRes=await api.get("/accounting/stats");
-const catRes=await api.get("/accounting/category-stats");
-const bankRes=await api.get("/bank/status");
+try{
 
+const invoicesRes=await api.get("/accounting/invoices");
 setInvoices(invoicesRes.data);
+
+setMonthly(buildMonthly(invoicesRes.data));
+
+}catch(e){
+
+console.error("invoice load failed",e);
+
+}
+
+
+try{
+
+const statsRes=await api.get("/accounting/stats");
 
 const s=statsRes.data;
 
@@ -69,14 +84,40 @@ setStats([
 {label:"Total",value:s.total_amount},
 {label:"Unpaid",value:s.unpaid_count},
 {label:"Overdue",value:s.overdue_count},
-{label:"Categories",value:s.by_category.length}
+{label:"Categories",value:s.by_category?.length || 0}
 ]);
+
+}catch(e){
+
+console.error("stats failed",e);
+
+}
+
+
+try{
+
+const catRes=await api.get("/accounting/category-stats");
 
 setCategories(catRes.data);
 
-setMonthly(buildMonthly(invoicesRes.data));
+}catch(e){
+
+console.error("category stats failed",e);
+
+}
+
+
+try{
+
+const bankRes=await api.get("/bank/status");
 
 setBankStatus(bankRes.data);
+
+}catch(e){
+
+console.warn("bank status not available");
+
+}
 
 };
 
@@ -94,18 +135,34 @@ return()=>clearInterval(interval);
 
 const connectBank=async()=>{
 
+try{
+
 const res=await api.get("/bank/connect");
 
 window.location.href=res.data.auth_url;
+
+}catch(e){
+
+console.error("bank connect failed",e);
+
+}
 
 };
 
 
 const disconnectBank=async()=>{
 
+try{
+
 await api.post("/bank/disconnect");
 
 loadData();
+
+}catch(e){
+
+console.error("disconnect failed",e);
+
+}
 
 };
 
