@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+kimport { useEffect,useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import InvoiceList from "../components/accounting/InvoiceList";
@@ -18,13 +18,14 @@ XAxis,
 YAxis
 } from "recharts";
 
-
 export default function AccountingPage(){
 
 const [invoices,setInvoices]=useState([]);
 const [stats,setStats]=useState([]);
 const [categories,setCategories]=useState([]);
 const [monthly,setMonthly]=useState([]);
+
+const [bankStatus,setBankStatus]=useState(null);
 
 const [createOpen,setCreateOpen]=useState(false);
 const [uploadOpen,setUploadOpen]=useState(false);
@@ -58,6 +59,7 @@ const loadData=async()=>{
 const invoicesRes=await api.get("/accounting/invoices");
 const statsRes=await api.get("/accounting/stats");
 const catRes=await api.get("/accounting/category-stats");
+const bankRes=await api.get("/bank/status");
 
 setInvoices(invoicesRes.data);
 
@@ -74,6 +76,8 @@ setCategories(catRes.data);
 
 setMonthly(buildMonthly(invoicesRes.data));
 
+setBankStatus(bankRes.data);
+
 };
 
 
@@ -86,6 +90,34 @@ const interval=setInterval(loadData,15000);
 return()=>clearInterval(interval);
 
 },[]);
+
+
+const connectBank=async()=>{
+
+const res=await api.get("/bank/connect");
+
+window.location.href=res.data.auth_url;
+
+};
+
+
+const disconnectBank=async()=>{
+
+await api.post("/bank/disconnect");
+
+loadData();
+
+};
+
+
+const exportDATEV=()=>{
+
+window.open(
+`${api.defaults.baseURL}/tax/export/datev`,
+"_blank"
+);
+
+};
 
 
 const overdue=invoices.filter(i=>
@@ -115,6 +147,8 @@ Buchhaltung
 )}
 
 
+{/* Stats */}
+
 <div className="grid grid-cols-4 gap-4 mb-6">
 
 {stats.map((s,i)=>(
@@ -135,6 +169,55 @@ Buchhaltung
 
 </div>
 
+
+{/* Bank Integration */}
+
+<Card className="mb-6 p-4">
+
+<h2 className="font-semibold mb-4">
+Bank Verbindung
+</h2>
+
+{bankStatus?.connected ? (
+
+<div className="flex justify-between items-center">
+
+<p className="text-green-400">
+Bank verbunden
+</p>
+
+<button
+onClick={disconnectBank}
+className="bg-red-600 px-3 py-1 rounded text-sm"
+>
+Trennen
+</button>
+
+</div>
+
+):(
+
+<div className="flex justify-between items-center">
+
+<p className="text-gray-400">
+Keine Bank verbunden
+</p>
+
+<button
+onClick={connectBank}
+className="bg-blue-600 px-3 py-1 rounded text-sm"
+>
+Bank verbinden
+</button>
+
+</div>
+
+)}
+
+</Card>
+
+
+{/* Charts */}
 
 <div className="grid grid-cols-2 gap-6 mb-6">
 
@@ -198,6 +281,8 @@ Monatliche Ausgaben
 </div>
 
 
+{/* Invoices */}
+
 <Card className="mb-6 p-4">
 
 <div className="flex justify-between mb-4">
@@ -237,6 +322,24 @@ prev.map(i => i.id===inv.id ? inv : i)
 
 }}
 />
+
+</Card>
+
+
+{/* DATEV Export */}
+
+<Card className="mb-6 p-4">
+
+<h2 className="font-semibold mb-3">
+Steuer Export
+</h2>
+
+<button
+onClick={exportDATEV}
+className="bg-green-600 px-4 py-2 rounded"
+>
+DATEV CSV Export
+</button>
 
 </Card>
 

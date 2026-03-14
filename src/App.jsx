@@ -29,6 +29,7 @@ import WorkflowLanding from "./pages/WorkflowLanding";
 import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
 import Pricing from "./pages/PricingPage";
+import TransactionPage from "./pages/TransactionPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -114,6 +115,12 @@ function App() {
               <Route path="/dashboard/workflow/time" element={
                 <ProtectedRoute>
                   <WorkflowTime />
+                </ProtectedRoute>
+              }/>
+
+              <Route path="/dashboard/accounting/Transaction" element={
+                <ProtectedRoute>
+                  <TransactionPage />
                 </ProtectedRoute>
               }/>
 
