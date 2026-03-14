@@ -1,4 +1,4 @@
-// src/pages/DashboardLanding.jsx
+k// src/pages/DashboardLanding.jsx
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -13,17 +13,17 @@ import GuidedTourModal from "../components/GuidedTourModal";
 export default function DashboardLanding() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
-  const [userName, setUserName] = useState("User");
+  const [userName, setUserName] = useState(null);
   const [notifications, setNotifications] = useState([]);
 
   // ----------------------------
-  // Backend API: Onboarding & User
+  // Backend API: User, Onboarding, Notifications
   // ----------------------------
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await api.get("/me/profile");
-        setUserName(res.data.name || "User");
+        setUserName(res.data.name || null);
       } catch (err) {
         console.error("Fehler beim Laden des Benutzers:", err);
       }
@@ -82,17 +82,19 @@ export default function DashboardLanding() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="relative rounded-3xl bg-gradient-to-br from-zinc-900/80 to-zinc-800/70 p-8 mb-8 shadow-lg overflow-hidden"
+          className="relative rounded-3xl bg-gradient-to-br from-zinc-900/70 to-zinc-800/50 p-8 mb-8 shadow-lg overflow-hidden"
         >
           <div className="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-3xl md:text-4xl font-bold text-white mb-2"
           >
-            Willkommen zurück, {userName}!
+            {userName ? `Willkommen zurück, ${userName}!` : "Willkommen zurück!"}
           </motion.h1>
+
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,7 +113,10 @@ export default function DashboardLanding() {
               className="mt-6 space-y-2"
             >
               {notifications.slice(0, 3).map((n, idx) => (
-                <div key={idx} className="bg-gray-800/50 p-3 rounded-lg text-gray-200 text-sm">
+                <div
+                  key={idx}
+                  className="bg-gray-800/50 p-3 rounded-lg text-gray-200 text-sm"
+                >
                   {n.message}
                 </div>
               ))}
@@ -135,8 +140,15 @@ export default function DashboardLanding() {
               variants={fadeInUp}
               transition={{ delay: 0.1 * idx }}
             >
-              <Link to={card.link} className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-                <Card title={card.title} description={card.description} className="hover:shadow-lg transition" />
+              <Link
+                to={card.link}
+                className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+              >
+                <Card
+                  title={card.title}
+                  description={card.description}
+                  className="hover:shadow-lg transition"
+                />
               </Link>
             </motion.div>
           ))}
