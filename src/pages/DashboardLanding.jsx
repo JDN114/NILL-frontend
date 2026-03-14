@@ -1,5 +1,8 @@
+// src/pages/DashboardLanding.jsx
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import api from "../services/api";
@@ -10,42 +13,45 @@ import GuidedTourModal from "../components/GuidedTourModal";
 export default function DashboardLanding() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
-  const [userName, setUserName] = useState("");  
+  const [userName, setUserName] = useState("User");
   const [notifications, setNotifications] = useState([]);
 
   // ----------------------------
-  // Backend API: User info & onboarding
+  // Backend API: Onboarding & User
   // ----------------------------
   useEffect(() => {
-    const loadUserAndOnboarding = async () => {
+    const fetchUser = async () => {
       try {
         const res = await api.get("/me/profile");
         setUserName(res.data.name || "User");
+      } catch (err) {
+        console.error("Fehler beim Laden des Benutzers:", err);
+      }
+    };
 
-        const onboard = await api.get("/me/onboarding-status");
-        if (onboard.data.is_subscription_active && !onboard.data.has_seen_onboarding) {
+    const checkOnboarding = async () => {
+      try {
+        const res = await api.get("/me/onboarding-status");
+        if (res.data.is_subscription_active && !res.data.has_seen_onboarding) {
           setShowWelcome(true);
         }
       } catch (err) {
-        console.error("Fehler beim Laden von User/Onboarding:", err);
+        console.error(err);
       }
     };
-    loadUserAndOnboarding();
-  }, []);
 
-  // ----------------------------
-  // Notifications laden
-  // ----------------------------
-  useEffect(() => {
-    const loadNotifications = async () => {
+    const fetchNotifications = async () => {
       try {
-        const res = await api.get("/me/notifications?limit=5");
-        setNotifications(res.data);
+        const res = await api.get("/me/notifications");
+        setNotifications(res.data || []);
       } catch (err) {
-        console.error("Fehler beim Laden der Benachrichtigungen:", err);
+        console.error(err);
       }
     };
-    loadNotifications();
+
+    fetchUser();
+    checkOnboarding();
+    fetchNotifications();
   }, []);
 
   const handleWelcomeClose = async () => {
@@ -54,11 +60,16 @@ export default function DashboardLanding() {
     try {
       await api.post("/me/onboarding-complete");
     } catch (err) {
-      console.error("Fehler beim Setzen von has_seen_onboarding:", err);
+      console.error(err);
     }
   };
 
   const handleTourFinish = () => setShowTour(false);
+
+  // ----------------------------
+  // Animations
+  // ----------------------------
+  const fadeInUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
   return (
     <>
@@ -66,53 +77,69 @@ export default function DashboardLanding() {
       <GuidedTourModal isOpen={showTour} onFinish={handleTourFinish} />
 
       <PageLayout>
-        {/* ------------------ Hero Section ------------------ */}
-        <div className="mb-10 relative p-6 bg-gradient-to-r from-purple-700 to-blue-600 rounded-2xl text-white shadow-lg overflow-hidden">
-          <h1 className="text-3xl md:text-4xl font-bold animate-fade-in">
+        {/* Hero */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="relative rounded-3xl bg-gradient-to-br from-zinc-900/80 to-zinc-800/70 p-8 mb-8 shadow-lg overflow-hidden"
+        >
+          <div className="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-3xl md:text-4xl font-bold text-white mb-2"
+          >
             Willkommen zurück, {userName}!
-          </h1>
-          <p className="mt-2 text-lg animate-fade-in delay-200">
-            Dein Dashboard für E-Mails, Buchhaltung und Team-Management
-          </p>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-gray-300 text-lg md:text-xl"
+          >
+            Dein Dashboard gibt dir einen schnellen Überblick über neue Aktivitäten und Aufgaben.
+          </motion.p>
 
+          {/* Notifications */}
           {notifications.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {notifications.map((note, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white/10 px-4 py-2 rounded-lg text-sm animate-slide-up"
-                >
-                  {note.message}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-6 space-y-2"
+            >
+              {notifications.slice(0, 3).map((n, idx) => (
+                <div key={idx} className="bg-gray-800/50 p-3 rounded-lg text-gray-200 text-sm">
+                  {n.message}
                 </div>
               ))}
-            </div>
+            </motion.div>
           )}
+        </motion.div>
 
-          {/* Optional: kleine animierte Kreise als Dekoration */}
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full animate-pulse-slow"></div>
-        </div>
-
-        {/* ------------------ Navigation Cards ------------------ */}
+        {/* Dashboard Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <Link to="/dashboard/emails" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card title="Emails" description="Postfach, Filter & Kategorien" className="hover:shadow-lg transition animate-fade-in" />
-          </Link>
-
-          <Link to="/dashboard/accounting" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card title="Buchhaltung" description="Rechnungen, Einnahmen & Ausgaben" className="hover:shadow-lg transition animate-fade-in delay-100" />
-          </Link>
-
-          <Link to="/dashboard/calendar" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card title="Kalender" description="Termine, Planung & Events" className="hover:shadow-lg transition animate-fade-in delay-200" />
-          </Link>
-
-          <Link to="/dashboard/workflow" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card title="Team" description="Tasks, Prozesse & Rollen" className="hover:shadow-lg transition animate-fade-in delay-300" />
-          </Link>
-
-          <Link to="/dashboard/settings" className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card title="Einstellungen" description="Gmail Verbindung & Account" className="hover:shadow-lg transition animate-fade-in delay-400" />
-          </Link>
+          {[
+            { title: "Emails", description: "Postfach, Filter & Kategorien", link: "/dashboard/emails" },
+            { title: "Buchhaltung", description: "Rechnungen, Einnahmen & Ausgaben", link: "/dashboard/accounting" },
+            { title: "Kalender", description: "Termine, Planung & Events", link: "/dashboard/calendar" },
+            { title: "Team", description: "Tasks, Prozesse & Rollen", link: "/dashboard/workflow" },
+            { title: "Einstellungen", description: "Gmail Verbindung & Account", link: "/dashboard/settings" },
+          ].map((card, idx) => (
+            <motion.div
+              key={idx}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              transition={{ delay: 0.1 * idx }}
+            >
+              <Link to={card.link} className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
+                <Card title={card.title} description={card.description} className="hover:shadow-lg transition" />
+              </Link>
+            </motion.div>
+          ))}
         </div>
       </PageLayout>
     </>
