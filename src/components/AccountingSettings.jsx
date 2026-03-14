@@ -24,8 +24,8 @@ export default function AccountingSettings() {
 
       try {
         const [settingsRes, bankRes] = await Promise.all([
-          api.get("/accounting/settings"),
-          api.get("/accounting/bank-accounts"),
+          api.get("/bank/settings"),
+          api.get("/bank/bank-accounts"),
         ]);
 
         if (!mounted) return;
@@ -59,7 +59,7 @@ export default function AccountingSettings() {
   // -------------------------------
   const handleConnectBank = async () => {
     try {
-      const res = await api.post("/accounting/bank-accounts/connect");
+      const res = await api.post("/bank/connect");
       if (res.data?.oauthUrl) {
         window.location.href = res.data.oauthUrl;
       }
@@ -74,7 +74,7 @@ export default function AccountingSettings() {
   // -------------------------------
   const handleDisconnectBank = async () => {
     try {
-      await api.post("/accounting/bank-accounts/disconnect");
+      await api.post("/bank/disconnect");
       setConnected(false);
       setBankAccount(null);
       setLastSync(null);
@@ -90,7 +90,7 @@ export default function AccountingSettings() {
   const handleExport = async () => {
     try {
       setExportLoading(true);
-      const res = await api.get("/accounting/export", { responseType: "blob" });
+      const res = await api.get("/tax/export/datev", { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
