@@ -3,34 +3,37 @@ import React from "react";
 import HeroImg from "../assets/images/hero-image.png";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { FiCheckCircle, FiClock, FiCloud } from "react-icons/fi";
 
 export default function Hero() {
   const features = [
     {
-      title: "Automatisiere Routineaufgaben",
-      subtitle: "Weniger manuelle Arbeit, mehr Fokus auf das Wesentliche"
+      icon: <FiCheckCircle className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
+      title: "99% Automatisierbar",
+      subtitle: "Weniger manuelle Arbeit"
     },
     {
-      title: "Smart & Transparent",
-      subtitle: "Alle Aktivitäten auf einen Blick"
+      icon: <FiClock className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
+      title: "24/7 Support",
+      subtitle: "Immer erreichbar"
     },
     {
-      title: "Nachhaltig & Effizient",
-      subtitle: "Green Hosting & ressourcenschonend"
+      icon: <FiCloud className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
+      title: "CO₂-effizient",
+      subtitle: "Green hosting & nachhaltige Server"
     }
   ];
 
   return (
     <section id="home" className="relative overflow-hidden">
-      {/* Subtiler Hintergrund */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-zinc-900/80 to-zinc-800/70" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#071023] to-[#03060a] opacity-95" />
 
       <div className="max-w-7xl mx-auto px-6 py-28 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          
-          {/* Linke Seite: Text & Features */}
+
+          {/* Linke Seite: Text, Button, Features */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="space-y-8"
@@ -40,15 +43,14 @@ export default function Hero() {
               und spare wertvolle Zeit
             </h1>
 
-            <p className="text-gray-300 text-lg md:text-xl max-w-xl">
-              NILL bündelt E-Mail-Automatisierung, Projektplanung und Buchhaltung in einer intelligenten KI-Plattform – 
-              für mehr Übersicht, Effizienz und Kontrolle.
+            <p className="text-gray-300 text-lg md:text-xl">
+              NILL bündelt E-Mail-Automatisierung, Zusammenfassungen, Projektplanung und Buchhaltung in einer intelligenten KI-Plattform.
             </p>
 
-            <div className="mt-6 flex gap-4 flex-wrap">
+            <div className="flex gap-4 flex-wrap">
               <Link 
-                to="/about-nill"
-                className="inline-flex items-center px-6 py-3 bg-[var(--accent)] text-black font-semibold rounded-lg shadow-md hover:scale-[1.03] transition"
+                to="/about-nill" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--accent)] text-black font-semibold rounded-lg shadow-lg hover:bg-yellow-400 transition"
               >
                 Mehr erfahren
               </Link>
@@ -59,27 +61,26 @@ export default function Hero() {
               {features.map((f, idx) => (
                 <motion.div
                   key={idx}
-                  whileHover={{ y: -3 }}
-                  className="bg-white/5 p-4 rounded-xl flex flex-col gap-2"
+                  whileHover={{ y: -5 }}
+                  className="glass p-4 rounded-xl flex items-center gap-3"
                 >
-                  <div className="font-semibold text-white">{f.title}</div>
-                  <div className="text-gray-300 text-sm">{f.subtitle}</div>
+                  {f.icon}
+                  <div>
+                    <div className="font-semibold text-white">{f.title}</div>
+                    <div className="text-gray-300 text-sm">{f.subtitle}</div>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
-          {/* Rechte Seite: Hero Bild */}
+          {/* Hero Bild */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="hidden lg:block relative"
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="hidden lg:block"
           >
-            {/* Soft Glow Kreise */}
-            <div className="absolute -top-16 -left-16 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-            <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-pink-500/10 blur-2xl" />
-            
             <img 
               src={HeroImg} 
               alt="Illustration der NILL Plattform mit automatisierten Prozessen" 
