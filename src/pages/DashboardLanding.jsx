@@ -101,7 +101,7 @@ export default function DashboardLanding() {
             transition={{ delay: 0.3 }}
             className="text-gray-300 text-lg md:text-xl"
           >
-            Dein Dashboard gibt dir einen schnellen Überblick über neue Aktivitäten und Aufgaben.
+            Mit NILL Zeit und Geld sparen.
           </motion.p>
 
           {/* Notifications */}

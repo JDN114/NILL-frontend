@@ -7,37 +7,24 @@ import { FiCheckCircle, FiClock, FiCloud } from "react-icons/fi";
 
 export default function Hero() {
   const features = [
-    {
-      icon: <FiCheckCircle className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
-      title: "99% Automatisierbar",
-      subtitle: "Weniger manuelle Arbeit"
-    },
-    {
-      icon: <FiClock className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
-      title: "24/7 Support",
-      subtitle: "Immer erreichbar"
-    },
-    {
-      icon: <FiCloud className="text-[var(--accent)] w-6 h-6" aria-hidden="true" />,
-      title: "CO₂-effizient",
-      subtitle: "Green hosting & nachhaltige Server"
-    }
+    { icon: <FiCheckCircle className="text-[var(--accent)] w-6 h-6" />, title: "99% Automatisierbar", subtitle: "Weniger manuelle Arbeit" },
+    { icon: <FiClock className="text-[var(--accent)] w-6 h-6" />, title: "24/7 Support", subtitle: "Immer erreichbar" },
+    { icon: <FiCloud className="text-[var(--accent)] w-6 h-6" />, title: "CO₂-effizient", subtitle: "Green hosting & nachhaltige Server" }
   ];
+
+  const fadeInUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+  const pulseBtn = { scale: [1, 1.03, 1], transition: { duration: 1.2, repeat: Infinity } };
 
   return (
     <section id="home" className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#071023] to-[#03060a] opacity-95" />
+      {/* Subtiler Farbverlauf */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-zinc-900/80 to-zinc-800/70 opacity-95" />
 
       <div className="max-w-7xl mx-auto px-6 py-28 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-          {/* Linke Seite: Text, Button, Features */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-8"
-          >
+          {/* Linke Seite: Text & Features */}
+          <motion.div initial="hidden" animate="visible" variants={fadeInUp} transition={{ duration: 0.8 }} className="space-y-8">
             <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight">
               Automatisiere <span className="text-[var(--accent)]">Routineaufgaben</span> <br />
               und spare wertvolle Zeit
@@ -47,22 +34,25 @@ export default function Hero() {
               NILL bündelt E-Mail-Automatisierung, Zusammenfassungen, Projektplanung und Buchhaltung in einer intelligenten KI-Plattform.
             </p>
 
-            <div className="flex gap-4 flex-wrap">
+            <motion.div whileHover={{ scale: 1.03 }} className="inline-block mt-4">
               <Link 
                 to="/about-nill" 
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--accent)] text-black font-semibold rounded-lg shadow-lg hover:bg-yellow-400 transition"
               >
                 Mehr erfahren
               </Link>
-            </div>
+            </motion.div>
 
             {/* Feature Highlights */}
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {features.map((f, idx) => (
                 <motion.div
                   key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * idx }}
                   whileHover={{ y: -5 }}
-                  className="glass p-4 rounded-xl flex items-center gap-3"
+                  className="glass p-4 rounded-xl flex items-center gap-3 backdrop-blur-md bg-white/5"
                 >
                   {f.icon}
                   <div>
