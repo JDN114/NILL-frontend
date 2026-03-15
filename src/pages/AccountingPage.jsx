@@ -81,9 +81,26 @@ export default function AccountingPage() {
   };
 
   useEffect(() => {
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("bank") === "connected") {
+
+      console.log("Bank successfully connected");
+
+      // sofort Bankstatus neu laden
+      loadData();
+
+      // URL säubern (Parameter entfernen)
+      window.history.replaceState({}, document.title, "/accounting");
+    }
+
     loadData();
+
     const interval = setInterval(loadData, 15000);
+
     return () => clearInterval(interval);
+
   }, []);
 
   // Browser redirect zum Backend-Endpoint
