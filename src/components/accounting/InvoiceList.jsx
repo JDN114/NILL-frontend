@@ -1,10 +1,8 @@
 // src/components/accounting/InvoiceList.jsx
-
 import React from "react";
 import api from "../../services/api";
 
 export default function InvoiceList({ invoices, onUpdated }) {
-
   if (!Array.isArray(invoices) || invoices.length === 0) {
     return (
       <p className="text-gray-400 text-sm">
@@ -15,11 +13,13 @@ export default function InvoiceList({ invoices, onUpdated }) {
 
   const togglePaid = async (invoice) => {
     try {
-      const endpoint = invoice.paid
+      const endpoint = invoice.payment_status === "paid"
         ? `/accounting/invoices/${invoice.id}/mark-unpaid`
         : `/accounting/invoices/${invoice.id}/mark-paid`;
 
-      const res = await api.post(endpoint);
+      await api.post(endpoint);
+
+      // Vollständig aktualisierte Liste laden
       onUpdated?.();
     } catch (err) {
       console.error("Status update failed", err);
@@ -31,7 +31,7 @@ export default function InvoiceList({ invoices, onUpdated }) {
       await api.delete(`/accounting/invoices/${invoice.id}`);
       onUpdated?.();
     } catch (err) {
-      console.error("Delete invoice failed", err);
+      console.error("Invoice delete failed", err);
     }
   };
 
@@ -49,68 +49,84 @@ export default function InvoiceList({ invoices, onUpdated }) {
             <th className="px-4 py-2">Aktionen</th>
           </tr>
         </thead>
-
         <tbody>
-          {invoices.map((inv, idx) => (
-            <tr
-              key={inv.id}
-              className="border-b border-gray-700 hover:bg-gray-900 transition"
-            >
-              <td className="px-4 py-2">{idx + 1}</td>
+          {invoices.map((inv, idx) => {
+            const paid = inv.payment_status === "paid";
 
-              <td className="px-4 py-2">
-                <div className="flex flex-col">
-                  <span>{inv.title || "-"}</span>
-                  {inv.category && (
-                    <span className="text-xs text-gray-400">{inv.category}</span>
+            return (
+              <tr
+                key={inv.id}
+                className="border-b border-gray-700 hover:bg-gray-900 transition"
+              >
+                <td className="px-4 py-2">{idx + 1}</td>
+
+                <td className="px-4 py-2">
+                  <div className="flex flex-col">
+                    <span>{inv.title || "-"}</span>
+                    {inv.category && (
+                      <span className="text-xs text-gray-400">
+                        {inv.category}
+                      </span>
+                    )}
+                  </div>
+                </td>
+
+                <td className="px-4 py-2">{inv.vendor || "-"}</td>
+
+                <td className="px-4 py-2">
+                  {inv.payment_deadline
+                    ? new Date(inv.payment_deadline).toLocaleDateString()
+                    : "-"}
+                </td>
+
+                <td className="px-4 py-2">
+                  {typeof inv.amount === "number"
+                    ? `${inv.amount.toFixed(2)} €`
+                    : "-"}
+                </td>
+
+                <td className="px-4 py-2">
+                  <div className="flex flex-col gap-1">
+                    <span
+                      className={`px-2 py-1 text-xs rounded ${
+                        paid
+                          ? "bg-green-600 text-white"
+                          : "bg-yellow-500 text-black"
+                      }`}
+                    >
+                      {paid ? "Bezahlt" : "Offen"}
+                    </span>
+                    {inv.ai_status === "processing" && (
+                      <span className="text-blue-400 text-xs">
+                        🤖 KI analysiert
+                      </span>
+                    )}
+                    {inv.ai_status === "done" && inv.source === "upload" && (
+                      <span className="text-green-400 text-xs">✓ KI erkannt</span>
+                    )}
+                  </div>
+                </td>
+
+                <td className="px-4 py-2 flex gap-2">
+                  {!paid ? (
+                    <button
+                      onClick={() => togglePaid(inv)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm"
+                    >
+                      Als bezahlt markieren
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => deleteInvoice(inv)}
+                      className="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-sm"
+                    >
+                      Rechnung löschen
+                    </button>
                   )}
-                </div>
-              </td>
-
-              <td className="px-4 py-2">{inv.vendor || "-"}</td>
-
-              <td className="px-4 py-2">
-                {inv.payment_deadline
-                  ? new Date(inv.payment_deadline).toLocaleDateString()
-                  : "-"}
-              </td>
-
-              <td className="px-4 py-2">
-                {typeof inv.amount === "number" ? `${inv.amount.toFixed(2)} €` : "-"}
-              </td>
-
-              <td className="px-4 py-2">
-                <div className="flex flex-col gap-1">
-                  <span
-                    className={`px-2 py-1 text-xs rounded ${
-                      inv.paid ? "bg-green-600 text-white" : "bg-yellow-500 text-black"
-                    }`}
-                  >
-                    {inv.paid ? "Bezahlt" : "Offen"}
-                  </span>
-
-                  {inv.processing_status === "processing" && (
-                    <span className="text-blue-400 text-xs">🤖 KI analysiert</span>
-                  )}
-
-                  {inv.processing_status === "done" && inv.source === "upload" && (
-                    <span className="text-green-400 text-xs">✓ KI erkannt</span>
-                  )}
-                </div>
-              </td>
-
-              <td className="px-4 py-2 flex gap-2">
-                <button
-                  onClick={() => (inv.paid ? deleteInvoice(inv) : togglePaid(inv))}
-                  className={`px-2 py-1 rounded text-sm text-white transition ${
-                    inv.paid ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  {inv.paid ? "Rechnung löschen" : "Als bezahlt markieren"}
-                </button>
-              </td>
-            </tr>
-          ))}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
