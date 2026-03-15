@@ -1,193 +1,234 @@
-// src/components/accounting/InvoiceList.jsx
-
-import React from "react";
+import { useState, useMemo } from "react";
 import api from "../../services/api";
 
-export default function InvoiceList({ invoices, onUpdated }) {
+export default function InvoiceList({ invoices = [], onUpdated }) {
 
-  // ---------- HARD SANITIZE ----------
-  const safeInvoices = (() => {
+  const [sort, setSort] = useState("date_desc");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [vendorFilter, setVendorFilter] = useState("");
 
-    if (!Array.isArray(invoices)) return [];
+  // -----------------------------
+  // Filter + Sort
+  // -----------------------------
 
-    return invoices
-      .filter(Boolean)
-      .filter(i => typeof i === "object")
-      .filter(i => "id" in i);
+  const processedInvoices = useMemo(() => {
 
-  })();
+    let data = Array.isArray(invoices) ? [...invoices] : [];
 
-  if (safeInvoices.length === 0) {
-    return (
-      <p className="text-gray-400 text-sm">
-        Keine Rechnungen vorhanden
-      </p>
-    );
-  }
+    // Status Filter
+    if (statusFilter !== "all") {
+      data = data.filter((i) => i?.payment_status === statusFilter);
+    }
 
-  const safeDate = (d) => {
-    if (!d) return "-";
-    const date = new Date(d);
-    return isNaN(date.getTime())
-      ? "-"
-      : date.toLocaleDateString();
-  };
+    // Vendor Filter
+    if (vendorFilter.trim()) {
+      const q = vendorFilter.toLowerCase();
+      data = data.filter((i) =>
+        (i?.vendor || "").toLowerCase().includes(q)
+      );
+    }
 
-  const safeAmount = (a) => {
-    const num = Number(a);
-    if (Number.isNaN(num)) return "-";
-    return `${num.toFixed(2)} €`;
-  };
+    // Sorting
+    data.sort((a, b) => {
 
-  const togglePaid = async (invoice) => {
+      if (sort === "date_desc") {
+        return new Date(b?.invoice_date || 0) - new Date(a?.invoice_date || 0);
+      }
+
+      if (sort === "date_asc") {
+        return new Date(a?.invoice_date || 0) - new Date(b?.invoice_date || 0);
+      }
+
+      if (sort === "amount_desc") {
+        return (b?.amount || 0) - (a?.amount || 0);
+      }
+
+      if (sort === "amount_asc") {
+        return (a?.amount || 0) - (b?.amount || 0);
+      }
+
+      return 0;
+
+    });
+
+    return data;
+
+  }, [invoices, sort, statusFilter, vendorFilter]);
+
+  // -----------------------------
+  // Actions
+  // -----------------------------
+
+  const markPaid = async (id) => {
 
     try {
 
-      const endpoint =
-        invoice.payment_status === "paid"
-          ? `/accounting/invoices/${invoice.id}/mark-unpaid`
-          : `/accounting/invoices/${invoice.id}/mark-paid`;
-
-      await api.post(endpoint);
+      await api.post(`/accounting/invoices/${id}/mark-paid`);
 
       onUpdated?.();
 
-    } catch (err) {
+    } catch (e) {
 
-      console.error("Status update failed", err);
+      console.error("mark paid failed", e);
 
     }
 
   };
 
-  const deleteInvoice = async (invoice) => {
+  const deleteInvoice = async (id) => {
 
     try {
 
-      await api.delete(`/accounting/invoices/${invoice.id}`);
+      await api.delete(`/accounting/invoices/${id}`);
 
       onUpdated?.();
 
-    } catch (err) {
+    } catch (e) {
 
-      console.error("Delete failed", err);
+      console.error("delete failed", e);
 
     }
 
   };
+
+  // -----------------------------
+  // Render
+  // -----------------------------
 
   return (
 
-    <div className="overflow-x-auto">
+    <div>
 
-      <table className="w-full table-auto text-left border-collapse">
+      {/* Controls */}
 
-        <thead>
+      <div className="flex flex-wrap gap-3 mb-4">
 
-          <tr className="bg-gray-800 text-gray-200">
+        {/* Sort */}
 
-            <th className="px-4 py-2">#</th>
-            <th className="px-4 py-2">Titel</th>
-            <th className="px-4 py-2">Anbieter</th>
-            <th className="px-4 py-2">Fällig am</th>
-            <th className="px-4 py-2">Betrag</th>
-            <th className="px-4 py-2">Status</th>
-            <th className="px-4 py-2">Aktionen</th>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          className="bg-gray-800 text-white px-3 py-1 rounded"
+        >
 
-          </tr>
+          <option value="date_desc">Datum ↓</option>
+          <option value="date_asc">Datum ↑</option>
+          <option value="amount_desc">Preis ↓</option>
+          <option value="amount_asc">Preis ↑</option>
 
-        </thead>
+        </select>
 
-        <tbody>
+        {/* Status */}
 
-          {safeInvoices.map((inv, idx) => {
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-gray-800 text-white px-3 py-1 rounded"
+        >
 
-            const paid = inv.payment_status === "paid";
+          <option value="all">Alle</option>
+          <option value="paid">Bezahlt</option>
+          <option value="unpaid">Unbezahlt</option>
 
-            return (
+        </select>
 
-              <tr
-                key={String(inv.id)}
-                className="border-b border-gray-700 hover:bg-gray-900 transition"
-              >
+        {/* Vendor Search */}
 
-                <td className="px-4 py-2">
-                  {idx + 1}
-                </td>
+        <input
+          type="text"
+          placeholder="Anbieter suchen..."
+          value={vendorFilter}
+          onChange={(e) => setVendorFilter(e.target.value)}
+          className="bg-gray-800 text-white px-3 py-1 rounded"
+        />
 
-                <td className="px-4 py-2">
-                  <div className="flex flex-col">
+      </div>
 
-                    <span>{inv.title || "-"}</span>
+      {/* Table */}
 
-                    {inv.category && (
-                      <span className="text-xs text-gray-400">
-                        {inv.category}
-                      </span>
+      <div className="overflow-x-auto">
+
+        <table className="w-full text-sm">
+
+          <thead className="text-gray-400 border-b border-gray-700">
+
+            <tr>
+
+              <th className="text-left py-2">Datum</th>
+              <th className="text-left py-2">Anbieter</th>
+              <th className="text-left py-2">Betrag</th>
+              <th className="text-left py-2">Status</th>
+              <th className="text-right py-2">Aktionen</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {processedInvoices.map((inv) => {
+
+              if (!inv?.id) return null;
+
+              return (
+
+                <tr key={inv.id} className="border-b border-gray-800">
+
+                  <td className="py-2">
+                    {inv.invoice_date
+                      ? new Date(inv.invoice_date).toLocaleDateString()
+                      : "-"}
+                  </td>
+
+                  <td>{inv.vendor || "-"}</td>
+
+                  <td>
+                    {inv.amount?.toFixed
+                      ? `${inv.amount.toFixed(2)} €`
+                      : "-"}
+                  </td>
+
+                  <td>
+
+                    {inv.payment_status === "paid" ? (
+                      <span className="text-green-400">Bezahlt</span>
+                    ) : (
+                      <span className="text-yellow-400">Offen</span>
                     )}
 
-                  </div>
-                </td>
+                  </td>
 
-                <td className="px-4 py-2">
-                  {inv.vendor || "-"}
-                </td>
+                  <td className="text-right space-x-2">
 
-                <td className="px-4 py-2">
-                  {safeDate(inv.payment_deadline)}
-                </td>
-
-                <td className="px-4 py-2">
-                  {safeAmount(inv.amount)}
-                </td>
-
-                <td className="px-4 py-2">
-
-                  <span
-                    className={`px-2 py-1 text-xs rounded ${
-                      paid
-                        ? "bg-green-600 text-white"
-                        : "bg-yellow-500 text-black"
-                    }`}
-                  >
-                    {paid ? "Bezahlt" : "Offen"}
-                  </span>
-
-                </td>
-
-                <td className="px-4 py-2 flex gap-2">
-
-                  {!paid ? (
+                    {inv.payment_status !== "paid" && (
+                      <button
+                        onClick={() => markPaid(inv.id)}
+                        className="bg-green-600 px-2 py-1 rounded text-xs"
+                      >
+                        Bezahlt
+                      </button>
+                    )}
 
                     <button
-                      onClick={() => togglePaid(inv)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm"
+                      onClick={() => deleteInvoice(inv.id)}
+                      className="bg-red-600 px-2 py-1 rounded text-xs"
                     >
-                      Als bezahlt markieren
+                      Löschen
                     </button>
 
-                  ) : (
+                  </td>
 
-                    <button
-                      onClick={() => deleteInvoice(inv)}
-                      className="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-sm"
-                    >
-                      Rechnung löschen
-                    </button>
+                </tr>
 
-                  )}
+              );
 
-                </td>
+            })}
 
-              </tr>
+          </tbody>
 
-            );
+        </table>
 
-          })}
-
-        </tbody>
-
-      </table>
+      </div>
 
     </div>
 
