@@ -2,19 +2,31 @@
 import React from "react";
 import api from "../../services/api";
 
-export default function InvoiceList({ invoices, setInvoices }) {
+export default function InvoiceList({ invoices, setInvoices, onUpdated }) {
 
   if (!Array.isArray(invoices) || invoices.length === 0) {
-    return <p className="text-gray-400 text-sm">Keine Rechnungen vorhanden</p>;
+    return (
+      <p className="text-gray-400 text-sm">
+        Keine Rechnungen vorhanden
+      </p>
+    );
   }
+
+  const updateLocal = (updater) => {
+    if (setInvoices) {
+      setInvoices(updater);
+    } else if (onUpdated) {
+      onUpdated(); // fallback → Liste neu laden
+    }
+  };
 
   const togglePaid = async (invoice) => {
 
     const newStatus =
       invoice.payment_status === "paid" ? "unpaid" : "paid";
 
-    // 🔹 Sofort UI aktualisieren
-    setInvoices((prev) =>
+    // Optimistic UI
+    updateLocal((prev) =>
       prev.map((inv) =>
         inv.id === invoice.id
           ? { ...inv, payment_status: newStatus }
@@ -35,8 +47,8 @@ export default function InvoiceList({ invoices, setInvoices }) {
 
       console.error("Status update failed", err);
 
-      // 🔹 rollback falls API fehlschlägt
-      setInvoices((prev) =>
+      // rollback
+      updateLocal((prev) =>
         prev.map((inv) =>
           inv.id === invoice.id
             ? { ...inv, payment_status: invoice.payment_status }
@@ -49,8 +61,10 @@ export default function InvoiceList({ invoices, setInvoices }) {
 
   const deleteInvoice = async (invoice) => {
 
-    // 🔹 Sofort aus UI entfernen
-    setInvoices((prev) => prev.filter((inv) => inv.id !== invoice.id));
+    // Optimistic remove
+    updateLocal((prev) =>
+      prev.filter((inv) => inv.id !== invoice.id)
+    );
 
     try {
 
@@ -60,8 +74,8 @@ export default function InvoiceList({ invoices, setInvoices }) {
 
       console.error("Delete failed", err);
 
-      // 🔹 rollback
-      setInvoices((prev) => [...prev, invoice]);
+      // rollback
+      updateLocal((prev) => [...prev, invoice]);
 
     }
   };
@@ -123,7 +137,6 @@ export default function InvoiceList({ invoices, setInvoices }) {
                 </td>
 
                 <td className="px-4 py-2">
-
                   <span
                     className={`px-2 py-1 text-xs rounded ${
                       paid
@@ -133,7 +146,6 @@ export default function InvoiceList({ invoices, setInvoices }) {
                   >
                     {paid ? "Bezahlt" : "Offen"}
                   </span>
-
                 </td>
 
                 <td className="px-4 py-2 flex gap-2">
