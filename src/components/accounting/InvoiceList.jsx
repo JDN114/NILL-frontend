@@ -2,7 +2,8 @@
 import React from "react";
 import api from "../../services/api";
 
-export default function InvoiceList({ invoices, onUpdated }) {
+export default function InvoiceList({ invoices, setInvoices }) {
+
   if (!Array.isArray(invoices) || invoices.length === 0) {
     return (
       <p className="text-gray-400 text-sm">
@@ -19,8 +20,15 @@ export default function InvoiceList({ invoices, onUpdated }) {
 
       await api.post(endpoint);
 
-      // Vollständig aktualisierte Liste laden
-      onUpdated?.();
+      // Optimistisch local state updaten
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv.id === invoice.id
+            ? { ...inv, payment_status: inv.payment_status === "paid" ? "unpaid" : "paid" }
+            : inv
+        )
+      );
+
     } catch (err) {
       console.error("Status update failed", err);
     }
@@ -29,7 +37,7 @@ export default function InvoiceList({ invoices, onUpdated }) {
   const deleteInvoice = async (invoice) => {
     try {
       await api.delete(`/accounting/invoices/${invoice.id}`);
-      onUpdated?.();
+      setInvoices((prev) => prev.filter((inv) => inv.id !== invoice.id));
     } catch (err) {
       console.error("Invoice delete failed", err);
     }
