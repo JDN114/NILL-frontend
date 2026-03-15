@@ -5,8 +5,17 @@ import api from "../../services/api";
 
 export default function InvoiceList({ invoices, onUpdated }) {
 
-  // ---------- SAFE DATA ----------
-  const safeInvoices = Array.isArray(invoices) ? invoices : [];
+  // ---------- HARD SANITIZE ----------
+  const safeInvoices = (() => {
+
+    if (!Array.isArray(invoices)) return [];
+
+    return invoices
+      .filter(Boolean)
+      .filter(i => typeof i === "object")
+      .filter(i => "id" in i);
+
+  })();
 
   if (safeInvoices.length === 0) {
     return (
@@ -16,35 +25,26 @@ export default function InvoiceList({ invoices, onUpdated }) {
     );
   }
 
-  // ---------- HELPERS ----------
   const safeDate = (d) => {
-    try {
-      if (!d) return "-";
-      return new Date(d).toLocaleDateString();
-    } catch {
-      return "-";
-    }
+    if (!d) return "-";
+    const date = new Date(d);
+    return isNaN(date.getTime())
+      ? "-"
+      : date.toLocaleDateString();
   };
 
   const safeAmount = (a) => {
-    try {
-      const num = Number(a);
-      if (Number.isNaN(num)) return "-";
-      return `${num.toFixed(2)} €`;
-    } catch {
-      return "-";
-    }
+    const num = Number(a);
+    if (Number.isNaN(num)) return "-";
+    return `${num.toFixed(2)} €`;
   };
 
-  // ---------- ACTIONS ----------
   const togglePaid = async (invoice) => {
 
     try {
 
-      const status = invoice?.payment_status || "unpaid";
-
       const endpoint =
-        status === "paid"
+        invoice.payment_status === "paid"
           ? `/accounting/invoices/${invoice.id}/mark-unpaid`
           : `/accounting/invoices/${invoice.id}/mark-paid`;
 
@@ -64,21 +64,18 @@ export default function InvoiceList({ invoices, onUpdated }) {
 
     try {
 
-      if (!invoice?.id) return;
-
       await api.delete(`/accounting/invoices/${invoice.id}`);
 
       onUpdated?.();
 
     } catch (err) {
 
-      console.error("Invoice delete failed", err);
+      console.error("Delete failed", err);
 
     }
 
   };
 
-  // ---------- RENDER ----------
   return (
 
     <div className="overflow-x-auto">
@@ -103,106 +100,90 @@ export default function InvoiceList({ invoices, onUpdated }) {
 
         <tbody>
 
-          {safeInvoices
-            .filter((inv) => inv && inv.id)
-            .map((inv, idx) => {
+          {safeInvoices.map((inv, idx) => {
 
-              try {
+            const paid = inv.payment_status === "paid";
 
-                const paid = inv.payment_status === "paid";
+            return (
 
-                return (
+              <tr
+                key={String(inv.id)}
+                className="border-b border-gray-700 hover:bg-gray-900 transition"
+              >
 
-                  <tr
-                    key={inv.id || idx}
-                    className="border-b border-gray-700 hover:bg-gray-900 transition"
-                  >
+                <td className="px-4 py-2">
+                  {idx + 1}
+                </td>
 
-                    <td className="px-4 py-2">
-                      {idx + 1}
-                    </td>
+                <td className="px-4 py-2">
+                  <div className="flex flex-col">
 
-                    <td className="px-4 py-2">
+                    <span>{inv.title || "-"}</span>
 
-                      <div className="flex flex-col">
-
-                        <span>
-                          {inv.title || "-"}
-                        </span>
-
-                        {inv.category && (
-                          <span className="text-xs text-gray-400">
-                            {inv.category}
-                          </span>
-                        )}
-
-                      </div>
-
-                    </td>
-
-                    <td className="px-4 py-2">
-                      {inv.vendor || "-"}
-                    </td>
-
-                    <td className="px-4 py-2">
-                      {safeDate(inv.payment_deadline)}
-                    </td>
-
-                    <td className="px-4 py-2">
-                      {safeAmount(inv.amount)}
-                    </td>
-
-                    <td className="px-4 py-2">
-
-                      <span
-                        className={`px-2 py-1 text-xs rounded ${
-                          paid
-                            ? "bg-green-600 text-white"
-                            : "bg-yellow-500 text-black"
-                        }`}
-                      >
-                        {paid ? "Bezahlt" : "Offen"}
+                    {inv.category && (
+                      <span className="text-xs text-gray-400">
+                        {inv.category}
                       </span>
+                    )}
 
-                    </td>
+                  </div>
+                </td>
 
-                    <td className="px-4 py-2 flex gap-2">
+                <td className="px-4 py-2">
+                  {inv.vendor || "-"}
+                </td>
 
-                      {!paid ? (
+                <td className="px-4 py-2">
+                  {safeDate(inv.payment_deadline)}
+                </td>
 
-                        <button
-                          onClick={() => togglePaid(inv)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm"
-                        >
-                          Als bezahlt markieren
-                        </button>
+                <td className="px-4 py-2">
+                  {safeAmount(inv.amount)}
+                </td>
 
-                      ) : (
+                <td className="px-4 py-2">
 
-                        <button
-                          onClick={() => deleteInvoice(inv)}
-                          className="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-sm"
-                        >
-                          Rechnung löschen
-                        </button>
+                  <span
+                    className={`px-2 py-1 text-xs rounded ${
+                      paid
+                        ? "bg-green-600 text-white"
+                        : "bg-yellow-500 text-black"
+                    }`}
+                  >
+                    {paid ? "Bezahlt" : "Offen"}
+                  </span>
 
-                      )}
+                </td>
 
-                    </td>
+                <td className="px-4 py-2 flex gap-2">
 
-                  </tr>
+                  {!paid ? (
 
-                );
+                    <button
+                      onClick={() => togglePaid(inv)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm"
+                    >
+                      Als bezahlt markieren
+                    </button>
 
-              } catch (rowError) {
+                  ) : (
 
-                console.error("Invoice row crash prevented", rowError);
+                    <button
+                      onClick={() => deleteInvoice(inv)}
+                      className="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-sm"
+                    >
+                      Rechnung löschen
+                    </button>
 
-                return null;
+                  )}
 
-              }
+                </td>
 
-            })}
+              </tr>
+
+            );
+
+          })}
 
         </tbody>
 
