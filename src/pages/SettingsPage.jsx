@@ -11,7 +11,6 @@ import api, { logoutUser } from "../services/api";
 
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal from "../components/DeleteAccountModal";
-#import AccountingSettings from "../components/AccountingSettings";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -258,7 +257,6 @@ export default function SettingsPage() {
         </Card>
 
 
- #       <AccountingSettings />
 
 
         {/* SUBSCRIPTION */}
