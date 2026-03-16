@@ -5,6 +5,7 @@ import Card from "../ui/Card";
 export default function BankInsights({ onUpload }) {
 
   const [activity, setActivity] = useState([]);
+  const [connected, setConnected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showMissing, setShowMissing] = useState(false);
 
@@ -14,11 +15,17 @@ export default function BankInsights({ onUpload }) {
 
       const res = await api.get("/bank/activity");
 
-      setActivity(Array.isArray(res.data) ? res.data : []);
+      const data = res.data || {};
+
+      setConnected(data.connected ?? false);
+      setActivity(Array.isArray(data.activity) ? data.activity : []);
 
     } catch (e) {
 
       console.error("bank activity failed", e);
+
+      setConnected(false);
+      setActivity([]);
 
     } finally {
 
@@ -52,77 +59,111 @@ export default function BankInsights({ onUpload }) {
 
       <h2 className="font-semibold mb-4">Bank Aktivität</h2>
 
-      {missing.length > 0 && (
+      {/* BANK NICHT VERBUNDEN */}
 
-        <div className="bg-yellow-900 p-3 rounded mb-4 flex justify-between items-center">
+      {connected === false && (
 
-          <span>
-            ⚠ {missing.length} Ausgaben ohne Rechnung
-          </span>
+        <div className="text-sm text-gray-400">
 
-          <button
-            onClick={() => setShowMissing(true)}
-            className="bg-yellow-600 px-3 py-1 rounded text-sm"
-          >
-            Anzeigen
-          </button>
+          Keine Bank verbunden.
 
         </div>
 
       )}
 
-      <div className="space-y-2">
+      {/* BANK VERBUNDEN ABER KEINE TRANSACTIONS */}
 
-        {activity.slice(0, 5).map((a) => (
+      {connected === true && activity.length === 0 && (
 
-          <div
-            key={a.id}
-            className="flex justify-between items-center text-sm border-b border-gray-800 pb-2"
-          >
+        <div className="text-sm text-gray-400">
 
-            <div>
+          Mache deine erste Geschäftsausgabe.
 
-              <p className="font-medium">
-                {a.vendor || "Unbekannt"}
-              </p>
+        </div>
 
-              <p className="text-xs text-gray-400">
-                {new Date(a.date).toLocaleDateString()}
-              </p>
+      )}
 
-            </div>
+      {/* NORMALER STATE */}
 
-            <div className="text-right">
+      {activity.length > 0 && (
 
-              <p>
-                {a.amount.toFixed(2)} {a.currency}
-              </p>
+        <>
 
-              {a.status === "matched" && (
-                <span className="text-green-400 text-xs">
-                  ✓ Rechnung gefunden
-                </span>
-              )}
+          {missing.length > 0 && (
 
-              {a.status === "missing_invoice" && (
-                <span className="text-yellow-400 text-xs">
-                  ⚠ Rechnung fehlt
-                </span>
-              )}
+            <div className="bg-yellow-900 p-3 rounded mb-4 flex justify-between items-center">
 
-              {a.status === "possible_match" && (
-                <span className="text-blue-400 text-xs">
-                  mögliches Match
-                </span>
-              )}
+              <span>
+                ⚠ {missing.length} Ausgaben ohne Rechnung
+              </span>
+
+              <button
+                onClick={() => setShowMissing(true)}
+                className="bg-yellow-600 px-3 py-1 rounded text-sm"
+              >
+                Anzeigen
+              </button>
 
             </div>
+
+          )}
+
+          <div className="space-y-2">
+
+            {activity.slice(0, 5).map((a) => (
+
+              <div
+                key={a.id}
+                className="flex justify-between items-center text-sm border-b border-gray-800 pb-2"
+              >
+
+                <div>
+
+                  <p className="font-medium">
+                    {a.vendor || "Unbekannt"}
+                  </p>
+
+                  <p className="text-xs text-gray-400">
+                    {new Date(a.date).toLocaleDateString()}
+                  </p>
+
+                </div>
+
+                <div className="text-right">
+
+                  <p>
+                    {a.amount.toFixed(2)} {a.currency}
+                  </p>
+
+                  {a.status === "matched" && (
+                    <span className="text-green-400 text-xs">
+                      ✓ Rechnung gefunden
+                    </span>
+                  )}
+
+                  {a.status === "missing_invoice" && (
+                    <span className="text-yellow-400 text-xs">
+                      ⚠ Rechnung fehlt
+                    </span>
+                  )}
+
+                  {a.status === "possible_match" && (
+                    <span className="text-blue-400 text-xs">
+                      mögliches Match
+                    </span>
+                  )}
+
+                </div>
+
+              </div>
+
+            ))}
 
           </div>
 
-        ))}
+        </>
 
-      </div>
+      )}
 
       {showMissing && (
 
