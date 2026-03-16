@@ -366,14 +366,19 @@ export default function AccountingPage() {
           onUpdated={loadInvoices}
         />
 
-           {/* Steuer-Dashboard */}
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">Steuer-Dashboard</h2>
-          <TaxDashboard />
-        </section>
-
-
       </Card>
+ 
+      {/* -------------------------------------- */}
+      {/* Steuer-Dashboard */}
+      {/* -------------------------------------- */}
+      <section className="mb-6">
+        <h2 className="text-2xl font-semibold mb-4">Steuer-Dashboard</h2>
+
+        {/* Hintergrund und Padding hinzufügen */}
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded shadow">
+          <TaxDashboard />
+        </div>
+      </section>
 
       {/* DATEV */}
 
