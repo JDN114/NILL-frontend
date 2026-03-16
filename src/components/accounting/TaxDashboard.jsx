@@ -1,4 +1,3 @@
-// frontend/components/TaxDashboard.jsx
 import React, { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
@@ -10,6 +9,11 @@ import dayjs from "dayjs";
 const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function TaxDashboard() {
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [profile, setProfile] = useState({});
+  const [options, setOptions] = useState([]);
+
   const [summary, setSummary] = useState({});
   const [refundSummary, setRefundSummary] = useState({});
   const [monthly, setMonthly] = useState([]);
@@ -19,22 +23,63 @@ export default function TaxDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiClient = axios.create({
-    baseURL: "/tax",
-    withCredentials: true
-  });
+  const apiClient = axios.create({ baseURL: "/tax", withCredentials: true });
+  const companyClient = axios.create({ baseURL: "/companies", withCredentials: true });
 
+  // --- Laden aller Firmen & Optionen ---
   useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        const [cRes, oRes] = await Promise.all([
+          companyClient.get("/"),
+          apiClient.get("/business-profile/options")
+        ]);
+        setCompanies(cRes.data || []);
+        setOptions(oRes.data || []);
+        if (cRes.data.length > 0) {
+          setSelectedCompany(cRes.data[0]);
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der Firmen/Optionen", err);
+      }
+    }
+    fetchCompanies();
+  }, []);
+
+  // --- Laden des Business Profiles ---
+  useEffect(() => {
+    if (!selectedCompany) return;
+
+    async function fetchProfile() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await apiClient.get("/business-profile", { params: { company_id: selectedCompany.id } });
+        setProfile(res.data || {});
+      } catch (err) {
+        console.error("Fehler beim Laden des Business Profiles", err);
+        setError("Fehler beim Laden des Firmenprofils");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, [selectedCompany]);
+
+  // --- Laden der Steuerdaten ---
+  useEffect(() => {
+    if (!selectedCompany) return;
+
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
         const [sRes, rRes, mRes, cRes, rollRes] = await Promise.all([
-          apiClient.get("/summary"),
-          apiClient.get("/refund-summary"),
-          apiClient.get("/chart/monthly", { params: { year: yearFilter } }),
-          apiClient.get("/chart/category", { params: { year: yearFilter } }),
-          apiClient.get("/chart/rolling")
+          apiClient.get("/summary", { params: { company_id: selectedCompany.id } }),
+          apiClient.get("/refund-summary", { params: { company_id: selectedCompany.id } }),
+          apiClient.get("/chart/monthly", { params: { year: yearFilter, company_id: selectedCompany.id } }),
+          apiClient.get("/chart/category", { params: { year: yearFilter, company_id: selectedCompany.id } }),
+          apiClient.get("/chart/rolling", { params: { company_id: selectedCompany.id } })
         ]);
 
         setSummary(sRes.data || {});
@@ -50,13 +95,53 @@ export default function TaxDashboard() {
       }
     }
     fetchData();
-  }, [yearFilter]);
+  }, [selectedCompany, yearFilter]);
 
   if (loading) return <div className="text-center py-10">Lade Steuerdaten...</div>;
   if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
 
   return (
     <div className="space-y-8 p-4 bg-gray-50 dark:bg-gray-800 rounded shadow">
+
+      {/* --- Firmen Auswahl --- */}
+      <div className="flex items-center justify-between mb-4 space-x-4">
+        <div>
+          <label className="font-medium text-gray-700 dark:text-gray-200 mr-2">Firma:</label>
+          <select
+            value={selectedCompany?.id || ""}
+            onChange={(e) => {
+              const comp = companies.find(c => c.id === Number(e.target.value));
+              setSelectedCompany(comp);
+            }}
+            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+          >
+            {companies.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="font-medium text-gray-700 dark:text-gray-200 mr-2">Rechtsform:</label>
+          <select
+            value={profile.legal_form || ""}
+            onChange={async (e) => {
+              const newForm = e.target.value;
+              setProfile(prev => ({ ...prev, legal_form: newForm }));
+
+              // Update Backend
+              await apiClient.post("/business-profile", { legal_form: newForm, company_id: selectedCompany.id });
+            }}
+            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+          >
+            {options.map(o => (
+              <option key={o.legal_form} value={o.legal_form}>{o.legal_form}</option>
+            ))}
+          </select>
+        </div>
+
+      </div>
+
       {/* Jahr Filter */}
       <div className="flex justify-end space-x-2 mb-4">
         <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
@@ -65,18 +150,11 @@ export default function TaxDashboard() {
           value={yearFilter}
           onChange={(e) => setYearFilter(Number(e.target.value))}
           className="
-            border
-            rounded
-            px-2
-            py-1
-            w-24
+            border rounded px-2 py-1 w-24
             bg-gray-100 dark:bg-gray-800
             text-gray-900 dark:text-gray-200
             placeholder-gray-400 dark:placeholder-gray-500
-            focus:outline-none
-            focus:ring-2
-            focus:ring-blue-500
-            focus:border-transparent
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             transition
           "
           placeholder="Jahr"
@@ -167,18 +245,19 @@ export default function TaxDashboard() {
       {/* DATEV Export */}
       <div className="flex space-x-4 mt-4">
         <a
-          href="/tax/export/datev"
+          href={`/tax/export/datev?company_id=${selectedCompany?.id}`}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
           DATEV Export (Gesamt)
         </a>
         <a
-          href={`/tax/export/datev-filtered?year=${yearFilter}`}
+          href={`/tax/export/datev-filtered?year=${yearFilter}&company_id=${selectedCompany?.id}`}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
         >
           DATEV Export (Jahr {yearFilter})
         </a>
       </div>
+
     </div>
   );
 }
@@ -213,9 +292,6 @@ function ChartSection({ title, children }) {
   );
 }
 
-// -------------------
-// Responsive Wrapper für Charts
-// -------------------
 function ResponsiveWrapper({ children }) {
   return (
     <div className="w-full overflow-auto">
