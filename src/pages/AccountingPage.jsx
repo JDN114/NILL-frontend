@@ -208,8 +208,6 @@ export default function AccountingPage() {
 
       <h1 className="text-2xl font-bold mb-6 text-white">Buchhaltung</h1>
 
-      <BankInsights onUpload={() => setUploadOpen(true)} />
-
       {overdue.length > 0 && (
         <div className="bg-red-900 p-4 rounded mb-6">
           ⚠️ {overdue.length} überfällige Rechnungen
@@ -271,6 +269,8 @@ export default function AccountingPage() {
           </div>
 
         )}
+
+      <BankInsights onUpload={() => setUploadOpen(true)} />
 
       </Card>
 
