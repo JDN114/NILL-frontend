@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import InvoiceList from "../components/accounting/InvoiceList";
+import BankInsights from "../components/accounting/BankInsights";
 import ReceiptUploadModal from "../components/accounting/ReceiptUpload";
 import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
 import api from "../services/api";
@@ -206,6 +207,8 @@ export default function AccountingPage() {
     <PageLayout>
 
       <h1 className="text-2xl font-bold mb-6 text-white">Buchhaltung</h1>
+
+      <BankInsights onUpload={() => setUploadOpen(true)} />
 
       {overdue.length > 0 && (
         <div className="bg-red-900 p-4 rounded mb-6">
