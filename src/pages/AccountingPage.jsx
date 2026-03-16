@@ -3,6 +3,7 @@ import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import InvoiceList from "../components/accounting/InvoiceList";
 import BankInsights from "../components/accounting/BankInsights";
+import TaxDashboard from "../components/accounting/TaxDashboard"; // Pfad anpassen, falls nötig
 import ReceiptUploadModal from "../components/accounting/ReceiptUpload";
 import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
 import api from "../services/api";
@@ -364,6 +365,13 @@ export default function AccountingPage() {
           invoices={invoices}
           onUpdated={loadInvoices}
         />
+
+           {/* Steuer-Dashboard */}
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Steuer-Dashboard</h2>
+          <TaxDashboard />
+        </section>
+
 
       </Card>
 
