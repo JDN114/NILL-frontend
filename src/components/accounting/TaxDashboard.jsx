@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+kimport React, { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
   LineChart, Line, CartesianGrid, Legend
@@ -9,11 +9,6 @@ import dayjs from "dayjs";
 const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function TaxDashboard() {
-  const [companies, setCompanies] = useState([]);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [profile, setProfile] = useState({});
-  const [options, setOptions] = useState([]);
-
   const [summary, setSummary] = useState({});
   const [refundSummary, setRefundSummary] = useState({});
   const [monthly, setMonthly] = useState([]);
@@ -23,122 +18,47 @@ export default function TaxDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiClient = axios.create({ baseURL: "/tax", withCredentials: true });
-  const companyClient = axios.create({ baseURL: "/companies", withCredentials: true });
+  const apiClient = axios.create({
+    baseURL: "/tax",
+    withCredentials: true
+  });
 
-  // --- Laden aller Firmen & Optionen ---
   useEffect(() => {
-    async function fetchCompanies() {
-      try {
-        const [cRes, oRes] = await Promise.all([
-          companyClient.get("/").catch(() => []),
-          apiClient.get("/business-profile/options").catch(() => [])
-        ]);
-        const comps = cRes.data || [];
-        setCompanies(comps);
-        setOptions(oRes.data || []);
-        if (comps.length > 0) setSelectedCompany(comps[0]);
-      } catch (err) {
-        console.error("Fehler beim Laden der Firmen/Optionen", err);
-      }
-    }
-    fetchCompanies();
-  }, []);
-
-  // --- Laden des Business Profiles ---
-  useEffect(() => {
-    if (!selectedCompany) return;
-    async function fetchProfile() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await apiClient
-          .get("/business-profile", { params: { company_id: selectedCompany.id } })
-          .catch(() => ({}));
-        setProfile(res.data || {});
-      } catch (err) {
-        console.error("Fehler beim Laden des Business Profiles", err);
-        setError("Fehler beim Laden des Firmenprofils");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProfile();
-  }, [selectedCompany]);
-
-  // --- Laden der Steuerdaten ---
-  useEffect(() => {
-    if (!selectedCompany) return;
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
         const [sRes, rRes, mRes, cRes, rollRes] = await Promise.all([
-          apiClient.get("/summary", { params: { company_id: selectedCompany.id } }).catch(() => ({})),
-          apiClient.get("/refund-summary", { params: { company_id: selectedCompany.id } }).catch(() => ({})),
-          apiClient.get("/chart/monthly", { params: { year: yearFilter, company_id: selectedCompany.id } }).catch(() => ({ data: { monthly_data: [] } })),
-          apiClient.get("/chart/category", { params: { year: yearFilter, company_id: selectedCompany.id } }).catch(() => ({ data: { categories: [] } })),
-          apiClient.get("/chart/rolling", { params: { company_id: selectedCompany.id } }).catch(() => ({ data: { rolling_12_months: [] } }))
+          apiClient.get("/summary"),
+          apiClient.get("/refund-summary"),
+          apiClient.get("/chart/monthly", { params: { year: yearFilter } }),
+          apiClient.get("/chart/category", { params: { year: yearFilter } }),
+          apiClient.get("/chart/rolling")
         ]);
 
         setSummary(sRes.data || {});
         setRefundSummary(rRes.data || {});
-        setMonthly(mRes.data?.monthly_data || []);
-        setCategory(cRes.data?.categories || []);
-        setRolling(rollRes.data?.rolling_12_months || []);
+        setMonthly(mRes.data?.monthly_data ?? []);
+        setCategory(cRes.data?.categories ?? []);
+        setRolling(rollRes.data?.rolling_12_months ?? []);
       } catch (err) {
         console.error("Tax Dashboard Error:", err);
         setError("Fehler beim Laden der Steuerdaten");
+        setMonthly([]);
+        setCategory([]);
+        setRolling([]);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [selectedCompany, yearFilter]);
+  }, [yearFilter]);
 
   if (loading) return <div className="text-center py-10">Lade Steuerdaten...</div>;
   if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
 
   return (
     <div className="space-y-8 p-4 bg-gray-50 dark:bg-gray-800 rounded shadow">
-
-      {/* --- Firmen Auswahl --- */}
-      <div className="flex items-center justify-between mb-4 space-x-4">
-        <div>
-          <label className="font-medium text-gray-700 dark:text-gray-200 mr-2">Firma:</label>
-          <select
-            value={selectedCompany?.id || ""}
-            onChange={(e) => {
-              const comp = companies.find(c => c.id === Number(e.target.value));
-              setSelectedCompany(comp || null);
-            }}
-            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-          >
-            {companies.length > 0 ? companies.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            )) : <option value="">Keine Firmen verfügbar</option>}
-          </select>
-        </div>
-
-        <div>
-          <label className="font-medium text-gray-700 dark:text-gray-200 mr-2">Rechtsform:</label>
-          <select
-            value={profile.legal_form || ""}
-            onChange={async (e) => {
-              const newForm = e.target.value;
-              setProfile(prev => ({ ...prev, legal_form: newForm }));
-              try {
-                await apiClient.post("/business-profile", { legal_form: newForm, company_id: selectedCompany?.id });
-              } catch {}
-            }}
-            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-          >
-            {options.length > 0 ? options.map(o => (
-              <option key={o.legal_form} value={o.legal_form}>{o.legal_form}</option>
-            )) : <option value="">Keine Optionen verfügbar</option>}
-          </select>
-        </div>
-      </div>
 
       {/* Jahr Filter */}
       <div className="flex justify-end space-x-2 mb-4">
@@ -148,11 +68,18 @@ export default function TaxDashboard() {
           value={yearFilter || dayjs().year()}
           onChange={(e) => setYearFilter(Number(e.target.value))}
           className="
-            border rounded px-2 py-1 w-24
-            bg-gray-100 dark:bg-gray-800
+            border
+            rounded
+            px-2
+            py-1
+            w-24
+            bg-gray-100 dark:bg-gray-700
             text-gray-900 dark:text-gray-200
             placeholder-gray-400 dark:placeholder-gray-500
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+            focus:border-transparent
             transition
           "
           placeholder="Jahr"
@@ -161,21 +88,21 @@ export default function TaxDashboard() {
 
       {/* Gesamtübersicht */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary.input_vat_total || 0} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total || 0} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary.refund_total || 0} color="text-blue-600" />
+        <Card title="Vorsteuer gesamt" value={summary.input_vat_total ?? 0} color="text-green-600" />
+        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total ?? 0} color="text-red-600" />
+        <Card title="Rückerstattung" value={summary.refund_total ?? 0} color="text-blue-600" />
       </div>
 
       {/* Steuerrückerstattung Vorjahr vs. Aktuelles Jahr */}
       <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 flex justify-around">
         <YearRefundCard
-          year={refundSummary.last_year?.year || yearFilter - 1}
-          refund={refundSummary.last_year?.refund || 0}
+          year={refundSummary.last_year?.year ?? (yearFilter - 1)}
+          refund={refundSummary.last_year?.refund ?? 0}
           label="Letztes Jahr"
         />
         <YearRefundCard
-          year={refundSummary.current_year?.year || yearFilter}
-          refund={refundSummary.current_year?.refund || 0}
+          year={refundSummary.current_year?.year ?? yearFilter}
+          refund={refundSummary.current_year?.refund ?? 0}
           label="Aktuelles Jahr"
         />
       </div>
@@ -183,7 +110,7 @@ export default function TaxDashboard() {
       {/* Monatliche Steuerübersicht */}
       <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
         <ResponsiveWrapper>
-          <BarChart data={monthly || []}>
+          <BarChart data={Array.isArray(monthly) ? monthly : []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
             <XAxis dataKey="month" />
             <YAxis />
@@ -201,7 +128,7 @@ export default function TaxDashboard() {
         <ResponsiveWrapper>
           <PieChart>
             <Pie
-              data={category || []}
+              data={Array.isArray(category) ? category : []}
               dataKey="refund"
               nameKey="category"
               cx="50%"
@@ -209,7 +136,7 @@ export default function TaxDashboard() {
               outerRadius={100}
               label
             >
-              {(category || []).map((entry, index) => (
+              {(Array.isArray(category) ? category : []).map((entry, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -221,13 +148,13 @@ export default function TaxDashboard() {
       {/* Rolling 12 Monate */}
       <ChartSection title="Trend der letzten 12 Monate">
         <ResponsiveWrapper>
-          <LineChart data={rolling || []}>
+          <LineChart data={Array.isArray(rolling) ? rolling : []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
             <XAxis
               dataKey="month"
               tickFormatter={(m, i) => {
-                const item = rolling[i] || {};
-                return `${item.year || yearFilter}-${String(m || 1).padStart(2, "0")}`;
+                const item = Array.isArray(rolling) ? rolling[i] || {} : {};
+                return `${item.year ?? yearFilter}-${String(m ?? 1).padStart(2, "0")}`;
               }}
             />
             <YAxis />
@@ -243,31 +170,30 @@ export default function TaxDashboard() {
       {/* DATEV Export */}
       <div className="flex space-x-4 mt-4">
         <a
-          href={`/tax/export/datev?company_id=${selectedCompany?.id || ""}`}
+          href="/tax/export/datev"
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
           DATEV Export (Gesamt)
         </a>
         <a
-          href={`/tax/export/datev-filtered?year=${yearFilter}&company_id=${selectedCompany?.id || ""}`}
+          href={`/tax/export/datev-filtered?year=${yearFilter}`}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
         >
           DATEV Export (Jahr {yearFilter})
         </a>
       </div>
-
     </div>
   );
 }
 
 // -------------------
-// Komponenten
+// Kleine Komponenten
 // -------------------
 function Card({ title, value, color }) {
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
       <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className={`text-2xl ${color}`}>{Number(value || 0).toFixed(2)} €</p>
+      <p className={`text-2xl ${color}`}>{Number(value ?? 0).toFixed(2)} €</p>
     </div>
   );
 }
@@ -275,8 +201,8 @@ function Card({ title, value, color }) {
 function YearRefundCard({ year, refund, label }) {
   return (
     <div className="text-center flex-1">
-      <p className="font-medium">{label} ({year})</p>
-      <p className="text-2xl text-blue-600">{Number(refund || 0).toFixed(2)} €</p>
+      <p className="font-medium">{label} ({year ?? "–"})</p>
+      <p className="text-2xl text-blue-600">{Number(refund ?? 0).toFixed(2)} €</p>
     </div>
   );
 }
@@ -290,6 +216,9 @@ function ChartSection({ title, children }) {
   );
 }
 
+// -------------------
+// Responsive Wrapper für Charts
+// -------------------
 function ResponsiveWrapper({ children }) {
   return (
     <div className="w-full overflow-auto">
