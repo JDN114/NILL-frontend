@@ -12,8 +12,8 @@ export default function TaxDashboard() {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
 
-  const [summary, setSummary] = useState({});
-  const [refundSummary, setRefundSummary] = useState({});
+  const [summary, setSummary] = useState({ input_vat_total: 0, output_vat_total: 0, refund_total: 0 });
+  const [refundSummary, setRefundSummary] = useState({ last_year: {}, current_year: {} });
   const [monthly, setMonthly] = useState([]);
   const [category, setCategory] = useState([]);
   const [rolling, setRolling] = useState([]);
@@ -21,18 +21,21 @@ export default function TaxDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiClient = axios.create({ baseURL: "/tax", withCredentials: true });
-  const companiesClient = axios.create({ baseURL: "/companies", withCredentials: true });
+  const apiClient = axios.create({
+    baseURL: "/tax",
+    withCredentials: true
+  });
 
+  // Lade Firmen für Dropdown
   useEffect(() => {
     async function fetchCompanies() {
       try {
-        const res = await companiesClient.get("/");
-        const list = Array.isArray(res.data) ? res.data : [];
-        setCompanies(list);
-        setSelectedCompany(list[0] ?? null);
+        const res = await axios.get("/companies");
+        const data = Array.isArray(res.data) ? res.data : [];
+        setCompanies(data);
+        setSelectedCompany(data[0] || null);
       } catch (err) {
-        console.error("Fehler beim Laden der Firmen:", err);
+        console.error("Companies load failed:", err);
         setCompanies([]);
         setSelectedCompany(null);
       }
@@ -40,6 +43,7 @@ export default function TaxDashboard() {
     fetchCompanies();
   }, []);
 
+  // Lade Steuerdaten
   useEffect(() => {
     if (!selectedCompany) return;
 
@@ -56,14 +60,16 @@ export default function TaxDashboard() {
           apiClient.get("/chart/rolling", { params })
         ]);
 
-        setSummary(sRes.data || {});
-        setRefundSummary(rRes.data || {});
-        setMonthly(mRes.data?.monthly_data ?? []);
-        setCategory(cRes.data?.categories ?? []);
-        setRolling(rollRes.data?.rolling_12_months ?? []);
+        setSummary(sRes.data || { input_vat_total: 0, output_vat_total: 0, refund_total: 0 });
+        setRefundSummary(rRes.data || { last_year: {}, current_year: {} });
+        setMonthly(Array.isArray(mRes.data?.monthly_data) ? mRes.data.monthly_data : []);
+        setCategory(Array.isArray(cRes.data?.categories) ? cRes.data.categories : []);
+        setRolling(Array.isArray(rollRes.data?.rolling_12_months) ? rollRes.data.rolling_12_months : []);
       } catch (err) {
         console.error("Tax Dashboard Error:", err);
         setError("Fehler beim Laden der Steuerdaten");
+        setSummary({ input_vat_total: 0, output_vat_total: 0, refund_total: 0 });
+        setRefundSummary({ last_year: {}, current_year: {} });
         setMonthly([]);
         setCategory([]);
         setRolling([]);
@@ -71,6 +77,7 @@ export default function TaxDashboard() {
         setLoading(false);
       }
     }
+
     fetchData();
   }, [yearFilter, selectedCompany]);
 
@@ -79,124 +86,140 @@ export default function TaxDashboard() {
 
   return (
     <div className="space-y-8 p-4 bg-gray-50 dark:bg-gray-800 rounded shadow">
+      
+      {/* Company Dropdown */}
+      <div className="flex justify-start space-x-2 mb-4">
+        <label className="text-gray-700 dark:text-gray-200 font-medium">Firma:</label>
+        <select
+          className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+          value={selectedCompany?.id || ""}
+          onChange={(e) => {
+            const company = companies.find(c => c.id === e.target.value);
+            setSelectedCompany(company || null);
+          }}
+        >
+          {companies.length > 0 ? (
+            companies.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))
+          ) : (
+            <option value="">Keine Firmen verfügbar</option>
+          )}
+        </select>
+      </div>
 
-      {/* Firmen Dropdown */}
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <label className="text-gray-700 dark:text-gray-200 font-medium">Firma:</label>
-          <select
-            value={selectedCompany?.id ?? ""}
-            onChange={(e) => {
-              const company = companies.find(c => c.id === e.target.value);
-              setSelectedCompany(company ?? null);
-            }}
-            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-          >
-            {(Array.isArray(companies) ? companies : []).map(c => (
-              <option key={c.id} value={c.id}>{c.name} ({c.legal_form ?? "–"})</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Jahr Filter */}
-        <div className="flex items-center space-x-2">
-          <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
-          <input
-            type="number"
-            value={yearFilter || dayjs().year()}
-            onChange={(e) => setYearFilter(Number(e.target.value))}
-            className="border rounded px-2 py-1 w-24 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-          />
-        </div>
+      {/* Jahr Filter */}
+      <div className="flex justify-end space-x-2 mb-4">
+        <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
+        <input
+          type="number"
+          value={yearFilter}
+          onChange={(e) => setYearFilter(Number(e.target.value))}
+          className="border rounded px-2 py-1 w-24 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+          placeholder="Jahr"
+        />
       </div>
 
       {/* Gesamtübersicht */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary.input_vat_total ?? 0} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total ?? 0} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary.refund_total ?? 0} color="text-blue-600" />
+        <Card title="Vorsteuer gesamt" value={summary.input_vat_total} color="text-green-600" />
+        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total} color="text-red-600" />
+        <Card title="Rückerstattung" value={summary.refund_total} color="text-blue-600" />
       </div>
 
       {/* Steuerrückerstattung Vorjahr vs. Aktuelles Jahr */}
       <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 flex justify-around">
         <YearRefundCard
-          year={refundSummary.last_year?.year ?? (yearFilter - 1)}
-          refund={refundSummary.last_year?.refund ?? 0}
+          year={refundSummary.last_year?.year || yearFilter - 1}
+          refund={refundSummary.last_year?.refund || 0}
           label="Letztes Jahr"
         />
         <YearRefundCard
-          year={refundSummary.current_year?.year ?? yearFilter}
-          refund={refundSummary.current_year?.refund ?? 0}
+          year={refundSummary.current_year?.year || yearFilter}
+          refund={refundSummary.current_year?.refund || 0}
           label="Aktuelles Jahr"
         />
       </div>
 
-      {/* Charts */}
+      {/* Monatliche Steuerübersicht */}
       <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
         <ResponsiveWrapper>
-          <BarChart data={Array.isArray(monthly) ? monthly : []}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="input_vat" fill={COLORS[0]} name="Vorsteuer" />
-            <Bar dataKey="output_vat" fill={COLORS[1]} name="Umsatzsteuer" />
-            <Bar dataKey="refund" fill={COLORS[2]} name="Rückerstattung" />
-          </BarChart>
+          {monthly.length > 0 ? (
+            <BarChart data={monthly}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="input_vat" fill={COLORS[0]} name="Vorsteuer" />
+              <Bar dataKey="output_vat" fill={COLORS[1]} name="Umsatzsteuer" />
+              <Bar dataKey="refund" fill={COLORS[2]} name="Rückerstattung" />
+            </BarChart>
+          ) : <p className="text-center text-gray-500 py-16">Keine Daten</p>}
         </ResponsiveWrapper>
       </ChartSection>
 
+      {/* Kategorienübersicht */}
       <ChartSection title="Steuern nach Kategorie">
         <ResponsiveWrapper>
-          <PieChart>
-            <Pie
-              data={Array.isArray(category) ? category : []}
-              dataKey="refund"
-              nameKey="category"
-              cx="50%"
-              cy="50%"
-              outerRadius={100}
-              label
-            >
-              {(Array.isArray(category) ? category : []).map((entry, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
+          {category.length > 0 ? (
+            <PieChart>
+              <Pie
+                data={category}
+                dataKey="refund"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label
+              >
+                {category.map((entry, index) => (
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          ) : <p className="text-center text-gray-500 py-16">Keine Daten</p>}
         </ResponsiveWrapper>
       </ChartSection>
 
+      {/* Rolling 12 Monate */}
       <ChartSection title="Trend der letzten 12 Monate">
         <ResponsiveWrapper>
-          <LineChart data={Array.isArray(rolling) ? rolling : []}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
-            <XAxis
-              dataKey="month"
-              tickFormatter={(m, i) => {
-                const item = Array.isArray(rolling) ? rolling[i] || {} : {};
-                return `${item.year ?? yearFilter}-${String(m ?? 1).padStart(2, "0")}`;
-              }}
-            />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="input_vat" stroke={COLORS[0]} name="Vorsteuer" />
-            <Line type="monotone" dataKey="output_vat" stroke={COLORS[1]} name="Umsatzsteuer" />
-            <Line type="monotone" dataKey="refund" stroke={COLORS[2]} name="Rückerstattung" />
-          </LineChart>
+          {rolling.length > 0 ? (
+            <LineChart data={rolling}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
+              <XAxis
+                dataKey="month"
+                tickFormatter={(m, i) => {
+                  const item = rolling[i] || {};
+                  return `${item.year || yearFilter}-${String(m || 1).padStart(2, "0")}`;
+                }}
+              />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="input_vat" stroke={COLORS[0]} name="Vorsteuer" />
+              <Line type="monotone" dataKey="output_vat" stroke={COLORS[1]} name="Umsatzsteuer" />
+              <Line type="monotone" dataKey="refund" stroke={COLORS[2]} name="Rückerstattung" />
+            </LineChart>
+          ) : <p className="text-center text-gray-500 py-16">Keine Daten</p>}
         </ResponsiveWrapper>
       </ChartSection>
 
       {/* DATEV Export */}
       <div className="flex space-x-4 mt-4">
-        <a href="/tax/export/datev" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+        <a
+          href="/tax/export/datev"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        >
           DATEV Export (Gesamt)
         </a>
-        <a href={`/tax/export/datev-filtered?year=${yearFilter}&company_id=${selectedCompany?.id}`}
-           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-          DATEV Export (Firma {selectedCompany?.name ?? "–"})
+        <a
+          href={`/tax/export/datev-filtered?year=${yearFilter}${selectedCompany ? `&company_id=${selectedCompany.id}` : ""}`}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
+          DATEV Export (Jahr {yearFilter})
         </a>
       </div>
     </div>
@@ -210,7 +233,7 @@ function Card({ title, value, color }) {
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
       <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className={`text-2xl ${color}`}>{Number(value ?? 0).toFixed(2)} €</p>
+      <p className={`text-2xl ${color}`}>{Number(value || 0).toFixed(2)} €</p>
     </div>
   );
 }
@@ -218,8 +241,8 @@ function Card({ title, value, color }) {
 function YearRefundCard({ year, refund, label }) {
   return (
     <div className="text-center flex-1">
-      <p className="font-medium">{label} ({year ?? "–"})</p>
-      <p className="text-2xl text-blue-600">{Number(refund ?? 0).toFixed(2)} €</p>
+      <p className="font-medium">{label} ({year})</p>
+      <p className="text-2xl text-blue-600">{Number(refund || 0).toFixed(2)} €</p>
     </div>
   );
 }
@@ -233,6 +256,9 @@ function ChartSection({ title, children }) {
   );
 }
 
+// -------------------
+// Responsive Wrapper für Charts
+// -------------------
 function ResponsiveWrapper({ children }) {
   return (
     <div className="w-full overflow-auto">
