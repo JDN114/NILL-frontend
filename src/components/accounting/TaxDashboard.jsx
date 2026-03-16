@@ -1,14 +1,17 @@
 // frontend/components/TaxDashboard.jsx
 import React, { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
+  LineChart, Line, CartesianGrid, Legend
+} from "recharts";
 import axios from "axios";
 import dayjs from "dayjs";
 
 const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function TaxDashboard() {
-  const [summary, setSummary] = useState(null);
-  const [refundSummary, setRefundSummary] = useState(null);
+  const [summary, setSummary] = useState({});
+  const [refundSummary, setRefundSummary] = useState({});
   const [monthly, setMonthly] = useState([]);
   const [category, setCategory] = useState([]);
   const [rolling, setRolling] = useState([]);
@@ -34,11 +37,11 @@ export default function TaxDashboard() {
           apiClient.get("/chart/rolling")
         ]);
 
-        setSummary(sRes.data);
-        setRefundSummary(rRes.data);
-        setMonthly(mRes.data.monthly_data);
-        setCategory(cRes.data.categories);
-        setRolling(rollRes.data.rolling_12_months);
+        setSummary(sRes.data || {});
+        setRefundSummary(rRes.data || {});
+        setMonthly(mRes.data?.monthly_data || []);
+        setCategory(cRes.data?.categories || []);
+        setRolling(rollRes.data?.rolling_12_months || []);
       } catch (err) {
         console.error("Tax Dashboard Error:", err);
         setError("Fehler beim Laden der Steuerdaten");
@@ -68,20 +71,28 @@ export default function TaxDashboard() {
 
       {/* Gesamtübersicht */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary.input_vat_total} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary.refund_total} color="text-blue-600" />
+        <Card title="Vorsteuer gesamt" value={summary.input_vat_total || 0} color="text-green-600" />
+        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total || 0} color="text-red-600" />
+        <Card title="Rückerstattung" value={summary.refund_total || 0} color="text-blue-600" />
       </div>
 
       {/* Steuerrückerstattung Vorjahr vs. Aktuelles Jahr */}
       <div className="bg-white shadow rounded p-4 flex justify-around">
-        <YearRefundCard year={refundSummary.last_year.year} refund={refundSummary.last_year.refund} label="Letztes Jahr" />
-        <YearRefundCard year={refundSummary.current_year.year} refund={refundSummary.current_year.refund} label="Aktuelles Jahr" />
+        <YearRefundCard
+          year={refundSummary.last_year?.year || yearFilter - 1}
+          refund={refundSummary.last_year?.refund || 0}
+          label="Letztes Jahr"
+        />
+        <YearRefundCard
+          year={refundSummary.current_year?.year || yearFilter}
+          refund={refundSummary.current_year?.refund || 0}
+          label="Aktuelles Jahr"
+        />
       </div>
 
       {/* Monatliche Steuerübersicht */}
       <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
-        <BarChart width={700} height={300} data={monthly}>
+        <BarChart width={700} height={300} data={monthly || []}>
           <XAxis dataKey="month" />
           <YAxis />
           <Tooltip />
@@ -96,7 +107,7 @@ export default function TaxDashboard() {
       <ChartSection title="Steuern nach Kategorie">
         <PieChart width={400} height={300}>
           <Pie
-            data={category}
+            data={category || []}
             dataKey="refund"
             nameKey="category"
             cx="50%"
@@ -104,7 +115,7 @@ export default function TaxDashboard() {
             outerRadius={100}
             label
           >
-            {category.map((entry, index) => (
+            {(category || []).map((entry, index) => (
               <Cell key={index} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -114,11 +125,14 @@ export default function TaxDashboard() {
 
       {/* Rolling 12 Monate */}
       <ChartSection title="Trend der letzten 12 Monate">
-        <LineChart width={700} height={300} data={rolling}>
+        <LineChart width={700} height={300} data={rolling || []}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="month"
-            tickFormatter={(m, i) => `${rolling[i].year}-${String(m).padStart(2, "0")}`}
+            tickFormatter={(m, i) => {
+              const item = rolling[i] || {};
+              return `${item.year || yearFilter}-${String(m || 1).padStart(2, "0")}`;
+            }}
           />
           <YAxis />
           <Tooltip />
@@ -155,7 +169,7 @@ function Card({ title, value, color }) {
   return (
     <div className="bg-white shadow rounded p-4 text-center">
       <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className={`text-2xl ${color}`}>{Number(value).toFixed(2)} €</p>
+      <p className={`text-2xl ${color}`}>{Number(value || 0).toFixed(2)} €</p>
     </div>
   );
 }
@@ -164,7 +178,7 @@ function YearRefundCard({ year, refund, label }) {
   return (
     <div className="text-center flex-1">
       <p className="font-medium">{label} ({year})</p>
-      <p className="text-2xl text-blue-600">{Number(refund).toFixed(2)} €</p>
+      <p className="text-2xl text-blue-600">{Number(refund || 0).toFixed(2)} €</p>
     </div>
   );
 }
