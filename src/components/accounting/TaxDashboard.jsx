@@ -64,7 +64,22 @@ export default function TaxDashboard() {
           type="number"
           value={yearFilter}
           onChange={(e) => setYearFilter(Number(e.target.value))}
-          className="border rounded px-2 py-1 w-24"
+          className="
+            border
+            rounded
+            px-2
+            py-1
+            w-24
+            bg-gray-100 dark:bg-gray-800
+            text-gray-900 dark:text-gray-200
+            placeholder-gray-400 dark:placeholder-gray-500
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+            focus:border-transparent
+            transition
+          "
+          placeholder="Jahr"
         />
       </div>
 
