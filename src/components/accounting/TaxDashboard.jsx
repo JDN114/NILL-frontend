@@ -56,11 +56,10 @@ export default function TaxDashboard() {
   if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
 
   return (
-    <div className="space-y-8 p-4">
-
+    <div className="space-y-8 p-4 bg-gray-50 dark:bg-gray-800 rounded shadow">
       {/* Jahr Filter */}
-      <div className="flex justify-end space-x-2">
-        <label className="text-gray-700 font-medium">Jahr:</label>
+      <div className="flex justify-end space-x-2 mb-4">
+        <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
         <input
           type="number"
           value={yearFilter}
@@ -71,13 +70,13 @@ export default function TaxDashboard() {
 
       {/* Gesamtübersicht */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary.input_vat_total || 0} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total || 0} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary.refund_total || 0} color="text-blue-600" />
+        <Card title="Vorsteuer gesamt" value={summary.input_vat_total} color="text-green-600" />
+        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total} color="text-red-600" />
+        <Card title="Rückerstattung" value={summary.refund_total} color="text-blue-600" />
       </div>
 
       {/* Steuerrückerstattung Vorjahr vs. Aktuelles Jahr */}
-      <div className="bg-white shadow rounded p-4 flex justify-around">
+      <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 flex justify-around">
         <YearRefundCard
           year={refundSummary.last_year?.year || yearFilter - 1}
           refund={refundSummary.last_year?.refund || 0}
@@ -92,59 +91,66 @@ export default function TaxDashboard() {
 
       {/* Monatliche Steuerübersicht */}
       <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
-        <BarChart width={700} height={300} data={monthly || []}>
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="input_vat" fill={COLORS[0]} name="Vorsteuer" />
-          <Bar dataKey="output_vat" fill={COLORS[1]} name="Umsatzsteuer" />
-          <Bar dataKey="refund" fill={COLORS[2]} name="Rückerstattung" />
-        </BarChart>
+        <ResponsiveWrapper>
+          <BarChart data={monthly}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="input_vat" fill={COLORS[0]} name="Vorsteuer" />
+            <Bar dataKey="output_vat" fill={COLORS[1]} name="Umsatzsteuer" />
+            <Bar dataKey="refund" fill={COLORS[2]} name="Rückerstattung" />
+          </BarChart>
+        </ResponsiveWrapper>
       </ChartSection>
 
       {/* Kategorienübersicht */}
       <ChartSection title="Steuern nach Kategorie">
-        <PieChart width={400} height={300}>
-          <Pie
-            data={category || []}
-            dataKey="refund"
-            nameKey="category"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            label
-          >
-            {(category || []).map((entry, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-        </PieChart>
+        <ResponsiveWrapper>
+          <PieChart>
+            <Pie
+              data={category}
+              dataKey="refund"
+              nameKey="category"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              label
+            >
+              {category.map((entry, index) => (
+                <Cell key={index} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveWrapper>
       </ChartSection>
 
       {/* Rolling 12 Monate */}
       <ChartSection title="Trend der letzten 12 Monate">
-        <LineChart width={700} height={300} data={rolling || []}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="month"
-            tickFormatter={(m, i) => {
-              const item = rolling[i] || {};
-              return `${item.year || yearFilter}-${String(m || 1).padStart(2, "0")}`;
-            }}
-          />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="input_vat" stroke={COLORS[0]} name="Vorsteuer" />
-          <Line type="monotone" dataKey="output_vat" stroke={COLORS[1]} name="Umsatzsteuer" />
-          <Line type="monotone" dataKey="refund" stroke={COLORS[2]} name="Rückerstattung" />
-        </LineChart>
+        <ResponsiveWrapper>
+          <LineChart data={rolling}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
+            <XAxis
+              dataKey="month"
+              tickFormatter={(m, i) => {
+                const item = rolling[i] || {};
+                return `${item.year || yearFilter}-${String(m || 1).padStart(2, "0")}`;
+              }}
+            />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="input_vat" stroke={COLORS[0]} name="Vorsteuer" />
+            <Line type="monotone" dataKey="output_vat" stroke={COLORS[1]} name="Umsatzsteuer" />
+            <Line type="monotone" dataKey="refund" stroke={COLORS[2]} name="Rückerstattung" />
+          </LineChart>
+        </ResponsiveWrapper>
       </ChartSection>
 
       {/* DATEV Export */}
-      <div className="flex space-x-4">
+      <div className="flex space-x-4 mt-4">
         <a
           href="/tax/export/datev"
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -167,7 +173,7 @@ export default function TaxDashboard() {
 // -------------------
 function Card({ title, value, color }) {
   return (
-    <div className="bg-white shadow rounded p-4 text-center">
+    <div className="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
       <h3 className="font-semibold text-lg mb-2">{title}</h3>
       <p className={`text-2xl ${color}`}>{Number(value || 0).toFixed(2)} €</p>
     </div>
@@ -185,9 +191,20 @@ function YearRefundCard({ year, refund, label }) {
 
 function ChartSection({ title, children }) {
   return (
-    <div className="bg-white shadow rounded p-4 overflow-auto">
+    <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 overflow-auto">
       <h3 className="font-semibold text-lg mb-4">{title}</h3>
       {children}
+    </div>
+  );
+}
+
+// -------------------
+// Responsive Wrapper für Charts
+// -------------------
+function ResponsiveWrapper({ children }) {
+  return (
+    <div className="w-full overflow-auto">
+      <div className="min-w-[700px]">{children}</div>
     </div>
   );
 }
