@@ -1,4 +1,4 @@
-kimport React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
   LineChart, Line, CartesianGrid, Legend
