@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+kimport React, { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
   LineChart, Line, CartesianGrid, Legend
@@ -9,6 +9,9 @@ import dayjs from "dayjs";
 const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function TaxDashboard() {
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+
   const [summary, setSummary] = useState({});
   const [refundSummary, setRefundSummary] = useState({});
   const [monthly, setMonthly] = useState([]);
@@ -18,22 +21,39 @@ export default function TaxDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiClient = axios.create({
-    baseURL: "/tax",
-    withCredentials: true
-  });
+  const apiClient = axios.create({ baseURL: "/tax", withCredentials: true });
+  const companiesClient = axios.create({ baseURL: "/companies", withCredentials: true });
 
   useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        const res = await companiesClient.get("/");
+        const list = Array.isArray(res.data) ? res.data : [];
+        setCompanies(list);
+        setSelectedCompany(list[0] ?? null);
+      } catch (err) {
+        console.error("Fehler beim Laden der Firmen:", err);
+        setCompanies([]);
+        setSelectedCompany(null);
+      }
+    }
+    fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCompany) return;
+
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
+        const params = { year: yearFilter, company_id: selectedCompany.id };
         const [sRes, rRes, mRes, cRes, rollRes] = await Promise.all([
-          apiClient.get("/summary"),
-          apiClient.get("/refund-summary"),
-          apiClient.get("/chart/monthly", { params: { year: yearFilter } }),
-          apiClient.get("/chart/category", { params: { year: yearFilter } }),
-          apiClient.get("/chart/rolling")
+          apiClient.get("/summary", { params }),
+          apiClient.get("/refund-summary", { params }),
+          apiClient.get("/chart/monthly", { params }),
+          apiClient.get("/chart/category", { params }),
+          apiClient.get("/chart/rolling", { params })
         ]);
 
         setSummary(sRes.data || {});
@@ -52,7 +72,7 @@ export default function TaxDashboard() {
       }
     }
     fetchData();
-  }, [yearFilter]);
+  }, [yearFilter, selectedCompany]);
 
   if (loading) return <div className="text-center py-10">Lade Steuerdaten...</div>;
   if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
@@ -60,30 +80,34 @@ export default function TaxDashboard() {
   return (
     <div className="space-y-8 p-4 bg-gray-50 dark:bg-gray-800 rounded shadow">
 
-      {/* Jahr Filter */}
-      <div className="flex justify-end space-x-2 mb-4">
-        <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
-        <input
-          type="number"
-          value={yearFilter || dayjs().year()}
-          onChange={(e) => setYearFilter(Number(e.target.value))}
-          className="
-            border
-            rounded
-            px-2
-            py-1
-            w-24
-            bg-gray-100 dark:bg-gray-700
-            text-gray-900 dark:text-gray-200
-            placeholder-gray-400 dark:placeholder-gray-500
-            focus:outline-none
-            focus:ring-2
-            focus:ring-blue-500
-            focus:border-transparent
-            transition
-          "
-          placeholder="Jahr"
-        />
+      {/* Firmen Dropdown */}
+      <div className="flex justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <label className="text-gray-700 dark:text-gray-200 font-medium">Firma:</label>
+          <select
+            value={selectedCompany?.id ?? ""}
+            onChange={(e) => {
+              const company = companies.find(c => c.id === e.target.value);
+              setSelectedCompany(company ?? null);
+            }}
+            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+          >
+            {(Array.isArray(companies) ? companies : []).map(c => (
+              <option key={c.id} value={c.id}>{c.name} ({c.legal_form ?? "–"})</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Jahr Filter */}
+        <div className="flex items-center space-x-2">
+          <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
+          <input
+            type="number"
+            value={yearFilter || dayjs().year()}
+            onChange={(e) => setYearFilter(Number(e.target.value))}
+            className="border rounded px-2 py-1 w-24 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+          />
+        </div>
       </div>
 
       {/* Gesamtübersicht */}
@@ -107,7 +131,7 @@ export default function TaxDashboard() {
         />
       </div>
 
-      {/* Monatliche Steuerübersicht */}
+      {/* Charts */}
       <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
         <ResponsiveWrapper>
           <BarChart data={Array.isArray(monthly) ? monthly : []}>
@@ -123,7 +147,6 @@ export default function TaxDashboard() {
         </ResponsiveWrapper>
       </ChartSection>
 
-      {/* Kategorienübersicht */}
       <ChartSection title="Steuern nach Kategorie">
         <ResponsiveWrapper>
           <PieChart>
@@ -145,7 +168,6 @@ export default function TaxDashboard() {
         </ResponsiveWrapper>
       </ChartSection>
 
-      {/* Rolling 12 Monate */}
       <ChartSection title="Trend der letzten 12 Monate">
         <ResponsiveWrapper>
           <LineChart data={Array.isArray(rolling) ? rolling : []}>
@@ -169,17 +191,12 @@ export default function TaxDashboard() {
 
       {/* DATEV Export */}
       <div className="flex space-x-4 mt-4">
-        <a
-          href="/tax/export/datev"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-        >
+        <a href="/tax/export/datev" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
           DATEV Export (Gesamt)
         </a>
-        <a
-          href={`/tax/export/datev-filtered?year=${yearFilter}`}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          DATEV Export (Jahr {yearFilter})
+        <a href={`/tax/export/datev-filtered?year=${yearFilter}&company_id=${selectedCompany?.id}`}
+           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+          DATEV Export (Firma {selectedCompany?.name ?? "–"})
         </a>
       </div>
     </div>
@@ -216,9 +233,6 @@ function ChartSection({ title, children }) {
   );
 }
 
-// -------------------
-// Responsive Wrapper für Charts
-// -------------------
 function ResponsiveWrapper({ children }) {
   return (
     <div className="w-full overflow-auto">
