@@ -31,14 +31,13 @@ export default function TaxDashboard() {
     async function fetchCompanies() {
       try {
         const [cRes, oRes] = await Promise.all([
-          companyClient.get("/"),
-          apiClient.get("/business-profile/options")
+          companyClient.get("/").catch(() => []),
+          apiClient.get("/business-profile/options").catch(() => [])
         ]);
-        setCompanies(cRes.data || []);
+        const comps = cRes.data || [];
+        setCompanies(comps);
         setOptions(oRes.data || []);
-        if (cRes.data.length > 0) {
-          setSelectedCompany(cRes.data[0]);
-        }
+        if (comps.length > 0) setSelectedCompany(comps[0]);
       } catch (err) {
         console.error("Fehler beim Laden der Firmen/Optionen", err);
       }
@@ -49,12 +48,13 @@ export default function TaxDashboard() {
   // --- Laden des Business Profiles ---
   useEffect(() => {
     if (!selectedCompany) return;
-
     async function fetchProfile() {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiClient.get("/business-profile", { params: { company_id: selectedCompany.id } });
+        const res = await apiClient
+          .get("/business-profile", { params: { company_id: selectedCompany.id } })
+          .catch(() => ({}));
         setProfile(res.data || {});
       } catch (err) {
         console.error("Fehler beim Laden des Business Profiles", err);
@@ -69,17 +69,16 @@ export default function TaxDashboard() {
   // --- Laden der Steuerdaten ---
   useEffect(() => {
     if (!selectedCompany) return;
-
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
         const [sRes, rRes, mRes, cRes, rollRes] = await Promise.all([
-          apiClient.get("/summary", { params: { company_id: selectedCompany.id } }),
-          apiClient.get("/refund-summary", { params: { company_id: selectedCompany.id } }),
-          apiClient.get("/chart/monthly", { params: { year: yearFilter, company_id: selectedCompany.id } }),
-          apiClient.get("/chart/category", { params: { year: yearFilter, company_id: selectedCompany.id } }),
-          apiClient.get("/chart/rolling", { params: { company_id: selectedCompany.id } })
+          apiClient.get("/summary", { params: { company_id: selectedCompany.id } }).catch(() => ({})),
+          apiClient.get("/refund-summary", { params: { company_id: selectedCompany.id } }).catch(() => ({})),
+          apiClient.get("/chart/monthly", { params: { year: yearFilter, company_id: selectedCompany.id } }).catch(() => ({ data: { monthly_data: [] } })),
+          apiClient.get("/chart/category", { params: { year: yearFilter, company_id: selectedCompany.id } }).catch(() => ({ data: { categories: [] } })),
+          apiClient.get("/chart/rolling", { params: { company_id: selectedCompany.id } }).catch(() => ({ data: { rolling_12_months: [] } }))
         ]);
 
         setSummary(sRes.data || {});
@@ -111,13 +110,13 @@ export default function TaxDashboard() {
             value={selectedCompany?.id || ""}
             onChange={(e) => {
               const comp = companies.find(c => c.id === Number(e.target.value));
-              setSelectedCompany(comp);
+              setSelectedCompany(comp || null);
             }}
             className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
           >
-            {companies.map(c => (
+            {companies.length > 0 ? companies.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            )) : <option value="">Keine Firmen verfügbar</option>}
           </select>
         </div>
 
@@ -128,18 +127,17 @@ export default function TaxDashboard() {
             onChange={async (e) => {
               const newForm = e.target.value;
               setProfile(prev => ({ ...prev, legal_form: newForm }));
-
-              // Update Backend
-              await apiClient.post("/business-profile", { legal_form: newForm, company_id: selectedCompany.id });
+              try {
+                await apiClient.post("/business-profile", { legal_form: newForm, company_id: selectedCompany?.id });
+              } catch {}
             }}
             className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
           >
-            {options.map(o => (
+            {options.length > 0 ? options.map(o => (
               <option key={o.legal_form} value={o.legal_form}>{o.legal_form}</option>
-            ))}
+            )) : <option value="">Keine Optionen verfügbar</option>}
           </select>
         </div>
-
       </div>
 
       {/* Jahr Filter */}
@@ -147,7 +145,7 @@ export default function TaxDashboard() {
         <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
         <input
           type="number"
-          value={yearFilter}
+          value={yearFilter || dayjs().year()}
           onChange={(e) => setYearFilter(Number(e.target.value))}
           className="
             border rounded px-2 py-1 w-24
@@ -163,9 +161,9 @@ export default function TaxDashboard() {
 
       {/* Gesamtübersicht */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary.input_vat_total} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary.refund_total} color="text-blue-600" />
+        <Card title="Vorsteuer gesamt" value={summary.input_vat_total || 0} color="text-green-600" />
+        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total || 0} color="text-red-600" />
+        <Card title="Rückerstattung" value={summary.refund_total || 0} color="text-blue-600" />
       </div>
 
       {/* Steuerrückerstattung Vorjahr vs. Aktuelles Jahr */}
@@ -185,7 +183,7 @@ export default function TaxDashboard() {
       {/* Monatliche Steuerübersicht */}
       <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
         <ResponsiveWrapper>
-          <BarChart data={monthly}>
+          <BarChart data={monthly || []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
             <XAxis dataKey="month" />
             <YAxis />
@@ -203,7 +201,7 @@ export default function TaxDashboard() {
         <ResponsiveWrapper>
           <PieChart>
             <Pie
-              data={category}
+              data={category || []}
               dataKey="refund"
               nameKey="category"
               cx="50%"
@@ -211,7 +209,7 @@ export default function TaxDashboard() {
               outerRadius={100}
               label
             >
-              {category.map((entry, index) => (
+              {(category || []).map((entry, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -223,7 +221,7 @@ export default function TaxDashboard() {
       {/* Rolling 12 Monate */}
       <ChartSection title="Trend der letzten 12 Monate">
         <ResponsiveWrapper>
-          <LineChart data={rolling}>
+          <LineChart data={rolling || []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
             <XAxis
               dataKey="month"
@@ -245,13 +243,13 @@ export default function TaxDashboard() {
       {/* DATEV Export */}
       <div className="flex space-x-4 mt-4">
         <a
-          href={`/tax/export/datev?company_id=${selectedCompany?.id}`}
+          href={`/tax/export/datev?company_id=${selectedCompany?.id || ""}`}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
           DATEV Export (Gesamt)
         </a>
         <a
-          href={`/tax/export/datev-filtered?year=${yearFilter}&company_id=${selectedCompany?.id}`}
+          href={`/tax/export/datev-filtered?year=${yearFilter}&company_id=${selectedCompany?.id || ""}`}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
         >
           DATEV Export (Jahr {yearFilter})
@@ -263,7 +261,7 @@ export default function TaxDashboard() {
 }
 
 // -------------------
-// Kleine Komponenten
+// Komponenten
 // -------------------
 function Card({ title, value, color }) {
   return (
