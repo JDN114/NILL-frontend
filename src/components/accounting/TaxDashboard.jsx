@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import dayjs from "dayjs";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
   LineChart, Line, CartesianGrid, Legend
 } from "recharts";
-import axios from "axios";
-import dayjs from "dayjs";
 
 const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function TaxDashboard({ companies = [] }) {
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [summary, setSummary] = useState({
-    profit: 0,
-    tax_total: 0,
-    vat: { input: 0, output: 0, refund: 0 },
-    net_after_tax: 0
-  });
+  const [summary, setSummary] = useState({ profit: 0, tax_total: 0, vat: { input: 0, output: 0, refund: 0 }, net_after_tax: 0 });
   const [refundSummary, setRefundSummary] = useState({
     last_year: { year: dayjs().year() - 1, vat_balance: 0 },
     current_year: { year: dayjs().year(), vat_balance: 0 }
@@ -30,36 +25,43 @@ export default function TaxDashboard({ companies = [] }) {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [legalForm, setLegalForm] = useState("");
 
-  const apiClient = axios.create({
-    baseURL: "/tax",
-    withCredentials: true
-  });
+  const apiClient = axios.create({ baseURL: "/tax", withCredentials: true });
 
+  // -------------------------------
+  // Check business profile
+  // -------------------------------
   useEffect(() => {
     async function checkProfile() {
       try {
+        console.log("[TaxDashboard] GET /business-profile");
         const res = await apiClient.get("/business-profile");
+        console.log("[TaxDashboard] Profile:", res.data);
         if (!res.data?.legal_form) {
           setShowProfileModal(true);
         } else {
           setLegalForm(res.data.legal_form);
         }
-      } catch {
+      } catch (err) {
+        console.error("[TaxDashboard] Error fetching profile:", err);
         setShowProfileModal(true);
       }
     }
     checkProfile();
   }, []);
 
+  // -------------------------------
+  // Fetch dashboard data
+  // -------------------------------
   useEffect(() => {
-    if (!legalForm) return; // nur laden, wenn Rechtsform vorhanden
+    if (!legalForm) return; // nur wenn Rechtsform vorhanden
     async function fetchData() {
       setLoading(true);
       setError(null);
-      try {
-        const params = { year: yearFilter };
-        if (selectedCompany?.id) params.company_id = selectedCompany.id;
+      const params = { year: yearFilter };
+      if (selectedCompany?.id) params.company_id = selectedCompany.id;
 
+      try {
+        console.log("[TaxDashboard] Fetching dashboard data with params:", params);
         const [sRes, rRes, mRes, cRes, rollRes] = await Promise.all([
           apiClient.get("/summary", { params }),
           apiClient.get("/refund-summary", { params }),
@@ -68,12 +70,13 @@ export default function TaxDashboard({ companies = [] }) {
           apiClient.get("/chart/rolling", { params })
         ]);
 
-        setSummary(sRes.data || {
-          profit: 0,
-          tax_total: 0,
-          vat: { input: 0, output: 0, refund: 0 },
-          net_after_tax: 0
-        });
+        console.log("[TaxDashboard] Summary:", sRes.data);
+        console.log("[TaxDashboard] RefundSummary:", rRes.data);
+        console.log("[TaxDashboard] Monthly:", mRes.data);
+        console.log("[TaxDashboard] Category:", cRes.data);
+        console.log("[TaxDashboard] Rolling:", rollRes.data);
+
+        setSummary(sRes.data || { profit: 0, tax_total: 0, vat: { input: 0, output: 0, refund: 0 }, net_after_tax: 0 });
         setRefundSummary(rRes.data || {
           last_year: { year: yearFilter - 1, vat_balance: 0 },
           current_year: { year: yearFilter, vat_balance: 0 }
@@ -82,25 +85,34 @@ export default function TaxDashboard({ companies = [] }) {
         setCategory(Array.isArray(cRes.data?.categories) ? cRes.data.categories : []);
         setRolling(Array.isArray(rollRes.data?.rolling) ? rollRes.data.rolling : []);
       } catch (err) {
-        console.error("Tax Dashboard Error:", err);
+        console.error("[TaxDashboard] Error loading dashboard:", err);
         setError("Fehler beim Laden der Steuerdaten");
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [yearFilter, selectedCompany, legalForm]);
+  }, [legalForm, selectedCompany, yearFilter]);
 
+  // -------------------------------
+  // Save Legal Form
+  // -------------------------------
   const saveProfile = async () => {
+    if (!legalForm) return;
     try {
-      await apiClient.post("/business-profile", { legal_form: legalForm });
+      console.log("[TaxDashboard] POST /business-profile", { legal_form: legalForm });
+      const res = await apiClient.post("/business-profile", { legal_form: legalForm });
+      console.log("[TaxDashboard] Saved profile:", res.data);
       setShowProfileModal(false);
     } catch (err) {
-      console.error("Fehler beim Speichern der Rechtsform:", err);
+      console.error("[TaxDashboard] Fehler beim Speichern der Rechtsform:", err);
       alert("Fehler beim Speichern der Rechtsform.");
     }
   };
 
+  // -------------------------------
+  // Modal für fehlende Rechtsform
+  // -------------------------------
   if (!legalForm) {
     return (
       <AnimatePresence>
@@ -114,14 +126,15 @@ export default function TaxDashboard({ companies = [] }) {
               className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xl"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className="fixed inset-0 z-50 flex items-center justify-center p-6"
             >
-              <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900/90 to-zinc-800/80 backdrop-blur-2xl p-10 shadow-[0_40px_120px_rgba(0,0,0,0.6)] text-center">
-                <h2 className="text-2xl font-semibold text-white mb-6">Rechtsform angeben</h2>
+              <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900/90 to-zinc-800/80 backdrop-blur-2xl p-10 shadow-[0_40px_120px_rgba(0,0,0,0.6)] text-center">
+                <div className="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
+                <h2 className="text-3xl font-semibold text-white mb-6">Rechtsform angeben</h2>
                 <select
                   className="w-full p-2 rounded text-black mb-4"
                   value={legalForm}
