@@ -10,7 +10,7 @@ const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function TaxDashboard({ companies = [] }) {
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [summary, setSummary] = useState({ input_vat_total: 0, output_vat_total: 0, refund_total: 0 });
+  const [summary, setSummary] = useState({ vat: { input: 0, output: 0, refund: 0 } });
   const [refundSummary, setRefundSummary] = useState({ last_year: {}, current_year: {} });
   const [monthly, setMonthly] = useState([]);
   const [category, setCategory] = useState([]);
@@ -40,15 +40,15 @@ export default function TaxDashboard({ companies = [] }) {
           apiClient.get("/chart/rolling", { params })
         ]);
 
-        setSummary(sRes.data || { input_vat_total: 0, output_vat_total: 0, refund_total: 0 });
+        setSummary(sRes.data || { vat: { input: 0, output: 0, refund: 0 } });
         setRefundSummary(rRes.data || { last_year: {}, current_year: {} });
         setMonthly(Array.isArray(mRes.data?.monthly_data) ? mRes.data.monthly_data : []);
         setCategory(Array.isArray(cRes.data?.categories) ? cRes.data.categories : []);
-        setRolling(Array.isArray(rollRes.data?.rolling_12_months) ? rollRes.data.rolling_12_months : []);
+        setRolling(Array.isArray(rollRes.data?.rolling) ? rollRes.data.rolling : []);
       } catch (err) {
         console.error("Tax Dashboard Error:", err);
         setError("Fehler beim Laden der Steuerdaten");
-        setSummary({ input_vat_total: 0, output_vat_total: 0, refund_total: 0 });
+        setSummary({ vat: { input: 0, output: 0, refund: 0 } });
         setRefundSummary({ last_year: {}, current_year: {} });
         setMonthly([]);
         setCategory([]);
@@ -76,18 +76,7 @@ export default function TaxDashboard({ companies = [] }) {
               const company = companies.find(c => c.id === e.target.value);
               setSelectedCompany(company || null);
             }}
-            className="
-              border
-              rounded
-              px-2
-              py-1
-              bg-gray-100 dark:bg-gray-700
-              text-gray-900 dark:text-gray-200
-              focus:outline-none
-              focus:ring-2
-              focus:ring-blue-500
-              transition
-            "
+            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           >
             <option value="">-- Alle Firmen --</option>
             {companies.map(c => (
@@ -104,41 +93,28 @@ export default function TaxDashboard({ companies = [] }) {
           type="number"
           value={yearFilter}
           onChange={(e) => setYearFilter(Number(e.target.value))}
-          className="
-            border
-            rounded
-            px-2
-            py-1
-            w-24
-            bg-gray-100 dark:bg-gray-800
-            text-gray-900 dark:text-gray-200
-            placeholder-gray-400 dark:placeholder-gray-500
-            focus:outline-none
-            focus:ring-2
-            focus:ring-blue-500
-            transition
-          "
+          className="border rounded px-2 py-1 w-24 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           placeholder="Jahr"
         />
       </div>
 
       {/* Gesamtübersicht */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary.input_vat_total} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary.output_vat_total} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary.refund_total} color="text-blue-600" />
+        <Card title="Vorsteuer gesamt" value={summary.vat?.input} color="text-green-600" />
+        <Card title="Umsatzsteuer gesamt" value={summary.vat?.output} color="text-red-600" />
+        <Card title="Rückerstattung" value={summary.vat?.refund} color="text-blue-600" />
       </div>
 
       {/* Steuerrückerstattung Vorjahr vs. Aktuelles Jahr */}
       <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 flex justify-around">
         <YearRefundCard
           year={refundSummary.last_year?.year || yearFilter - 1}
-          refund={refundSummary.last_year?.refund || 0}
+          refund={refundSummary.last_year?.vat_balance || 0}
           label="Letztes Jahr"
         />
         <YearRefundCard
           year={refundSummary.current_year?.year || yearFilter}
-          refund={refundSummary.current_year?.refund || 0}
+          refund={refundSummary.current_year?.vat_balance || 0}
           label="Aktuelles Jahr"
         />
       </div>
@@ -222,9 +198,7 @@ export default function TaxDashboard({ companies = [] }) {
   );
 }
 
-// -------------------
 // Kleine Komponenten
-// -------------------
 function Card({ title, value, color }) {
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
@@ -252,9 +226,6 @@ function ChartSection({ title, children }) {
   );
 }
 
-// -------------------
-// Responsive Wrapper für Charts
-// -------------------
 function ResponsiveWrapper({ children }) {
   return (
     <div className="w-full overflow-auto">
