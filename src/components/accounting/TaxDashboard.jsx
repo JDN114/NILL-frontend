@@ -1,322 +1,183 @@
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
-  LineChart, Line, CartesianGrid, Legend
-} from "recharts";
-import axios from "axios";
+import api from "../../services/api";
 import dayjs from "dayjs";
 
-const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 const LOCAL_STORAGE_KEY = "nill_legal_form";
 
-export default function TaxDashboard({ companies = [] }) {
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [summary, setSummary] = useState({
-    profit: 0,
-    tax_total: 0,
-    vat: { input: 0, output: 0, refund: 0 },
-    net_after_tax: 0
-  });
-  const [refundSummary, setRefundSummary] = useState({
-    last_year: { year: dayjs().year() - 1, vat_balance: 0 },
-    current_year: { year: dayjs().year(), vat_balance: 0 }
-  });
+export default function TaxDashboard() {
+  const [summary, setSummary] = useState(null);
   const [monthly, setMonthly] = useState([]);
   const [category, setCategory] = useState([]);
   const [rolling, setRolling] = useState([]);
-  const [yearFilter, setYearFilter] = useState(dayjs().year());
+  const [refundSummary, setRefundSummary] = useState(null);
+
+  const [legalForm, setLegalForm] = useState(
+    localStorage.getItem(LOCAL_STORAGE_KEY) || ""
+  );
+
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [legalForm, setLegalForm] = useState(localStorage.getItem(LOCAL_STORAGE_KEY) || "");
 
-  const apiClient = axios.create({
-    baseURL: "/tax",
-    withCredentials: true,
-    headers: { Accept: "application/json" },
-  });
-
-  // ---------- Load business profile ----------
+  // -----------------------------
+  // LOAD PROFILE
+  // -----------------------------
   useEffect(() => {
-    async function checkProfile() {
+    const loadProfile = async () => {
       try {
-        console.log("[TaxDashboard] GET /business-profile");
-        const res = await apiClient.get("/business-profile");
-        console.log("[TaxDashboard] Profile:", res.data);
+        const res = await api.get("/tax/business-profile");
 
         if (!res.data?.legal_form) {
-          setShowProfileModal(true);
+          setShowModal(true);
         } else {
           setLegalForm(res.data.legal_form);
           localStorage.setItem(LOCAL_STORAGE_KEY, res.data.legal_form);
-          setShowProfileModal(false);
+          setShowModal(false);
         }
-      } catch (err) {
-        console.error("[TaxDashboard] Fehler beim Laden der Rechtsform:", err);
-        setShowProfileModal(true);
+      } catch (e) {
+        console.error("Profile load failed", e);
+        setShowModal(true);
       }
-    }
-    if (!legalForm) checkProfile();
-  }, [legalForm]);
+    };
 
-  // ---------- Fetch dashboard data ----------
+    if (!legalForm) loadProfile();
+  }, []);
+
+  // -----------------------------
+  // LOAD DASHBOARD
+  // -----------------------------
   useEffect(() => {
     if (!legalForm) return;
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
+
+    const loadData = async () => {
       try {
-        const params = { year: yearFilter };
-        if (selectedCompany?.id) params.company_id = selectedCompany.id;
+        setLoading(true);
 
-        console.log("[TaxDashboard] Fetching dashboard data with params:", params);
-
-        const [sRes, rRes, mRes, cRes, rollRes] = await Promise.all([
-          apiClient.get("/summary", { params }),
-          apiClient.get("/refund-summary", { params }),
-          apiClient.get("/chart/monthly", { params }),
-          apiClient.get("/chart/category", { params }),
-          apiClient.get("/chart/rolling", { params })
+        const [s, r, m, c, roll] = await Promise.all([
+          api.get("/tax/summary"),
+          api.get("/tax/refund-summary"),
+          api.get("/tax/chart/monthly"),
+          api.get("/tax/chart/category"),
+          api.get("/tax/chart/rolling"),
         ]);
 
-        console.log("[TaxDashboard] Summary:", sRes.data);
-        console.log("[TaxDashboard] RefundSummary:", rRes.data);
-        console.log("[TaxDashboard] Monthly:", mRes.data);
-        console.log("[TaxDashboard] Category:", cRes.data);
-        console.log("[TaxDashboard] Rolling:", rollRes.data);
-
-        setSummary(sRes.data || summary);
-        setRefundSummary(rRes.data || refundSummary);
-        setMonthly(Array.isArray(mRes.data?.monthly_data) ? mRes.data.monthly_data : []);
-        setCategory(Array.isArray(cRes.data?.categories) ? cRes.data.categories : []);
-        setRolling(Array.isArray(rollRes.data?.rolling) ? rollRes.data.rolling : []);
-      } catch (err) {
-        console.error("[TaxDashboard] Fehler beim Laden der Steuerdaten:", err);
-        setError("Fehler beim Laden der Steuerdaten");
+        setSummary(s.data || {});
+        setRefundSummary(r.data || {});
+        setMonthly(m.data?.monthly_data || []);
+        setCategory(c.data?.categories || []);
+        setRolling(roll.data?.rolling || []);
+      } catch (e) {
+        console.error("Dashboard load failed", e);
       } finally {
         setLoading(false);
       }
-    }
-    fetchData();
-  }, [yearFilter, selectedCompany, legalForm]);
+    };
 
-  // ---------- Save profile ----------
+    loadData();
+  }, [legalForm]);
+
+  // -----------------------------
+  // SAVE PROFILE
+  // -----------------------------
   const saveProfile = async () => {
     if (!legalForm) return;
+
     try {
-      console.log("[TaxDashboard] POST /business-profile", { legal_form: legalForm });
-      const res = await apiClient.post("/business-profile", { legal_form: legalForm });
-      console.log("[TaxDashboard] Profile updated:", res.data);
+      await api.post("/tax/business-profile", {
+        legal_form: legalForm,
+      });
+
       localStorage.setItem(LOCAL_STORAGE_KEY, legalForm);
-      setShowProfileModal(false);
-    } catch (err) {
-      console.error("[TaxDashboard] Fehler beim Speichern der Rechtsform:", err);
-      alert("Fehler beim Speichern der Rechtsform.");
+      setShowModal(false);
+    } catch (e) {
+      console.error("Save failed", e);
     }
   };
 
-  // ---------- Modal for legal form ----------
-  if (!legalForm) {
+  // -----------------------------
+  // MODAL
+  // -----------------------------
+  if (!legalForm && showModal) {
     return (
-      <AnimatePresence>
-        {showProfileModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xl"
-            />
+      <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xl">
+        <div className="bg-zinc-900 p-8 rounded-2xl w-[400px] text-center shadow-xl">
+          <h2 className="text-white text-xl mb-4">
+            Rechtsform angeben
+          </h2>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              transition={{ duration: 0.5 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-6"
-            >
-              <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900/90 to-zinc-800/80 backdrop-blur-2xl p-10 shadow-[0_40px_120px_rgba(0,0,0,0.6)] text-center">
-                {/* Glow */}
-                <div className="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
+          <select
+            value={legalForm}
+            onChange={(e) => setLegalForm(e.target.value)}
+            className="w-full p-3 rounded bg-zinc-800 text-white mb-4"
+          >
+            <option value="">Auswählen</option>
+            <option value="Einzelunternehmer">Einzelunternehmer</option>
+            <option value="Freiberufler">Freiberufler</option>
+            <option value="GmbH">GmbH</option>
+            <option value="UG">UG</option>
+          </select>
 
-                <h2 className="text-3xl font-semibold text-white mb-6">Rechtsform angeben</h2>
-                <select
-                  className="w-full p-3 rounded text-black mb-4"
-                  value={legalForm}
-                  onChange={(e) => setLegalForm(e.target.value)}
-                >
-                  <option value="">-- auswählen --</option>
-                  <option value="Einzelunternehmer">Einzelunternehmer</option>
-                  <option value="Freiberufler">Freiberufler</option>
-                  <option value="GmbH">GmbH</option>
-                  <option value="UG">UG</option>
-                </select>
-                <button
-                  onClick={saveProfile}
-                  className="group relative rounded-full bg-blue-800 hover:bg-blue-700 text-gray-100 px-8 py-3 font-medium transition-all duration-300"
-                >
-                  Speichern
-                  <div className="absolute inset-0 rounded-full bg-blue-800 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-40" />
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          <button
+            onClick={saveProfile}
+            className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded text-white"
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
     );
   }
 
-  if (loading) return <div className="text-center py-10">Lade Steuerdaten...</div>;
+  // -----------------------------
+  // LOADING
+  // -----------------------------
+  if (loading) {
+    return <div className="text-center p-10">Lade...</div>;
+  }
 
+  // -----------------------------
+  // UI
+  // -----------------------------
   return (
-    <div className="space-y-8 p-4 bg-gray-50 dark:bg-gray-800 rounded shadow relative">
-      {error && <div className="text-red-500 text-center">{error}</div>}
+    <div className="p-6 space-y-6">
 
-      {/* Company Filter */}
-      {companies.length > 0 && (
-        <div className="flex justify-end space-x-2 mb-4">
-          <label className="text-gray-700 dark:text-gray-200 font-medium">Firma:</label>
-          <select
-            value={selectedCompany?.id || ""}
-            onChange={(e) => setSelectedCompany(companies.find(c => c.id === e.target.value) || null)}
-            className="border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            <option value="">-- Alle Firmen --</option>
-            {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
-      )}
-
-      {/* Jahr Filter */}
-      <div className="flex justify-end space-x-2 mb-4">
-        <label className="text-gray-700 dark:text-gray-200 font-medium">Jahr:</label>
-        <input
-          type="number"
-          value={yearFilter}
-          onChange={(e) => setYearFilter(Number(e.target.value))}
-          className="border rounded px-2 py-1 w-24 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
+      <div className="grid grid-cols-3 gap-4">
+        <Card title="Gewinn" value={summary?.profit} />
+        <Card title="Steuern" value={summary?.tax_total} />
+        <Card title="Netto" value={summary?.net_after_tax} />
       </div>
 
-      {/* Gesamtübersicht */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card title="Vorsteuer gesamt" value={summary?.vat?.input ?? 0} color="text-green-600" />
-        <Card title="Umsatzsteuer gesamt" value={summary?.vat?.output ?? 0} color="text-red-600" />
-        <Card title="Rückerstattung" value={summary?.vat?.refund ?? 0} color="text-blue-600" />
+      <div className="grid grid-cols-3 gap-4">
+        <Card title="Vorsteuer" value={summary?.vat?.input} />
+        <Card title="USt" value={summary?.vat?.output} />
+        <Card title="Erstattung" value={summary?.vat?.refund} />
       </div>
 
-      {/* Rückerstattung Vorjahr vs Aktuelles Jahr */}
-      <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 flex justify-around">
-        <YearRefundCard year={refundSummary.last_year?.year} refund={refundSummary.last_year?.vat_balance} label="Letztes Jahr" />
-        <YearRefundCard year={refundSummary.current_year?.year} refund={refundSummary.current_year?.vat_balance} label="Aktuelles Jahr" />
+      <div className="bg-zinc-900 p-4 rounded">
+        <h3 className="text-white mb-2">Refund Übersicht</h3>
+        <p className="text-gray-400">
+          {refundSummary?.current_year?.year}:{" "}
+          {refundSummary?.current_year?.vat_balance || 0} €
+        </p>
+        <p className="text-gray-400">
+          {refundSummary?.last_year?.year}:{" "}
+          {refundSummary?.last_year?.vat_balance || 0} €
+        </p>
       </div>
 
-      {/* Charts */}
-      <ChartSection title={`Monatliche Steuerübersicht ${yearFilter}`}>
-        <ResponsiveWrapper>
-          <BarChart data={monthly ?? []}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="input_vat" fill={COLORS[0]} name="Vorsteuer" />
-            <Bar dataKey="output_vat" fill={COLORS[1]} name="Umsatzsteuer" />
-            <Bar dataKey="refund" fill={COLORS[2]} name="Rückerstattung" />
-          </BarChart>
-        </ResponsiveWrapper>
-      </ChartSection>
-
-      <ChartSection title="Steuern nach Kategorie">
-        <ResponsiveWrapper>
-          <PieChart>
-            <Pie
-              data={category ?? []}
-              dataKey="refund"
-              nameKey="category"
-              cx="50%"
-              cy="50%"
-              outerRadius={100}
-              label
-            >
-              {Array.isArray(category) ? category.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />) : null}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveWrapper>
-      </ChartSection>
-
-      <ChartSection title="Trend der letzten 12 Monate">
-        <ResponsiveWrapper>
-          <LineChart data={rolling ?? []}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#8884d8" />
-            <XAxis
-              dataKey="month"
-              tickFormatter={(m, i) => {
-                const item = rolling[i] || {};
-                return `${item.year || yearFilter}-${String(m || 1).padStart(2, "0")}`;
-              }}
-            />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="input_vat" stroke={COLORS[0]} name="Vorsteuer" />
-            <Line type="monotone" dataKey="output_vat" stroke={COLORS[1]} name="Umsatzsteuer" />
-            <Line type="monotone" dataKey="refund" stroke={COLORS[2]} name="Rückerstattung" />
-          </LineChart>
-        </ResponsiveWrapper>
-      </ChartSection>
-
-      {/* DATEV Export */}
-      <div className="flex space-x-4 mt-4">
-        <a href="/tax/export/datev" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">DATEV Export (Gesamt)</a>
-        <a
-          href={`/tax/export/datev-filtered?year=${yearFilter}${selectedCompany?.id ? `&company_id=${selectedCompany.id}` : ""}`}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          DATEV Export (Jahr {yearFilter})
-        </a>
-      </div>
     </div>
   );
 }
 
-// -------------------
-// Kleine Komponenten
-// -------------------
-function Card({ title, value, color }) {
+// -----------------------------
+// CARD
+// -----------------------------
+function Card({ title, value }) {
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
-      <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className={`text-2xl ${color}`}>{Number(value ?? 0).toFixed(2)} €</p>
-    </div>
-  );
-}
-
-function YearRefundCard({ year, refund, label }) {
-  return (
-    <div className="text-center flex-1">
-      <p className="font-medium">{label} ({year ?? ""})</p>
-      <p className="text-2xl text-blue-600">{Number(refund ?? 0).toFixed(2)} €</p>
-    </div>
-  );
-}
-
-function ChartSection({ title, children }) {
-  return (
-    <div className="bg-gray-100 dark:bg-gray-700 shadow rounded p-4 overflow-auto mb-4">
-      <h3 className="font-semibold text-lg mb-4">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function ResponsiveWrapper({ children }) {
-  return (
-    <div className="w-full overflow-auto">
-      <div className="min-w-[700px]">{children}</div>
+    <div className="bg-zinc-900 p-4 rounded text-center">
+      <p className="text-gray-400">{title}</p>
+      <p className="text-xl text-white">
+        {Number(value || 0).toFixed(2)} €
+      </p>
     </div>
   );
 }
