@@ -1,22 +1,33 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
-import dayjs from "dayjs";
-
-const LOCAL_STORAGE_KEY = "nill_legal_form";
 
 export default function TaxDashboard() {
+
+  const [forms, setForms] = useState([]);
+  const [legalForm, setLegalForm] = useState("");
+  const [selectedForm, setSelectedForm] = useState("");
+
   const [summary, setSummary] = useState(null);
-  const [monthly, setMonthly] = useState([]);
-  const [category, setCategory] = useState([]);
-  const [rolling, setRolling] = useState([]);
-  const [refundSummary, setRefundSummary] = useState(null);
 
-  const [legalForm, setLegalForm] = useState(
-    localStorage.getItem(LOCAL_STORAGE_KEY) || ""
-  );
-
-  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // -----------------------------
+  // LOAD OPTIONS
+  // -----------------------------
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const res = await api.get("/tax/business-profile/options");
+        setForms(res.data?.forms || []);
+      } catch (e) {
+        console.error("Options error", e);
+      }
+    };
+
+    loadOptions();
+  }, []);
 
   // -----------------------------
   // LOAD PROFILE
@@ -30,139 +41,131 @@ export default function TaxDashboard() {
           setShowModal(true);
         } else {
           setLegalForm(res.data.legal_form);
-          localStorage.setItem(LOCAL_STORAGE_KEY, res.data.legal_form);
-          setShowModal(false);
         }
+
       } catch (e) {
-        console.error("Profile load failed", e);
+        console.error("Profile error", e);
         setShowModal(true);
-      }
-    };
-
-    if (!legalForm) loadProfile();
-  }, []);
-
-  // -----------------------------
-  // LOAD DASHBOARD
-  // -----------------------------
-  useEffect(() => {
-    if (!legalForm) return;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-
-        const [s, r, m, c, roll] = await Promise.all([
-          api.get("/tax/summary"),
-          api.get("/tax/refund-summary"),
-          api.get("/tax/chart/monthly"),
-          api.get("/tax/chart/category"),
-          api.get("/tax/chart/rolling"),
-        ]);
-
-        setSummary(s.data || {});
-        setRefundSummary(r.data || {});
-        setMonthly(m.data?.monthly_data || []);
-        setCategory(c.data?.categories || []);
-        setRolling(roll.data?.rolling || []);
-      } catch (e) {
-        console.error("Dashboard load failed", e);
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
+    loadProfile();
+  }, []);
+
+  // -----------------------------
+  // LOAD SUMMARY
+  // -----------------------------
+  useEffect(() => {
+    if (!legalForm) return;
+
+    const loadSummary = async () => {
+      try {
+        const res = await api.get("/tax/summary");
+        setSummary(res.data || {});
+      } catch (e) {
+        console.error("Summary error", e);
+      }
+    };
+
+    loadSummary();
   }, [legalForm]);
 
   // -----------------------------
-  // SAVE PROFILE
+  // SAVE LEGAL FORM
   // -----------------------------
-  const saveProfile = async () => {
-    if (!legalForm) return;
+  const saveLegalForm = async () => {
+    if (!selectedForm) return;
 
     try {
-      await api.post("/tax/business-profile", {
-        legal_form: legalForm,
-      });
+      setSaving(true);
 
-      localStorage.setItem(LOCAL_STORAGE_KEY, legalForm);
+      await api.post(
+        `/tax/business-profile/legal-form?legal_form=${selectedForm}`
+      );
+
+      setLegalForm(selectedForm);
       setShowModal(false);
+
     } catch (e) {
-      console.error("Save failed", e);
+      console.error("Save error", e);
+      alert("Fehler beim Speichern");
+    } finally {
+      setSaving(false);
     }
   };
-
-  // -----------------------------
-  // MODAL
-  // -----------------------------
-  if (!legalForm && showModal) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xl">
-        <div className="bg-zinc-900 p-8 rounded-2xl w-[400px] text-center shadow-xl">
-          <h2 className="text-white text-xl mb-4">
-            Rechtsform angeben
-          </h2>
-
-          <select
-            value={legalForm}
-            onChange={(e) => setLegalForm(e.target.value)}
-            className="w-full p-3 rounded bg-zinc-800 text-white mb-4"
-          >
-            <option value="">Auswählen</option>
-            <option value="Einzelunternehmer">Einzelunternehmer</option>
-            <option value="Freiberufler">Freiberufler</option>
-            <option value="GmbH">GmbH</option>
-            <option value="UG">UG</option>
-          </select>
-
-          <button
-            onClick={saveProfile}
-            className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded text-white"
-          >
-            Speichern
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // -----------------------------
   // LOADING
   // -----------------------------
   if (loading) {
-    return <div className="text-center p-10">Lade...</div>;
+    return <div className="p-10 text-center">Lade...</div>;
   }
 
-  // -----------------------------
-  // UI
-  // -----------------------------
   return (
-    <div className="p-6 space-y-6">
+    <div className="relative">
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card title="Gewinn" value={summary?.profit} />
-        <Card title="Steuern" value={summary?.tax_total} />
-        <Card title="Netto" value={summary?.net_after_tax} />
+      {/* DASHBOARD */}
+      <div className={`${!legalForm ? "blur-md pointer-events-none" : ""} transition`}>
+
+        <div className="p-6 space-y-6">
+
+          <div className="grid grid-cols-3 gap-4">
+            <Card title="Gewinn" value={summary?.profit} />
+            <Card title="Steuern" value={summary?.tax_total} />
+            <Card title="Netto" value={summary?.net_after_tax} />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <Card title="Vorsteuer" value={summary?.vat?.input} />
+            <Card title="USt" value={summary?.vat?.output} />
+            <Card title="Erstattung" value={summary?.vat?.refund} />
+          </div>
+
+        </div>
+
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card title="Vorsteuer" value={summary?.vat?.input} />
-        <Card title="USt" value={summary?.vat?.output} />
-        <Card title="Erstattung" value={summary?.vat?.refund} />
-      </div>
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-      <div className="bg-zinc-900 p-4 rounded">
-        <h3 className="text-white mb-2">Refund Übersicht</h3>
-        <p className="text-gray-400">
-          {refundSummary?.current_year?.year}:{" "}
-          {refundSummary?.current_year?.vat_balance || 0} €
-        </p>
-        <p className="text-gray-400">
-          {refundSummary?.last_year?.year}:{" "}
-          {refundSummary?.last_year?.vat_balance || 0} €
-        </p>
-      </div>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+
+          <div className="relative z-10 w-[420px] rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-8 shadow-xl border border-white/10">
+
+            <h2 className="text-2xl text-white mb-6 text-center">
+              Rechtsform festlegen
+            </h2>
+
+            <select
+              value={selectedForm}
+              onChange={(e) => setSelectedForm(e.target.value)}
+              className="w-full p-3 rounded-lg bg-zinc-800 text-white mb-6"
+            >
+              <option value="">Bitte wählen</option>
+
+              {forms.map((f, i) => (
+                <option key={i} value={f.legal_form}>
+                  {f.legal_form}
+                </option>
+              ))}
+
+            </select>
+
+            <button
+              onClick={saveLegalForm}
+              disabled={!selectedForm || saving}
+              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium"
+            >
+              {saving ? "Speichern..." : "Bestätigen"}
+            </button>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );
@@ -173,7 +176,7 @@ export default function TaxDashboard() {
 // -----------------------------
 function Card({ title, value }) {
   return (
-    <div className="bg-zinc-900 p-4 rounded text-center">
+    <div className="bg-zinc-900 p-4 rounded-xl text-center border border-white/5">
       <p className="text-gray-400">{title}</p>
       <p className="text-xl text-white">
         {Number(value || 0).toFixed(2)} €
