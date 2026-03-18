@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+kimport React, { useEffect, useState } from "react";
 import api from "../../services/api";
 
 export default function TaxDashboard() {
@@ -73,7 +73,7 @@ export default function TaxDashboard() {
   }, [legalForm]);
 
   // -----------------------------
-  // SAVE LEGAL FORM
+  // SAVE LEGAL FORM (FIXED)
   // -----------------------------
   const saveLegalForm = async () => {
     if (!selectedForm) return;
@@ -81,11 +81,16 @@ export default function TaxDashboard() {
     try {
       setSaving(true);
 
-      await api.post(
-        `/tax/business-profile/legal-form?legal_form=${selectedForm}`
-      );
+      console.log("SENDING:", selectedForm);
 
+      await api.post("/tax/business-profile/legal-form", {
+        legal_form: selectedForm
+      });
+
+      // ✅ State setzen
       setLegalForm(selectedForm);
+
+      // ✅ Modal schließen erst nach Erfolg
       setShowModal(false);
 
     } catch (e) {
@@ -131,9 +136,10 @@ export default function TaxDashboard() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+          {/* 🔥 SEXY BLUR */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-2xl" />
 
-          <div className="relative z-10 w-[420px] rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-8 shadow-xl border border-white/10">
+          <div className="relative z-10 w-[420px] rounded-3xl bg-gradient-to-br from-zinc-900/90 to-zinc-800/90 backdrop-blur-xl p-8 shadow-2xl border border-white/10">
 
             <h2 className="text-2xl text-white mb-6 text-center">
               Rechtsform festlegen
@@ -142,7 +148,7 @@ export default function TaxDashboard() {
             <select
               value={selectedForm}
               onChange={(e) => setSelectedForm(e.target.value)}
-              className="w-full p-3 rounded-lg bg-zinc-800 text-white mb-6"
+              className="w-full p-3 rounded-lg bg-zinc-800 text-white mb-6 outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Bitte wählen</option>
 
@@ -157,7 +163,7 @@ export default function TaxDashboard() {
             <button
               onClick={saveLegalForm}
               disabled={!selectedForm || saving}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium"
+              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-40 text-white font-medium"
             >
               {saving ? "Speichern..." : "Bestätigen"}
             </button>
