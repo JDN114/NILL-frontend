@@ -7,7 +7,14 @@ export default function TaxDashboard() {
   const [legalForm, setLegalForm] = useState("");
   const [selectedForm, setSelectedForm] = useState("");
 
-  const [summary, setSummary] = useState(null);
+  const [summary, setSummary] = useState({
+    income: 0,
+    expenses: 0,
+    profit: 0,
+    vat: { input: 0, output: 0, refund: 0 },
+    tax_total: 0,
+    net_after_tax: 0
+  });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,7 +32,6 @@ export default function TaxDashboard() {
         console.error("Options error", e);
       }
     };
-
     loadOptions();
   }, []);
 
@@ -36,13 +42,11 @@ export default function TaxDashboard() {
     const loadProfile = async () => {
       try {
         const res = await api.get("/tax/business-profile");
-
         if (!res.data?.legal_form) {
           setShowModal(true);
         } else {
           setLegalForm(res.data.legal_form);
         }
-
       } catch (e) {
         console.error("Profile error", e);
         setShowModal(true);
@@ -50,7 +54,6 @@ export default function TaxDashboard() {
         setLoading(false);
       }
     };
-
     loadProfile();
   }, []);
 
@@ -58,14 +61,32 @@ export default function TaxDashboard() {
   // LOAD SUMMARY
   // -----------------------------
   useEffect(() => {
-    if (!legalForm) return;
-
     const loadSummary = async () => {
       try {
         const res = await api.get("/tax/summary");
-        setSummary(res.data || {});
+        if (res.data) {
+          setSummary(res.data);
+        } else {
+          console.warn("Summary empty from backend");
+          setSummary({
+            income: 0,
+            expenses: 0,
+            profit: 0,
+            vat: { input: 0, output: 0, refund: 0 },
+            tax_total: 0,
+            net_after_tax: 0
+          });
+        }
       } catch (e) {
         console.error("Summary error", e);
+        setSummary({
+          income: 0,
+          expenses: 0,
+          profit: 0,
+          vat: { input: 0, output: 0, refund: 0 },
+          tax_total: 0,
+          net_after_tax: 0
+        });
       }
     };
 
@@ -73,26 +94,16 @@ export default function TaxDashboard() {
   }, [legalForm]);
 
   // -----------------------------
-  // SAVE LEGAL FORM (FIXED)
+  // SAVE LEGAL FORM
   // -----------------------------
   const saveLegalForm = async () => {
     if (!selectedForm) return;
 
     try {
       setSaving(true);
-
-      console.log("SENDING:", selectedForm);
-
-      await api.post("/tax/business-profile/legal-form", {
-        legal_form: selectedForm
-      });
-
-      // ✅ State setzen
+      await api.post("/tax/business-profile/legal-form", { legal_form: selectedForm });
       setLegalForm(selectedForm);
-
-      // ✅ Modal schließen erst nach Erfolg
       setShowModal(false);
-
     } catch (e) {
       console.error("Save error", e);
       alert("Fehler beim Speichern");
@@ -113,53 +124,39 @@ export default function TaxDashboard() {
 
       {/* DASHBOARD */}
       <div className={`${!legalForm ? "blur-md pointer-events-none" : ""} transition`}>
-
         <div className="p-6 space-y-6">
 
           <div className="grid grid-cols-3 gap-4">
-            <Card title="Gewinn" value={summary?.profit} />
-            <Card title="Steuern" value={summary?.tax_total} />
-            <Card title="Netto" value={summary?.net_after_tax} />
+            <Card title="Gewinn" value={summary.profit} />
+            <Card title="Steuern" value={summary.tax_total} />
+            <Card title="Netto" value={summary.net_after_tax} />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <Card title="Vorsteuer" value={summary?.vat?.input} />
-            <Card title="USt" value={summary?.vat?.output} />
-            <Card title="Erstattung" value={summary?.vat?.refund} />
+            <Card title="Vorsteuer" value={summary.vat.input} />
+            <Card title="USt" value={summary.vat.output} />
+            <Card title="Erstattung" value={summary.vat.refund} />
           </div>
 
         </div>
-
       </div>
 
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-
-          {/* 🔥 SEXY BLUR */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-2xl" />
-
           <div className="relative z-10 w-[420px] rounded-3xl bg-gradient-to-br from-zinc-900/90 to-zinc-800/90 backdrop-blur-xl p-8 shadow-2xl border border-white/10">
-
-            <h2 className="text-2xl text-white mb-6 text-center">
-              Rechtsform festlegen
-            </h2>
-
+            <h2 className="text-2xl text-white mb-6 text-center">Rechtsform festlegen</h2>
             <select
               value={selectedForm}
               onChange={(e) => setSelectedForm(e.target.value)}
               className="w-full p-3 rounded-lg bg-zinc-800 text-white mb-6 outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Bitte wählen</option>
-
               {forms.map((f, i) => (
-                <option key={i} value={f.legal_form}>
-                  {f.legal_form}
-                </option>
+                <option key={i} value={f.legal_form}>{f.legal_form}</option>
               ))}
-
             </select>
-
             <button
               onClick={saveLegalForm}
               disabled={!selectedForm || saving}
@@ -167,9 +164,7 @@ export default function TaxDashboard() {
             >
               {saving ? "Speichern..." : "Bestätigen"}
             </button>
-
           </div>
-
         </div>
       )}
 
@@ -178,15 +173,13 @@ export default function TaxDashboard() {
 }
 
 // -----------------------------
-// CARD
+// CARD COMPONENT
 // -----------------------------
 function Card({ title, value }) {
   return (
     <div className="bg-zinc-900 p-4 rounded-xl text-center border border-white/5">
       <p className="text-gray-400">{title}</p>
-      <p className="text-xl text-white">
-        {Number(value || 0).toFixed(2)} €
-      </p>
+      <p className="text-xl text-white">{Number(value || 0).toFixed(2)} €</p>
     </div>
   );
 }

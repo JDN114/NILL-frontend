@@ -380,21 +380,6 @@ export default function AccountingPage() {
         </div>
       </section>
 
-      {/* DATEV */}
-
-      <Card className="mb-6 p-4">
-
-        <h2 className="font-semibold mb-3">Steuer Export</h2>
-
-        <button
-          onClick={exportDATEV}
-          className="bg-green-600 px-4 py-2 rounded"
-        >
-          DATEV CSV Export
-        </button>
-
-      </Card>
-
       <InvoiceCreateModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
