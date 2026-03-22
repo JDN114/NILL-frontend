@@ -1,4 +1,4 @@
-kimport { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import InvoiceList from "../components/accounting/InvoiceList";
