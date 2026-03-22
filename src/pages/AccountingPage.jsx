@@ -26,13 +26,15 @@ export default function AccountingPage() {
   const [categories, setCategories] = useState([]);
   const [monthly, setMonthly] = useState([]);
   const [bankStatus, setBankStatus] = useState(null);
+  const [chartAnimated, setChartAnimated] = useState(false);
+
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [chartInitialized, setChartInitialized] = useState(false);
 
   // -------------------------
   // Helpers
   // -------------------------
+
   const buildMonthly = (data) => {
     const map = {};
     data.forEach((i) => {
@@ -48,6 +50,7 @@ export default function AccountingPage() {
   // -------------------------
   // API LOADERS
   // -------------------------
+
   const loadInvoices = async () => {
     try {
       const res = await api.get("/accounting/invoices");
@@ -64,8 +67,8 @@ export default function AccountingPage() {
       const res = await api.get("/accounting/stats");
       const s = res.data;
       setStats([
-        { label: "Total", value: s.total_amount },
-        { label: "Unbezahlt", value: s.unpaid_count },
+        { label: "Gesamt", value: s.total_amount, showEuro: true },
+        { label: "Offen", value: s.unpaid_count },
         { label: "Überfällig", value: s.overdue_count },
         { label: "Kategorien", value: s.by_category?.length || 0 },
       ]);
@@ -77,7 +80,10 @@ export default function AccountingPage() {
   const loadCategories = async () => {
     try {
       const res = await api.get("/accounting/category-stats");
-      setCategories(Array.isArray(res.data) ? res.data : []);
+      const data = Array.isArray(res.data) ? res.data : [];
+      // Sort by value descending for better visual
+      data.sort((a, b) => b.total - a.total);
+      setCategories(data);
     } catch (e) {
       console.error("category stats failed", e);
     }
@@ -95,6 +101,7 @@ export default function AccountingPage() {
   // -------------------------
   // INIT
   // -------------------------
+
   useEffect(() => {
     loadInvoices();
     loadStats();
@@ -115,6 +122,7 @@ export default function AccountingPage() {
   // -------------------------
   // Bank Actions
   // -------------------------
+
   const connectBank = () => {
     window.location.href = `${api.defaults.baseURL}/bank/connect`;
   };
@@ -140,8 +148,11 @@ export default function AccountingPage() {
   );
 
   // -------------------------
-  // RENDER
+  // Pie colors
   // -------------------------
+
+  const pieColors = ["#4F46E5", "#6366F1", "#818CF8", "#A5B4FC", "#C7D2FE"];
+
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Buchhaltung</h1>
@@ -158,8 +169,7 @@ export default function AccountingPage() {
           <Card key={i} className="p-4">
             <p className="text-sm text-gray-400">{s.label}</p>
             <p className="text-xl font-bold">
-              {s.value}
-              {s.label === "Total" ? " €" : ""}
+              {s.value} {s.showEuro ? "€" : ""}
             </p>
           </Card>
         ))}
@@ -194,7 +204,6 @@ export default function AccountingPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Kategorie Ausgaben */}
         <Card className="p-4">
           <h2 className="mb-4 font-semibold">Kategorie Ausgaben</h2>
           <ResponsiveContainer width="100%" height={250}>
@@ -203,42 +212,36 @@ export default function AccountingPage() {
                 data={categories}
                 dataKey="total"
                 nameKey="category"
-                innerRadius={50}
-                outerRadius={75}
-                paddingAngle={4}
+                outerRadius={90}
+                innerRadius={40}
+                isAnimationActive={!chartAnimated}
+                onAnimationEnd={() => setChartAnimated(true)}
                 label={({ name, percent }) =>
-                  `${name}: ${(percent * 100).toFixed(0)}%`
+                  `${name.length > 10 ? name.slice(0, 10) + "…" : name} (${(
+                    percent * 100
+                  ).toFixed(0)}%)`
                 }
                 labelLine={false}
-                isAnimationActive={!chartInitialized}
-                onAnimationEnd={() => setChartInitialized(true)}
               >
-                {categories.map((c, i) => {
-                  const colors = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
-                  return <Cell key={i} fill={colors[i % colors.length]} />;
-                })}
+                {categories.map((c, i) => (
+                  <Cell key={i} fill={pieColors[i % pieColors.length]} />
+                ))}
               </Pie>
               <Tooltip
-                formatter={(value, name, props) => [
-                  `${value.toLocaleString("de-DE")} €`,
-                  props.payload.category,
-                ]}
+                formatter={(value, name) => [`${value} €`, name]}
               />
             </PieChart>
           </ResponsiveContainer>
         </Card>
 
-        {/* Monatliche Ausgaben */}
         <Card className="p-4">
           <h2 className="mb-4 font-semibold">Monatliche Ausgaben</h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={monthly}>
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip
-                formatter={(value) => `${value.toLocaleString("de-DE")} €`}
-              />
-              <Bar dataKey="total" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+              <Tooltip formatter={(value) => `${value} €`} />
+              <Bar dataKey="total" fill="#4F46E5" />
             </BarChart>
           </ResponsiveContainer>
         </Card>
