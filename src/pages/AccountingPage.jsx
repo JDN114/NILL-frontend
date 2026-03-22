@@ -28,7 +28,6 @@ export default function AccountingPage() {
   const [bankStatus, setBankStatus] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-
   const [chartInitialized, setChartInitialized] = useState(false);
 
   // -------------------------
@@ -45,20 +44,6 @@ export default function AccountingPage() {
     });
     return Object.entries(map).map(([k, v]) => ({ month: k, total: v }));
   };
-
-  const mapCategoryNames = (cat) => {
-    const mapping = {
-      "OTHER": "Sonstiges",
-      "FOOD": "Essen",
-      "TRAVEL": "Reisen",
-      "OFFICE": "Büro",
-      "SERVICES": "Dienstleistungen",
-      "TECH": "Technik",
-    };
-    return mapping[cat] || cat;
-  };
-
-  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6"];
 
   // -------------------------
   // API LOADERS
@@ -79,7 +64,7 @@ export default function AccountingPage() {
       const res = await api.get("/accounting/stats");
       const s = res.data;
       setStats([
-        { label: "Total", value: `${s.total_amount} €` },
+        { label: "Total", value: s.total_amount },
         { label: "Unbezahlt", value: s.unpaid_count },
         { label: "Überfällig", value: s.overdue_count },
         { label: "Kategorien", value: s.by_category?.length || 0 },
@@ -92,11 +77,7 @@ export default function AccountingPage() {
   const loadCategories = async () => {
     try {
       const res = await api.get("/accounting/category-stats");
-      const mapped = (Array.isArray(res.data) ? res.data : []).map((c) => ({
-        ...c,
-        category: mapCategoryNames(c.category),
-      }));
-      setCategories(mapped);
+      setCategories(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error("category stats failed", e);
     }
@@ -119,9 +100,11 @@ export default function AccountingPage() {
     loadStats();
     loadCategories();
     loadBank();
+
     const invoiceInterval = setInterval(loadInvoices, 15000);
     const statsInterval = setInterval(loadStats, 60000);
     const bankInterval = setInterval(loadBank, 120000);
+
     return () => {
       clearInterval(invoiceInterval);
       clearInterval(statsInterval);
@@ -156,6 +139,9 @@ export default function AccountingPage() {
       new Date(i.payment_deadline) < new Date()
   );
 
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Buchhaltung</h1>
@@ -166,12 +152,15 @@ export default function AccountingPage() {
         </div>
       )}
 
-      {/* Top Stats */}
+      {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {stats.map((s, i) => (
-          <Card key={i} className="p-4 hover:scale-105 transition-transform duration-200">
+          <Card key={i} className="p-4">
             <p className="text-sm text-gray-400">{s.label}</p>
-            <p className="text-xl font-bold">{s.value}</p>
+            <p className="text-xl font-bold">
+              {s.value}
+              {s.label === "Total" ? " €" : ""}
+            </p>
           </Card>
         ))}
       </div>
@@ -205,6 +194,7 @@ export default function AccountingPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-2 gap-6 mb-6">
+        {/* Kategorie Ausgaben */}
         <Card className="p-4">
           <h2 className="mb-4 font-semibold">Kategorie Ausgaben</h2>
           <ResponsiveContainer width="100%" height={250}>
@@ -214,36 +204,41 @@ export default function AccountingPage() {
                 dataKey="total"
                 nameKey="category"
                 innerRadius={50}
-                outerRadius={80}
-                paddingAngle={2}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                outerRadius={75}
+                paddingAngle={4}
+                label={({ name, percent }) =>
+                  `${name}: ${(percent * 100).toFixed(0)}%`
+                }
                 labelLine={false}
                 isAnimationActive={!chartInitialized}
                 onAnimationEnd={() => setChartInitialized(true)}
               >
-                {categories.map((c, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
+                {categories.map((c, i) => {
+                  const colors = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
+                  return <Cell key={i} fill={colors[i % colors.length]} />;
+                })}
               </Pie>
               <Tooltip
-                formatter={(value, name, props) => {
-                  const total = categories.reduce((acc, c) => acc + c.total, 0);
-                  const percent = total ? ((props.payload.total / total) * 100).toFixed(1) : 0;
-                  return [`${value} € (${percent}%)`, props.payload.category];
-                }}
+                formatter={(value, name, props) => [
+                  `${value.toLocaleString("de-DE")} €`,
+                  props.payload.category,
+                ]}
               />
             </PieChart>
           </ResponsiveContainer>
         </Card>
 
+        {/* Monatliche Ausgaben */}
         <Card className="p-4">
           <h2 className="mb-4 font-semibold">Monatliche Ausgaben</h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={monthly}>
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip />
-              <Bar dataKey="total" fill="#4f46e5" isAnimationActive={!chartInitialized} onAnimationEnd={() => setChartInitialized(true)} />
+              <Tooltip
+                formatter={(value) => `${value.toLocaleString("de-DE")} €`}
+              />
+              <Bar dataKey="total" fill="#4f46e5" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
