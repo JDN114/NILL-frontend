@@ -6,15 +6,21 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   const [sort, setSort] = useState("date_desc");
   const [statusFilter, setStatusFilter] = useState("all");
   const [vendorFilter, setVendorFilter] = useState("");
+
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // -----------------------------
   // Helpers
   // -----------------------------
 
-  const getDisplayAmount = (inv) => {
-    return inv?.gross_amount ?? inv?.amount ?? 0;
-  };
+  const getGross = (inv) =>
+    inv?.gross_amount ?? inv?.amount ?? 0;
+
+  const getNet = (inv) =>
+    inv?.net_amount ?? inv?.amount ?? 0;
+
+  const getVat = (inv) =>
+    inv?.vat ?? 0;
 
   // -----------------------------
   // Filter + Sort
@@ -46,11 +52,11 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       }
 
       if (sort === "amount_desc") {
-        return getDisplayAmount(b) - getDisplayAmount(a);
+        return getGross(b) - getGross(a);
       }
 
       if (sort === "amount_asc") {
-        return getDisplayAmount(a) - getDisplayAmount(b);
+        return getGross(a) - getGross(b);
       }
 
       return 0;
@@ -69,7 +75,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
     try {
       await api.post(`/accounting/invoices/${id}/mark-paid`);
       onUpdated?.();
-      setSelectedInvoice(null);
     } catch (e) {
       console.error("mark paid failed", e);
     }
@@ -93,7 +98,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
     <div>
 
       {/* Controls */}
-
       <div className="flex flex-wrap gap-3 mb-4">
 
         <select
@@ -128,7 +132,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       </div>
 
       {/* Table */}
-
       <div className="overflow-x-auto">
 
         <table className="w-full text-sm">
@@ -166,7 +169,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                   <td>{inv.vendor || "-"}</td>
 
                   <td>
-                    {getDisplayAmount(inv).toFixed(2)} €
+                    {getGross(inv).toFixed(2)} €
                   </td>
 
                   <td>
@@ -177,14 +180,14 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                     )}
                   </td>
 
-                  <td className="text-right space-x-2">
+                  <td
+                    className="text-right space-x-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
 
                     {inv.payment_status !== "paid" && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markPaid(inv.id);
-                        }}
+                        onClick={() => markPaid(inv.id)}
                         className="bg-green-600 px-2 py-1 rounded text-xs"
                       >
                         Bezahlt
@@ -192,10 +195,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                     )}
 
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteInvoice(inv.id);
-                      }}
+                      onClick={() => deleteInvoice(inv.id)}
                       className="bg-red-600 px-2 py-1 rounded text-xs"
                     >
                       Löschen
@@ -215,79 +215,81 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
 
       </div>
 
-      {/* MODAL */}
-
+      {/* Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-          <div className="bg-zinc-900 w-[900px] max-w-[95%] rounded-xl shadow-lg overflow-hidden flex">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setSelectedInvoice(null)}
+          />
 
-            {/* LEFT: PDF */}
+          <div className="relative z-10 bg-gray-900 text-white w-[900px] max-h-[90vh] rounded-xl shadow-lg overflow-hidden flex flex-col">
 
-            <div className="w-1/2 border-r border-zinc-800">
-
-              {selectedInvoice.file_url ? (
-                <iframe
-                  src={`${api.defaults.baseURL}${selectedInvoice.file_url}`}
-                  className="w-full h-[500px]"
-                />
-              ) : (
-                <div className="p-6 text-gray-400">
-                  Keine Datei vorhanden
-                </div>
-              )}
-
-            </div>
-
-            {/* RIGHT: DETAILS */}
-
-            <div className="w-1/2 p-6 text-sm text-white space-y-3">
-
-              <h2 className="text-lg font-semibold mb-2">
-                {selectedInvoice.title}
+            {/* Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-700">
+              <h2 className="text-lg font-semibold">
+                {selectedInvoice.title || "Rechnung"}
               </h2>
 
-              <p><b>Anbieter:</b> {selectedInvoice.vendor || "-"}</p>
-              <p><b>Kategorie:</b> {selectedInvoice.category || "-"}</p>
+              <button
+                onClick={() => setSelectedInvoice(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
 
-              <div className="pt-2 border-t border-zinc-700 space-y-1">
+            {/* Content */}
+            <div className="flex flex-1 overflow-hidden">
 
-                <p><b>Netto:</b> {selectedInvoice.net_amount?.toFixed?.(2) || "-"} €</p>
-                <p><b>Steuer:</b> {selectedInvoice.vat?.toFixed?.(2) || "-"} €</p>
-                <p className="text-green-400 font-semibold">
-                  <b>Brutto:</b> {getDisplayAmount(selectedInvoice).toFixed(2)} €
+              {/* Left */}
+              <div className="w-1/2 p-4 space-y-2 border-r border-gray-800 text-sm">
+
+                <p><b>Anbieter:</b> {selectedInvoice.vendor || "-"}</p>
+                <p><b>Kategorie:</b> {selectedInvoice.category || "-"}</p>
+
+                <p className="mt-4 text-gray-400">Beträge</p>
+
+                <p><b>Brutto:</b> {getGross(selectedInvoice).toFixed(2)} €</p>
+                <p><b>Netto:</b> {getNet(selectedInvoice).toFixed(2)} €</p>
+                <p><b>MwSt:</b> {getVat(selectedInvoice).toFixed(2)} €</p>
+
+                <p className="mt-4">
+                  <b>Status:</b>{" "}
+                  {selectedInvoice.payment_status === "paid"
+                    ? "Bezahlt"
+                    : "Offen"}
                 </p>
-
-              </div>
-
-              <p><b>Datum:</b> {selectedInvoice.invoice_date}</p>
-
-              <p>
-                <b>Status:</b>{" "}
-                {selectedInvoice.payment_status === "paid"
-                  ? "Bezahlt"
-                  : "Offen"}
-              </p>
-
-              {/* ACTIONS */}
-
-              <div className="flex gap-2 pt-4">
 
                 {selectedInvoice.payment_status !== "paid" && (
                   <button
-                    onClick={() => markPaid(selectedInvoice.id)}
-                    className="bg-green-600 px-3 py-1 rounded text-sm"
+                    onClick={() => {
+                      markPaid(selectedInvoice.id);
+                      setSelectedInvoice(null);
+                    }}
+                    className="mt-3 bg-green-600 px-3 py-1 rounded text-sm"
                   >
                     Als bezahlt markieren
                   </button>
                 )}
 
-                <button
-                  onClick={() => setSelectedInvoice(null)}
-                  className="bg-gray-700 px-3 py-1 rounded text-sm"
-                >
-                  Schließen
-                </button>
+              </div>
+
+              {/* Right (PDF/Image) */}
+              <div className="w-1/2 h-full bg-black">
+
+                {selectedInvoice.file_url ? (
+                  <iframe
+                    src={`${api.defaults.baseURL}${selectedInvoice.file_url}`}
+                    className="w-full h-full"
+                    title="Rechnung"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Kein Dokument verfügbar
+                  </div>
+                )}
 
               </div>
 
