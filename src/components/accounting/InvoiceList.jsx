@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+kimport { useState, useMemo } from "react";
 import api from "../../services/api";
 
 export default function InvoiceList({ invoices = [], onUpdated }) {
@@ -19,7 +19,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // Filter + Sort
   // -----------------------------
   const processedInvoices = useMemo(() => {
-
     let data = Array.isArray(invoices) ? [...invoices] : [];
 
     if (statusFilter !== "all") {
@@ -34,18 +33,14 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
     }
 
     data.sort((a, b) => {
-
       if (sort === "date_desc") return new Date(b?.invoice_date || 0) - new Date(a?.invoice_date || 0);
       if (sort === "date_asc") return new Date(a?.invoice_date || 0) - new Date(b?.invoice_date || 0);
       if (sort === "amount_desc") return getGross(b) - getGross(a);
       if (sort === "amount_asc") return getGross(a) - getGross(b);
-
       return 0;
-
     });
 
     return data;
-
   }, [invoices, sort, statusFilter, vendorFilter]);
 
   // -----------------------------
@@ -75,12 +70,10 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // Render
   // -----------------------------
   return (
-
     <div>
 
       {/* Controls */}
       <div className="flex flex-wrap gap-3 mb-4">
-
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
@@ -88,8 +81,8 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
         >
           <option value="date_desc">Datum ↓</option>
           <option value="date_asc">Datum ↑</option>
-          <option value="amount_desc">Preis ↓</option>
-          <option value="amount_asc">Preis ↑</option>
+          <option value="amount_desc">Betrag ↓</option>
+          <option value="amount_asc">Betrag ↑</option>
         </select>
 
         <select
@@ -99,7 +92,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
         >
           <option value="all">Alle</option>
           <option value="paid">Bezahlt</option>
-          <option value="unpaid">Unbezahlt</option>
+          <option value="unpaid">Offen</option>
         </select>
 
         <input
@@ -109,7 +102,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
           onChange={(e) => setVendorFilter(e.target.value)}
           className="bg-gray-800 text-white px-3 py-1 rounded"
         />
-
       </div>
 
       {/* Table */}
@@ -119,11 +111,12 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
             <tr>
               <th className="text-left py-2">Datum</th>
               <th className="text-left py-2">Anbieter</th>
-              <th className="text-left py-2">Betrag</th>
+              <th className="text-left py-2">Brutto</th>
               <th className="text-left py-2">Status</th>
               <th className="text-right py-2">Aktionen</th>
             </tr>
           </thead>
+
           <tbody>
             {processedInvoices.map((inv) => {
               if (!inv?.id) return null;
@@ -175,12 +168,10 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       {/* Modal */}
       {selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-
           <div
             className="absolute inset-0 bg-black/70"
             onClick={() => setSelectedInvoice(null)}
           />
-
           <div className="relative z-10 bg-gray-900 text-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6 shadow-xl border border-gray-700">
 
             {/* Header */}
@@ -200,27 +191,22 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                 <p className="text-gray-400">Anbieter</p>
                 <p>{selectedInvoice.vendor || "-"}</p>
               </div>
-
               <div>
                 <p className="text-gray-400">Datum</p>
                 <p>{selectedInvoice.invoice_date ? new Date(selectedInvoice.invoice_date).toLocaleDateString() : "-"}</p>
               </div>
-
               <div>
                 <p className="text-gray-400">Brutto</p>
                 <p>{getGross(selectedInvoice).toFixed(2)} €</p>
               </div>
-
               <div>
                 <p className="text-gray-400">Netto</p>
                 <p>{getNet(selectedInvoice).toFixed(2)} €</p>
               </div>
-
               <div>
                 <p className="text-gray-400">MwSt</p>
                 <p>{getVat(selectedInvoice).toFixed(2)} €</p>
               </div>
-
               <div>
                 <p className="text-gray-400">MwSt Satz</p>
                 <p>{selectedInvoice.vat_rate || "-"}%</p>
@@ -257,11 +243,9 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
             </div>
 
           </div>
-
         </div>
       )}
 
     </div>
   );
-
 }
