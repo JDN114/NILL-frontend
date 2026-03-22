@@ -12,10 +12,8 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // Helpers
   // -----------------------------
 
-  const getFileUrl = (inv) => {
-    if (!inv?.file_url) return null;
-    if (inv.file_url.startsWith("http")) return inv.file_url;
-    return `${api.defaults.baseURL}${inv.file_url}`;
+  const getAmount = (inv) => {
+    return inv?.gross_amount ?? inv?.amount ?? 0;
   };
 
   // -----------------------------
@@ -48,11 +46,11 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       }
 
       if (sort === "amount_desc") {
-        return (b?.amount || 0) - (a?.amount || 0);
+        return getAmount(b) - getAmount(a);
       }
 
       if (sort === "amount_asc") {
-        return (a?.amount || 0) - (b?.amount || 0);
+        return getAmount(a) - getAmount(b);
       }
 
       return 0;
@@ -96,6 +94,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
     <div>
 
       {/* Controls */}
+
       <div className="flex flex-wrap gap-3 mb-4">
 
         <select
@@ -130,6 +129,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       </div>
 
       {/* Table */}
+
       <div className="overflow-x-auto">
 
         <table className="w-full text-sm">
@@ -154,7 +154,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
 
                 <tr
                   key={inv.id}
-                  className="border-b border-gray-800 cursor-pointer hover:bg-gray-800/40"
+                  className="border-b border-gray-800 hover:bg-gray-900 cursor-pointer"
                   onClick={() => setSelectedInvoice(inv)}
                 >
 
@@ -167,11 +167,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                   <td>{inv.vendor || "-"}</td>
 
                   <td>
-                    {inv.gross_amount
-                      ? `${Number(inv.gross_amount).toFixed(2)} €`
-                      : inv.amount
-                        ? `${Number(inv.amount).toFixed(2)} €`
-                        : "-"}
+                    {getAmount(inv).toFixed(2)} €
                   </td>
 
                   <td>
@@ -217,12 +213,9 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
 
       </div>
 
-      {/* -----------------------------
-          MODAL
-      ----------------------------- */}
+      {/* MODAL */}
 
       {selectedInvoice && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center">
 
           <div
@@ -230,131 +223,103 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
             onClick={() => setSelectedInvoice(null)}
           />
 
-          <div className="relative z-10 w-[90%] h-[90%] bg-white rounded-lg overflow-hidden shadow-xl flex">
+          <div className="relative z-10 bg-gray-900 text-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6 shadow-xl border border-gray-700">
 
-            {/* LEFT */}
-            <div className="w-2/3 h-full border-r">
+            {/* Header */}
 
-              <div className="p-3 border-b flex justify-between items-center">
-                <span className="font-semibold">
-                  {selectedInvoice.title}
-                </span>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">
+                {selectedInvoice.title}
+              </h2>
+              <button
+                onClick={() => setSelectedInvoice(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
 
-                <button
-                  onClick={() => setSelectedInvoice(null)}
-                  className="text-red-500 text-lg"
-                >
-                  ✕
-                </button>
+            {/* Content Grid */}
+
+            <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+
+              <div>
+                <p className="text-gray-400">Anbieter</p>
+                <p>{selectedInvoice.vendor || "-"}</p>
               </div>
 
-              <div className="w-full h-[calc(100%-50px)]">
+              <div>
+                <p className="text-gray-400">Datum</p>
+                <p>
+                  {selectedInvoice.invoice_date
+                    ? new Date(selectedInvoice.invoice_date).toLocaleDateString()
+                    : "-"}
+                </p>
+              </div>
 
-                {selectedInvoice.file_type === "application/pdf" ? (
-                  <iframe
-                    src={getFileUrl(selectedInvoice)}
-                    className="w-full h-full"
-                  />
-                ) : (
-                  <img
-                    src={getFileUrl(selectedInvoice)}
-                    alt="receipt"
-                    className="max-h-full mx-auto"
-                  />
-                )}
+              <div>
+                <p className="text-gray-400">Brutto</p>
+                <p>{getAmount(selectedInvoice).toFixed(2)} €</p>
+              </div>
 
+              <div>
+                <p className="text-gray-400">Netto</p>
+                <p>{selectedInvoice.amount?.toFixed(2) || "0.00"} €</p>
+              </div>
+
+              <div>
+                <p className="text-gray-400">MwSt</p>
+                <p>{selectedInvoice.vat?.toFixed(2) || "0.00"} €</p>
+              </div>
+
+              <div>
+                <p className="text-gray-400">MwSt Satz</p>
+                <p>{selectedInvoice.vat_rate || "-"}%</p>
               </div>
 
             </div>
 
-            {/* RIGHT */}
-            <div className="w-1/3 h-full p-4 overflow-y-auto bg-gray-50">
+            {/* FILE PREVIEW */}
 
-              <h3 className="text-lg font-semibold mb-4">Rechnungsdaten</h3>
-
-              <div className="space-y-3 text-sm">
-
-                <Row label="Anbieter" value={selectedInvoice.vendor} />
-                <Row label="Kategorie" value={selectedInvoice.category} />
-                <Row label="Datum" value={selectedInvoice.invoice_date} />
-
-                <hr />
-
-                <Row
-                  label="Netto"
-                  value={`${Number(selectedInvoice.amount || 0).toFixed(2)} €`}
+            {selectedInvoice.file_url && (
+              <div className="mb-6">
+                <iframe
+                  src={`${api.defaults.baseURL}${selectedInvoice.file_url}`}
+                  className="w-full h-[300px] rounded border border-gray-700"
+                  title="Rechnung"
                 />
-
-                <Row
-                  label="MwSt"
-                  value={`${Number(selectedInvoice.vat || 0).toFixed(2)} €`}
-                />
-
-                <Row
-                  label="Brutto"
-                  value={`${Number(selectedInvoice.gross_amount || 0).toFixed(2)} €`}
-                />
-
-                <Row
-                  label="Steuersatz"
-                  value={
-                    selectedInvoice.vat_rate
-                      ? `${selectedInvoice.vat_rate}%`
-                      : "-"
-                  }
-                />
-
-                <hr />
-
-                <Row label="Status" value={selectedInvoice.payment_status} />
-
-                {/* ACTIONS */}
-                <div className="pt-4 space-y-2">
-
-                  {selectedInvoice.payment_status !== "paid" && (
-                    <button
-                      onClick={() => markPaid(selectedInvoice.id)}
-                      className="w-full bg-green-600 py-2 rounded text-white"
-                    >
-                      Als bezahlt markieren
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => deleteInvoice(selectedInvoice.id)}
-                    className="w-full bg-red-600 py-2 rounded text-white"
-                  >
-                    Löschen
-                  </button>
-
-                </div>
-
               </div>
+            )}
+
+            {/* ACTIONS */}
+
+            <div className="flex justify-end gap-2">
+
+              {selectedInvoice.payment_status !== "paid" && (
+                <button
+                  onClick={() => markPaid(selectedInvoice.id)}
+                  className="bg-green-600 px-4 py-2 rounded text-sm"
+                >
+                  Als bezahlt markieren
+                </button>
+              )}
+
+              <button
+                onClick={() => deleteInvoice(selectedInvoice.id)}
+                className="bg-red-600 px-4 py-2 rounded text-sm"
+              >
+                Löschen
+              </button>
 
             </div>
 
           </div>
 
         </div>
-
       )}
 
     </div>
 
   );
 
-}
-
-// -----------------------------
-// Helper
-// -----------------------------
-function Row({ label, value }) {
-  return (
-    <div className="flex justify-between">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-right">
-        {value || "-"}
-      </span>
-    </div>
-  );
 }
