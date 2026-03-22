@@ -11,15 +11,13 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // -----------------------------
   // Helpers
   // -----------------------------
-
-  const getAmount = (inv) => {
-    return inv?.gross_amount ?? inv?.amount ?? 0;
-  };
+  const getGross = (inv) => inv?.gross_amount ?? inv?.amount ?? 0;
+  const getNet = (inv) => inv?.net_amount ?? inv?.amount ?? 0;
+  const getVat = (inv) => inv?.vat_amount ?? inv?.vat ?? 0;
 
   // -----------------------------
   // Filter + Sort
   // -----------------------------
-
   const processedInvoices = useMemo(() => {
 
     let data = Array.isArray(invoices) ? [...invoices] : [];
@@ -37,21 +35,10 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
 
     data.sort((a, b) => {
 
-      if (sort === "date_desc") {
-        return new Date(b?.invoice_date || 0) - new Date(a?.invoice_date || 0);
-      }
-
-      if (sort === "date_asc") {
-        return new Date(a?.invoice_date || 0) - new Date(b?.invoice_date || 0);
-      }
-
-      if (sort === "amount_desc") {
-        return getAmount(b) - getAmount(a);
-      }
-
-      if (sort === "amount_asc") {
-        return getAmount(a) - getAmount(b);
-      }
+      if (sort === "date_desc") return new Date(b?.invoice_date || 0) - new Date(a?.invoice_date || 0);
+      if (sort === "date_asc") return new Date(a?.invoice_date || 0) - new Date(b?.invoice_date || 0);
+      if (sort === "amount_desc") return getGross(b) - getGross(a);
+      if (sort === "amount_asc") return getGross(a) - getGross(b);
 
       return 0;
 
@@ -64,7 +51,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // -----------------------------
   // Actions
   // -----------------------------
-
   const markPaid = async (id) => {
     try {
       await api.post(`/accounting/invoices/${id}/mark-paid`);
@@ -88,13 +74,11 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // -----------------------------
   // Render
   // -----------------------------
-
   return (
 
     <div>
 
       {/* Controls */}
-
       <div className="flex flex-wrap gap-3 mb-4">
 
         <select
@@ -129,11 +113,8 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       </div>
 
       {/* Table */}
-
       <div className="overflow-x-auto">
-
         <table className="w-full text-sm">
-
           <thead className="text-gray-400 border-b border-gray-700">
             <tr>
               <th className="text-left py-2">Datum</th>
@@ -143,33 +124,21 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
               <th className="text-right py-2">Aktionen</th>
             </tr>
           </thead>
-
           <tbody>
-
             {processedInvoices.map((inv) => {
-
               if (!inv?.id) return null;
 
               return (
-
                 <tr
                   key={inv.id}
                   className="border-b border-gray-800 hover:bg-gray-900 cursor-pointer"
                   onClick={() => setSelectedInvoice(inv)}
                 >
-
                   <td className="py-2">
-                    {inv.invoice_date
-                      ? new Date(inv.invoice_date).toLocaleDateString()
-                      : "-"}
+                    {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "-"}
                   </td>
-
                   <td>{inv.vendor || "-"}</td>
-
-                  <td>
-                    {getAmount(inv).toFixed(2)} €
-                  </td>
-
+                  <td>{getGross(inv).toFixed(2)} €</td>
                   <td>
                     {inv.payment_status === "paid" ? (
                       <span className="text-green-400">Bezahlt</span>
@@ -177,12 +146,10 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                       <span className="text-yellow-400">Offen</span>
                     )}
                   </td>
-
                   <td
                     className="text-right space-x-2"
                     onClick={(e) => e.stopPropagation()}
                   >
-
                     {inv.payment_status !== "paid" && (
                       <button
                         onClick={() => markPaid(inv.id)}
@@ -191,30 +158,21 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                         Bezahlt
                       </button>
                     )}
-
                     <button
                       onClick={() => deleteInvoice(inv.id)}
                       className="bg-red-600 px-2 py-1 rounded text-xs"
                     >
                       Löschen
                     </button>
-
                   </td>
-
                 </tr>
-
               );
-
             })}
-
           </tbody>
-
         </table>
-
       </div>
 
-      {/* MODAL */}
-
+      {/* Modal */}
       {selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
 
@@ -226,11 +184,8 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
           <div className="relative z-10 bg-gray-900 text-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6 shadow-xl border border-gray-700">
 
             {/* Header */}
-
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">
-                {selectedInvoice.title}
-              </h2>
+              <h2 className="text-lg font-semibold">{selectedInvoice.title}</h2>
               <button
                 onClick={() => setSelectedInvoice(null)}
                 className="text-gray-400 hover:text-white"
@@ -240,9 +195,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
             </div>
 
             {/* Content Grid */}
-
             <div className="grid grid-cols-2 gap-4 text-sm mb-6">
-
               <div>
                 <p className="text-gray-400">Anbieter</p>
                 <p>{selectedInvoice.vendor || "-"}</p>
@@ -250,37 +203,31 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
 
               <div>
                 <p className="text-gray-400">Datum</p>
-                <p>
-                  {selectedInvoice.invoice_date
-                    ? new Date(selectedInvoice.invoice_date).toLocaleDateString()
-                    : "-"}
-                </p>
+                <p>{selectedInvoice.invoice_date ? new Date(selectedInvoice.invoice_date).toLocaleDateString() : "-"}</p>
               </div>
 
               <div>
                 <p className="text-gray-400">Brutto</p>
-                <p>{getAmount(selectedInvoice).toFixed(2)} €</p>
+                <p>{getGross(selectedInvoice).toFixed(2)} €</p>
               </div>
 
               <div>
                 <p className="text-gray-400">Netto</p>
-                <p>{selectedInvoice.amount?.toFixed(2) || "0.00"} €</p>
+                <p>{getNet(selectedInvoice).toFixed(2)} €</p>
               </div>
 
               <div>
                 <p className="text-gray-400">MwSt</p>
-                <p>{selectedInvoice.vat?.toFixed(2) || "0.00"} €</p>
+                <p>{getVat(selectedInvoice).toFixed(2)} €</p>
               </div>
 
               <div>
                 <p className="text-gray-400">MwSt Satz</p>
                 <p>{selectedInvoice.vat_rate || "-"}%</p>
               </div>
-
             </div>
 
-            {/* FILE PREVIEW */}
-
+            {/* File Preview */}
             {selectedInvoice.file_url && (
               <div className="mb-6">
                 <iframe
@@ -291,10 +238,8 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
               </div>
             )}
 
-            {/* ACTIONS */}
-
+            {/* Actions */}
             <div className="flex justify-end gap-2">
-
               {selectedInvoice.payment_status !== "paid" && (
                 <button
                   onClick={() => markPaid(selectedInvoice.id)}
@@ -303,14 +248,12 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                   Als bezahlt markieren
                 </button>
               )}
-
               <button
                 onClick={() => deleteInvoice(selectedInvoice.id)}
                 className="bg-red-600 px-4 py-2 rounded text-sm"
               >
                 Löschen
               </button>
-
             </div>
 
           </div>
@@ -319,7 +262,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
       )}
 
     </div>
-
   );
 
 }
