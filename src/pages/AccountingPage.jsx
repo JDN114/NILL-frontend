@@ -18,18 +18,16 @@ import {
   Bar,
   XAxis,
   YAxis,
-  LabelList
+  LabelList,
 } from "recharts";
 
-const COLORS = ["#4F46E5", "#6366F1", "#818CF8", "#A5B4FC", "#C7D2FE", "#E0E7FF"];
-
-// Mapping Kategorien auf Deutsch
+const COLORS = ["#6366F1", "#EF4444", "#FBBF24", "#10B981", "#8B5CF6"];
 const CATEGORY_MAP = {
-  "Food": "Essen",
-  "Transport": "Transport",
-  "Office": "Büro",
-  "Travel": "Reisen",
-  "Other": "Sonstiges"
+  Food: "Essen",
+  Transport: "Transport",
+  Office: "Büro",
+  Travel: "Reisen",
+  Other: "Sonstiges",
 };
 
 export default function AccountingPage() {
@@ -40,7 +38,11 @@ export default function AccountingPage() {
   const [bankStatus, setBankStatus] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [chartInitialized, setChartInitialized] = useState(false);
+
+  // -------------------------
+  // Helpers
+  // -------------------------
 
   const buildMonthly = (data) => {
     const map = {};
@@ -54,13 +56,19 @@ export default function AccountingPage() {
     return Object.entries(map).map(([k, v]) => ({ month: k, total: v }));
   };
 
+  // -------------------------
+  // API LOADERS
+  // -------------------------
+
   const loadInvoices = async () => {
     try {
       const res = await api.get("/accounting/invoices");
       const data = Array.isArray(res.data) ? res.data : [];
       setInvoices(data);
       setMonthly(buildMonthly(data));
-    } catch (e) { console.error("invoice load failed", e); }
+    } catch (e) {
+      console.error("invoice load failed", e);
+    }
   };
 
   const loadStats = async () => {
@@ -68,39 +76,51 @@ export default function AccountingPage() {
       const res = await api.get("/accounting/stats");
       const s = res.data;
       setStats([
-        { label: "Total", value: s.total_amount, showEuro: true },
+        { label: "Total", value: s.total_amount },
         { label: "Unpaid", value: s.unpaid_count },
         { label: "Overdue", value: s.overdue_count },
         { label: "Categories", value: s.by_category?.length || 0 },
       ]);
-    } catch (e) { console.error("stats failed", e); }
+    } catch (e) {
+      console.error("stats failed", e);
+    }
   };
 
   const loadCategories = async () => {
     try {
       const res = await api.get("/accounting/category-stats");
-      // Übersetze Kategorie-Bezeichnungen
-      const mapped = Array.isArray(res.data) ? res.data.map(c => ({
-        ...c,
-        category: CATEGORY_MAP[c.category] || c.category
-      })) : [];
-      setCategories(mapped);
-    } catch (e) { console.error("category stats failed", e); }
+      setCategories(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error("category stats failed", e);
+    }
   };
 
   const loadBank = async () => {
-    try { const res = await api.get("/bank/status"); setBankStatus(res.data); }
-    catch { console.warn("bank status not available"); }
+    try {
+      const res = await api.get("/bank/status");
+      setBankStatus(res.data);
+    } catch {
+      console.warn("bank status not available");
+    }
   };
+
+  // -------------------------
+  // INIT
+  // -------------------------
 
   useEffect(() => {
     loadInvoices();
     loadStats();
     loadCategories();
     loadBank();
+
     const invoiceInterval = setInterval(loadInvoices, 15000);
     const statsInterval = setInterval(loadStats, 60000);
     const bankInterval = setInterval(loadBank, 120000);
+
+    // Charts Animation einmal initial
+    setTimeout(() => setChartInitialized(true), 1500);
+
     return () => {
       clearInterval(invoiceInterval);
       clearInterval(statsInterval);
@@ -108,17 +128,38 @@ export default function AccountingPage() {
     };
   }, []);
 
-  const connectBank = () => window.location.href = `${api.defaults.baseURL}/bank/connect`;
-  const disconnectBank = async () => { try { await api.post("/bank/disconnect"); loadBank(); } catch (e) { console.error(e); } };
-  const exportDATEV = () => window.open(`${api.defaults.baseURL}/tax/export/datev`, "_blank");
+  // -------------------------
+  // Bank Actions
+  // -------------------------
+
+  const connectBank = () => {
+    window.location.href = `${api.defaults.baseURL}/bank/connect`;
+  };
+
+  const disconnectBank = async () => {
+    try {
+      await api.post("/bank/disconnect");
+      loadBank();
+    } catch (e) {
+      console.error("disconnect failed", e);
+    }
+  };
+
+  const exportDATEV = () => {
+    window.open(`${api.defaults.baseURL}/tax/export/datev`, "_blank");
+  };
 
   const overdue = invoices.filter(
-    (i) => i?.payment_deadline && i?.payment_status === "unpaid" && new Date(i.payment_deadline) < new Date()
+    (i) =>
+      i?.payment_deadline &&
+      i?.payment_status === "unpaid" &&
+      new Date(i.payment_deadline) < new Date()
   );
 
-  const filteredInvoices = selectedCategory
-    ? invoices.filter((i) => (CATEGORY_MAP[i.category] || i.category) === selectedCategory)
-    : invoices;
+  const mappedCategories = categories.map((c) => ({
+    ...c,
+    category: CATEGORY_MAP[c.category] || c.category,
+  }));
 
   return (
     <PageLayout>
@@ -132,14 +173,24 @@ export default function AccountingPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {stats.map((s, i) => (
-          <Card key={i} className="p-4 transition transform hover:scale-105 hover:shadow-lg cursor-pointer">
-            <p className="text-sm text-gray-400">{s.label}</p>
-            <p className="text-xl font-bold">
-              {s.value}{s.showEuro ? " €" : ""}
-            </p>
-          </Card>
-        ))}
+        {stats.map((s, i) => {
+          let label = s.label;
+          if (label === "Categories") label = "Kategorien";
+          if (label === "Total") label = "Total";
+
+          return (
+            <Card
+              key={i}
+              className="p-4 transition transform hover:scale-105 hover:shadow-lg cursor-pointer"
+            >
+              <p className="text-sm text-gray-400">{label}</p>
+              <p className="text-xl font-bold">
+                {s.value}
+                {label === "Total" ? " €" : ""}
+              </p>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Bank */}
@@ -148,12 +199,22 @@ export default function AccountingPage() {
         {bankStatus?.connected ? (
           <div className="flex justify-between items-center">
             <p className="text-green-400">Bank verbunden</p>
-            <button onClick={disconnectBank} className="bg-red-600 px-3 py-1 rounded text-sm">Trennen</button>
+            <button
+              onClick={disconnectBank}
+              className="bg-red-600 px-3 py-1 rounded text-sm"
+            >
+              Trennen
+            </button>
           </div>
         ) : (
           <div className="flex justify-between items-center">
             <p className="text-gray-400">Keine Bank verbunden</p>
-            <button onClick={connectBank} className="bg-blue-600 px-3 py-1 rounded text-sm">Bank verbinden</button>
+            <button
+              onClick={connectBank}
+              className="bg-blue-600 px-3 py-1 rounded text-sm"
+            >
+              Bank verbinden
+            </button>
           </div>
         )}
         <BankInsights onUpload={() => setUploadOpen(true)} />
@@ -166,39 +227,42 @@ export default function AccountingPage() {
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
-                data={categories}
+                data={mappedCategories}
                 dataKey="total"
                 nameKey="category"
                 outerRadius={90}
+                paddingAngle={4}
                 label={(entry) => `${entry.category}: ${entry.value} €`}
-                onClick={(entry) => setSelectedCategory(entry.category)}
+                isAnimationActive={!chartInitialized}
               >
-                {categories.map((c, i) => (
+                {mappedCategories.map((c, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value, name, props) => {
-                const total = categories.reduce((acc, c) => acc + c.total, 0);
-                const percent = total ? ((props.payload.total / total) * 100).toFixed(1) : 0;
-                return [`${value} € (${percent}%)`, props.payload.category];
-              }} />
+              <Tooltip
+                formatter={(value, name, props) => {
+                  const total = mappedCategories.reduce((acc, c) => acc + c.total, 0);
+                  const percent = total ? ((props.payload.total / total) * 100).toFixed(1) : 0;
+                  return [`${value} € (${percent}%)`, props.payload.category];
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
-          {selectedCategory && (
-            <p className="text-sm text-gray-400 mt-2 cursor-pointer" onClick={() => setSelectedCategory(null)}>
-              Alle Kategorien anzeigen
-            </p>
-          )}
         </Card>
 
         <Card className="p-4">
           <h2 className="mb-4 font-semibold">Monatliche Ausgaben</h2>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={monthly}>
+            <BarChart data={monthly} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip formatter={(value) => `${value} €`} />
-              <Bar dataKey="total" fill="#6366F1" radius={[4, 4, 0, 0]} isAnimationActive>
+              <Bar
+                dataKey="total"
+                fill="#6366F1"
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={!chartInitialized}
+              >
                 <LabelList dataKey="total" position="top" formatter={(v) => `${v} €`} />
               </Bar>
             </BarChart>
@@ -211,12 +275,21 @@ export default function AccountingPage() {
         <div className="flex justify-between mb-4">
           <h2 className="font-semibold">Rechnungen</h2>
           <div className="flex gap-2">
-            <button onClick={() => setCreateOpen(true)} className="bg-blue-600 px-3 py-1 rounded text-sm">Neue Rechnung</button>
-            <button onClick={() => setUploadOpen(true)} className="bg-green-600 px-3 py-1 rounded text-sm">Beleg scannen</button>
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="bg-blue-600 px-3 py-1 rounded text-sm"
+            >
+              Neue Rechnung
+            </button>
+            <button
+              onClick={() => setUploadOpen(true)}
+              className="bg-green-600 px-3 py-1 rounded text-sm"
+            >
+              Beleg scannen
+            </button>
           </div>
         </div>
-
-        <InvoiceList invoices={filteredInvoices} onUpdated={loadInvoices} />
+        <InvoiceList invoices={invoices} onUpdated={loadInvoices} />
       </Card>
 
       {/* Steuer-Dashboard */}
@@ -227,8 +300,16 @@ export default function AccountingPage() {
         </div>
       </section>
 
-      <InvoiceCreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={loadInvoices} />
-      <ReceiptUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onCreated={loadInvoices} />
+      <InvoiceCreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={loadInvoices}
+      />
+      <ReceiptUploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onCreated={loadInvoices}
+      />
     </PageLayout>
   );
 }
