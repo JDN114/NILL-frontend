@@ -5,7 +5,6 @@ import InvoiceList from "../components/accounting/InvoiceList";
 import BankInsights from "../components/accounting/BankInsights";
 import TaxDashboard from "../components/accounting/TaxDashboard";
 import ReceiptUploadModal from "../components/accounting/ReceiptUpload";
-import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
 import api from "../services/api";
 
 import {
