@@ -1,9 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import PageLayout from "../components/layout/PageLayout";
-import Calendar from "react-calendar";
 import api from "../lib/api";
-import 'react-calendar/dist/Calendar.css';
 import clsx from "clsx";
+import 'react-calendar/dist/Calendar.css';
+
+// Dynamisches Importieren nur im Browser
+const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
 
 export default function KalenderLanding() {
   const [events, setEvents] = useState([]);
@@ -11,6 +14,7 @@ export default function KalenderLanding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Events laden
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -30,10 +34,11 @@ export default function KalenderLanding() {
     }
   }
 
+  // Events nach Datum gruppieren
   const eventsByDate = useMemo(() => {
     const map = {};
     (events || []).forEach(e => {
-      const start = e.start_at || e.date; // fallback auf e.date
+      const start = e.start_at || e.date;
       if (!start) return;
       const day = new Date(start).toDateString();
       if (!map[day]) map[day] = [];
@@ -44,6 +49,7 @@ export default function KalenderLanding() {
 
   const selectedDayEvents = eventsByDate[selectedDate?.toDateString()] || [];
 
+  // Nächste 5 Termine
   const nextEvents = useMemo(() => {
     const now = new Date();
     return (events || [])
@@ -68,7 +74,7 @@ export default function KalenderLanding() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Calendar */}
           <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-xl border border-white/10 shadow-lg">
-            {selectedDate && (
+            {typeof window !== "undefined" && selectedDate && (
               <Calendar
                 value={selectedDate}
                 onChange={date => date && setSelectedDate(date)}
