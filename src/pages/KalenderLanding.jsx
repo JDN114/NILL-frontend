@@ -4,7 +4,7 @@ import Calendar from "react-calendar";
 import api from "../lib/api";
 import 'react-calendar/dist/Calendar.css';
 import { motion, AnimatePresence } from "framer-motion";
-import EventModal from "../components/calendar/EventModal"; // Neues Modal Component
+import EventModal from "../components/Calendar/EventModal"; // Neues Modal Component
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
