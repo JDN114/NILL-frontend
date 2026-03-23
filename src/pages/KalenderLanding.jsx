@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Calendar from "react-calendar";
 import api from "../lib/api";
 import 'react-calendar/dist/Calendar.css';
+import clsx from "clsx";
 
-export default function CalendarPage() {
+export default function KalenderLanding() {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
@@ -15,8 +16,9 @@ export default function CalendarPage() {
   }, []);
 
   async function fetchEvents() {
+    setLoading(true);
     try {
-      const res = await api.get("/calendar/events/upcoming", { params: { days: 30 } });
+      const res = await api.get("/calendar/events/upcoming", { params: { days: 90 } });
       setEvents(res.data || []);
       setError(false);
     } catch (err) {
@@ -28,13 +30,32 @@ export default function CalendarPage() {
     }
   }
 
-  const nextEvents = events.filter(e => new Date(e.date) >= new Date()).slice(0, 5);
+  const eventsByDate = useMemo(() => {
+    const map = {};
+    events.forEach(e => {
+      const day = new Date(e.start_at).toDateString();
+      if (!map[day]) map[day] = [];
+      map[day].push(e);
+    });
+    return map;
+  }, [events]);
+
+  const selectedDayEvents = eventsByDate[selectedDate.toDateString()] || [];
+
+  const nextEvents = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter(e => new Date(e.start_at) >= now)
+      .sort((a,b) => new Date(a.start_at) - new Date(b.start_at))
+      .slice(0, 5);
+  }, [events]);
 
   return (
     <PageLayout>
-      <h1 className="text-2xl font-bold mb-6 text-white">Kalender</h1>
+      <h1 className="text-3xl font-bold mb-6 text-white">Kalender</h1>
 
       {loading && <p className="text-gray-400">Lade Termine...</p>}
+
       {!loading && error && (
         <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg text-red-400">
           Termine konnten nicht geladen werden.
@@ -43,21 +64,42 @@ export default function CalendarPage() {
 
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-lg border border-white/5">
+          {/* Calendar */}
+          <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-xl border border-white/10 shadow-lg">
             <Calendar
               value={selectedDate}
               onChange={setSelectedDate}
-              tileClassName={({ date }) =>
-                events.some(e => new Date(e.date).toDateString() === date.toDateString())
-                  ? "bg-[var(--accent)]/20 rounded"
-                  : ""
+              calendarType="US"
+              next2Label={null}
+              prev2Label={null}
+              className="react-calendar text-white border-none bg-[#0a1120]"
+              tileClassName={({ date, view }) =>
+                clsx(
+                  "transition-colors duration-200",
+                  eventsByDate[date.toDateString()] && "bg-[var(--accent)]/20 rounded-lg",
+                  date.toDateString() === selectedDate.toDateString() && "bg-[var(--accent)]/60 text-white font-semibold"
+                )
               }
             />
+            {selectedDayEvents.length > 0 && (
+              <div className="mt-4 p-2 bg-[#111827]/80 rounded-lg border border-white/5 shadow-inner max-h-60 overflow-y-auto">
+                <h3 className="text-white font-semibold mb-2">Termine am {selectedDate.toLocaleDateString()}</h3>
+                <ul className="space-y-2">
+                  {selectedDayEvents.map(e => (
+                    <li key={e.id} className="p-2 bg-[#1f2937]/50 rounded border border-white/5 hover:bg-[var(--accent)]/30 transition">
+                      <p className="font-semibold">{e.title}</p>
+                      <p className="text-gray-400 text-sm">{new Date(e.start_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {new Date(e.end_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
-          <div className="bg-[#0a1120] p-4 rounded-lg border border-white/5 flex flex-col">
+          {/* Upcoming Events */}
+          <div className="bg-[#0a1120] p-4 rounded-xl border border-white/10 shadow-lg flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-semibold text-white">Nächste Termine</h2>
+              <h2 className="font-semibold text-white text-lg">Nächste Termine</h2>
               <button className="px-3 py-1 bg-[var(--accent)] rounded text-white text-sm hover:bg-opacity-80 transition">
                 Termin eintragen
               </button>
@@ -65,11 +107,11 @@ export default function CalendarPage() {
             {nextEvents.length === 0 ? (
               <p className="text-gray-400">Keine bevorstehenden Termine.</p>
             ) : (
-              <ul className="space-y-2 overflow-y-auto max-h-[300px]">
+              <ul className="space-y-2 overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-[var(--accent)] scrollbar-track-[#0a1120]">
                 {nextEvents.map(e => (
-                  <li key={e.id} className="bg-[#111827] p-2 rounded border border-white/5">
-                    <p className="font-semibold">{e.title}</p>
-                    <p className="text-gray-400 text-sm">{new Date(e.date).toLocaleString()}</p>
+                  <li key={e.id} className="bg-[#111827]/50 p-3 rounded-lg border border-white/5 hover:bg-[var(--accent)]/30 transition cursor-pointer">
+                    <p className="font-semibold text-white">{e.title}</p>
+                    <p className="text-gray-400 text-sm">{new Date(e.start_at).toLocaleString()}</p>
                   </li>
                 ))}
               </ul>
