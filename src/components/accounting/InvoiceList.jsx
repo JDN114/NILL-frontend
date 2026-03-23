@@ -1,25 +1,35 @@
-import { useState, useMemo } from "react";
+kimport { useState, useMemo } from "react";
 import api from "../../services/api";
 
 export default function InvoiceList({ invoices = [], onUpdated }) {
-
   const [sort, setSort] = useState("date_desc");
   const [statusFilter, setStatusFilter] = useState("all");
   const [vendorFilter, setVendorFilter] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // -----------------------------
-  // Helpers
+  // Helpers (SAFE)
   // -----------------------------
-  const getGross = (inv) => inv?.gross_amount ?? inv?.amount ?? 0;
-  const getNet = (inv) => inv?.net_amount ?? inv?.amount ?? 0;
-  const getVat = (inv) => inv?.vat_amount ?? inv?.vat ?? 0;
+  const getGross = (inv) => Number(inv?.gross_amount ?? inv?.amount ?? 0);
+  const getNet = (inv) => Number(inv?.net_amount ?? inv?.amount ?? 0);
+  const getVat = (inv) => Number(inv?.vat_amount ?? inv?.vat ?? 0);
+
+  const safeDate = (d) => {
+    if (!d) return "-";
+    try {
+      return new Date(d).toLocaleDateString();
+    } catch {
+      return "-";
+    }
+  };
 
   // -----------------------------
   // Filter + Sort
   // -----------------------------
   const processedInvoices = useMemo(() => {
-    let data = Array.isArray(invoices) ? [...invoices] : [];
+    let data = Array.isArray(invoices)
+      ? invoices.filter(Boolean) // 🔥 remove null entries
+      : [];
 
     if (statusFilter !== "all") {
       data = data.filter((i) => i?.payment_status === statusFilter);
@@ -71,7 +81,6 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
   // -----------------------------
   return (
     <div>
-
       {/* Controls */}
       <div className="flex flex-wrap gap-3 mb-4">
         <select
@@ -118,7 +127,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
           </thead>
 
           <tbody>
-            {processedInvoices.map((inv) => {
+            {(processedInvoices || []).map((inv) => {
               if (!inv?.id) return null;
 
               return (
@@ -128,10 +137,15 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                   onClick={() => setSelectedInvoice(inv)}
                 >
                   <td className="py-2">
-                    {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "-"}
+                    {safeDate(inv.invoice_date)}
                   </td>
+
                   <td>{inv.vendor || "-"}</td>
-                  <td>{getGross(inv).toFixed(2)} €</td>
+
+                  <td>
+                    {(getGross(inv) || 0).toFixed(2)} €
+                  </td>
+
                   <td>
                     {inv.payment_status === "paid" ? (
                       <span className="text-green-400">Bezahlt</span>
@@ -139,6 +153,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                       <span className="text-yellow-400">Offen</span>
                     )}
                   </td>
+
                   <td
                     className="text-right space-x-2"
                     onClick={(e) => e.stopPropagation()}
@@ -151,6 +166,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                         Bezahlt
                       </button>
                     )}
+
                     <button
                       onClick={() => deleteInvoice(inv.id)}
                       className="bg-red-600 px-2 py-1 rounded text-xs"
@@ -161,22 +177,34 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                 </tr>
               );
             })}
+
+            {/* Empty State */}
+            {(!processedInvoices || processedInvoices.length === 0) && (
+              <tr>
+                <td colSpan="5" className="text-center py-6 text-gray-500">
+                  Keine Rechnungen vorhanden
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Modal */}
-      {selectedInvoice && (
+      {selectedInvoice?.id && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/70"
             onClick={() => setSelectedInvoice(null)}
           />
-          <div className="relative z-10 bg-gray-900 text-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6 shadow-xl border border-gray-700">
 
+          <div className="relative z-10 bg-gray-900 text-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6 shadow-xl border border-gray-700">
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">{selectedInvoice.title}</h2>
+              <h2 className="text-lg font-semibold">
+                {selectedInvoice.title || "Rechnung"}
+              </h2>
+
               <button
                 onClick={() => setSelectedInvoice(null)}
                 className="text-gray-400 hover:text-white"
@@ -185,31 +213,36 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
               </button>
             </div>
 
-            {/* Content Grid */}
+            {/* Content */}
             <div className="grid grid-cols-2 gap-4 text-sm mb-6">
               <div>
                 <p className="text-gray-400">Anbieter</p>
                 <p>{selectedInvoice.vendor || "-"}</p>
               </div>
+
               <div>
                 <p className="text-gray-400">Datum</p>
-                <p>{selectedInvoice.invoice_date ? new Date(selectedInvoice.invoice_date).toLocaleDateString() : "-"}</p>
+                <p>{safeDate(selectedInvoice.invoice_date)}</p>
               </div>
+
               <div>
                 <p className="text-gray-400">Brutto</p>
-                <p>{getGross(selectedInvoice).toFixed(2)} €</p>
+                <p>{(getGross(selectedInvoice) || 0).toFixed(2)} €</p>
               </div>
+
               <div>
                 <p className="text-gray-400">Netto</p>
-                <p>{getNet(selectedInvoice).toFixed(2)} €</p>
+                <p>{(getNet(selectedInvoice) || 0).toFixed(2)} €</p>
               </div>
+
               <div>
                 <p className="text-gray-400">MwSt</p>
-                <p>{getVat(selectedInvoice).toFixed(2)} €</p>
+                <p>{(getVat(selectedInvoice) || 0).toFixed(2)} €</p>
               </div>
+
               <div>
                 <p className="text-gray-400">MwSt Satz</p>
-                <p>{selectedInvoice.vat_rate || "-"}%</p>
+                <p>{selectedInvoice.vat_rate ?? "-"}%</p>
               </div>
             </div>
 
@@ -234,6 +267,7 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                   Als bezahlt markieren
                 </button>
               )}
+
               <button
                 onClick={() => deleteInvoice(selectedInvoice.id)}
                 className="bg-red-600 px-4 py-2 rounded text-sm"
@@ -241,11 +275,9 @@ export default function InvoiceList({ invoices = [], onUpdated }) {
                 Löschen
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
