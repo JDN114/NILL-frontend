@@ -258,8 +258,8 @@ export default function AccountingPage() {
           <h2 className="font-semibold">Rechnungen</h2>
           <div className="flex gap-2">
             <button
-              onClick={() => setCreateOpen(true)}
-              className="bg-blue-600 px-3 py-1 rounded text-sm"
+              onClick={() => setUploadOpen(true)}
+              className="bg-green-600 px-3 py-1 rounded text-sm"
             >
               Beleg scannen
             </button>
