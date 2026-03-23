@@ -1,12 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import api from "../lib/api";
 import clsx from "clsx";
 import 'react-calendar/dist/Calendar.css';
 
-// Dynamisches Importieren nur im Browser
-const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
+// React.lazy für dynamisches Laden (nur im Browser)
+const Calendar = Suspense(() => import("react-calendar"));
 
 export default function KalenderLanding() {
   const [events, setEvents] = useState([]);
@@ -14,7 +13,6 @@ export default function KalenderLanding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Events laden
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -34,7 +32,6 @@ export default function KalenderLanding() {
     }
   }
 
-  // Events nach Datum gruppieren
   const eventsByDate = useMemo(() => {
     const map = {};
     (events || []).forEach(e => {
@@ -49,7 +46,6 @@ export default function KalenderLanding() {
 
   const selectedDayEvents = eventsByDate[selectedDate?.toDateString()] || [];
 
-  // Nächste 5 Termine
   const nextEvents = useMemo(() => {
     const now = new Date();
     return (events || [])
@@ -74,11 +70,11 @@ export default function KalenderLanding() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Calendar */}
           <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-xl border border-white/10 shadow-lg">
-            {typeof window !== "undefined" && selectedDate && (
+            <Suspense fallback={<p className="text-gray-400">Lade Kalender...</p>}>
               <Calendar
                 value={selectedDate}
                 onChange={date => date && setSelectedDate(date)}
-                calendarType="US" // Nur erlaubte Types
+                calendarType="US" // nur erlaubte types
                 next2Label={null}
                 prev2Label={null}
                 className="react-calendar text-white border-none bg-[#0a1120]"
@@ -90,7 +86,7 @@ export default function KalenderLanding() {
                   )
                 }
               />
-            )}
+            </Suspense>
 
             {selectedDayEvents.length > 0 && (
               <div className="mt-4 p-2 bg-[#111827]/80 rounded-lg border border-white/5 shadow-inner max-h-60 overflow-y-auto">
