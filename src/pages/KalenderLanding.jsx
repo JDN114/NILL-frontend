@@ -1,11 +1,9 @@
-import { useEffect, useState, useMemo, Suspense } from "react";
+kimport { useEffect, useState, useMemo } from "react";
 import PageLayout from "../components/layout/PageLayout";
+import Calendar from "react-calendar";
 import api from "../lib/api";
 import clsx from "clsx";
 import 'react-calendar/dist/Calendar.css';
-
-// React.lazy für dynamisches Laden (nur im Browser)
-const Calendar = Suspense(() => import("react-calendar"));
 
 export default function KalenderLanding() {
   const [events, setEvents] = useState([]);
@@ -32,6 +30,7 @@ export default function KalenderLanding() {
     }
   }
 
+  // Events nach Datum mappen
   const eventsByDate = useMemo(() => {
     const map = {};
     (events || []).forEach(e => {
@@ -70,23 +69,21 @@ export default function KalenderLanding() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Calendar */}
           <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-xl border border-white/10 shadow-lg">
-            <Suspense fallback={<p className="text-gray-400">Lade Kalender...</p>}>
-              <Calendar
-                value={selectedDate}
-                onChange={date => date && setSelectedDate(date)}
-                calendarType="US" // nur erlaubte types
-                next2Label={null}
-                prev2Label={null}
-                className="react-calendar text-white border-none bg-[#0a1120]"
-                tileClassName={({ date }) =>
-                  clsx(
-                    "transition-colors duration-200",
-                    eventsByDate[date.toDateString()] && "bg-[var(--accent)]/20 rounded-lg",
-                    date.toDateString() === selectedDate.toDateString() && "bg-[var(--accent)]/60 text-white font-semibold"
-                  )
-                }
-              />
-            </Suspense>
+            <Calendar
+              value={selectedDate}
+              onChange={date => date && setSelectedDate(date)}
+              calendarType="US"
+              next2Label={null}
+              prev2Label={null}
+              className="react-calendar text-white border-none bg-[#0a1120]"
+              tileClassName={({ date }) =>
+                clsx(
+                  "transition-colors duration-200",
+                  eventsByDate[date.toDateString()] && "bg-[var(--accent)]/20 rounded-lg",
+                  date.toDateString() === selectedDate.toDateString() && "bg-[var(--accent)]/60 text-white font-semibold"
+                )
+              }
+            />
 
             {selectedDayEvents.length > 0 && (
               <div className="mt-4 p-2 bg-[#111827]/80 rounded-lg border border-white/5 shadow-inner max-h-60 overflow-y-auto">
