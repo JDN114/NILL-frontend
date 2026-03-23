@@ -37,12 +37,12 @@ export default function AccountingPage() {
 
   const buildMonthly = (data) => {
     const map = {};
-    data.forEach((i) => {
+    (data || []).forEach((i) => {
       if (!i?.invoice_date || !i?.amount) return;
       const d = new Date(i.invoice_date);
       const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
       if (!map[key]) map[key] = 0;
-      map[key] += Number(i.amount);
+      map[key] += Number(i.amount) || 0;
     });
     return Object.entries(map).map(([k, v]) => ({ month: k, total: v }));
   };
@@ -59,33 +59,45 @@ export default function AccountingPage() {
       setMonthly(buildMonthly(data));
     } catch (e) {
       console.error("invoice load failed", e);
+      setInvoices([]); // 🔥 wichtig
     }
   };
 
   const loadStats = async () => {
     try {
       const res = await api.get("/accounting/stats");
-      const s = res.data;
+      const s = res.data || {};
       setStats([
-        { label: "Gesamt", value: s.total_amount, showEuro: true },
-        { label: "Offen", value: s.unpaid_count },
-        { label: "Überfällig", value: s.overdue_count },
+        { label: "Gesamt", value: s.total_amount || 0, showEuro: true },
+        { label: "Offen", value: s.unpaid_count || 0 },
+        { label: "Überfällig", value: s.overdue_count || 0 },
         { label: "Kategorien", value: s.by_category?.length || 0 },
       ]);
     } catch (e) {
       console.error("stats failed", e);
+      setStats([]);
     }
   };
 
   const loadCategories = async () => {
     try {
       const res = await api.get("/accounting/category-stats");
-      const data = Array.isArray(res.data) ? res.data : [];
-      // Sort by value descending for better visual
+
+      let data = Array.isArray(res.data) ? res.data : [];
+
+      // 🔥 FIX: null-safe machen
+      data = data.map((c) => ({
+        ...c,
+        category: c?.category || "Unbekannt",
+        total: Number(c?.total) || 0,
+      }));
+
       data.sort((a, b) => b.total - a.total);
+
       setCategories(data);
     } catch (e) {
       console.error("category stats failed", e);
+      setCategories([]);
     }
   };
 
@@ -95,6 +107,7 @@ export default function AccountingPage() {
       setBankStatus(res.data);
     } catch {
       console.warn("bank status not available");
+      setBankStatus(null);
     }
   };
 
@@ -136,20 +149,12 @@ export default function AccountingPage() {
     }
   };
 
-  const exportDATEV = () => {
-    window.open(`${api.defaults.baseURL}/tax/export/datev`, "_blank");
-  };
-
-  const overdue = invoices.filter(
+  const overdue = (invoices || []).filter(
     (i) =>
       i?.payment_deadline &&
       i?.payment_status === "unpaid" &&
       new Date(i.payment_deadline) < new Date()
   );
-
-  // -------------------------
-  // Pie colors
-  // -------------------------
 
   const pieColors = ["#4F46E5", "#6366F1", "#818CF8", "#A5B4FC", "#C7D2FE"];
 
@@ -209,27 +214,28 @@ export default function AccountingPage() {
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
-                data={categories}
+                data={categories || []}
                 dataKey="total"
                 nameKey="category"
                 outerRadius={90}
                 innerRadius={40}
                 isAnimationActive={!chartAnimated}
                 onAnimationEnd={() => setChartAnimated(true)}
-                label={({ name, percent }) =>
-                  `${name.length > 10 ? name.slice(0, 10) + "…" : name} (${(
-                    percent * 100
-                  ).toFixed(0)}%)`
-                }
+                label={({ name, percent }) => {
+                  const safeName = name || "Unbekannt";
+                  const short =
+                    safeName.length > 10
+                      ? safeName.slice(0, 10) + "…"
+                      : safeName;
+                  return `${short} (${((percent || 0) * 100).toFixed(0)}%)`;
+                }}
                 labelLine={false}
               >
-                {categories.map((c, i) => (
+                {(categories || []).map((c, i) => (
                   <Cell key={i} fill={pieColors[i % pieColors.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value, name) => [`${value} €`, name]}
-              />
+              <Tooltip formatter={(value, name) => [`${value} €`, name || "Unbekannt"]} />
             </PieChart>
           </ResponsiveContainer>
         </Card>
@@ -237,7 +243,7 @@ export default function AccountingPage() {
         <Card className="p-4">
           <h2 className="mb-4 font-semibold">Monatliche Ausgaben</h2>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={monthly}>
+            <BarChart data={monthly || []}>
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip formatter={(value) => `${value} €`} />
@@ -266,10 +272,9 @@ export default function AccountingPage() {
             </button>
           </div>
         </div>
-        <InvoiceList invoices={invoices} onUpdated={loadInvoices} />
+        <InvoiceList invoices={invoices || []} onUpdated={loadInvoices} />
       </Card>
 
-      {/* Steuer-Dashboard */}
       <section className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Steuer-Dashboard</h2>
         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded shadow">
@@ -283,11 +288,6 @@ export default function AccountingPage() {
         onCreated={loadInvoices}
       />
 
-      <ReceiptUploadModal
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        onCreated={loadInvoices}
-      />
     </PageLayout>
   );
 }
