@@ -7,7 +7,7 @@ export default function KalenderLanding() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // erst nach Mount rendern wir den Kalender
+    setIsClient(true); // wir sind jetzt clientseitig
   }, []);
 
   return (
@@ -23,11 +23,15 @@ export default function KalenderLanding() {
   );
 }
 
-// Dieser Teil wird nur clientseitig gerendert
 function ClientCalendar() {
-  const Calendar = require("react-calendar").default;
+  const [Calendar, setCalendar] = useState(null);
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Dynamischer Import nur auf Client
+  useEffect(() => {
+    import("react-calendar").then(mod => setCalendar(() => mod.default));
+  }, []);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -35,19 +39,21 @@ function ClientCalendar() {
         const res = await api.get("/calendar/events/upcoming", { params: { days: 30 } });
         setEvents(res.data || []);
       } catch (err) {
-        console.error(err);
+        console.error("Calendar fetch error:", err);
         setEvents([]);
       }
     }
     fetchEvents();
   }, []);
 
+  if (!Calendar) return <p className="text-gray-400">Kalender wird geladen...</p>;
+
   return (
     <div className="bg-[#0a1120] p-4 rounded-lg border border-white/5">
       <Calendar
         value={selectedDate}
         onChange={setSelectedDate}
-        calendarType="US" // zwingend setzen, sonst Unsupported calendar type
+        calendarType="US" // unbedingt setzen
         tileClassName={({ date }) =>
           events.some(e => new Date(e.start_at).toDateString() === date.toDateString())
             ? "bg-[var(--accent)]/30 rounded-lg"
