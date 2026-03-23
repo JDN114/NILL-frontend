@@ -4,7 +4,6 @@ import Card from "../components/ui/Card";
 import InvoiceList from "../components/accounting/InvoiceList";
 import BankInsights from "../components/accounting/BankInsights";
 import TaxDashboard from "../components/accounting/TaxDashboard";
-import InvoiceCreateModal from "../components/accounting/InvoiceCreateModal";
 import api from "../services/api";
 
 import {
@@ -261,12 +260,6 @@ export default function AccountingPage() {
               onClick={() => setCreateOpen(true)}
               className="bg-blue-600 px-3 py-1 rounded text-sm"
             >
-              Neue Rechnung
-            </button>
-            <button
-              onClick={() => setUploadOpen(true)}
-              className="bg-green-600 px-3 py-1 rounded text-sm"
-            >
               Beleg scannen
             </button>
           </div>
@@ -281,12 +274,11 @@ export default function AccountingPage() {
         </div>
       </section>
 
-      <InvoiceCreateModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+     <ReceiptUploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
         onCreated={loadInvoices}
       />
-
     </PageLayout>
   );
 }
