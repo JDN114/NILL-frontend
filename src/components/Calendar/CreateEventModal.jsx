@@ -1,38 +1,41 @@
-// /src/components/calendar/CreateEventModal.jsx
 import { useState } from "react";
-import { motion } from "framer-motion";
 import api from "../../lib/api";
 
-export default function CreateEventModal({ onClose, onCreated }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+export default function EventModal({ open, onClose, onCreated, selectedDate }) {
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    location: "",
+    all_day: false,
+    start_at: "",
+    end_at: "",
+  });
 
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [allDay, setAllDay] = useState(false);
+  if (!open) return null;
 
-  const [error, setError] = useState("");
+  const handleChange = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+  };
 
-  const submit = async () => {
-    if (!title.trim()) return setError("Titel ist erforderlich");
-    if (!start || !end) return setError("Zeitraum ist erforderlich");
+  const createEvent = async () => {
+    if (!form.title || !form.start_at) {
+      alert("Titel und Startzeit sind Pflicht");
+      return;
+    }
 
     try {
       await api.post("/calendar/events", {
-        title,
-        description,
-        location,
-        start_at: start,
-        end_at: end,
-        all_day: allDay,
+        ...form,
+        start_at: new Date(form.start_at).toISOString(),
+        end_at: form.all_day
+          ? new Date(form.start_at).toISOString()
+          : new Date(form.end_at).toISOString(),
       });
 
       onCreated?.();
       onClose();
     } catch (e) {
-      console.error(e);
-      setError("Fehler beim Erstellen");
+      console.error("create event failed", e);
     }
   };
 
@@ -43,82 +46,86 @@ export default function CreateEventModal({ onClose, onCreated }) {
         onClick={onClose}
       />
 
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="relative z-10 bg-gray-900 w-[500px] p-6 rounded-xl border border-white/10 shadow-xl"
-      >
-        <h2 className="text-xl font-semibold text-white mb-4">
+      <div className="relative z-10 bg-[#0f172a] p-6 rounded-2xl w-[420px] space-y-4 border border-white/10 shadow-xl">
+
+        <h2 className="text-lg font-semibold text-white">
           Neuer Termin
         </h2>
 
-        {error && (
-          <div className="text-red-400 text-sm mb-3">{error}</div>
-        )}
+        {/* TITLE */}
+        <input
+          placeholder="Titel *"
+          className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+          onChange={(e) => handleChange("title", e.target.value)}
+        />
 
-        <div className="space-y-3">
+        {/* DESCRIPTION */}
+        <textarea
+          placeholder="Beschreibung"
+          className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+          onChange={(e) => handleChange("description", e.target.value)}
+        />
+
+        {/* LOCATION */}
+        <input
+          placeholder="Ort"
+          className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+          onChange={(e) => handleChange("location", e.target.value)}
+        />
+
+        {/* ALL DAY */}
+        <label className="flex items-center gap-2 text-sm text-gray-300">
           <input
-            placeholder="Titel *"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-gray-800 p-2 rounded"
+            type="checkbox"
+            onChange={(e) => handleChange("all_day", e.target.checked)}
           />
+          Ganztägig
+        </label>
 
-          <textarea
-            placeholder="Beschreibung"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-gray-800 p-2 rounded"
-          />
+        {/* DATE PICKERS */}
+        <div className="space-y-2">
 
-          <input
-            placeholder="Ort"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full bg-gray-800 p-2 rounded"
-          />
-
-          <div className="flex gap-2">
+          <div>
+            <label className="text-xs text-gray-400">
+              Start *
+            </label>
             <input
               type="datetime-local"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="flex-1 bg-gray-800 p-2 rounded"
-            />
-            <input
-              type="datetime-local"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              className="flex-1 bg-gray-800 p-2 rounded"
+              className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+              onChange={(e) => handleChange("start_at", e.target.value)}
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={allDay}
-              onChange={() => setAllDay(!allDay)}
-            />
-            Ganztägig
-          </label>
+          {!form.all_day && (
+            <div>
+              <label className="text-xs text-gray-400">
+                Ende
+              </label>
+              <input
+                type="datetime-local"
+                className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+                onChange={(e) => handleChange("end_at", e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-end gap-2 mt-5">
+        {/* ACTIONS */}
+        <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="px-3 py-1 bg-gray-700 rounded"
+            className="text-gray-400 hover:text-white"
           >
             Abbrechen
           </button>
-
           <button
-            onClick={submit}
-            className="px-4 py-1 bg-[var(--accent)] rounded text-white"
+            onClick={createEvent}
+            className="bg-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-500"
           >
-            Erstellen
+            Speichern
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
