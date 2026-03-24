@@ -1,11 +1,11 @@
-// /src/pages/KalenderLanding.jsx
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Calendar from "react-calendar";
-import EventModal from "../components/Calendar/EventModal";
+import EventModal from "../components/calendar/EventModal";
 import api from "../lib/api";
 import 'react-calendar/dist/Calendar.css';
 import { motion, AnimatePresence } from "framer-motion";
+import Card from "../components/ui/Card";
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -32,12 +32,10 @@ export default function CalendarPage() {
     }
   }
 
-  // Events für die selektierte Tagesanzeige
   const eventsForDay = events.filter(e =>
     new Date(e.date).toDateString() === selectedDate.toDateString()
   );
 
-  // Nächste 5 bevorstehende Events
   const nextEvents = events.filter(e => new Date(e.date) >= new Date()).slice(0, 5);
 
   return (
@@ -46,30 +44,28 @@ export default function CalendarPage() {
 
       {loading && <p className="text-gray-400">Lade Termine...</p>}
       {!loading && error && (
-        <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg text-red-400">
+        <Card className="bg-red-500/10 border-red-500/30 p-4 text-red-400 mb-6">
           Termine konnten nicht geladen werden.
-        </div>
+        </Card>
       )}
 
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* CALENDAR */}
-          <div className="md:col-span-2 bg-[#0a1120] p-4 rounded-xl border border-white/5 shadow-lg">
+          {/* Calendar Panel */}
+          <Card className="md:col-span-2 bg-[#0a1120] border-white/5 p-4 rounded-xl shadow-lg">
             <Calendar
               value={selectedDate}
               onChange={setSelectedDate}
-              calendarType="US" // Fix für "Unsupported calendar type"
-              className="bg-[#0a1120] text-white rounded-xl"
               tileClassName={({ date }) =>
                 events.some(e => new Date(e.date).toDateString() === date.toDateString())
                   ? "bg-[var(--accent)]/30 rounded-lg font-semibold text-white shadow-inner"
                   : ""
               }
             />
-          </div>
+          </Card>
 
-          {/* UPCOMING EVENTS */}
-          <div className="bg-[#0a1120] p-4 rounded-xl border border-white/5 shadow-lg flex flex-col">
+          {/* Next Events */}
+          <Card className="bg-[#0a1120] border-white/5 p-4 rounded-xl shadow-lg flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-semibold text-white text-lg">Nächste Termine</h2>
               <button className="px-3 py-1 bg-[var(--accent)] rounded text-white text-sm hover:bg-opacity-80 transition">
@@ -93,11 +89,11 @@ export default function CalendarPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
 
-          {/* EVENTS FOR SELECTED DAY */}
+          {/* Tages Events */}
           {eventsForDay.length > 0 && (
-            <div className="md:col-span-3 bg-[#0a1120] p-4 rounded-xl border border-white/5 shadow-lg mt-6">
+            <Card className="md:col-span-3 bg-[#0a1120] border-white/5 p-4 rounded-xl shadow-lg mt-6">
               <h3 className="text-white font-semibold mb-3">
                 Termine für {selectedDate.toLocaleDateString()}
               </h3>
@@ -113,12 +109,12 @@ export default function CalendarPage() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Card>
           )}
         </div>
       )}
 
-      {/* EVENT MODAL */}
+      {/* Event Modal */}
       <AnimatePresence>
         {modalEvent && (
           <EventModal
