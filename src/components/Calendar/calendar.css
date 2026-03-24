@@ -1,36 +1,64 @@
-/* /src/components/calendar/calendar.css */
+/* /src/components/Calendar/calendar.css */
 
 .calendar-wrapper .react-calendar {
-  background: transparent;
+  background: #0f172a;
   border: none;
-  color: black;
+  color: white;
   width: 100%;
+  border-radius: 14px;
+  padding: 10px;
 }
 
+/* Navigation (Monat / Jahr) */
+.react-calendar__navigation {
+  margin-bottom: 10px;
+}
+
+.react-calendar__navigation button {
+  color: white;
+  font-weight: 600;
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: 0.2s;
+}
+
+.react-calendar__navigation button:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+/* Wochentage */
+.react-calendar__month-view__weekdays {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Tage */
 .react-calendar__tile {
   border-radius: 10px;
   transition: all 0.2s ease;
+  color: white;
 }
 
+/* Hover */
 .react-calendar__tile:hover {
   background: rgba(99, 102, 241, 0.2);
 }
 
+/* Heute */
 .react-calendar__tile--now {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
 }
 
+/* Aktiv */
+.react-calendar__tile--active {
+  background: #6366f1;
+  color: white;
+}
+
+/* 🔥 EVENT DAY */
 .event-day {
   background: rgba(99, 102, 241, 0.35) !important;
-  color: black;
-  font-weight: bold;
-}
-
-.react-calendar__navigation button {
-  color: black;
+  border: 1px solid rgba(99, 102, 241, 0.6);
   font-weight: 600;
-}
-
-.react-calendar__month-view__weekdays {
-  color: #00000;
 }
