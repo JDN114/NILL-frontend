@@ -1,4 +1,4 @@
-k// /src/pages/KalenderLanding.jsx
+// /src/pages/KalenderLanding.jsx
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
