@@ -22,12 +22,12 @@
 
 .event-day {
   background: rgba(99, 102, 241, 0.35) !important;
-  color: white;
+  color: black;
   font-weight: bold;
 }
 
 .react-calendar__navigation button {
-  color: white;
+  color: black;
   font-weight: 600;
 }
 
