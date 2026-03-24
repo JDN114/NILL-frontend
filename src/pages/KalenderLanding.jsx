@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Calendar from "react-calendar";
-import EventModal from "../components/calendar/EventModal";
+import EventModal from "../components/Calendar/EventModal";
 import api from "../lib/api";
 import 'react-calendar/dist/Calendar.css';
 import { motion, AnimatePresence } from "framer-motion";
