@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 
-import CalendarWrapper from "../components/calendar/CalendarWrapper";
-import EventList from "../components/calendar/EventList";
-import CalendarStats from "../components/calendar/CalendarStats";
-import EventModal from "../components/calendar/EventModal";
-import CreateEventModal from "../components/calendar/CreateEventModal";
+import CalendarWrapper from "../components/Calendar/CalendarWrapper";
+import EventList from "../components/Calendar/EventList";
+import CalendarStats from "../components/Calendar/CalendarStats";
+import EventModal from "../components/Calendar/EventModal";
+import CreateEventModal from "../components/Calendar/CreateEventModal";
 
 import api from "../lib/api";
 import { AnimatePresence } from "framer-motion";
