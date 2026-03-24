@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 
-import CalendarWrapper from "../components/Calendar/CalendarWrapper";
-import EventList from "../components/Calendar/EventList";
-import CalendarStats from "../components/Calendar/CalendarStats";
-import EventModal from "../components/Calendar/EventModal";
+import CalendarWrapper from "../components/calendar/CalendarWrapper";
+import EventList from "../components/calendar/EventList";
+import CalendarStats from "../components/calendar/CalendarStats";
+import EventModal from "../components/calendar/EventModal";
+import CreateEventModal from "../components/calendar/CreateEventModal";
 
 import api from "../lib/api";
 import { AnimatePresence } from "framer-motion";
@@ -14,13 +15,15 @@ import { AnimatePresence } from "framer-motion";
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [modalEvent, setModalEvent] = useState(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   // -------------------------
-  // FETCH
+  // FETCH EVENTS
   // -------------------------
   useEffect(() => {
     fetchEvents();
@@ -46,7 +49,7 @@ export default function CalendarPage() {
   }
 
   // -------------------------
-  // SAFE HELPERS
+  // HELPERS (SAFE)
   // -------------------------
   const isSameDay = (d1, d2) => {
     try {
@@ -57,11 +60,11 @@ export default function CalendarPage() {
   };
 
   const eventsForDay = events.filter(
-    (e) => e?.date && isSameDay(e.date, selectedDate)
+    (e) => e?.start_at && isSameDay(e.start_at, selectedDate)
   );
 
   const nextEvents = events
-    .filter((e) => e?.date && new Date(e.date) >= new Date())
+    .filter((e) => e?.start_at && new Date(e.start_at) >= new Date())
     .slice(0, 5);
 
   // -------------------------
@@ -71,15 +74,17 @@ export default function CalendarPage() {
     <PageLayout>
       <h1 className="text-3xl font-bold mb-6 text-white">Kalender</h1>
 
-      {/* STATES */}
+      {/* LOADING */}
       {loading && <p className="text-gray-400">Lade Termine...</p>}
 
+      {/* ERROR */}
       {!loading && error && (
         <Card className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 mb-6">
           Termine konnten nicht geladen werden.
         </Card>
       )}
 
+      {/* CONTENT */}
       {!loading && !error && (
         <>
           {/* STATS */}
@@ -102,7 +107,10 @@ export default function CalendarPage() {
                   Nächste Termine
                 </h2>
 
-                <button className="px-3 py-1 bg-[var(--accent)] rounded text-white text-sm hover:bg-opacity-80 transition">
+                <button
+                  onClick={() => setCreateOpen(true)}
+                  className="px-3 py-1 bg-[var(--accent)] rounded text-white text-sm hover:bg-opacity-80 transition"
+                >
                   Neuer Termin
                 </button>
               </div>
@@ -128,12 +136,22 @@ export default function CalendarPage() {
         </>
       )}
 
-      {/* MODAL */}
+      {/* EVENT DETAILS MODAL */}
       <AnimatePresence>
         {modalEvent && (
           <EventModal
             event={modalEvent}
             onClose={() => setModalEvent(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* CREATE EVENT MODAL */}
+      <AnimatePresence>
+        {createOpen && (
+          <CreateEventModal
+            onClose={() => setCreateOpen(false)}
+            onCreated={fetchEvents}
           />
         )}
       </AnimatePresence>
