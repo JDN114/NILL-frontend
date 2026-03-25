@@ -4,7 +4,6 @@ import Card from "../components/ui/Card";
 
 import CalendarWrapper from "../components/Calendar/CalendarWrapper";
 import EventList from "../components/Calendar/EventList";
-import CalendarStats from "../components/Calendar/CalendarStats";
 import EventModal from "../components/Calendar/EventModal";
 import CreateEventModal from "../components/Calendar/CreateEventModal";
 
@@ -28,7 +27,6 @@ export default function CalendarPage() {
     fetchEvents();
   }, []);
 
-
   async function handleDelete(event) {
     try {
       await api.delete(`/calendar/events/${event.id}`);
@@ -46,7 +44,6 @@ export default function CalendarPage() {
 
       const safeData = Array.isArray(res.data) ? res.data : [];
 
-      // 🔥 normalize backend → frontend
       const normalized = safeData.map((e) => ({
         ...e,
         start: e.start_at ? new Date(e.start_at) : null,
@@ -71,22 +68,39 @@ export default function CalendarPage() {
     d1 && d2 && new Date(d1).toDateString() === new Date(d2).toDateString();
 
   const now = new Date();
-  const in72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+
+  const next7d = new Date();
+  next7d.setDate(now.getDate() + 7);
+
+  const eventsNext7Days = events
+    .filter((e) => e?.start && e.start >= now && e.start <= next7d)
+    .sort((a, b) => a.start - b.start);
 
   const eventsForDay = events.filter(
     (e) => e?.start && isSameDay(e.start, selectedDate)
   );
-
-  const nextEvents = events
-    .filter((e) => e?.start && e.start >= now && e.start <= in72h)
-    .sort((a, b) => a.start - b.start);
 
   // -------------------------
   // RENDER
   // -------------------------
   return (
     <PageLayout>
-      <h1 className="text-3xl font-bold mb-6 text-white">Kalender</h1>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Kalender</h1>
+          <p className="text-gray-400 text-sm mt-1">
+            {events.length} Termine insgesamt
+          </p>
+        </div>
+
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="px-4 py-2 bg-[var(--accent)] rounded-lg text-white text-sm hover:bg-opacity-80 transition"
+        >
+          + Termin erstellen
+        </button>
+      </div>
 
       {/* LOADING */}
       {loading && <p className="text-gray-400">Lade Termine...</p>}
@@ -100,60 +114,52 @@ export default function CalendarPage() {
 
       {/* CONTENT */}
       {!loading && !error && (
-        <>
-          {/* STATS */}
-          <CalendarStats events={events} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* CALENDAR */}
+          <Card className="md:col-span-2 p-4 rounded-xl shadow-lg">
+            <CalendarWrapper
+              value={selectedDate}
+              onChange={setSelectedDate}
+              events={events}
+            />
+          </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* CALENDAR */}
-            <Card className="md:col-span-2 p-4 rounded-xl shadow-lg">
-              <CalendarWrapper
-                value={selectedDate}
-                onChange={setSelectedDate}
-                events={events}
-              />
-            </Card>
+          {/* NEXT 7 DAYS */}
+          <Card className="p-4 rounded-xl shadow-lg flex flex-col">
+            <h2 className="font-semibold text-white text-lg mb-3">
+              Nächste 7 Tage
+              <span className="ml-2 text-sm text-gray-400">
+                ({eventsNext7Days.length})
+              </span>
+            </h2>
 
-            {/* UPCOMING (72H) */}
-            <Card className="p-4 rounded-xl shadow-lg flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-white text-lg">
-                  Termine in den nächsten 72 Stunden
-                  <span className="ml-2 text-sm text-gray-400">
-                    ({nextEvents.length})
-                  </span>
-                </h2>
+            <EventList
+              events={eventsNext7Days}
+              onSelect={(e) => setModalEvent(e)}
+              onDelete={handleDelete}
+            />
+          </Card>
 
-                <button
-                  onClick={() => setCreateOpen(true)}
-                  className="px-3 py-1 bg-indigo-600 rounded text-white text-sm hover:bg-indigo-500 transition"
-                >
-                  + Termin
-                </button>
-              </div>
+          {/* DAY VIEW */}
+          <Card className="md:col-span-3 p-4 rounded-xl shadow-lg">
+            <h3 className="text-white font-semibold mb-3">
+              {selectedDate.toLocaleDateString("de-DE", {
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+              })}
+            </h3>
 
-              <EventList
-                events={nextEvents}
-                onSelect={(e) => setModalEvent(e)}
-              />
-            </Card>
-
-            {/* DAY VIEW */}
-            <Card className="md:col-span-3 p-4 rounded-xl shadow-lg">
-              <h3 className="text-white font-semibold mb-3">
-                Termine für {selectedDate.toLocaleDateString()}
-              </h3>
-
-              <EventList
-                events={eventsForDay}
-                onSelect={(e) => setModalEvent(e)}
-              />
-            </Card>
-          </div>
-        </>
+            <EventList
+              events={eventsForDay}
+              onSelect={(e) => setModalEvent(e)}
+              onDelete={handleDelete}
+            />
+          </Card>
+        </div>
       )}
 
-      {/* EVENT DETAILS MODAL */}
+      {/* EVENT MODAL */}
       <AnimatePresence>
         {modalEvent && (
           <EventModal
@@ -163,7 +169,7 @@ export default function CalendarPage() {
         )}
       </AnimatePresence>
 
-      {/* CREATE EVENT MODAL */}
+      {/* CREATE MODAL */}
       <AnimatePresence>
         {createOpen && (
           <CreateEventModal
