@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
   const [loading, setLoading] = useState(false);
 
-  // 🔥 LOCAL STATE (wichtig!)
+  // 🔥 LOCAL STATE (Eingaben isoliert vom Originalevent)
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -48,7 +48,8 @@ export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
     try {
       setLoading(true);
 
-      await api.patch(`/calendar/events/${event.id}`, {
+      // 🔥 PUT statt PATCH
+      await api.put(`/calendar/events/${event.id}`, {
         title: form.title,
         description: form.description,
         location: form.location,
