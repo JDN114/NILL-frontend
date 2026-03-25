@@ -1,4 +1,4 @@
-kimport { motion } from "framer-motion";
+import { motion } from "framer-motion";
 import api from "../../lib/api";
 import { useState, useEffect } from "react";
 
