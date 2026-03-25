@@ -1,4 +1,4 @@
-kexport default function EventList({ events = [], onSelect, onDelete }) {
+export default function EventList({ events = [], onSelect, onDelete }) {
   if (!events.length) {
     return <p className="text-gray-400 text-sm">Keine Termine vorhanden.</p>;
   }
