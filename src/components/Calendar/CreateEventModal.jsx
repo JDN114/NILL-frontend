@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../lib/api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import "react-datepicker/dist/react-datepicker-cssmodules.css";
+import "./datepicker-dark.css"; // Custom Dark Theme
 
 export default function CreateEventModal({ open, onClose, onCreated, selectedDate }) {
   const [form, setForm] = useState({
@@ -29,7 +29,6 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
       alert("Titel und Startzeit sind Pflicht");
       return;
     }
-
     try {
       await api.post("/calendar/events", {
         ...form,
@@ -51,10 +50,7 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
 
       {/* Modal */}
       <div className="relative z-10 bg-[#0f172a] p-6 rounded-2xl w-[420px] space-y-4 border border-white/10 shadow-xl">
-
-        <h2 className="text-lg font-semibold text-white">
-          Neuer Termin
-        </h2>
+        <h2 className="text-lg font-semibold text-white">Neuer Termin</h2>
 
         {/* TITLE */}
         <input
@@ -94,24 +90,16 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
         <div className="space-y-2 mt-2">
           <div>
             <label className="text-xs text-gray-400 mb-1 block">Start *</label>
-            {form.all_day ? (
-              <DatePicker
-                selected={form.start_at}
-                onChange={(date) => handleChange("start_at", date)}
-                dateFormat="dd.MM.yyyy"
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-              />
-            ) : (
-              <DatePicker
-                selected={form.start_at}
-                onChange={(date) => handleChange("start_at", date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="dd.MM.yyyy HH:mm"
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-              />
-            )}
+            <DatePicker
+              selected={form.start_at}
+              onChange={(date) => handleChange("start_at", date)}
+              showTimeSelect={!form.all_day}
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat={form.all_day ? "dd.MM.yyyy" : "dd.MM.yyyy HH:mm"}
+              className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              calendarClassName="react-datepicker-dark" // Dark popup
+            />
           </div>
 
           {!form.all_day && (
@@ -125,6 +113,7 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
                 timeIntervals={15}
                 dateFormat="dd.MM.yyyy HH:mm"
                 className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                calendarClassName="react-datepicker-dark"
               />
             </div>
           )}
@@ -132,10 +121,7 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
 
         {/* ACTIONS */}
         <div className="flex justify-end gap-2 pt-2">
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
             Abbrechen
           </button>
           <button
