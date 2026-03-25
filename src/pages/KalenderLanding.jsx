@@ -28,6 +28,16 @@ export default function CalendarPage() {
     fetchEvents();
   }, []);
 
+
+  async function handleDelete(event) {
+    try {
+      await api.delete(`/calendar/events/${event.id}`);
+      fetchEvents();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   async function fetchEvents() {
     try {
       const res = await api.get("/calendar/events/upcoming", {
@@ -60,14 +70,16 @@ export default function CalendarPage() {
   const isSameDay = (d1, d2) =>
     d1 && d2 && new Date(d1).toDateString() === new Date(d2).toDateString();
 
+  const now = new Date();
+  const in72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+
   const eventsForDay = events.filter(
     (e) => e?.start && isSameDay(e.start, selectedDate)
   );
 
   const nextEvents = events
-    .filter((e) => e?.start && e.start >= new Date())
-    .sort((a, b) => a.start - b.start)
-    .slice(0, 5);
+    .filter((e) => e?.start && e.start >= now && e.start <= in72h)
+    .sort((a, b) => a.start - b.start);
 
   // -------------------------
   // RENDER
@@ -76,16 +88,20 @@ export default function CalendarPage() {
     <PageLayout>
       <h1 className="text-3xl font-bold mb-6 text-white">Kalender</h1>
 
+      {/* LOADING */}
       {loading && <p className="text-gray-400">Lade Termine...</p>}
 
+      {/* ERROR */}
       {!loading && error && (
         <Card className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 mb-6">
           Termine konnten nicht geladen werden.
         </Card>
       )}
 
+      {/* CONTENT */}
       {!loading && !error && (
         <>
+          {/* STATS */}
           <CalendarStats events={events} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -98,11 +114,14 @@ export default function CalendarPage() {
               />
             </Card>
 
-            {/* UPCOMING */}
+            {/* UPCOMING (72H) */}
             <Card className="p-4 rounded-xl shadow-lg flex flex-col">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-semibold text-white text-lg">
-                  Nächste Termine
+                  Termine in den nächsten 72 Stunden
+                  <span className="ml-2 text-sm text-gray-400">
+                    ({nextEvents.length})
+                  </span>
                 </h2>
 
                 <button
@@ -134,7 +153,7 @@ export default function CalendarPage() {
         </>
       )}
 
-      {/* EVENT DETAILS */}
+      {/* EVENT DETAILS MODAL */}
       <AnimatePresence>
         {modalEvent && (
           <EventModal
@@ -144,11 +163,11 @@ export default function CalendarPage() {
         )}
       </AnimatePresence>
 
-      {/* CREATE MODAL (FIXED) */}
+      {/* CREATE EVENT MODAL */}
       <AnimatePresence>
         {createOpen && (
           <CreateEventModal
-            open={createOpen} // 🔥 FIX
+            open={createOpen}
             onClose={() => setCreateOpen(false)}
             onCreated={fetchEvents}
           />
