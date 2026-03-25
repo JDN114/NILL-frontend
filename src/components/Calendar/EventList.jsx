@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // -------------------------
 // HELPERS
@@ -9,12 +9,11 @@ function formatTime(start, end, allDay) {
     if (allDay) return "Ganztägig";
 
     const s = new Date(start);
-    const e = new Date(end);
+    const e = end ? new Date(end) : null;
 
-    return `${s.toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}${end ? " – " + e.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : ""}`;
+    return `${s.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}${
+      e ? " – " + e.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : ""
+    }`;
   } catch {
     return "";
   }
@@ -49,18 +48,22 @@ function groupByDay(events) {
 // -------------------------
 // COMPONENT
 // -------------------------
-export default function EventList({ events = [], onSelect, onDelete }) {
+export default function EventList({ events = [], onSelect, onDelete, onUpdated }) {
   const [localEvents, setLocalEvents] = useState(events);
 
-  // 🔥 Update einzelne Events direkt in der Liste nach Update
+  // 🔥 Sync props -> local state
+  useEffect(() => {
+    setLocalEvents(events);
+  }, [events]);
+
+  // 🔥 Update einzelner Event direkt in der Liste
   const handleUpdated = (updatedEvent) => {
-    setLocalEvents((prev) =>
-      prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e))
-    );
+    setLocalEvents((prev) => prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
+    onUpdated?.(updatedEvent); // callback an Parent
   };
 
   if (!localEvents.length) {
-    return <p className="text-gray-400 text-sm">Keine Termine in den nächsten 7 Tagen</p>;
+    return <p className="text-gray-400 text-sm">Keine Termine</p>;
   }
 
   const grouped = groupByDay(localEvents);
