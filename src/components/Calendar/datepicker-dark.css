@@ -1,35 +1,80 @@
-.react-datepicker-dark {
+/* Grundfarben für Kalender */
+.react-datepicker,
+.react-datepicker-popper {
   background-color: #0f172a !important;
   color: #ffffff !important;
   border: 1px solid #333 !important;
+  font-family: inherit;
+  z-index: 9999;
 }
 
-.react-datepicker-dark .react-datepicker__header {
+/* Header */
+.react-datepicker__header {
   background-color: #111827 !important;
   border-bottom: 1px solid #333;
 }
 
-.react-datepicker-dark .react-datepicker__day-name,
-.react-datepicker-dark .react-datepicker__day,
-.react-datepicker-dark .react-datepicker__time-name {
-  color: #ffffff;
+/* Monat & Wochentage */
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: #ffffff !important;
 }
 
-.react-datepicker-dark .react-datepicker__current-month {
-  color: #ffffff;
+/* Tage */
+.react-datepicker__day,
+.react-datepicker__time-name {
+  color: #ffffff !important;
 }
 
-.react-datepicker-dark .react-datepicker__navigation-icon::before {
-  border-color: #ffffff;
+/* Hover & Selected */
+.react-datepicker__day:hover,
+.react-datepicker__time-name:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
 }
 
-.react-datepicker-dark .react-datepicker__day--selected,
-.react-datepicker-dark .react-datepicker__day--keyboard-selected {
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
   background-color: var(--accent) !important;
   color: #0f172a !important;
 }
 
-.react-datepicker-dark .react-datepicker__time-container {
+/* Navigation Pfeile */
+.react-datepicker__navigation-icon::before {
+  border-color: #ffffff !important;
+}
+
+/* Time Picker Container */
+.react-datepicker__time-container {
   background-color: #0f172a !important;
-  border-left: 1px solid #333;
+  border-left: 1px solid #333 !important;
+}
+
+/* Time List */
+.react-datepicker__time-list {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+.react-datepicker__time-list-item {
+  color: #ffffff !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background-color: var(--accent) !important;
+  color: #0f172a !important;
+}
+
+/* Scrollbar dunkel */
+.react-datepicker__time-container .react-datepicker__time-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.react-datepicker__time-container .react-datepicker__time-list::-webkit-scrollbar-thumb {
+  background-color: #333;
+  border-radius: 3px;
+}
+
+.react-datepicker__time-container .react-datepicker__time-list::-webkit-scrollbar-track {
+  background-color: #0f172a;
 }
