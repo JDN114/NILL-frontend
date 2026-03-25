@@ -1,154 +1,139 @@
-import { motion } from "framer-motion";
+kimport { motion } from "framer-motion";
+import api from "../../lib/api";
+import { useState, useEffect } from "react";
 
-// -------------------------
-// HELPERS
-// -------------------------
-function formatTime(start, end, allDay) {
-  try {
-    if (allDay) return "Ganztägig";
+export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
+  const [loading, setLoading] = useState(false);
 
-    const s = new Date(start);
-    const e = new Date(end);
-
-    return `${s.toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}${
-      end
-        ? " – " +
-          e.toLocaleTimeString("de-DE", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : ""
-    }`;
-  } catch {
-    return "";
-  }
-}
-
-function formatDayLabel(date) {
-  const d = new Date(date);
-  const today = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(today.getDate() + 1);
-
-  if (d.toDateString() === today.toDateString()) return "Heute";
-  if (d.toDateString() === tomorrow.toDateString()) return "Morgen";
-
-  return d.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-  });
-}
-
-// -------------------------
-// GROUP EVENTS BY DAY
-// -------------------------
-function groupByDay(events) {
-  const groups = {};
-
-  events.forEach((e) => {
-    if (!e.start_at) return;
-
-    const key = new Date(e.start_at).toDateString();
-
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(e);
+  // 🔥 LOCAL STATE (wichtig!)
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    location: "",
   });
 
-  return groups;
-}
+  // 🔥 Sync wenn Modal geöffnet wird
+  useEffect(() => {
+    if (event) {
+      setForm({
+        title: event.title || "",
+        description: event.description || "",
+        location: event.location || "",
+      });
+    }
+  }, [event]);
 
-// -------------------------
-// COMPONENT
-// -------------------------
-export default function EventList({ events = [], onSelect, onDelete }) {
-  if (!events.length) {
-    return (
-      <p className="text-gray-400 text-sm">
-        Keine Termine in den nächsten 7 Tagen 
-      </p>
-    );
+  if (!event) return null;
+
+  // -------------------------
+  // ACTIONS
+  // -------------------------
+  async function handleDelete() {
+    if (!confirm("Termin wirklich löschen?")) return;
+
+    try {
+      setLoading(true);
+      await api.delete(`/calendar/events/${event.id}`);
+      onDeleted?.();
+      onClose();
+    } catch (e) {
+      console.error(e);
+      alert("Löschen fehlgeschlagen");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const grouped = groupByDay(events);
+  async function handleUpdate() {
+    try {
+      setLoading(true);
 
+      // 🔥 PUT statt PATCH
+      const res = await api.put(`/calendar/events/${event.id}`, {
+        title: form.title,
+        description: form.description,
+        location: form.location,
+      });
+
+      // 🔥 updated Event direkt zurückgeben
+      onUpdated?.(res.data);
+      onClose();
+    } catch (e) {
+      console.error(e);
+      alert("Update fehlgeschlagen");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
-    <div className="space-y-6 max-h-[420px] overflow-y-auto pr-1">
-      {Object.entries(grouped).map(([day, dayEvents]) => (
-        <div key={day}>
-          {/* DAY HEADER */}
-          <p className="text-sm text-gray-400 mb-2">
-            {formatDayLabel(day)}
-          </p>
+    <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <motion.div className="bg-[#0a1120] p-6 rounded-xl w-full max-w-md border border-white/10 shadow-xl">
 
-          <ul className="space-y-3">
-            {dayEvents.map((e) => (
-              <motion.li
-                key={e.id}
-                whileHover={{ scale: 1.02 }}
-                className="bg-[#111827] border border-white/5 rounded-xl p-3 transition group hover:border-[var(--accent)]/40"
-              >
-                {/* CLICK AREA */}
-                <div
-                  onClick={() => onSelect?.(e)}
-                  className="cursor-pointer"
-                >
-                  {/* TOP ROW */}
-                  <div className="flex justify-between items-center">
-                    <p className="text-white font-semibold">
-                      {e.title || "Ohne Titel"}
-                    </p>
+        <h2 className="text-xl font-bold text-white mb-4">
+          Termin bearbeiten
+        </h2>
 
-                    <span className="text-xs text-gray-400">
-                      {formatTime(e.start_at, e.end_at, e.all_day)}
-                    </span>
-                  </div>
+        {/* TITLE */}
+        <input
+          value={form.title}
+          placeholder="Titel"
+          onChange={(e) =>
+            setForm((f) => ({ ...f, title: e.target.value }))
+          }
+          className="w-full mb-3 p-2 rounded bg-[#111827] text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        />
 
-                  {/* DESCRIPTION */}
-                  {e.description && (
-                    <p className="text-sm text-gray-300 mt-2 line-clamp-2">
-                      {e.description}
-                    </p>
-                  )}
+        {/* DESCRIPTION */}
+        <textarea
+          value={form.description}
+          placeholder="Beschreibung"
+          onChange={(e) =>
+            setForm((f) => ({ ...f, description: e.target.value }))
+          }
+          className="w-full mb-3 p-2 rounded bg-[#111827] text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        />
 
-                  {/* LOCATION */}
-                  {e.location && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      📍 {e.location}
-                    </p>
-                  )}
-                </div>
+        {/* LOCATION */}
+        <input
+          value={form.location}
+          placeholder="Ort"
+          onChange={(e) =>
+            setForm((f) => ({ ...f, location: e.target.value }))
+          }
+          className="w-full mb-4 p-2 rounded bg-[#111827] text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        />
 
-                {/* ACTIONS */}
-                <div className="flex justify-end gap-3 mt-3 opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    onClick={(ev) => {
-                      ev.stopPropagation();
-                      onSelect?.(e);
-                    }}
-                    className="text-xs text-indigo-400 hover:text-indigo-300"
-                  >
-                    Bearbeiten
-                  </button>
+        {/* ACTIONS */}
+        <div className="flex justify-between gap-2">
+          <button
+            onClick={handleDelete}
+            className="bg-red-500/90 px-3 py-2 rounded text-white hover:bg-red-500 transition"
+          >
+            Löschen
+          </button>
 
-                  <button
-                    onClick={(ev) => {
-                      ev.stopPropagation();
-                      onDelete?.(e);
-                    }}
-                    className="text-xs text-red-400 hover:text-red-300"
-                  >
-                    Löschen
-                  </button>
-                </div>
-              </motion.li>
-            ))}
-          </ul>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="bg-gray-600 px-3 py-2 rounded text-white hover:bg-gray-500 transition"
+            >
+              Abbrechen
+            </button>
+
+            <button
+              onClick={handleUpdate}
+              disabled={loading}
+              className="bg-[var(--accent)] px-3 py-2 rounded text-white hover:bg-opacity-80 transition disabled:opacity-50"
+            >
+              {loading ? "Speichern..." : "Speichern"}
+            </button>
+          </div>
         </div>
-      ))}
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
