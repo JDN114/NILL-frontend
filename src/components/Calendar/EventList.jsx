@@ -1,37 +1,64 @@
 import { motion } from "framer-motion";
 
 // -------------------------
-// HELPER
+// HELPERS
 // -------------------------
-function formatDateTime(start, end, allDay) {
+function formatTime(start, end, allDay) {
   try {
+    if (allDay) return "Ganztägig";
+
     const s = new Date(start);
     const e = new Date(end);
 
-    const date = s.toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "short",
-    });
-
-    if (allDay) return `${date} • Ganztägig`;
-
-    const time = `${s.toLocaleTimeString("de-DE", {
+    return `${s.toLocaleTimeString("de-DE", {
       hour: "2-digit",
       minute: "2-digit",
     })}${
       end
-        ? " - " +
+        ? " – " +
           e.toLocaleTimeString("de-DE", {
             hour: "2-digit",
             minute: "2-digit",
           })
         : ""
     }`;
-
-    return `${date} • ${time}`;
   } catch {
     return "";
   }
+}
+
+function formatDayLabel(date) {
+  const d = new Date(date);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  if (d.toDateString() === today.toDateString()) return "Heute";
+  if (d.toDateString() === tomorrow.toDateString()) return "Morgen";
+
+  return d.toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+// -------------------------
+// GROUP EVENTS BY DAY
+// -------------------------
+function groupByDay(events) {
+  const groups = {};
+
+  events.forEach((e) => {
+    if (!e.start_at) return;
+
+    const key = new Date(e.start_at).toDateString();
+
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(e);
+  });
+
+  return groups;
 }
 
 // -------------------------
@@ -41,73 +68,87 @@ export default function EventList({ events = [], onSelect, onDelete }) {
   if (!events.length) {
     return (
       <p className="text-gray-400 text-sm">
-        Keine Termine vorhanden.
+        Keine Termine in den nächsten 7 Tagen ✨
       </p>
     );
   }
 
+  const grouped = groupByDay(events);
+
   return (
-    <ul className="space-y-3 overflow-y-auto max-h-[320px] pr-1">
-      {events.map((e) => (
-        <motion.li
-          key={e.id}
-          whileHover={{ scale: 1.02 }}
-          className="bg-[#111827] border border-white/5 rounded-xl p-3 transition group hover:border-[var(--accent)]/40"
-        >
-          {/* CLICK AREA */}
-          <div
-            onClick={() => onSelect?.(e)}
-            className="cursor-pointer"
-          >
-            {/* TITLE */}
-            <p className="text-white font-semibold">
-              {e.title || "Ohne Titel"}
-            </p>
+    <div className="space-y-6 max-h-[420px] overflow-y-auto pr-1">
+      {Object.entries(grouped).map(([day, dayEvents]) => (
+        <div key={day}>
+          {/* DAY HEADER */}
+          <p className="text-sm text-gray-400 mb-2">
+            {formatDayLabel(day)}
+          </p>
 
-            {/* DATE + TIME */}
-            <p className="text-xs text-gray-400 mt-1">
-              {formatDateTime(e.start_at, e.end_at, e.all_day)}
-            </p>
+          <ul className="space-y-3">
+            {dayEvents.map((e) => (
+              <motion.li
+                key={e.id}
+                whileHover={{ scale: 1.02 }}
+                className="bg-[#111827] border border-white/5 rounded-xl p-3 transition group hover:border-[var(--accent)]/40"
+              >
+                {/* CLICK AREA */}
+                <div
+                  onClick={() => onSelect?.(e)}
+                  className="cursor-pointer"
+                >
+                  {/* TOP ROW */}
+                  <div className="flex justify-between items-center">
+                    <p className="text-white font-semibold">
+                      {e.title || "Ohne Titel"}
+                    </p>
 
-            {/* DESCRIPTION */}
-            {e.description && (
-              <p className="text-sm text-gray-300 mt-2 line-clamp-2">
-                {e.description}
-              </p>
-            )}
+                    <span className="text-xs text-gray-400">
+                      {formatTime(e.start_at, e.end_at, e.all_day)}
+                    </span>
+                  </div>
 
-            {/* LOCATION */}
-            {e.location && (
-              <p className="text-xs text-gray-500 mt-1">
-                📍 {e.location}
-              </p>
-            )}
-          </div>
+                  {/* DESCRIPTION */}
+                  {e.description && (
+                    <p className="text-sm text-gray-300 mt-2 line-clamp-2">
+                      {e.description}
+                    </p>
+                  )}
 
-          {/* ACTIONS */}
-          <div className="flex justify-end gap-3 mt-3 opacity-0 group-hover:opacity-100 transition">
-            <button
-              onClick={(ev) => {
-                ev.stopPropagation(); // 🔥 verhindert Modal + Click gleichzeitig
-                onSelect?.(e);
-              }}
-              className="text-xs text-indigo-400 hover:text-indigo-300"
-            >
-              Bearbeiten
-            </button>
+                  {/* LOCATION */}
+                  {e.location && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      📍 {e.location}
+                    </p>
+                  )}
+                </div>
 
-            <button
-              onClick={(ev) => {
-                ev.stopPropagation(); // 🔥 wichtig!
-                onDelete?.(e);
-              }}
-              className="text-xs text-red-400 hover:text-red-300"
-            >
-              Löschen
-            </button>
-          </div>
-        </motion.li>
+                {/* ACTIONS */}
+                <div className="flex justify-end gap-3 mt-3 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      onSelect?.(e);
+                    }}
+                    className="text-xs text-indigo-400 hover:text-indigo-300"
+                  >
+                    Bearbeiten
+                  </button>
+
+                  <button
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      onDelete?.(e);
+                    }}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    Löschen
+                  </button>
+                </div>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
