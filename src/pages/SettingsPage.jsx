@@ -1,3 +1,4 @@
+```jsx
 import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
@@ -6,18 +7,23 @@ import Card from "../components/ui/Card";
 
 import { GmailContext } from "../context/GmailContext";
 import { OutlookContext } from "../context/OutlookContext";
+import { useAuth } from "../context/AuthContext";
 
 import api, { logoutUser } from "../services/api";
 
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 
+const INDUSTRIES = [
+  "Handwerk", "Reinigung", "Werkstatt", "Gastronomie",
+  "Beratung", "Gesundheit", "IT & Software",
+  "Handel", "Transport", "Sonstiges"
+];
+
 export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  console.log("[SettingsPage] Render start");
-  console.log("[SettingsPage] Location key:", location.key);
+  const { user, org, updateOrg } = useAuth();
 
   // -------------------------------
   // Contexts
@@ -36,9 +42,6 @@ export default function SettingsPage() {
     fetchStatus: fetchOutlookStatus,
   } = useContext(OutlookContext);
 
-  console.log("[SettingsPage] Gmail context:", gmailConnected);
-  console.log("[SettingsPage] Outlook context:", outlookConnected);
-
   // -------------------------------
   // Local state
   // -------------------------------
@@ -46,18 +49,22 @@ export default function SettingsPage() {
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
   const [subscription, setSubscription] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
+
+  // Org bearbeiten
+  const [orgName, setOrgName] = useState(org?.name ?? "");
+  const [orgIndustry, setOrgIndustry] = useState(org?.industry ?? "");
+  const [orgSaving, setOrgSaving] = useState(false);
+  const [orgSuccess, setOrgSuccess] = useState(false);
+  const [orgError, setOrgError] = useState("");
 
   // -------------------------------
   // Logout
   // -------------------------------
   const handleLogout = async () => {
-    console.log("[SettingsPage] Logout clicked");
     try {
       await logoutUser();
-      console.log("[SettingsPage] Logout success, redirecting");
       navigate("/login");
     } catch (err) {
       console.error("[SettingsPage] Logout Fehler:", err);
@@ -69,113 +76,81 @@ export default function SettingsPage() {
   // -------------------------------
   useEffect(() => {
     let mounted = true;
-
-    console.log("[SettingsPage] useEffect loadStatus triggered");
-
     const loadStatus = async () => {
-      console.log("[SettingsPage] Loading provider status...");
       setLoadingStatus(true);
-
       try {
-        if (typeof fetchGmailStatus === "function") {
-          console.log("[SettingsPage] Fetching Gmail status...");
-          const gmailResult = await fetchGmailStatus();
-          console.log("[SettingsPage] Gmail status result:", gmailResult);
-        } else {
-          console.warn("[SettingsPage] fetchGmailStatus is not a function");
-        }
-
-        if (typeof fetchOutlookStatus === "function") {
-          console.log("[SettingsPage] Fetching Outlook status...");
-          const outlookResult = await fetchOutlookStatus();
-          console.log("[SettingsPage] Outlook status result:", outlookResult);
-        } else {
-          console.warn("[SettingsPage] fetchOutlookStatus is not a function");
-        }
-
+        if (typeof fetchGmailStatus === "function") await fetchGmailStatus();
+        if (typeof fetchOutlookStatus === "function") await fetchOutlookStatus();
       } catch (err) {
         console.error("[SettingsPage] Status load error:", err);
       } finally {
-        if (mounted) {
-          console.log("[SettingsPage] Provider status loading finished");
-          setLoadingStatus(false);
-        }
+        if (mounted) setLoadingStatus(false);
       }
     };
-
     loadStatus();
-
-    return () => {
-      console.log("[SettingsPage] Cleanup loadStatus effect");
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [fetchGmailStatus, fetchOutlookStatus, location.key]);
 
   // -------------------------------
   // Load Subscription
   // -------------------------------
   useEffect(() => {
-    console.log("[SettingsPage] Loading subscription...");
-
     const loadSubscription = async () => {
       try {
         const res = await api.get("/me/subscription");
-        console.log("[SettingsPage] Subscription result:", res.data);
         setSubscription(res.data);
       } catch (err) {
         console.error("[SettingsPage] Subscription load error:", err);
       } finally {
-        console.log("[SettingsPage] Subscription loading finished");
         setLoadingSub(false);
       }
     };
-
     loadSubscription();
   }, []);
 
   // -------------------------------
-  // Connect Provider
+  // Save Org
   // -------------------------------
-  const handleProviderSelect = (provider) => {
-    console.log("[SettingsPage] Provider selected:", provider);
-
-    setShowProviderModal(false);
-
-    if (provider === "gmail") {
-      console.log("[SettingsPage] Connecting Gmail...");
-      connectGmail();
+  const handleSaveOrg = async () => {
+    if (!orgName.trim()) {
+      setOrgError("Unternehmensname darf nicht leer sein.");
+      return;
     }
-
-    if (provider === "outlook") {
-      console.log("[SettingsPage] Connecting Outlook...");
-      connectOutlook();
+    setOrgError("");
+    setOrgSaving(true);
+    setOrgSuccess(false);
+    try {
+      const res = await api.patch("/auth/onboarding", {
+        name: orgName.trim(),
+        industry: orgIndustry || null,
+      }, { withCredentials: true });
+      updateOrg({ name: res.data.name, industry: res.data.industry });
+      setOrgSuccess(true);
+      setTimeout(() => setOrgSuccess(false), 3000);
+    } catch (err) {
+      setOrgError("Fehler beim Speichern. Bitte versuche es erneut.");
+    } finally {
+      setOrgSaving(false);
     }
   };
 
   // -------------------------------
-  // Disconnect Provider
+  // Connect / Disconnect Provider
   // -------------------------------
+  const handleProviderSelect = (provider) => {
+    setShowProviderModal(false);
+    if (provider === "gmail") connectGmail();
+    if (provider === "outlook") connectOutlook();
+  };
+
   const handleDisconnect = async () => {
-    console.log("[SettingsPage] Disconnect clicked");
-
     setLoadingStatus(true);
-
     try {
-      if (outlookIsConnected) {
-        console.log("[SettingsPage] Disconnecting Outlook...");
-        await disconnectOutlook();
-        console.log("[SettingsPage] Outlook disconnected");
-        } else if (gmailIsConnected) {
-        console.log("[SettingsPage] Disconnecting Gmail...");
-        await disconnectGmail();
-        console.log("[SettingsPage] Gmail disconnected");
-      } else {
-        console.warn("[SettingsPage] No provider connected");
-      }
+      if (outlookIsConnected) await disconnectOutlook();
+      else if (gmailIsConnected) await disconnectGmail();
     } catch (err) {
       console.error("[SettingsPage] Disconnect error:", err);
     } finally {
-      console.log("[SettingsPage] Disconnect finished");
       setLoadingStatus(false);
     }
   };
@@ -183,29 +158,14 @@ export default function SettingsPage() {
   // -------------------------------
   // Unified provider state
   // -------------------------------
-  // normalize values (handle boolean OR object)
   const gmailIsConnected =
-    gmailConnected === true ||
-    gmailConnected?.connected === true;
-
+    gmailConnected === true || gmailConnected?.connected === true;
   const outlookIsConnected =
-    outlookConnected === true ||
-    outlookConnected?.connected === true;
-
+    outlookConnected === true || outlookConnected?.connected === true;
   const anyConnected = gmailIsConnected || outlookIsConnected;
-
   const providerName = outlookIsConnected
     ? "Microsoft Outlook"
-    : gmailIsConnected
-    ? "Gmail"
-    : null;
-
-  console.log("[SettingsPage] Normalized state:", {
-    gmailIsConnected,
-    outlookIsConnected,
-    anyConnected,
-    providerName,
-  });
+    : gmailIsConnected ? "Gmail" : null;
 
   // -------------------------------
   // Render
@@ -221,6 +181,89 @@ export default function SettingsPage() {
             Verwalte dein Konto, dein Abonnement und deine Integrationen.
           </p>
         </div>
+
+        {/* UNTERNEHMEN */}
+        <Card title="Unternehmen" className="rounded-2xl shadow-md">
+          <div className="space-y-5">
+
+            {/* Aktueller Stand */}
+            <div className="grid grid-cols-2 gap-4 bg-gray-800/50 rounded-xl p-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Unternehmensname</p>
+                <p className="text-white font-medium">
+                  {org?.name ?? <span className="text-gray-500">—</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Branche</p>
+                <p className="text-white font-medium">
+                  {org?.industry ?? <span className="text-gray-500">—</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Plan</p>
+                <p className="text-white font-medium capitalize">
+                  {org?.plan ?? <span className="text-gray-500">—</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Status</p>
+                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                  org?.plan_status === "active"
+                    ? "bg-green-500/10 text-green-400"
+                    : "bg-red-500/10 text-red-400"
+                }`}>
+                  {org?.plan_status ?? "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Bearbeiten */}
+            <div>
+              <label className="text-gray-300 text-sm mb-1 block">
+                Unternehmensname
+              </label>
+              <input
+                type="text"
+                value={orgName}
+                onChange={e => setOrgName(e.target.value)}
+                placeholder="z.B. Müller Handwerk GmbH"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-gray-300 text-sm mb-1 block">
+                Branche <span className="text-gray-500">(optional)</span>
+              </label>
+              <select
+                value={orgIndustry}
+                onChange={e => setOrgIndustry(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-gray-500"
+              >
+                <option value="">Bitte wählen…</option>
+                {INDUSTRIES.map(i => (
+                  <option key={i} value={i}>{i}</option>
+                ))}
+              </select>
+            </div>
+
+            {orgError && (
+              <p className="text-red-400 text-sm">{orgError}</p>
+            )}
+            {orgSuccess && (
+              <p className="text-green-400 text-sm">Änderungen gespeichert.</p>
+            )}
+
+            <button
+              onClick={handleSaveOrg}
+              disabled={orgSaving}
+              className="px-6 py-2.5 rounded-xl font-medium bg-white text-gray-900 hover:bg-gray-100 transition disabled:opacity-50"
+            >
+              {orgSaving ? "Wird gespeichert…" : "Speichern"}
+            </button>
+          </div>
+        </Card>
 
         {/* EMAIL */}
         <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
@@ -241,10 +284,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <button
-                onClick={() => {
-                  console.log("[SettingsPage] Open provider modal");
-                  setShowProviderModal(true);
-                }}
+                onClick={() => setShowProviderModal(true)}
                 className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition"
               >
                 E-Mail Konto verbinden
@@ -255,9 +295,6 @@ export default function SettingsPage() {
             </p>
           </div>
         </Card>
-
-
-
 
         {/* SUBSCRIPTION */}
         <Card title="Abonnement" className="rounded-2xl shadow-md">
@@ -278,7 +315,6 @@ export default function SettingsPage() {
                   {subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}
                 </span>
               </div>
-
               {subscription.next_billing_date && (
                 <div>
                   <p className="text-sm text-gray-400">Nächste Abbuchung</p>
@@ -287,7 +323,6 @@ export default function SettingsPage() {
                   </p>
                 </div>
               )}
-
               <div className="pt-4">
                 <Link
                   to="/redeem-coupon"
@@ -306,11 +341,16 @@ export default function SettingsPage() {
 
         {/* ACCOUNT */}
         <Card title="Account" className="rounded-2xl shadow-md space-y-4">
+          <div className="mb-4 bg-gray-800/50 rounded-xl p-4">
+            <p className="text-xs text-gray-500 mb-1">Eingeloggt als</p>
+            <p className="text-white font-medium">{user?.email}</p>
+            <p className="text-xs text-gray-500 mt-1 capitalize">
+              Rolle: {user?.role ?? "—"}
+            </p>
+          </div>
+
           <button
-            onClick={() => {
-              console.log("[SettingsPage] Open password modal");
-              setShowPasswordModal(true);
-            }}
+            onClick={() => setShowPasswordModal(true)}
             className="w-full py-3 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition"
           >
             Passwort ändern
@@ -330,12 +370,8 @@ export default function SettingsPage() {
             <p className="text-sm text-gray-400">
               Aktionen in diesem Bereich sind dauerhaft und können nicht rückgängig gemacht werden.
             </p>
-
             <button
-              onClick={() => {
-                console.log("[SettingsPage] Open delete modal");
-                setShowDeleteModal(true);
-              }}
+              onClick={() => setShowDeleteModal(true)}
               className="w-full py-3 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition"
             >
               Account dauerhaft löschen
@@ -345,43 +381,33 @@ export default function SettingsPage() {
 
       </div>
 
-      {/* Modals unchanged */}
+      {/* Provider Modal */}
       {showProviderModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
-
             <h2 className="text-xl font-bold text-white">
               E-Mail Anbieter auswählen
             </h2>
-
             <div className="space-y-4">
-
               <button
                 onClick={() => handleProviderSelect("gmail")}
                 className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
               >
                 Google (Gmail)
               </button>
-
               <button
                 onClick={() => handleProviderSelect("outlook")}
                 className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition"
               >
                 Microsoft Outlook
               </button>
-
             </div>
-
             <button
-              onClick={() => {
-                console.log("[SettingsPage] Close provider modal");
-                setShowProviderModal(false);
-              }}
+              onClick={() => setShowProviderModal(false)}
               className="text-sm text-gray-400 hover:text-white transition"
             >
               Abbrechen
             </button>
-
           </div>
         </div>
       )}
@@ -399,3 +425,4 @@ export default function SettingsPage() {
     </PageLayout>
   );
 }
+```
