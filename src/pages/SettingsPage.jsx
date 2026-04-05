@@ -1,4 +1,4 @@
-```jsx
+k```jsx
 import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
@@ -25,9 +25,6 @@ export default function SettingsPage() {
   const location = useLocation();
   const { user, org, updateOrg } = useAuth();
 
-  // -------------------------------
-  // Contexts
-  // -------------------------------
   const {
     connected: gmailConnected,
     connectGmail,
@@ -42,9 +39,6 @@ export default function SettingsPage() {
     fetchStatus: fetchOutlookStatus,
   } = useContext(OutlookContext);
 
-  // -------------------------------
-  // Local state
-  // -------------------------------
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -52,16 +46,12 @@ export default function SettingsPage() {
   const [subscription, setSubscription] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
 
-  // Org bearbeiten
   const [orgName, setOrgName] = useState(org?.name ?? "");
   const [orgIndustry, setOrgIndustry] = useState(org?.industry ?? "");
   const [orgSaving, setOrgSaving] = useState(false);
   const [orgSuccess, setOrgSuccess] = useState(false);
   const [orgError, setOrgError] = useState("");
 
-  // -------------------------------
-  // Logout
-  // -------------------------------
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -71,9 +61,6 @@ export default function SettingsPage() {
     }
   };
 
-  // -------------------------------
-  // Load Provider Status
-  // -------------------------------
   useEffect(() => {
     let mounted = true;
     const loadStatus = async () => {
@@ -91,9 +78,6 @@ export default function SettingsPage() {
     return () => { mounted = false; };
   }, [fetchGmailStatus, fetchOutlookStatus, location.key]);
 
-  // -------------------------------
-  // Load Subscription
-  // -------------------------------
   useEffect(() => {
     const loadSubscription = async () => {
       try {
@@ -108,9 +92,6 @@ export default function SettingsPage() {
     loadSubscription();
   }, []);
 
-  // -------------------------------
-  // Save Org
-  // -------------------------------
   const handleSaveOrg = async () => {
     if (!orgName.trim()) {
       setOrgError("Unternehmensname darf nicht leer sein.");
@@ -134,9 +115,6 @@ export default function SettingsPage() {
     }
   };
 
-  // -------------------------------
-  // Connect / Disconnect Provider
-  // -------------------------------
   const handleProviderSelect = (provider) => {
     setShowProviderModal(false);
     if (provider === "gmail") connectGmail();
@@ -155,9 +133,6 @@ export default function SettingsPage() {
     }
   };
 
-  // -------------------------------
-  // Unified provider state
-  // -------------------------------
   const gmailIsConnected =
     gmailConnected === true || gmailConnected?.connected === true;
   const outlookIsConnected =
@@ -167,14 +142,14 @@ export default function SettingsPage() {
     ? "Microsoft Outlook"
     : gmailIsConnected ? "Gmail" : null;
 
-  // -------------------------------
-  // Render
-  // -------------------------------
+  const statusClass = org?.plan_status === "active"
+    ? "text-sm font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-400"
+    : "text-sm font-medium px-2 py-0.5 rounded-full bg-red-500/10 text-red-400";
+
   return (
     <PageLayout>
       <div className="max-w-4xl space-y-12">
 
-        {/* HEADER */}
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Einstellungen</h1>
           <p className="text-gray-400">
@@ -186,39 +161,33 @@ export default function SettingsPage() {
         <Card title="Unternehmen" className="rounded-2xl shadow-md">
           <div className="space-y-5">
 
-            {/* Aktueller Stand */}
             <div className="grid grid-cols-2 gap-4 bg-gray-800/50 rounded-xl p-4">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Unternehmensname</p>
                 <p className="text-white font-medium">
-                  {org?.name ?? <span className="text-gray-500">—</span>}
+                  {org?.name || <span className="text-gray-500">—</span>}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Branche</p>
                 <p className="text-white font-medium">
-                  {org?.industry ?? <span className="text-gray-500">—</span>}
+                  {org?.industry || <span className="text-gray-500">—</span>}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Plan</p>
                 <p className="text-white font-medium capitalize">
-                  {org?.plan ?? <span className="text-gray-500">—</span>}
+                  {org?.plan || <span className="text-gray-500">—</span>}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Status</p>
-                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                  org?.plan_status === "active"
-                    ? "bg-green-500/10 text-green-400"
-                    : "bg-red-500/10 text-red-400"
-                }`}>
-                  {org?.plan_status ?? "—"}
+                <span className={statusClass}>
+                  {org?.plan_status || "—"}
                 </span>
               </div>
             </div>
 
-            {/* Bearbeiten */}
             <div>
               <label className="text-gray-300 text-sm mb-1 block">
                 Unternehmensname
@@ -345,17 +314,15 @@ export default function SettingsPage() {
             <p className="text-xs text-gray-500 mb-1">Eingeloggt als</p>
             <p className="text-white font-medium">{user?.email}</p>
             <p className="text-xs text-gray-500 mt-1 capitalize">
-              Rolle: {user?.role ?? "—"}
+              Rolle: {user?.role || "—"}
             </p>
           </div>
-
           <button
             onClick={() => setShowPasswordModal(true)}
             className="w-full py-3 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition"
           >
             Passwort ändern
           </button>
-
           <button
             onClick={handleLogout}
             className="w-full py-3 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition"
@@ -381,7 +348,6 @@ export default function SettingsPage() {
 
       </div>
 
-      {/* Provider Modal */}
       {showProviderModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
