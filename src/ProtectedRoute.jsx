@@ -1,31 +1,38 @@
-import { ReactNode, useEffect } from "react";
+// src/ProtectedRoute.jsx
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "./context/AuthContext";
 
-type Props = {
-  children: ReactNode;
-};
-
-export default function ProtectedRoute({ children }: Props) {
-  const { user, loading } = useAuth();
+export default function ProtectedRoute({ children }) {
+  const { user, org, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    // 1. nicht eingeloggt
+    if (!user) {
       navigate("/login", { replace: true });
+      return;
     }
-  }, [loading, user, navigate]);
 
-  // ⏳ Während Auth-Status noch geladen wird → nichts rendern
-  if (loading) {
-    return null; // oder <Spinner />
-  }
+    // 2. kein aktiver Plan
+    if (!org?.plan || org?.plan_status === "inactive" || org?.plan_status === "canceled") {
+      navigate("/pricing", { replace: true });
+      return;
+    }
 
-  // ❌ Nicht eingeloggt → Redirect läuft bereits
-  if (!user) {
-    return null;
-  }
+    // 3. kein Unternehmensname → Onboarding
+    if (!org?.name) {
+      navigate("/onboarding", { replace: true });
+      return;
+    }
+  }, [loading, user, org, navigate]);
 
-  // ✅ Eingeloggt → Zugriff erlaubt
+  if (loading) return null;
+  if (!user) return null;
+  if (!org?.plan || org?.plan_status === "inactive" || org?.plan_status === "canceled") return null;
+  if (!org?.name) return null;
+
   return <>{children}</>;
 }

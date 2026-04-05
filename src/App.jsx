@@ -1,135 +1,113 @@
-// App.jsx
+// src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
-import { OutlookProvider } from "./context/OutlookContext"; // <--- hinzugefügt
+import { OutlookProvider } from "./context/OutlookContext";
 import { MailProvider } from "./context/MailContext";
+
+import ProtectedRoute from "./ProtectedRoute";
+import AdminGuard from "./components/AdminGuard";
 
 import LandingPage from "./components/LandingPage";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
+import OnboardingPage from "./pages/OnboardingPage";
 import DashboardLanding from "./pages/DashboardLanding";
 import EmailsPage from "./pages/EmailsPage";
 import SettingsPage from "./pages/SettingsPage";
-import Impressum from "./pages/Impressum";
-import Datenschutz from "./pages/Datenschutz";
-import Register from "./pages/Register";
-import AboutNillPage from "./pages/AboutNillPage";
-import AboutUsPage from "./pages/AboutUsPage";
-import Founder from "./pages/Founder";
-import Roadmap from "./pages/Roadmap";
-import RedeemCoupon from "./pages/RedeemCouponPage";
-import AdminPage from "./pages/AdminPage";
-import VerifyEmail from "./pages/VerifyEmail";
-import VerificationSuccess from "./pages/VerificationSuccess";
-import VerificationFailed from "./pages/VerificationFailed";
 import AccountingPage from "./pages/AccountingPage";
 import KalenderLanding from "./pages/KalenderLanding";
 import WorkflowLanding from "./pages/WorkflowLanding";
 import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
-import Pricing from "./pages/PricingPage";
 import TransactionPage from "./pages/TransactionPage";
-
-import ProtectedRoute from "./components/ProtectedRoute";
+import AdminPage from "./pages/AdminPage";
+import RedeemCoupon from "./pages/RedeemCouponPage";
+import Pricing from "./pages/PricingPage";
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
+import AboutNillPage from "./pages/AboutNillPage";
+import AboutUsPage from "./pages/AboutUsPage";
+import Founder from "./pages/Founder";
+import Roadmap from "./pages/Roadmap";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerificationSuccess from "./pages/VerificationSuccess";
+import VerificationFailed from "./pages/VerificationFailed";
 
 function App() {
   return (
-    <GmailProvider>
-      <OutlookProvider>
-        <MailProvider> {/* ✅ HIER hinzufügen */}
+    <AuthProvider>
+      <GmailProvider>
+        <OutlookProvider>
+          <MailProvider>
+            <Router>
+              <Routes>
 
-          <Router>
-            <Routes>
+                {/* Public */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/verification-success" element={<VerificationSuccess />} />
+                <Route path="/verification-failed" element={<VerificationFailed />} />
+                <Route path="/Impressum" element={<Impressum />} />
+                <Route path="/Datenschutz" element={<Datenschutz />} />
+                <Route path="/about-nill" element={<AboutNillPage />} />
+                <Route path="/about-us" element={<AboutUsPage />} />
+                <Route path="/founder" element={<Founder />} />
+                <Route path="/roadmap" element={<Roadmap />} />
 
-              {/* ================= Öffentlich ================= */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/Impressum" element={<Impressum />} />
-              <Route path="/Datenschutz" element={<Datenschutz />} />
-              <Route path="/about-nill" element={<AboutNillPage />} />
-              <Route path="/about-us" element={<AboutUsPage />} />
-              <Route path="/founder" element={<Founder />} />
-              <Route path="/roadmap" element={<Roadmap />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/verification-success" element={<VerificationSuccess />} />
-              <Route path="/verification-failed" element={<VerificationFailed />} />
-              <Route path="/pricing" element={<Pricing />} />
+                {/* Protected — alle eingeloggten User */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute><DashboardLanding /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/emails" element={
+                  <ProtectedRoute><EmailsPage /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/calendar" element={
+                  <ProtectedRoute><KalenderLanding /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/accounting" element={
+                  <ProtectedRoute><AccountingPage /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/accounting/Transaction" element={
+                  <ProtectedRoute><TransactionPage /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/workflow" element={
+                  <ProtectedRoute><WorkflowLanding /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/workflow/tasks" element={
+                  <ProtectedRoute><WorkflowTasks /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/workflow/time" element={
+                  <ProtectedRoute><WorkflowTime /></ProtectedRoute>
+                }/>
+                <Route path="/redeem-coupon" element={
+                  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
+                }/>
 
-              {/* ================= Geschützt ================= */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardLanding />
-                </ProtectedRoute>
-              }/>
+                {/* Company Admin only */}
+                <Route path="/dashboard/settings" element={
+                  <ProtectedRoute>
+                    <AdminGuard><SettingsPage /></AdminGuard>
+                  </ProtectedRoute>
+                }/>
 
-              <Route path="/dashboard/emails" element={
-                <ProtectedRoute>
-                  <EmailsPage />
-                </ProtectedRoute>
-              }/>
+                {/* NILL Superadmin */}
+                <Route path="/admin" element={
+                  <ProtectedRoute><AdminPage /></ProtectedRoute>
+                }/>
 
-              <Route path="/dashboard/settings" element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/dashboard/accounting" element={
-                <ProtectedRoute>
-                  <AccountingPage />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/redeem-coupon" element={
-                <ProtectedRoute>
-                  <RedeemCoupon />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/dashboard/calendar" element={
-                <ProtectedRoute>
-                  <KalenderLanding />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/dashboard/workflow" element={
-                <ProtectedRoute>
-                  <WorkflowLanding />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/dashboard/workflow/tasks" element={
-                <ProtectedRoute>
-                  <WorkflowTasks />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/dashboard/workflow/time" element={
-                <ProtectedRoute>
-                  <WorkflowTime />
-                </ProtectedRoute>
-              }/>
-
-              <Route path="/dashboard/accounting/Transaction" element={
-                <ProtectedRoute>
-                  <TransactionPage />
-                </ProtectedRoute>
-              }/>
-
-            </Routes>
-          </Router>
-
-        </MailProvider> {/* ✅ HIER schließen */}
-      </OutlookProvider>
-    </GmailProvider>
+              </Routes>
+            </Router>
+          </MailProvider>
+        </OutlookProvider>
+      </GmailProvider>
+    </AuthProvider>
   );
 }
 
