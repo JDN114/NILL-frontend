@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
       try {
         const res = await api.get("/auth/me", {
           withCredentials: true, // 👈 wichtig für Cookies/OAuth
+          console.log("auth/me response:", JSON.stringify(res.data, null, 2));
         });
         if (mounted) setUser(res.data);
       } catch (err) {
