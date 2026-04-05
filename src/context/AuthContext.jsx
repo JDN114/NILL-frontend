@@ -12,8 +12,7 @@ export function AuthProvider({ children }) {
     let mounted = true; // Verhindert State-Updates nach Unmount
     async function loadUser() {
       try {
-        const res = await api.get("/auth/me", {
-          withCredentials: true, // 👈 wichtig für Cookies/OAuth
+          const res = await api.get("/auth/me", { withCredentials: true });
           console.log("auth/me response:", JSON.stringify(res.data, null, 2));
         });
         if (mounted) setUser(res.data);
