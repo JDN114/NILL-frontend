@@ -13,14 +13,14 @@ import EmailComposeModal from "../components/EmailComposeModal";
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const { 
-    provider, 
-    connected, 
-    activeEmail, // jetzt direkt vom Context
-    fetchEmails, 
-    openEmail, 
-    closeEmail, 
-    initializing 
+  const {
+    provider,
+    connected,
+    activeEmail,
+    fetchEmails,
+    openEmail,
+    closeEmail,
+    initializing,
   } = useContext(MailContext);
 
   const [mailbox, setMailbox] = useState("inbox");
@@ -30,6 +30,12 @@ export default function EmailsPage() {
   const [filteredEmails, setFilteredEmails] = useState([]);
 
   const pollingRef = useRef(null);
+  const activeEmailRef = useRef(null);
+
+  // 🔁 keep ref in sync (fix stale state)
+  useEffect(() => {
+    activeEmailRef.current = activeEmail;
+  }, [activeEmail]);
 
   // =====================================================
   // Auth Guard
@@ -39,7 +45,7 @@ export default function EmailsPage() {
   }, [user, navigate]);
 
   // =====================================================
-  // Emails laden & filtern nach mailbox
+  // Emails laden
   // =====================================================
   const loadAndFilterEmails = async () => {
     if (!connected) return [];
@@ -62,13 +68,55 @@ export default function EmailsPage() {
   }, [connected, mailbox]);
 
   // =====================================================
+  // Polling FIXED
+  // =====================================================
+  const stopPollingAI = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  const startPollingAI = (emailId) => {
+    stopPollingAI();
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const updated = await openEmail(emailId);
+
+        // ✅ stop when done (NO stale state anymore)
+        if (updated?.ai_status === "done" || updated?.ai_status === "success") {
+          stopPollingAI();
+        }
+
+        // ✅ stop if user closed email meanwhile
+        if (!activeEmailRef.current) {
+          stopPollingAI();
+        }
+      } catch (err) {
+        console.error("Polling Error:", err);
+        stopPollingAI();
+      }
+    }, 3000);
+  };
+
+  // cleanup on unmount
+  useEffect(() => {
+    return () => stopPollingAI();
+  }, []);
+
+  // =====================================================
   // Open / Close Email
   // =====================================================
   const handleOpenEmail = async (id) => {
-    if (!id || (activeEmail && activeEmail.id === id) || loading) return;
+    if (!id || loading) return;
+    if (activeEmailRef.current?.id === id) return;
+
+    stopPollingAI();
+
     setLoading(true);
     try {
-      await openEmail(id); // Context-State wird automatisch gesetzt
+      await openEmail(id);
       startPollingAI(id);
     } catch (err) {
       console.error("Fehler beim Öffnen der Mail:", err);
@@ -79,39 +127,22 @@ export default function EmailsPage() {
 
   const handleCloseEmail = () => {
     stopPollingAI();
-    closeEmail();
+
+    // kleine safety delay gegen race conditions
+    setTimeout(() => {
+      closeEmail();
+    }, 50);
   };
 
   // =====================================================
-  // KI Polling
-  // =====================================================
-  const startPollingAI = (emailId) => {
-    stopPollingAI();
-    pollingRef.current = setInterval(async () => {
-      try {
-        await openEmail(emailId); // activeEmail im Context wird geupdatet
-        if (activeEmail?.ai_status === "done") stopPollingAI();
-      } catch (err) {
-        console.error("Polling Error:", err);
-        stopPollingAI();
-      }
-    }, 3000);
-  };
-
-  const stopPollingAI = () => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-  };
-
-  // =====================================================
-  // Loading / No Provider
+  // UI STATES
   // =====================================================
   if (initializing || loading)
     return (
       <PageLayout>
-        <p className="text-gray-400 text-center py-10">E-Mails werden geladen…</p>
+        <p className="text-gray-400 text-center py-10">
+          E-Mails werden geladen…
+        </p>
       </PageLayout>
     );
 
@@ -124,18 +155,13 @@ export default function EmailsPage() {
     );
 
   // =====================================================
-  // Debug-Logging aktiv (kann nach Fix entfernt werden)
-  // =====================================================
-  console.log("activeEmail:", activeEmail);
-  console.log("filteredEmails:", filteredEmails);
-
-  // =====================================================
   // UI
   // =====================================================
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">
-        Postfach <span className="text-sm text-gray-400 ml-3">({provider})</span>
+        Postfach{" "}
+        <span className="text-sm text-gray-400 ml-3">({provider})</span>
       </h1>
 
       {!activeEmail && (
@@ -174,7 +200,9 @@ export default function EmailsPage() {
           {/* Email List */}
           <Card className="p-0 overflow-hidden">
             {filteredEmails.length === 0 ? (
-              <p className="text-center p-6 text-gray-400">Keine E-Mails gefunden</p>
+              <p className="text-center p-6 text-gray-400">
+                Keine E-Mails gefunden
+              </p>
             ) : (
               <ul className="divide-y divide-gray-800">
                 {filteredEmails.map((mail) => (
@@ -184,12 +212,18 @@ export default function EmailsPage() {
                     className="px-6 py-4 hover:bg-gray-800 cursor-pointer"
                   >
                     <div className="flex justify-between mb-1">
-                      <p className="font-semibold truncate">{mail.subject ?? "(Kein Betreff)"}</p>
+                      <p className="font-semibold truncate">
+                        {mail.subject ?? "(Kein Betreff)"}
+                      </p>
                       <span className="text-xs text-gray-400">
-                        {mail.received_at ? new Date(mail.received_at).toLocaleString() : ""}
+                        {mail.received_at
+                          ? new Date(mail.received_at).toLocaleString()
+                          : ""}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-400 truncate">{mail.from ?? "(Absender unbekannt)"}</p>
+                    <p className="text-sm text-gray-400 truncate">
+                      {mail.from ?? "(Absender unbekannt)"}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -200,79 +234,41 @@ export default function EmailsPage() {
 
       {activeEmail && (
         <Card className="p-6 space-y-6">
-          <button onClick={handleCloseEmail} className="text-gray-400 mb-4">
+          <button
+            onClick={handleCloseEmail}
+            className="text-gray-400 mb-4"
+          >
             Zurück
           </button>
 
           <div className="space-y-2">
-            <h2 className="text-xl font-bold">{activeEmail.subject ?? "(Kein Betreff)"}</h2>
-            <p className="text-gray-400">{activeEmail.from ?? "(Absender unbekannt)"}</p>
+            <h2 className="text-xl font-bold">
+              {activeEmail.subject ?? "(Kein Betreff)"}
+            </h2>
+            <p className="text-gray-400">
+              {activeEmail.from ?? "(Absender unbekannt)"}
+            </p>
           </div>
 
           <SafeEmailHtml html={activeEmail.body ?? "<p>Kein Inhalt</p>"} />
 
-          {/* KI Insights */}
-          <div className="mt-6 p-4 bg-gray-800 rounded space-y-4">
-            <h3 className="text-lg font-semibold mb-2">KI Insights</h3>
+          {/* KI Status */}
+          {activeEmail.ai_status === "pending" && (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-8 h-8 border-4 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="ml-3 text-gray-400">Analyse läuft…</span>
+            </div>
+          )}
 
-            {activeEmail.ai_status === "pending" && (
-              <div className="flex items-center justify-center py-6">
-                <div className="w-8 h-8 border-4 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="ml-3 text-gray-400">Analyse läuft…</span>
-              </div>
-            )}
+          {["done", "success"].includes(activeEmail.ai_status) && (
+            <div className="mt-6 p-4 bg-gray-800 rounded space-y-4">
+              <h3 className="text-lg font-semibold mb-2">KI Insights</h3>
 
-            {activeEmail.ai_status === "done" || activeEmail.ai_status === "success" ? (
-              <>
-                {activeEmail.summary && (
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-300">Zusammenfassung:</h4>
-                    <p className="text-gray-200">{activeEmail.summary}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-2 flex-wrap">
-                  {activeEmail.priority && (
-                    <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
-                      Priority: {activeEmail.priority}
-                    </span>
-                  )}
-                  {activeEmail.category && (
-                    <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
-                      Kategorie: {activeEmail.category}
-                    </span>
-                  )}
-                  {activeEmail.category_group && (
-                    <span className="bg-green-600 text-white px-2 py-1 rounded text-xs">
-                      Gruppe: {activeEmail.category_group}
-                    </span>
-                  )}
-                </div>
-
-                {activeEmail.action_items?.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-300">Action Items:</h4>
-                    <ul className="list-disc list-inside text-gray-200">
-                      {activeEmail.action_items.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {activeEmail.detected_dates?.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-300">Erkannte Termine:</h4>
-                    <ul className="list-disc list-inside text-gray-200">
-                      {activeEmail.detected_dates.map((date, idx) => (
-                        <li key={idx}>{new Date(date).toLocaleString()}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </>
-            ) : null}
-          </div>
+              {activeEmail.summary && (
+                <p className="text-gray-200">{activeEmail.summary}</p>
+              )}
+            </div>
+          )}
 
           <button
             onClick={() => setReplyOpen(true)}
@@ -283,8 +279,15 @@ export default function EmailsPage() {
         </Card>
       )}
 
-      <EmailReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
-      <EmailComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
+      <EmailReplyModal
+        emailId={activeEmail?.id}
+        open={replyOpen}
+        onClose={() => setReplyOpen(false)}
+      />
+      <EmailComposeModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+      />
     </PageLayout>
   );
 }
