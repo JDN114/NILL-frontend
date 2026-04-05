@@ -10,19 +10,16 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     if (loading) return;
 
-    // 1. nicht eingeloggt
     if (!user) {
       navigate("/login", { replace: true });
       return;
     }
 
-    // 2. kein aktiver Plan
     if (!org?.plan || org?.plan_status === "inactive" || org?.plan_status === "canceled") {
       navigate("/pricing", { replace: true });
       return;
     }
 
-    // 3. kein Unternehmensname → Onboarding
     if (!org?.name) {
       navigate("/onboarding", { replace: true });
       return;
