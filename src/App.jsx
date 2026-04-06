@@ -22,6 +22,7 @@ import KalenderLanding from "./pages/KalenderLanding";
 import WorkflowLanding from "./pages/WorkflowLanding";
 import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
+import WorkflowTeam from "./pages/WorkflowTeam";
 import TransactionPage from "./pages/TransactionPage";
 import AdminPage from "./pages/AdminPage";
 import RedeemCoupon from "./pages/RedeemCouponPage";
@@ -85,6 +86,9 @@ function App() {
                 }/>
                 <Route path="/dashboard/workflow/time" element={
                   <ProtectedRoute><WorkflowTime /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/workflow/team" element={
+                  <ProtectedRoute><WorkflowTeam /></ProtectedRoute>
                 }/>
                 <Route path="/redeem-coupon" element={
                   <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
