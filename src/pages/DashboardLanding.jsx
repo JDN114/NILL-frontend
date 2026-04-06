@@ -7,6 +7,7 @@ import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
 import api from "../services/api";
 
+import { useAuth } from "../context/AuthContext";
 import WelcomeToNILLModal from "../components/WelcomeToNILLModal";
 import GuidedTourModal from "../components/GuidedTourModal";
 
@@ -15,6 +16,7 @@ export default function DashboardLanding() {
   const [showTour, setShowTour] = useState(false);
   const [userName, setUserName] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const { hasFeature, isCompanyAdmin } = useAuth();
 
   // ----------------------------
   // Backend API: User, Onboarding, Notifications
@@ -124,36 +126,54 @@ export default function DashboardLanding() {
           )}
         </motion.div>
 
-        {/* Dashboard Cards */}
+        // Dann den Cards-Block ersetzen:
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[
-            { title: "Emails", description: "Postfach, Filter & Kategorien", link: "/dashboard/emails" },
-            { title: "Buchhaltung", description: "Rechnungen, Einnahmen & Ausgaben", link: "/dashboard/accounting" },
-            { title: "Kalender", description: "Termine, Planung & Events", link: "/dashboard/calendar" },
-            { title: "Team", description: "Tasks, Prozesse & Rollen", link: "/dashboard/workflow" },
-            { title: "Einstellungen", description: "Gmail Verbindung & Account", link: "/dashboard/settings" },
-          ].map((card, idx) => (
-            <motion.div
-              key={idx}
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              transition={{ delay: 0.1 * idx }}
-            >
-              <Link
-                to={card.link}
-                className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+            { title: "Emails",        description: "Postfach, Filter & Kategorien",     link: "/dashboard/emails",     feature: "email" },
+            { title: "Buchhaltung",   description: "Rechnungen, Einnahmen & Ausgaben",   link: "/dashboard/accounting", feature: "accounting" },
+            { title: "Kalender",      description: "Termine, Planung & Events",          link: "/dashboard/calendar",   feature: "calendar" },
+            { title: "Team",          description: "Tasks, Prozesse & Rollen",           link: "/dashboard/workflow",   feature: null },
+            { title: "Einstellungen", description: "Gmail Verbindung & Account",         link: "/dashboard/settings",   feature: null, adminOnly: true },
+          ]
+          .filter(card => !card.adminOnly || isCompanyAdmin())
+          .map((card, idx) => {
+            const unlocked = !card.feature || hasFeature(card.feature);
+            return (
+              <motion.div
+                key={idx}
+                initial="hidden"
+                animate="visible"
+                variants={fadeInUp}
+                transition={{ delay: 0.1 * idx }}
               >
-                <Card
-                  title={card.title}
-                  description={card.description}
-                  className="hover:shadow-lg transition"
-                />
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </PageLayout>
-    </>
-  );
-}
+                {unlocked ? (
+                  <Link
+                    to={card.link}
+                    className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+                  >
+                    <Card
+                      title={card.title}
+                      description={card.description}
+                      className="hover:shadow-lg transition"
+                    />
+                  </Link>
+                ) : (
+                      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 flex flex-col gap-2 opacity-60 cursor-not-allowed">
+                      <div className="flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" strokeWidth="2" className="text-gray-500 shrink-0">
+                        <rect x="3" y="11" width="18" height="11" rx="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                    <span className="text-white font-medium text-sm">{card.title}</span>
+                  </div>
+                <p className="text-gray-500 text-xs">{card.description}</p>
+                <p className="text-gray-600 text-xs mt-1">
+                  Für deine Rolle nicht freigeschaltet
+                </p>
+              </div>
+            )}
+          </motion.div>
+        );
+      })}
+  </div>
