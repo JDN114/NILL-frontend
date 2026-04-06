@@ -16,11 +16,8 @@ export default function DashboardLanding() {
   const [showTour, setShowTour] = useState(false);
   const [userName, setUserName] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  const { hasFeature, isCompanyAdmin } = useAuth();
+  const { hasFeature, isCompanyAdmin, org } = useAuth();
 
-  // ----------------------------
-  // Backend API: User, Onboarding, Notifications
-  // ----------------------------
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -68,10 +65,18 @@ export default function DashboardLanding() {
 
   const handleTourFinish = () => setShowTour(false);
 
-  // ----------------------------
-  // Animations
-  // ----------------------------
-  const fadeInUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const cards = [
+    { title: "Emails",        description: "Postfach, Filter & Kategorien",    link: "/dashboard/emails",     feature: "email" },
+    { title: "Buchhaltung",   description: "Rechnungen, Einnahmen & Ausgaben",  link: "/dashboard/accounting", feature: "accounting" },
+    { title: "Kalender",      description: "Termine, Planung & Events",         link: "/dashboard/calendar",   feature: "calendar" },
+    { title: "Team",          description: "Tasks, Prozesse & Rollen",          link: "/dashboard/workflow",   feature: null },
+    { title: "Einstellungen", description: "Gmail Verbindung & Account",        link: "/dashboard/settings",   feature: null, adminOnly: true },
+  ].filter(card => !card.adminOnly || isCompanyAdmin());
 
   return (
     <>
@@ -79,7 +84,6 @@ export default function DashboardLanding() {
       <GuidedTourModal isOpen={showTour} onFinish={handleTourFinish} />
 
       <PageLayout>
-        {/* Hero */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -94,7 +98,11 @@ export default function DashboardLanding() {
             transition={{ delay: 0.2 }}
             className="text-3xl md:text-4xl font-bold text-white mb-2"
           >
-            {userName ? `Willkommen zurück, ${userName}!` : "Willkommen zurück!"}
+            {org?.name
+              ? `Willkommen zurück, ${org.name}!`
+              : userName
+              ? `Willkommen zurück, ${userName}!`
+              : "Willkommen zurück!"}
           </motion.h1>
 
           <motion.p
@@ -106,7 +114,6 @@ export default function DashboardLanding() {
             Mit NILL Zeit und Geld sparen.
           </motion.p>
 
-          {/* Notifications */}
           {notifications.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -126,17 +133,8 @@ export default function DashboardLanding() {
           )}
         </motion.div>
 
-        // Dann den Cards-Block ersetzen:
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[
-            { title: "Emails",        description: "Postfach, Filter & Kategorien",     link: "/dashboard/emails",     feature: "email" },
-            { title: "Buchhaltung",   description: "Rechnungen, Einnahmen & Ausgaben",   link: "/dashboard/accounting", feature: "accounting" },
-            { title: "Kalender",      description: "Termine, Planung & Events",          link: "/dashboard/calendar",   feature: "calendar" },
-            { title: "Team",          description: "Tasks, Prozesse & Rollen",           link: "/dashboard/workflow",   feature: null },
-            { title: "Einstellungen", description: "Gmail Verbindung & Account",         link: "/dashboard/settings",   feature: null, adminOnly: true },
-          ]
-          .filter(card => !card.adminOnly || isCompanyAdmin())
-          .map((card, idx) => {
+          {cards.map((card, idx) => {
             const unlocked = !card.feature || hasFeature(card.feature);
             return (
               <motion.div
@@ -158,22 +156,35 @@ export default function DashboardLanding() {
                     />
                   </Link>
                 ) : (
-                      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 flex flex-col gap-2 opacity-60 cursor-not-allowed">
-                      <div className="flex items-center gap-2">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2" className="text-gray-500 shrink-0">
-                        <rect x="3" y="11" width="18" height="11" rx="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 flex flex-col gap-2 opacity-60 cursor-not-allowed">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-gray-500 shrink-0"
+                      >
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                       </svg>
-                    <span className="text-white font-medium text-sm">{card.title}</span>
+                      <span className="text-white font-medium text-sm">
+                        {card.title}
+                      </span>
+                    </div>
+                    <p className="text-gray-500 text-xs">{card.description}</p>
+                    <p className="text-gray-600 text-xs mt-1">
+                      Für deine Rolle nicht freigeschaltet
+                    </p>
                   </div>
-                <p className="text-gray-500 text-xs">{card.description}</p>
-                <p className="text-gray-600 text-xs mt-1">
-                  Für deine Rolle nicht freigeschaltet
-                </p>
-              </div>
-            )}
-          </motion.div>
-        );
-      })}
-  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </PageLayout>
+    </>
+  );
+}
