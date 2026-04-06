@@ -36,6 +36,7 @@ import Roadmap from "./pages/Roadmap";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
+import InviteAcceptPage from "./pages/InviteAcceptPage";
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
                 <Route path="/about-us" element={<AboutUsPage />} />
                 <Route path="/founder" element={<Founder />} />
                 <Route path="/roadmap" element={<Roadmap />} />
+                <Route path="/invite/:token" element={<InviteAcceptPage />} />
 
                 {/* Protected — alle eingeloggten User */}
                 <Route path="/dashboard" element={

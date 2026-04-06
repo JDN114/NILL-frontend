@@ -1,23 +1,21 @@
-// src/pages/WorkflowTeam.jsx
+k// src/pages/WorkflowTeam.jsx
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 const ALL_PERMISSIONS = [
-  { key: "calendar",    label: "Kalender" },
-  { key: "email",       label: "E-Mail" },
-  { key: "accounting",  label: "Buchhaltung" },
-  { key: "schedules",   label: "Stundenpläne" },
-  { key: "documents",   label: "Dokumente" },
-  { key: "inventory",   label: "Inventur" },
-  { key: "wages",       label: "Löhne" },
+  { key: "calendar",   label: "Kalender" },
+  { key: "email",      label: "E-Mail" },
+  { key: "accounting", label: "Buchhaltung" },
+  { key: "schedules",  label: "Stundenpläne" },
+  { key: "documents",  label: "Dokumente" },
+  { key: "inventory",  label: "Inventur" },
+  { key: "wages",      label: "Löhne" },
 ];
 
 export default function WorkflowTeam() {
   const { user, isCompanyAdmin } = useAuth();
-  const navigate = useNavigate();
 
   const [members, setMembers]     = useState([]);
   const [roles, setRoles]         = useState([]);
@@ -25,15 +23,13 @@ export default function WorkflowTeam() {
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState("members");
 
-  // Role modal
-  const [showRoleModal, setShowRoleModal]   = useState(false);
-  const [editingRole, setEditingRole]       = useState(null);
-  const [roleName, setRoleName]             = useState("");
-  const [rolePerms, setRolePerms]           = useState([]);
-  const [roleSaving, setRoleSaving]         = useState(false);
-  const [roleError, setRoleError]           = useState("");
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [editingRole, setEditingRole]     = useState(null);
+  const [roleName, setRoleName]           = useState("");
+  const [rolePerms, setRolePerms]         = useState([]);
+  const [roleSaving, setRoleSaving]       = useState(false);
+  const [roleError, setRoleError]         = useState("");
 
-  // Invite modal
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail]         = useState("");
   const [inviteRoleId, setInviteRoleId]       = useState("");
@@ -41,12 +37,9 @@ export default function WorkflowTeam() {
   const [inviteError, setInviteError]         = useState("");
   const [inviteSuccess, setInviteSuccess]     = useState("");
 
-  // Assign role
   const [assigningMember, setAssigningMember] = useState(null);
   const [assignRoleId, setAssignRoleId]       = useState("");
-
-  // Delete confirm
-  const [deletingMember, setDeletingMember] = useState(null);
+  const [deletingMember, setDeletingMember]   = useState(null);
 
   useEffect(() => {
     loadAll();
@@ -55,10 +48,14 @@ export default function WorkflowTeam() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [rolesRes, invitesRes] = await Promise.all([
+      const [membersRes, rolesRes, invitesRes] = await Promise.all([
+        api.get("/team/members", { withCredentials: true }),
         api.get("/team/roles", { withCredentials: true }),
-        isCompanyAdmin() ? api.get("/team/invites", { withCredentials: true }) : Promise.resolve({ data: [] }),
+        isCompanyAdmin()
+          ? api.get("/team/invites", { withCredentials: true })
+          : Promise.resolve({ data: [] }),
       ]);
+      setMembers(membersRes.data ?? []);
       setRoles(rolesRes.data ?? []);
       setInvites(invitesRes.data ?? []);
     } catch (err) {
@@ -68,7 +65,10 @@ export default function WorkflowTeam() {
     }
   };
 
-  // ---- Roles ----
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    loadAll();
+  };
 
   const openCreateRole = () => {
     setEditingRole(null);
@@ -98,14 +98,18 @@ export default function WorkflowTeam() {
     setRoleError("");
     try {
       if (editingRole) {
-        const res = await api.put(`/team/roles/${editingRole.id}`,
+        const res = await api.put(
+          `/team/roles/${editingRole.id}`,
           { name: roleName.trim(), permissions: rolePerms },
-          { withCredentials: true });
+          { withCredentials: true }
+        );
         setRoles(prev => prev.map(r => r.id === editingRole.id ? res.data : r));
       } else {
-        const res = await api.post("/team/roles",
+        const res = await api.post(
+          "/team/roles",
           { name: roleName.trim(), permissions: rolePerms },
-          { withCredentials: true });
+          { withCredentials: true }
+        );
         setRoles(prev => [...prev, res.data]);
       }
       setShowRoleModal(false);
@@ -125,15 +129,16 @@ export default function WorkflowTeam() {
     }
   };
 
-  // ---- Assign Role ----
-
   const assignRole = async (memberId) => {
     try {
-      await api.post(`/team/roles/${assignRoleId}/assign/${memberId}`,
-        {}, { withCredentials: true });
+      await api.post(
+        `/team/roles/${assignRoleId}/assign/${memberId}`,
+        {},
+        { withCredentials: true }
+      );
       setMembers(prev => prev.map(m =>
         m.id === memberId
-          ? { ...m, org_role: roles.find(r => r.id === assignRoleId) }
+          ? { ...m, org_role_id: assignRoleId, org_role_name: roles.find(r => r.id === assignRoleId)?.name }
           : m
       ));
       setAssigningMember(null);
@@ -143,17 +148,17 @@ export default function WorkflowTeam() {
     }
   };
 
-  // ---- Invite ----
-
   const sendInvite = async () => {
     if (!inviteEmail.trim()) { setInviteError("E-Mail darf nicht leer sein."); return; }
     setInviteSending(true);
     setInviteError("");
     setInviteSuccess("");
     try {
-      const res = await api.post("/team/invites",
+      const res = await api.post(
+        "/team/invites",
         { email: inviteEmail.trim(), org_role_id: inviteRoleId || null },
-        { withCredentials: true });
+        { withCredentials: true }
+      );
       setInvites(prev => [...prev, res.data]);
       setInviteSuccess(`Einladung an ${inviteEmail} gesendet.`);
       setInviteEmail("");
@@ -175,8 +180,6 @@ export default function WorkflowTeam() {
     }
   };
 
-  // ---- Delete Member ----
-
   const deleteMember = async (memberId) => {
     try {
       await api.delete(`/team/members/${memberId}`, { withCredentials: true });
@@ -186,8 +189,6 @@ export default function WorkflowTeam() {
       console.error(err);
     }
   };
-
-  // ---- My Role (employee view) ----
 
   const myRole = user?.org_role ?? null;
 
@@ -203,7 +204,6 @@ export default function WorkflowTeam() {
     <PageLayout>
       <div className="max-w-5xl space-y-8">
 
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Team</h1>
@@ -221,7 +221,6 @@ export default function WorkflowTeam() {
           )}
         </div>
 
-        {/* Eigene Rolle (für Employees) */}
         {!isCompanyAdmin() && myRole && (
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
             <p className="text-xs text-gray-500 mb-1">Deine Rolle</p>
@@ -230,11 +229,11 @@ export default function WorkflowTeam() {
               {ALL_PERMISSIONS.map(p => (
                 <span
                   key={p.key}
-                  className={`text-xs px-2 py-1 rounded-full ${
+                  className={
                     myRole.permissions?.includes(p.key)
-                      ? "bg-green-500/10 text-green-400"
-                      : "bg-gray-800 text-gray-600"
-                  }`}
+                      ? "text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400"
+                      : "text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-600"
+                  }
                 >
                   {p.label}
                 </span>
@@ -243,19 +242,18 @@ export default function WorkflowTeam() {
           </div>
         )}
 
-        {/* Tabs — nur für Admin */}
         {isCompanyAdmin() && (
           <>
             <div className="flex gap-1 bg-gray-900 rounded-xl p-1 w-fit">
               {["members", "roles", "invites"].map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  onClick={() => handleTabChange(tab)}
+                  className={
                     activeTab === tab
-                      ? "bg-white text-gray-900"
-                      : "text-gray-400 hover:text-white"
-                  }`}
+                      ? "px-4 py-2 rounded-lg text-sm font-medium transition bg-white text-gray-900"
+                      : "px-4 py-2 rounded-lg text-sm font-medium transition text-gray-400 hover:text-white"
+                  }
                 >
                   {tab === "members" ? "Mitglieder"
                     : tab === "roles" ? "Rollen"
@@ -264,7 +262,6 @@ export default function WorkflowTeam() {
               ))}
             </div>
 
-            {/* MEMBERS TAB */}
             {activeTab === "members" && (
               <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
                 {members.length === 0 ? (
@@ -315,11 +312,11 @@ export default function WorkflowTeam() {
                               <button
                                 onClick={() => {
                                   setAssigningMember(m.id);
-                                  setAssignRoleId(m.org_role?.id ?? "");
+                                  setAssignRoleId(m.org_role_id ?? "");
                                 }}
                                 className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition"
                               >
-                                {m.org_role?.name ?? "Keine Rolle"}
+                                {m.org_role_name ?? "Keine Rolle"}
                               </button>
                             )}
                           </td>
@@ -341,7 +338,6 @@ export default function WorkflowTeam() {
               </div>
             )}
 
-            {/* ROLES TAB */}
             {activeTab === "roles" && (
               <div className="space-y-4">
                 <button
@@ -350,7 +346,6 @@ export default function WorkflowTeam() {
                 >
                   + Neue Rolle
                 </button>
-
                 {roles.length === 0 ? (
                   <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center text-gray-500">
                     Noch keine Rollen erstellt.
@@ -358,10 +353,7 @@ export default function WorkflowTeam() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {roles.map(role => (
-                      <div
-                        key={role.id}
-                        className="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-3"
-                      >
+                      <div key={role.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-white font-semibold">{role.name}</p>
                           <div className="flex gap-2">
@@ -383,11 +375,11 @@ export default function WorkflowTeam() {
                           {ALL_PERMISSIONS.map(p => (
                             <span
                               key={p.key}
-                              className={`text-xs px-2 py-1 rounded-full ${
+                              className={
                                 role.permissions?.includes(p.key)
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-gray-800 text-gray-600"
-                              }`}
+                                  ? "text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400"
+                                  : "text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-600"
+                              }
                             >
                               {p.label}
                             </span>
@@ -400,13 +392,20 @@ export default function WorkflowTeam() {
               </div>
             )}
 
-            {/* INVITES TAB */}
             {activeTab === "invites" && (
               <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 text-sm">Offene Einladungen</span>
+                  <button
+                    onClick={loadAll}
+                    className="text-xs text-gray-500 hover:text-white transition"
+                  >
+                    ↻ Aktualisieren
+                  </button>
+                </div>
                 {inviteSuccess && (
                   <p className="text-green-400 text-sm">{inviteSuccess}</p>
                 )}
-
                 {invites.length === 0 ? (
                   <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center text-gray-500">
                     Keine offenen Einladungen.
@@ -431,13 +430,13 @@ export default function WorkflowTeam() {
                               {roles.find(r => r.id === inv.org_role_id)?.name ?? "—"}
                             </td>
                             <td className="px-5 py-4">
-                              <span className={`text-xs px-2 py-1 rounded-full ${
+                              <span className={
                                 inv.status === "pending"
-                                  ? "bg-amber-500/10 text-amber-400"
+                                  ? "text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-400"
                                   : inv.status === "accepted"
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-gray-800 text-gray-500"
-                              }`}>
+                                  ? "text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400"
+                                  : "text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-500"
+                              }>
                                 {inv.status === "pending" ? "Ausstehend"
                                   : inv.status === "accepted" ? "Angenommen"
                                   : "Abgelaufen"}
@@ -470,7 +469,6 @@ export default function WorkflowTeam() {
         )}
       </div>
 
-      {/* ROLE MODAL */}
       {showRoleModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md space-y-5 shadow-2xl border border-gray-800">
@@ -491,10 +489,7 @@ export default function WorkflowTeam() {
               <label className="text-gray-300 text-sm mb-2 block">Berechtigungen</label>
               <div className="grid grid-cols-2 gap-2">
                 {ALL_PERMISSIONS.map(p => (
-                  <label
-                    key={p.key}
-                    className="flex items-center gap-2 cursor-pointer group"
-                  >
+                  <label key={p.key} className="flex items-center gap-2 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={rolePerms.includes(p.key)}
@@ -528,7 +523,6 @@ export default function WorkflowTeam() {
         </div>
       )}
 
-      {/* INVITE MODAL */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md space-y-5 shadow-2xl border border-gray-800">
@@ -583,7 +577,6 @@ export default function WorkflowTeam() {
         </div>
       )}
 
-      {/* DELETE CONFIRM MODAL */}
       {deletingMember && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-sm space-y-5 shadow-2xl border border-gray-800">
