@@ -37,7 +37,9 @@ import VerifyEmail from "./pages/VerifyEmail";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
-
+import FeatureRoute from "./FeatureRoute";
+import UpgradePage from "./pages/UpgradePage";
+ 
 function App() {
   return (
     <AuthProvider>
@@ -47,68 +49,99 @@ function App() {
             <Router>
               <Routes>
 
-                {/* Public */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="/verification-success" element={<VerificationSuccess />} />
-                <Route path="/verification-failed" element={<VerificationFailed />} />
-                <Route path="/Impressum" element={<Impressum />} />
-                <Route path="/Datenschutz" element={<Datenschutz />} />
-                <Route path="/about-nill" element={<AboutNillPage />} />
-                <Route path="/about-us" element={<AboutUsPage />} />
-                <Route path="/founder" element={<Founder />} />
-                <Route path="/roadmap" element={<Roadmap />} />
-                <Route path="/invite/:token" element={<InviteAcceptPage />} />
+              {/* Public */}
+      	        <Route path="/" element={<LandingPage />} />
+  	        <Route path="/login" element={<Login />} />
+	        <Route path="/register" element={<Register />} />
+  	        <Route path="/onboarding" element={<OnboardingPage />} />
+  	        <Route path="/pricing" element={<Pricing />} />
+		<Route path="/verify-email" element={<VerifyEmail />} />
+		<Route path="/verification-success" element={<VerificationSuccess />} />
+ 		<Route path="/verification-failed" element={<VerificationFailed />} />
+		<Route path="/Impressum" element={<Impressum />} />
+		<Route path="/Datenschutz" element={<Datenschutz />} />
+		<Route path="/about-nill" element={<AboutNillPage />} />
+		<Route path="/about-us" element={<AboutUsPage />} />
+		<Route path="/founder" element={<Founder />} />
+		<Route path="/roadmap" element={<Roadmap />} />
+		<Route path="/invite/:token" element={<InviteAcceptPage />} />
 
-                {/* Protected — alle eingeloggten User */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute><DashboardLanding /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/emails" element={
-                  <ProtectedRoute><EmailsPage /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/calendar" element={
-                  <ProtectedRoute><KalenderLanding /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/accounting" element={
-                  <ProtectedRoute><AccountingPage /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/accounting/Transaction" element={
-                  <ProtectedRoute><TransactionPage /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/workflow" element={
-                  <ProtectedRoute><WorkflowLanding /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/workflow/tasks" element={
-                  <ProtectedRoute><WorkflowTasks /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/workflow/time" element={
-                  <ProtectedRoute><WorkflowTime /></ProtectedRoute>
-                }/>
-                <Route path="/dashboard/workflow/team" element={
-                  <ProtectedRoute><WorkflowTeam /></ProtectedRoute>
-                }/>
-                <Route path="/redeem-coupon" element={
-                  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
-                }/>
+		{/* Upgrade / Access Denied */}
+		<Route path="/upgrade" element={
+		  <ProtectedRoute><UpgradePage /></ProtectedRoute>
+		}/>
 
-                {/* Company Admin only */}
-                <Route path="/dashboard/settings" element={
-                  <ProtectedRoute>
-                    <AdminGuard><SettingsPage /></AdminGuard>
-                  </ProtectedRoute>
-                }/>
+		{/* Protected — Login + aktiver Plan erforderlich */}
+		<Route path="/dashboard" element={
+		  <ProtectedRoute><DashboardLanding /></ProtectedRoute>
+		}/>
 
-                {/* NILL Superadmin */}
-                <Route path="/admin" element={
-                  <ProtectedRoute><AdminPage /></ProtectedRoute>
-                }/>
+		{/* E-Mail — requires feature "email" + module "emails" */}
+		<Route path="/dashboard/emails" element={
+		  <ProtectedRoute>
+		    <FeatureRoute feature="email" module="emails">
+		      <EmailsPage />
+		    </FeatureRoute>
+		  </ProtectedRoute>
+		}/>
 
-              </Routes>
+		{/* Kalender — requires module "calendar" (admin bypass via hasFeature) */}
+		<Route path="/dashboard/calendar" element={
+		  <ProtectedRoute>
+		    <FeatureRoute feature="calendar" module="calendar">
+		      <KalenderLanding />
+		    </FeatureRoute>
+		  </ProtectedRoute>
+		}/>
+
+		{/* Buchhaltung — requires feature "accounting" + module "accounting" */}
+		<Route path="/dashboard/accounting" element={
+		  <ProtectedRoute>
+		    <FeatureRoute feature="accounting" module="accounting">
+		      <AccountingPage />
+		    </FeatureRoute>
+		  </ProtectedRoute>
+		}/>
+		<Route path="/dashboard/accounting/Transaction" element={
+  		  <ProtectedRoute>
+		    <FeatureRoute feature="accounting" module="accounting">
+		      <TransactionPage />
+		    </FeatureRoute>
+		  </ProtectedRoute>
+		}/>
+
+		{/* Workflow — kein Feature-Guard, aber Team-Tab intern per AdminGuard */}
+		<Route path="/dashboard/workflow" element={
+		  <ProtectedRoute><WorkflowLanding /></ProtectedRoute>
+		}/>
+		<Route path="/dashboard/workflow/tasks" element={
+		  <ProtectedRoute><WorkflowTasks /></ProtectedRoute>
+		}/>
+		<Route path="/dashboard/workflow/time" element={
+		  <ProtectedRoute><WorkflowTime /></ProtectedRoute>
+		}/>
+		<Route path="/dashboard/workflow/team" element={
+		  <ProtectedRoute>
+		    <AdminGuard><WorkflowTeam /></AdminGuard>
+		  </ProtectedRoute>
+		}/>
+
+		<Route path="/redeem-coupon" element={
+		  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
+		}/>
+
+		{/* Company Admin only */}
+		<Route path="/dashboard/settings" element={
+		  <ProtectedRoute>
+		    <AdminGuard><SettingsPage /></AdminGuard>
+		  </ProtectedRoute>
+		}/>
+
+		{/* NILL Superadmin */}
+		<Route path="/admin" element={
+		  <ProtectedRoute><AdminPage /></ProtectedRoute>
+		}/>
+	      </Routes>
             </Router>
           </MailProvider>
         </OutlookProvider>
