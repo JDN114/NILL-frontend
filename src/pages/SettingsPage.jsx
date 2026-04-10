@@ -30,7 +30,7 @@ export default function SettingsPage() {
   const { user, org, updateOrg } = useAuth();
 
   const isSolo = org?.plan === "solo";
-  const showTeamTab = !isSolo && org?.plan != null;
+  const showTeamTab = !isSolo() && org?.plan != null;
 
   const visibleTabs = showTeamTab ? TABS : TABS.filter(t => t.id !== "team");
   const [activeTab, setActiveTab] = useState("konto");
