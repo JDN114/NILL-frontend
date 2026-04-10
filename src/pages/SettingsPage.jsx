@@ -27,9 +27,9 @@ const TABS = [
 export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, org, updateOrg } = useAuth();
+  const { user, org, updateOrg, isSolo, isCompanyAdmin } = useAuth();
 
-  const isSolo = org?.plan === "solo";
+  // isSolo kommt aus useAuth()
   const showTeamTab = !isSolo() && org?.plan != null;
 
   const visibleTabs = showTeamTab ? TABS : TABS.filter(t => t.id !== "team");
