@@ -1,11 +1,13 @@
 // src/pages/InviteAcceptPage.jsx
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 export default function InviteAcceptPage() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const { setUser, setOrg } = useAuth();
 
   const [invite, setInvite]     = useState(null);
   const [loading, setLoading]   = useState(true);
@@ -39,7 +41,11 @@ export default function InviteAcceptPage() {
     setSubmitting(true);
     try {
       await api.post(`/team/invites/accept/${token}`, { password });
-      setSuccess(true);
+      await api.post("/auth/login", { email: invite.email, password });
+      const me = await api.get("/auth/me", { withCredentials: true });
+      setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
+      setOrg(me.data.org ?? null);
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       const detail = err.response?.data?.detail;
       setError(typeof detail === "string" ? detail : "Fehler beim Erstellen des Accounts.");

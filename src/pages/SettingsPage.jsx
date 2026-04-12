@@ -79,11 +79,12 @@ export default function SettingsPage() {
 
   const showTeamTab = !isSolo() && org?.plan != null;
 
+  const isAdmin = isCompanyAdmin();
   const TABS = [
     { id: "konto",         label: "Konto",         icon: <IconUser /> },
-    { id: "unternehmen",   label: "Unternehmen",   icon: <IconBuilding /> },
-    { id: "integrationen", label: "Integrationen", icon: <IconPlug /> },
-    { id: "abonnement",    label: "Abonnement",    icon: <IconCreditCard /> },
+    ...(isAdmin ? [{ id: "unternehmen",   label: "Unternehmen",   icon: <IconBuilding /> }] : []),
+    ...(isAdmin ? [{ id: "integrationen", label: "Integrationen", icon: <IconPlug /> }] : []),
+    ...(isAdmin ? [{ id: "abonnement",    label: "Abonnement",    icon: <IconCreditCard /> }] : []),
     ...(showTeamTab ? [{ id: "team", label: "Mein Team", icon: <IconTeam /> }] : []),
   ];
 
