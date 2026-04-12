@@ -11,14 +11,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Frontend E-Mail Regex für minimalen Check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
-
-    // Frontend Validation
     if (!emailRegex.test(email)) {
       setError("Bitte eine gültige E-Mail-Adresse eingeben.");
       return;
@@ -27,19 +24,15 @@ export default function Login() {
       setError("Passwort muss mindestens 6 Zeichen lang sein.");
       return;
     }
-
     setLoading(true);
-
     try {
-      // Backend setzt HttpOnly Cookie für Auth
       await api.post("/auth/login", { email, password });
-
-      // Erfolgreich → Dashboard
+      const me = await api.get("/auth/me", { withCredentials: true });
+      setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
+      setOrg(me.data.org ?? null);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Login Fehler:", err);
-
-      // Einheitliche Fehlermeldung (kein User Enumeration möglich)
       setError("E-Mail oder Passwort ungültig.");
     } finally {
       setLoading(false);
@@ -53,7 +46,6 @@ export default function Login() {
         className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-lg space-y-6"
       >
         <h1 className="text-3xl font-bold text-center text-white">Login</h1>
-
         <input
           type="email"
           placeholder="E-Mail"
@@ -63,7 +55,6 @@ export default function Login() {
           className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoComplete="email"
         />
-
         <input
           type="password"
           placeholder="Passwort"
@@ -73,9 +64,7 @@ export default function Login() {
           className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoComplete="current-password"
         />
-
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-
         <button
           type="submit"
           disabled={loading}
@@ -87,7 +76,6 @@ export default function Login() {
         >
           {loading ? "Anmelden..." : "Login"}
         </button>
-
         <p className="text-center text-sm text-gray-400">
           Noch kein Konto?{" "}
           <span
