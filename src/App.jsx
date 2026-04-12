@@ -132,10 +132,8 @@ function App() {
 
 		{/* Company Admin only */}
 		<Route path="/dashboard/settings" element={
-		  <ProtectedRoute>
-		    <AdminGuard><SettingsPage /></AdminGuard>
-		  </ProtectedRoute>
-		}/>
+                  <ProtectedRoute><SettingsPage /></ProtectedRoute>
+                }/>
 
 		{/* NILL Superadmin */}
 		<Route path="/admin" element={
