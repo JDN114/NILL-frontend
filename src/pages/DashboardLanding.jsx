@@ -1,5 +1,5 @@
 // src/pages/DashboardLanding.jsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
@@ -16,7 +16,8 @@ export default function DashboardLanding() {
   const [showTour, setShowTour] = useState(false);
   const [userName, setUserName] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  const { hasFeature, isCompanyAdmin, org } = useAuth();
+  const { hasFeature, hasModule, isCompanyAdmin, org } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,13 +71,28 @@ export default function DashboardLanding() {
     visible: { opacity: 1, y: 0 },
   };
 
+  // feature = permission check (Rolle), module = plan check (Org)
   const cards = [
-    { title: "Emails",        description: "Postfach, Filter & Kategorien",    link: "/dashboard/emails",     feature: "email" },
-    { title: "Buchhaltung",   description: "Rechnungen, Einnahmen & Ausgaben",  link: "/dashboard/accounting", feature: "accounting" },
-    { title: "Kalender",      description: "Termine, Planung & Events",         link: "/dashboard/calendar",   feature: "calendar" },
-    { title: "Team",          description: "Tasks, Prozesse & Rollen",          link: "/dashboard/workflow",   feature: null },
-    { title: "Einstellungen", description: "Gmail Verbindung & Account",        link: "/dashboard/settings",   feature: null, adminOnly: true },
+    { title: "Emails",        description: "Postfach, Filter & Kategorien",    link: "/dashboard/emails",     feature: "email",       module: "emails" },
+    { title: "Buchhaltung",   description: "Rechnungen, Einnahmen & Ausgaben",  link: "/dashboard/accounting", feature: "accounting",  module: "accounting" },
+    { title: "Kalender",      description: "Termine, Planung & Events",         link: "/dashboard/calendar",   feature: "calendar",    module: "calendar" },
+    { title: "Team",          description: "Tasks, Prozesse & Rollen",          link: "/dashboard/workflow",   feature: null,          module: null },
+    { title: "Einstellungen", description: "Gmail Verbindung & Account",        link: "/dashboard/settings",   feature: null,          module: null, adminOnly: true },
   ].filter(card => !card.adminOnly || isCompanyAdmin());
+
+  const handleLockedClick = (card) => {
+    const moduleOk  = !card.module  || hasModule(card.module);
+    const featureOk = !card.feature || hasFeature(card.feature);
+    const reason    = !moduleOk ? "module" : "feature";
+    navigate("/upgrade", {
+      state: {
+        from:    "/dashboard",
+        feature: card.feature,
+        module:  card.module,
+        reason,
+      },
+    });
+  };
 
   return (
     <>
@@ -122,10 +138,7 @@ export default function DashboardLanding() {
               className="mt-6 space-y-2"
             >
               {notifications.slice(0, 3).map((n, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-800/50 p-3 rounded-lg text-gray-200 text-sm"
-                >
+                <div key={idx} className="bg-gray-800/50 p-3 rounded-lg text-gray-200 text-sm">
                   {n.message}
                 </div>
               ))}
@@ -135,7 +148,10 @@ export default function DashboardLanding() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {cards.map((card, idx) => {
-            const unlocked = !card.feature || hasFeature(card.feature);
+            const moduleOk  = !card.module  || hasModule(card.module);
+            const featureOk = !card.feature || hasFeature(card.feature);
+            const unlocked  = moduleOk && featureOk;
+
             return (
               <motion.div
                 key={idx}
@@ -156,28 +172,23 @@ export default function DashboardLanding() {
                     />
                   </Link>
                 ) : (
-                  <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 flex flex-col gap-2 opacity-60 cursor-not-allowed">
+                  <div
+                    onClick={() => handleLockedClick(card)}
+                    className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 flex flex-col gap-2 opacity-60 cursor-pointer hover:opacity-80 transition"
+                  >
                     <div className="flex items-center gap-2">
                       <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                        width="14" height="14" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" strokeWidth="2"
                         className="text-gray-500 shrink-0"
                       >
                         <rect x="3" y="11" width="18" height="11" rx="2" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                       </svg>
-                      <span className="text-white font-medium text-sm">
-                        {card.title}
-                      </span>
+                      <span className="text-white font-medium text-sm">{card.title}</span>
                     </div>
                     <p className="text-gray-500 text-xs">{card.description}</p>
-                    <p className="text-gray-600 text-xs mt-1">
-                      Für deine Rolle nicht freigeschaltet
-                    </p>
+                    <p className="text-gray-600 text-xs mt-1">Für deine Rolle nicht freigeschaltet</p>
                   </div>
                 )}
               </motion.div>

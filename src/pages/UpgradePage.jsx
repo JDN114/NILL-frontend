@@ -44,20 +44,23 @@ const PLAN_INFO = {
 };
 
 export default function UpgradePage() {
-  const location = useLocation();
+  const location  = useLocation();
   const navigate  = useNavigate();
-  const { user, org, isCompanyAdmin } = useAuth();
+  const { org, isCompanyAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
   const { from, feature, module: mod, reason } = location.state ?? {};
 
+  // Fallback: wenn kein state vorhanden (z.B. direkter URL-Aufruf)
+  const backTarget = from ?? "/dashboard";
+
   const blockedLabel =
     reason === "module"
-      ? MODULE_LABELS[mod]   ?? mod   ?? "dieses Modul"
-      : FEATURE_LABELS[feature] ?? feature ?? "diese Funktion";
+      ? MODULE_LABELS[mod]      ?? mod      ?? "dieses Modul"
+      : FEATURE_LABELS[feature] ?? feature  ?? "diese Funktion";
 
-  const planInfo = PLAN_INFO[org?.plan] ?? null;
+  const planInfo   = PLAN_INFO[org?.plan] ?? null;
   const canUpgrade = isCompanyAdmin?.() && planInfo?.nextKey;
 
   const handlePortal = async () => {
@@ -66,7 +69,7 @@ export default function UpgradePage() {
     try {
       const res = await api.get("/billing/portal", { withCredentials: true });
       window.location.href = res.data.url;
-    } catch (err) {
+    } catch {
       setError("Stripe Portal konnte nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
@@ -96,8 +99,8 @@ export default function UpgradePage() {
             <p className="text-gray-400 text-sm leading-relaxed">
               {reason === "module" ? (
                 <>
-                  <span className="text-white font-medium">{blockedLabel}</span> ist im aktuellen Plan
-                  {" "}<span className="text-white font-medium capitalize">{org?.plan ?? "—"}</span> nicht enthalten.
+                  <span className="text-white font-medium">{blockedLabel}</span> ist im aktuellen Plan{" "}
+                  <span className="text-white font-medium capitalize">{org?.plan ?? "—"}</span> nicht enthalten.
                   {canUpgrade && " Upgrade auf einen höheren Plan um dieses Modul freizuschalten."}
                 </>
               ) : (
@@ -113,7 +116,7 @@ export default function UpgradePage() {
           {/* Actions */}
           <div className="space-y-3">
 
-            {/* Upgrade CTA — nur für Company Admin + upgradebarer Plan + module-block */}
+            {/* Upgrade CTA — nur Company Admin + upgradefähiger Plan + module-block */}
             {canUpgrade && reason === "module" && (
               <div className="bg-gray-800/60 border border-gray-700 rounded-2xl p-5 text-left space-y-3">
                 <div className="flex items-center justify-between">
@@ -133,7 +136,7 @@ export default function UpgradePage() {
               </div>
             )}
 
-            {/* Feature-block: nur Info, kein Upgrade-CTA */}
+            {/* Feature-block: Hinweis an Admin */}
             {reason === "feature" && (
               <div className="bg-gray-800/60 border border-gray-700 rounded-2xl p-5 text-left">
                 <p className="text-sm text-gray-400">
@@ -143,13 +146,11 @@ export default function UpgradePage() {
               </div>
             )}
 
-            {error && (
-              <p className="text-red-400 text-sm">{error}</p>
-            )}
+            {error && <p className="text-red-400 text-sm">{error}</p>}
 
-            {/* Back */}
+            {/* Zurück — immer funktionierend */}
             <button
-              onClick={() => navigate(from ?? "/dashboard", { replace: true })}
+              onClick={() => navigate(backTarget)}
               className="w-full py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition text-sm"
             >
               ← Zurück zum Dashboard
