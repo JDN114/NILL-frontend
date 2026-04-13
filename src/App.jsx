@@ -39,7 +39,7 @@ import VerificationFailed from "./pages/VerificationFailed";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
-import Delivery_notes_Page from "./pages/Workflow_delivery_notes_page.jsx";
+import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
  
 function App() {
   return (
@@ -128,7 +128,7 @@ function App() {
 		}/>
                 <Route path="/dashboard/workflow/Delivery-notes" element={
                   <ProtectedRoute>
-                    <AdminGuard><Workflow_delivery_notes /></AdminGuard>
+                    <AdminGuard><WorkflowDeliveryNotes /></AdminGuard>
                   </ProtectedRoute>
                 }/>
 		<Route path="/redeem-coupon" element={
