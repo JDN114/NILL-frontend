@@ -39,7 +39,7 @@ import VerificationFailed from "./pages/VerificationFailed";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
-import Delivery_notes_Page from "./pages/Workflow_delivery_notes_page.py";
+import Delivery_notes_Page from "./pages/Workflow_delivery_notes_page.jsx";
  
 function App() {
   return (
