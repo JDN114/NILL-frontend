@@ -39,6 +39,7 @@ import VerificationFailed from "./pages/VerificationFailed";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
+import Delivery_notes_Page from "./pages/Workflow_delivery_notes_page.py";
  
 function App() {
   return (
@@ -125,7 +126,11 @@ function App() {
 		    <AdminGuard><WorkflowTeam /></AdminGuard>
 		  </ProtectedRoute>
 		}/>
-
+                <Route path="/dashboard/workflow/Delivery-notes" element={
+                  <ProtectedRoute>
+                    <AdminGuard><Workflow_delivery_notes /></AdminGuard>
+                  </ProtectedRoute>
+                }/>
 		<Route path="/redeem-coupon" element={
 		  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
 		}/>

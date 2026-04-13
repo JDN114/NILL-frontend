@@ -8,16 +8,25 @@ export default function WorkflowLanding() {
     { title: "Aufgaben", description: "Deine Aufgaben & Deadlines", to: "/dashboard/workflow/tasks" },
     { title: "Projekte", description: "Projekte & Fortschritt", to: "/dashboard/workflow/projects" },
     { title: "Zeiterfassung", description: "Arbeitszeiten & Monatsübersicht", to: "/dashboard/workflow/time" },
-    { title: "Audit & Events", description: "Logs & Trigger überwachen", to: "/dashboard/workflow/audit" },
+    { title: "Lieferscheine", description: "Dokumente & Inventur-Belege", to: "/dashboard/workflow/delivery-notes" },
   ];
 
   return (
     <PageLayout>
       <h1 className="text-2xl font-bold mb-6 text-white">Workflow</h1>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {buttons.map((b) => (
-          <Link key={b.title} to={b.to} className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg">
-            <Card title={b.title} description={b.description} className="hover:shadow-lg transition" />
+          <Link
+            key={b.title}
+            to={b.to}
+            className="focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+          >
+            <Card
+              title={b.title}
+              description={b.description}
+              className="hover:shadow-lg transition"
+            />
           </Link>
         ))}
       </div>
