@@ -9,9 +9,29 @@ export default function WorkflowTimePage() {
   const [error, setError] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
+  const [activeEntry, setActiveEntry] = useState(null);
+  const [now, setNow] = useState(Date.now());
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // live timer
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   useEffect(() => {
     fetchTimeEntries();
+    fetchActive();
   }, [selectedMonth]);
+
+  async function fetchActive() {
+    try {
+      const res = await api.get("/workflow/time/summary");
+      setActiveEntry(res.data?.active_entry || null);
+    } catch (e) {
+      console.error("active fetch failed", e);
+    }
+  }
 
   async function fetchTimeEntries() {
     setLoading(true);
@@ -22,7 +42,8 @@ export default function WorkflowTimePage() {
           end: format(endOfMonth(selectedMonth), "yyyy-MM-dd"),
         },
       });
-      setEntries(res.data?.entries || []);
+
+      setEntries(res.data?.items || res.data?.entries || []);
       setError(false);
     } catch (err) {
       console.error("Workflow Time fetch error:", err);
@@ -32,6 +53,47 @@ export default function WorkflowTimePage() {
       setLoading(false);
     }
   }
+
+  async function clockIn() {
+    setActionLoading(true);
+    try {
+      const res = await api.post("/workflow/time/clock-in");
+      setActiveEntry(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function clockOut() {
+    setActionLoading(true);
+    try {
+      await api.post("/workflow/time/clock-out");
+      setActiveEntry(null);
+      fetchTimeEntries();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  const startTime = activeEntry?.clock_in
+    ? new Date(activeEntry.clock_in).getTime()
+    : null;
+
+  const workedMs = startTime ? now - startTime : 0;
+
+  const formatHM = (ms) => {
+    const totalMin = Math.floor(ms / 1000 / 60);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}h ${m}m`;
+  };
+
+  const formatDecimal = (ms) =>
+    (ms / 1000 / 60 / 60).toFixed(2);
 
   const totalHours = entries.reduce((sum, e) => sum + (e.hours || 0), 0);
 
@@ -43,38 +105,83 @@ export default function WorkflowTimePage() {
 
   return (
     <PageLayout>
-      <h1 className="text-2xl font-bold mb-6 text-white">Zeiterfassung</h1>
+      <h1 className="text-2xl font-bold mb-4 text-white">Zeiterfassung</h1>
 
+      {/* LIVE CLOCK CARD */}
+      <div className="mb-6 p-4 bg-[#0a1120] border border-white/10 rounded-lg text-white">
+        {activeEntry ? (
+          <>
+            <p className="text-green-400 font-semibold">
+              🟢 Aktuell eingestempelt
+            </p>
+            <p className="text-gray-300 mt-1">
+              Seit: {new Date(activeEntry.clock_in).toLocaleString()}
+            </p>
+
+            <p className="mt-2 text-lg">
+              Arbeitszeit: {formatHM(workedMs)} ({formatDecimal(workedMs)}h)
+            </p>
+
+            <button
+              disabled={actionLoading}
+              onClick={clockOut}
+              className="mt-3 px-4 py-2 bg-red-600 rounded text-white"
+            >
+              Ausstempeln
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-gray-400">Nicht eingestempelt</p>
+            <button
+              disabled={actionLoading}
+              onClick={clockIn}
+              className="mt-3 px-4 py-2 bg-green-600 rounded text-white"
+            >
+              Einstempeln
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* MONTH CONTROL */}
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handleMonthChange(-1)}
-            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white hover:bg-opacity-90 transition"
+            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white"
           >
             ← Vorheriger Monat
           </button>
-          <span className="font-semibold text-white">{format(selectedMonth, "MMMM yyyy")}</span>
+
+          <span className="font-semibold text-white">
+            {format(selectedMonth, "MMMM yyyy")}
+          </span>
+
           <button
             onClick={() => handleMonthChange(1)}
-            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white hover:bg-opacity-90 transition"
+            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white"
           >
             Nächster Monat →
           </button>
         </div>
+
         <div className="font-semibold text-white">
-          Gesamtstunden: {totalHours.toFixed(2)}
+          Gesamtstunden: {totalHours.toFixed(2)}h
         </div>
       </div>
 
+      {/* LIST */}
       {loading && <p className="text-gray-400">Lade Zeiteinträge...</p>}
+
       {!loading && error && (
         <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg text-red-400">
-          Zeiteinträge konnten nicht geladen werden.
+          Fehler beim Laden der Zeiteinträge
         </div>
       )}
 
       {!loading && !error && entries.length === 0 && (
-        <p className="text-gray-400">Keine Zeiteinträge vorhanden für diesen Monat.</p>
+        <p className="text-gray-400">Keine Zeiteinträge vorhanden</p>
       )}
 
       {!loading && !error && entries.length > 0 && (
@@ -82,30 +189,23 @@ export default function WorkflowTimePage() {
           {entries.map((e) => (
             <div
               key={e.id}
-              className="bg-[#0a1120] p-4 rounded-lg border border-white/5 flex justify-between items-center"
+              className="bg-[#0a1120] p-4 rounded-lg border border-white/5"
             >
-              <div>
-                <p className="font-semibold">{e.taskTitle || "Allgemein"}</p>
-                <p className="text-gray-400 text-sm">
-                  {format(new Date(e.date), "dd.MM.yyyy")}
-                </p>
-              </div>
-              <p className="px-2 py-1 text-sm rounded bg-yellow-500/20 text-yellow-400">
+              <p className="font-semibold text-white">
+                {e.taskTitle || "Arbeitszeit"}
+              </p>
+
+              <p className="text-gray-400 text-sm">
+                {e.clock_in && format(new Date(e.clock_in), "dd.MM.yyyy HH:mm")}
+              </p>
+
+              <p className="text-yellow-400 mt-2">
                 {e.hours?.toFixed(2) || 0} h
               </p>
             </div>
           ))}
         </div>
       )}
-
-      <div className="mt-6 flex justify-end">
-        <button
-          className="px-4 py-2 bg-[var(--accent)] rounded text-white hover:bg-opacity-90 transition"
-          onClick={() => alert("Feature zum Hinzufügen von Zeiteinträgen noch implementieren")}
-        >
-          Neuer Eintrag
-        </button>
-      </div>
     </PageLayout>
   );
 }
