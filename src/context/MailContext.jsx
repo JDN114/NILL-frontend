@@ -1,57 +1,69 @@
-import React, { createContext, useContext, useMemo, useEffect } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { GmailContext } from "./GmailContext";
 import { OutlookContext } from "./OutlookContext";
 
 export const MailContext = createContext(null);
 
 export const MailProvider = ({ children }) => {
-  const gmail = useContext(GmailContext);
+  const gmail   = useContext(GmailContext);
   const outlook = useContext(OutlookContext);
 
+  // Provider-Auswahl: Outlook hat Vorrang wenn beide verbunden
   const provider = useMemo(() => {
     if (outlook?.connected?.connected) return "outlook";
-    if (gmail?.connected?.connected) return "gmail";
+    if (gmail?.connected?.connected)   return "gmail";
     return null;
   }, [outlook?.connected?.connected, gmail?.connected?.connected]);
 
+  // initializing: true solange der aktive Provider seinen Status noch lädt
+  const initializing = useMemo(() => {
+    if (provider === "outlook") return outlook?.initializing ?? false;
+    if (provider === "gmail")   return gmail?.initializing   ?? false;
+    // Kein Provider — warten bis beide Statuses geladen sind
+    // (connected === null bedeutet: noch nie gefetcht)
+    const gmailPending   = gmail?.connected   === null;
+    const outlookPending = outlook?.connected === null;
+    return gmailPending || outlookPending;
+  }, [provider, gmail?.initializing, outlook?.initializing, gmail?.connected, outlook?.connected]);
+
+  // Gecachte Email-Listen aus den Sub-Contexts
   const emails = useMemo(() => {
     if (!provider) return [];
     if (provider === "outlook") return outlook.emails ?? [];
-    if (provider === "gmail")
-      return [...(gmail.emails ?? []), ...(gmail.sentEmails ?? [])];
+    if (provider === "gmail")   return [...(gmail.emails ?? []), ...(gmail.sentEmails ?? [])];
     return [];
-  }, [provider, outlook.emails, gmail.emails, gmail.sentEmails]);
+  }, [provider, outlook?.emails, gmail?.emails, gmail?.sentEmails]);
 
-  const activeEmail =
-    provider === "outlook"
-      ? outlook.activeEmail
-      : provider === "gmail"
-      ? gmail.activeEmail
-      : null;
+  const activeEmail = useMemo(() => {
+    if (provider === "outlook") return outlook?.activeEmail ?? null;
+    if (provider === "gmail")   return gmail?.activeEmail   ?? null;
+    return null;
+  }, [provider, outlook?.activeEmail, gmail?.activeEmail]);
 
+  // --------------------------------------------------
+  // fetchEmails — kein eigener useEffect nötig, EmailsPage ruft direkt auf
+  // --------------------------------------------------
   const fetchEmails = async (box = null) => {
     if (!provider) return [];
+
     if (provider === "outlook") {
       const fetched = await outlook.fetchEmails();
       return box ? fetched.filter((m) => m.mailbox === box) : fetched;
     }
+
     if (provider === "gmail") {
-      let inbox = gmail.emails ?? [];
-      let sent = gmail.sentEmails ?? [];
-
       if (box === "inbox") {
-        inbox = await gmail.fetchInboxEmails();
+        return await gmail.fetchInboxEmails();
       }
-      else if (box === "sent") {
-        sent = await gmail.fetchSentEmails();
+      if (box === "sent") {
+        return await gmail.fetchSentEmails();
       }
-      else {
-        inbox = await gmail.fetchInboxEmails();
-        sent = await gmail.fetchSentEmails();
-      }
-
-      const all = [...inbox, ...sent];
-      return box ? all.filter(m => m.mailbox === box) : all;
+      // Beide parallel laden
+      const [inbox, sent] = await Promise.all([
+        gmail.fetchInboxEmails(),
+        gmail.fetchSentEmails(),
+      ]);
+      return [...inbox, ...sent];
     }
 
     return [];
@@ -60,18 +72,19 @@ export const MailProvider = ({ children }) => {
   const openEmail = async (id) => {
     if (!id) return null;
     if (provider === "outlook") return await outlook.openEmail(id);
-    if (provider === "gmail") return await gmail.openEmail(id);
+    if (provider === "gmail")   return await gmail.openEmail(id);
     return null;
   };
 
   const closeEmail = () => {
-    if (provider === "outlook") return outlook.closeEmail();
-    if (provider === "gmail") return gmail.closeEmail();
+    if (provider === "outlook") outlook.closeEmail?.();
+    if (provider === "gmail")   gmail.closeEmail?.();
   };
 
-  useEffect(() => {
-    if (provider) fetchEmails();
-  }, [provider]);
+  const disconnectProvider = async () => {
+    if (provider === "gmail")   return await gmail.disconnectGmail?.();
+    if (provider === "outlook") return await outlook.disconnectOutlook?.();
+  };
 
   return (
     <MailContext.Provider
@@ -80,9 +93,11 @@ export const MailProvider = ({ children }) => {
         connected: provider !== null,
         emails,
         activeEmail,
+        initializing,
         fetchEmails,
         openEmail,
         closeEmail,
+        disconnectProvider,
       }}
     >
       {children}
