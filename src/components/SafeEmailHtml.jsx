@@ -153,11 +153,9 @@ export default function SafeEmailHtml({ html }) {
   }
 
   return (
-    <div className="email-body-render html-mail">
-      <div
-        className="email-content-scroller"
-        dangerouslySetInnerHTML={{ __html: cleanHtml }}
-      />
-    </div>
+    <div
+      className="email-body-render html-mail"
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
+    />
   );
 }

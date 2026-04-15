@@ -48,181 +48,445 @@ body {
   color: white;
 }
 
-/* ========================= */
-/* EMAIL BODY STYLES          */
-/* ========================= */
-/* ==============================================
-   EMAIL BODY STYLES
-   Ziel: Email-HTML sauber ins Dark-Theme
-   integrieren ohne den Inhalt zu zerstören.
-   ============================================== */
+/* ==========================================================
+   EMAIL LAYOUT — Gmail-style fixed shell
+   Ersetzt den alten EMAIL BODY STYLES Block in index.css
+   ========================================================== */
 
-/* ── Äußerer Wrapper ── */
+/* ── Shell: nimmt den Raum unter der Navbar komplett ein ── */
+.em-shell {
+  display: flex;
+  height: calc(100vh - 64px); /* 64px = Navbar-Höhe, ggf. anpassen */
+  overflow: hidden;            /* KEIN Page-Scroll */
+  background: #03060a;
+}
+.em-shell--center {
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.em-sidebar {
+  width: 220px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.75rem;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.01);
+  gap: 0.25rem;
+}
+
+.em-compose {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(197,165,114,0.12);
+  border: 1px solid rgba(197,165,114,0.25);
+  border-radius: 20px;
+  color: #c5a572;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.em-compose:hover {
+  background: rgba(197,165,114,0.2);
+  border-color: rgba(197,165,114,0.4);
+}
+
+.em-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+.em-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  background: transparent;
+  border: none;
+  text-align: left;
+  width: 100%;
+}
+.em-nav-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.em-nav-item--active { background: rgba(255,255,255,0.08); color: #f1f5f9; font-weight: 600; }
+
+.em-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #3b82f6;
+  color: white;
+  padding: 0 6px;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+.em-sidebar-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-top: auto;
+}
+.em-provider {
+  font-size: 0.72rem;
+  color: #475569;
+  text-transform: capitalize;
+}
+.em-disconnect {
+  font-size: 0.72rem;
+  color: #475569;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color 0.15s;
+}
+.em-disconnect:hover { color: #f87171; }
+
+/* ── Liste ───────────────────────────────────────────────── */
+.em-list-col {
+  width: 340px;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+
+.em-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  shrink: 0;
+}
+.em-list-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.em-refresh {
+  padding: 0.35rem;
+  border-radius: 6px;
+  color: #64748b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+}
+.em-refresh:hover { color: #e2e8f0; background: rgba(255,255,255,0.06); }
+.em-refresh--spin svg { animation: em-spin 0.8s linear infinite; }
+
+.em-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+.em-list::-webkit-scrollbar { width: 4px; }
+.em-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+.em-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  font-size: 0.82rem;
+  color: #475569;
+}
+.em-state--error { color: #f87171; }
+.em-state--empty { color: #475569; }
+
+.em-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.1s;
+  position: relative;
+}
+.em-item:hover { background: rgba(255,255,255,0.04); }
+.em-item--active { background: rgba(255,255,255,0.07) !important; }
+.em-item--unread::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #3b82f6;
+  border-radius: 0 2px 2px 0;
+}
+
+.em-item-body { flex: 1; min-width: 0; }
+.em-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+.em-item-sender {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  truncate: true;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 170px;
+}
+.em-item--unread .em-item-sender { color: #f8fafc; }
+.em-item-date {
+  font-size: 0.72rem;
+  color: #475569;
+  white-space: nowrap;
+  shrink: 0;
+}
+.em-item-subject {
+  font-size: 0.78rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+.em-item--unread .em-item-subject { color: #94a3b8; }
+
+/* ── Detail ───────────────────────────────────────────────── */
+.em-detail-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255,255,255,0.005);
+}
+
+.em-detail-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.em-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.em-detail-topbar {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  shrink: 0;
+}
+
+.em-back {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+.em-back:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+
+/* Der innere Bereich scrollt — NUR dieser, nicht die Page */
+.em-detail-inner {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.75rem 2rem 3rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+.em-detail-inner::-webkit-scrollbar { width: 5px; }
+.em-detail-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+.em-detail-subject {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.3;
+  margin: 0 0 1.25rem;
+}
+
+.em-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 1.75rem;
+}
+.em-detail-meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+.em-detail-meta-name { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; }
+.em-detail-meta-email { font-size: 0.75rem; color: #475569; }
+.em-detail-meta-date { font-size: 0.75rem; color: #475569; white-space: nowrap; }
+
+/* ── Email-Body: kein eigener max-height/Scroll mehr ──
+   Der parent .em-detail-inner übernimmt das Scrolling.
+   SafeEmailHtml rendert jetzt flat ohne Scroll-Container. */
+.em-detail-body {
+  width: 100%;
+}
+
+/* ── AI ─────────────────────────────────────────────────── */
+.em-ai-pending {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+.em-ai-box {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+}
+.em-ai-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #c5a572;
+  margin: 0 0 0.5rem;
+}
+.em-ai-text { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; margin: 0; }
+
+/* ── Actions ─────────────────────────────────────────────── */
+.em-detail-actions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.em-reply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #93c5fd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.em-reply-btn:hover {
+  background: rgba(59,130,246,0.2);
+  border-color: rgba(59,130,246,0.5);
+}
+
+/* ── Mobile ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .em-sidebar { display: none; }
+  .em-list-col { width: 100%; min-width: 0; border-right: none; }
+  .em-list-col--pushed { display: none; }
+  .em-detail-col { display: none; width: 100%; }
+  .em-detail-col--open { display: flex; }
+  .em-detail-inner { padding: 1.25rem 1rem 2rem; }
+}
+
+/* ── Animation ────────────────────────────────────────────── */
+@keyframes em-spin { to { transform: rotate(360deg); } }
+
+/* ==========================================================
+   SAFE EMAIL HTML — angepasst für flat rendering
+   (kein eigener Scroll-Container mehr)
+   ========================================================== */
+
 .email-body-render {
   width: 100%;
-  color: #e2e8f0; /* slate-200 — guter Kontrast auf dunklem BG */
+  color: #cbd5e1;
   font-size: 0.875rem;
-  line-height: 1.6;
+  line-height: 1.65;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
-/* ── Scroll-Container ── */
-.email-content-scroller {
-  width: 100%;
-  max-height: calc(100vh - 320px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1rem 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
-}
-.email-content-scroller::-webkit-scrollbar {
-  width: 5px;
-}
-.email-content-scroller::-webkit-scrollbar-track {
-  background: transparent;
-}
-.email-content-scroller::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
-  border-radius: 3px;
-}
-
-/* ── Plain Text ── */
-.email-body-render.plain-text pre {
-  white-space: pre-wrap;
-  font-family: inherit;
-  font-size: 0.875rem;
-  color: #cbd5e1;
-  line-height: 1.7;
-  margin: 0;
-  padding: 0.5rem 0;
-}
-
-/* ── Typografie im HTML-Mail ── */
-.email-body-render p,
-.email-body-render div,
-.email-body-render span,
-.email-body-render td,
-.email-body-render th,
-.email-body-render li {
-  /* Verhindert dass weiße/schwarze Textfarben aus dem Email
-     ohne Kontext gesetzt werden. Eigene Styles die NICHT
-     schwarz/weiß sind (z.B. Brand-Farben) werden von der
-     JS-Normalisierung durchgelassen. */
-  max-width: 100%;
-}
-
-.email-body-render a {
-  color: #93c5fd; /* blue-300 — sichtbar auf dark BG */
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.email-body-render a:hover {
-  color: #bfdbfe; /* blue-200 */
-}
-
-.email-body-render h1,
-.email-body-render h2,
-.email-body-render h3,
-.email-body-render h4 {
-  color: #f1f5f9;
-  font-weight: 600;
-  margin: 1em 0 0.4em;
-  line-height: 1.3;
-}
-
-/* ── Bilder ── */
-.email-body-render img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  /* Verhindert gebrochene Bilder die den Layout sprengen */
-  display: inline-block;
-}
-/* Tracking-Pixel verstecken */
-.email-body-render img[width="1"],
-.email-body-render img[height="1"],
-.email-body-render img[width="0"],
-.email-body-render img[height="0"] {
-  display: none !important;
-}
-
-/* ── Tabellen (Newsletter-Layout) ── */
-.email-body-render table {
-  width: 100% !important;
+/* HTML-Mail: Newsletter-Wrapper zähmen */
+.email-body-render.html-mail > div,
+.email-body-render.html-mail > table,
+.email-body-render.html-mail > center {
   max-width: 100% !important;
-  border-collapse: collapse;
-  table-layout: fixed;
-  /* Überschreibe explizit gesetzte Breiten die über Container gehen */
+  width: 100% !important;
 }
-.email-body-render td,
-.email-body-render th {
-  max-width: 100%;
-  word-break: break-word;
-  vertical-align: top;
-  /* Padding nicht erzwingen — manche Newsletter setzen es bewusst */
-}
-/* Entferne explizite Hintergrundfarben auf Tabellenzellen
-   die der JS-Normalisierung entgangen sind */
-.email-body-render td[bgcolor],
-.email-body-render table[bgcolor] {
-  background-color: transparent !important;
-}
+.email-body-render center { text-align: left; }
 
-/* ── Listen ── */
-.email-body-render ul,
-.email-body-render ol {
-  padding-left: 1.5em;
-  margin: 0.5em 0;
+/* Typografie */
+.email-body-render a { color: #93c5fd; text-decoration: underline; text-underline-offset: 2px; }
+.email-body-render a:hover { color: #bfdbfe; }
+.email-body-render h1, .email-body-render h2, .email-body-render h3, .email-body-render h4 {
+  color: #f1f5f9; font-weight: 600; margin: 1em 0 0.4em; line-height: 1.3;
 }
-.email-body-render li {
-  margin: 0.2em 0;
-}
-
-/* ── Blockquote (Reply-Ketten) ── */
+.email-body-render p { margin: 0.5em 0; }
 .email-body-render blockquote {
-  border-left: 2px solid rgba(255,255,255,0.15);
-  margin: 0.75em 0;
-  padding: 0.5em 1em;
-  color: #94a3b8; /* slate-400 */
-  font-size: 0.82rem;
+  border-left: 2px solid rgba(255,255,255,0.12);
+  margin: 0.75em 0; padding: 0.4em 1em;
+  color: #64748b; font-size: 0.82rem;
+}
+.email-body-render hr { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 1em 0; }
+.email-body-render ul, .email-body-render ol { padding-left: 1.5em; margin: 0.4em 0; }
+
+/* Bilder */
+.email-body-render img { max-width: 100%; height: auto; display: inline-block; border-radius: 3px; }
+.email-body-render img[width="1"], .email-body-render img[height="1"],
+.email-body-render img[width="0"], .email-body-render img[height="0"] { display: none !important; }
+
+/* Tabellen */
+.email-body-render table { width: 100% !important; max-width: 100% !important; border-collapse: collapse; table-layout: fixed; }
+.email-body-render td, .email-body-render th { max-width: 100%; word-break: break-word; vertical-align: top; }
+.email-body-render td[bgcolor], .email-body-render table[bgcolor] { background-color: transparent !important; }
+
+/* Plain text */
+.email-body-render.plain-text pre {
+  white-space: pre-wrap; font-family: inherit;
+  font-size: 0.875rem; color: #cbd5e1; line-height: 1.7; margin: 0;
 }
 
-/* ── HR / Divider ── */
-.email-body-render hr {
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  margin: 1em 0;
-}
-
-/* ── Code / Pre ── */
-.email-body-render code,
-.email-body-render pre {
-  background: rgba(255,255,255,0.05);
-  border-radius: 4px;
-  font-size: 0.82rem;
-  padding: 0.2em 0.4em;
-  color: #a5f3fc;
-}
-
-/* ── Breit-gesetzte Newsletter-Wrapper zähmen ──
-   Viele Newsletter setzen einen äußeren div/table
-   mit expliziter px-Breite (z.B. 600px).
-   Wir erzwingen dass diese nie über den Container gehen. */
-.email-content-scroller > div,
-.email-content-scroller > table,
-.email-content-scroller > center {
-  max-width: 100% !important;
-  width: 100% !important;
-}
-/* center-Tag (altes HTML-Email) */
-.email-body-render center {
-  text-align: left;
-}
-
-/* ── Fallback: falls irgendwo noch ein explizit weißer
-   Hintergrund durch die JS-Normalisierung gerutscht ist ── */
+/* Farb-Fallbacks (Safety-Net nach JS-Normalisierung) */
 .email-body-render [style*="background:#fff"],
 .email-body-render [style*="background: #fff"],
 .email-body-render [style*="background:#ffffff"],
@@ -231,21 +495,17 @@ body {
 .email-body-render [style*="background-color: #fff"],
 .email-body-render [style*="background-color:#ffffff"],
 .email-body-render [style*="background-color: #ffffff"],
-.email-body-render [style*="background-color: white"],
-.email-body-render [style*="background-color:white"] {
-  background: transparent !important;
-}
-/* Dasselbe für schwarzen Text */
+.email-body-render [style*="background-color:white"],
+.email-body-render [style*="background-color: white"] { background: transparent !important; }
+
 .email-body-render [style*="color:#000"],
 .email-body-render [style*="color: #000"],
 .email-body-render [style*="color:#000000"],
 .email-body-render [style*="color: #000000"],
 .email-body-render [style*="color:black"],
 .email-body-render [style*="color: black"],
+.email-body-render [style*="color:#111"],
+.email-body-render [style*="color:#222"],
 .email-body-render [style*="color:#333"],
 .email-body-render [style*="color: #333"],
-.email-body-render [style*="color:#333333"],
-.email-body-render [style*="color:#222"],
-.email-body-render [style*="color:#111"] {
-  color: inherit !important;
-}
+.email-body-render [style*="color:#333333"] { color: inherit !important; }
