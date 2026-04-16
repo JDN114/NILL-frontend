@@ -49,369 +49,417 @@ body {
 }
 
 /* ==========================================================
-   EMAIL LAYOUT — Gmail-style fixed shell
-   Ersetzt den alten EMAIL BODY STYLES Block in index.css
+   NILL CSS-VARIABLEN (global definieren — behebt auch
+   Navbar/Card-Inkonsistenzen im Rest der App)
+   ========================================================== */
+:root {
+  --nill-bg:        #03060a;
+  --nill-bg-grad:   #071023;
+  --nill-panel:     rgba(255,255,255,0.03);
+  --nill-panel-hov: rgba(255,255,255,0.055);
+  --nill-border:    rgba(255,255,255,0.07);
+  --nill-border-lg: rgba(255,255,255,0.10);
+
+  --nill-gold:      #C5A572;
+  --nill-gold-dim:  rgba(197,165,114,0.15);
+  --nill-gold-glow: rgba(197,165,114,0.25);
+
+  --nill-blue:      #3b82f6;
+  --nill-blue-dim:  rgba(59,130,246,0.12);
+  --nill-blue-glow: rgba(59,130,246,0.3);
+
+  --nill-text:      #e2e8f0;
+  --nill-text-sub:  #94a3b8;
+  --nill-text-mute: #475569;
+  --nill-text-dim:  #334155;
+
+  /* Aliase für bestehende Komponenten (Card, Navbar) */
+  --bg-main:        var(--nill-bg);
+  --bg-panel:       #0d1628;
+  --nill-primary:   var(--nill-gold);
+  --text-main:      var(--nill-text);
+  --text-muted:     var(--nill-text-sub);
+  --accent:         var(--nill-gold);
+  --brand:          var(--nill-bg-grad);
+}
+
+/* ==========================================================
+   EMAIL SHELL — Gmail-style fixed layout
    ========================================================== */
 
-/* ── Shell: nimmt den Raum unter der Navbar komplett ein ── */
 .em-shell {
   display: flex;
-  height: calc(100vh - 64px); /* 64px = Navbar-Höhe, ggf. anpassen */
-  overflow: hidden;            /* KEIN Page-Scroll */
-  background: #03060a;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  background: var(--nill-bg);
 }
 .em-shell--center {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+.em-center-label {
+  font-size: 0.82rem;
+  color: var(--nill-text-mute);
+  margin: 0;
+}
+
+/* ── Spinner ─────────────────────────────────────────────── */
+.em-spinner {
+  width: 24px; height: 24px;
+  border: 2px solid rgba(255,255,255,0.08);
+  border-top-color: var(--nill-gold);
+  border-radius: 50%;
+  animation: em-spin 0.75s linear infinite;
+}
+.em-spinner--sm { width: 14px; height: 14px; border-width: 1.5px; }
+
+/* ── Avatar ──────────────────────────────────────────────── */
+.em-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  flex-shrink: 0;
+  user-select: none;
+  letter-spacing: 0.02em;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────── */
 .em-sidebar {
-  width: 220px;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 0.75rem;
-  border-right: 1px solid rgba(255,255,255,0.05);
-  background: rgba(255,255,255,0.01);
-  gap: 0.25rem;
+  width: 210px; min-width: 210px;
+  display: flex; flex-direction: column;
+  padding: 1.1rem 0.8rem;
+  border-right: 1px solid var(--nill-border);
+  background: rgba(7,16,35,0.6);
+  gap: 0.2rem;
 }
 
 .em-compose {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem 1rem;
-  margin-bottom: 0.75rem;
-  background: rgba(197,165,114,0.12);
-  border: 1px solid rgba(197,165,114,0.25);
-  border-radius: 20px;
-  color: #c5a572;
-  font-size: 0.82rem;
-  font-weight: 600;
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.85rem;
+  background: var(--nill-gold-dim);
+  border: 1px solid rgba(197,165,114,0.22);
+  border-radius: 22px;
+  color: var(--nill-gold);
+  font-size: 0.8rem; font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  letter-spacing: 0.01em;
 }
 .em-compose:hover {
-  background: rgba(197,165,114,0.2);
+  background: var(--nill-gold-glow);
   border-color: rgba(197,165,114,0.4);
+  box-shadow: 0 0 12px rgba(197,165,114,0.12);
 }
 
 .em-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
 .em-nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.82rem;
-  color: #94a3b8;
-  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.9rem;
+  border-radius: 22px;
+  font-size: 0.81rem;
+  color: var(--nill-text-sub);
+  cursor: pointer; background: transparent; border: none;
+  text-align: left; width: 100%;
   transition: background 0.12s, color 0.12s;
-  background: transparent;
-  border: none;
-  text-align: left;
-  width: 100%;
 }
-.em-nav-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
-.em-nav-item--active { background: rgba(255,255,255,0.08); color: #f1f5f9; font-weight: 600; }
+.em-nav-item:hover { background: var(--nill-panel-hov); color: var(--nill-text); }
+.em-nav-item--active {
+  background: var(--nill-gold-dim);
+  color: var(--nill-gold);
+  font-weight: 600;
+}
 
 .em-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: #3b82f6;
-  color: white;
-  padding: 0 6px;
-  border-radius: 10px;
-  line-height: 1.6;
+  font-size: 0.68rem; font-weight: 700;
+  background: var(--nill-blue);
+  color: #fff;
+  padding: 1px 6px; border-radius: 10px; line-height: 1.6;
 }
 
 .em-sidebar-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  margin-top: auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 0.75rem; margin-top: auto;
+  border-top: 1px solid var(--nill-border);
 }
 .em-provider {
-  font-size: 0.72rem;
-  color: #475569;
-  text-transform: capitalize;
+  font-size: 0.7rem; color: var(--nill-text-dim); text-transform: capitalize;
 }
 .em-disconnect {
-  font-size: 0.72rem;
-  color: #475569;
-  cursor: pointer;
-  background: none;
-  border: none;
+  font-size: 0.7rem; color: var(--nill-text-dim);
+  background: none; border: none; cursor: pointer;
   transition: color 0.15s;
 }
 .em-disconnect:hover { color: #f87171; }
 
 /* ── Liste ───────────────────────────────────────────────── */
 .em-list-col {
-  width: 340px;
-  min-width: 340px;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid rgba(255,255,255,0.05);
+  width: 320px; min-width: 320px;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--nill-border);
+  background: rgba(7,16,35,0.3);
   overflow: hidden;
 }
 
 .em-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1.25rem 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 1.1rem 0.7rem;
+  border-bottom: 1px solid var(--nill-border);
+  flex-shrink: 0;
 }
 .em-list-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--nill-text-mute);
+  text-transform: uppercase; letter-spacing: 0.07em;
 }
 .em-refresh {
-  padding: 0.35rem;
-  border-radius: 6px;
-  color: #64748b;
-  background: none;
-  border: none;
-  cursor: pointer;
+  padding: 0.3rem; border-radius: 6px;
+  color: var(--nill-text-mute);
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center;
   transition: color 0.15s, background 0.15s;
-  display: flex;
-  align-items: center;
 }
-.em-refresh:hover { color: #e2e8f0; background: rgba(255,255,255,0.06); }
-.em-refresh--spin svg { animation: em-spin 0.8s linear infinite; }
+.em-refresh:hover { color: var(--nill-text); background: var(--nill-panel-hov); }
+.em-refresh--spin svg { animation: em-spin 0.75s linear infinite; }
+.em-refresh:disabled { opacity: 0.4; cursor: default; }
 
+/* ── Suchleiste ──────────────────────────────────────────── */
+.em-search-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0.55rem 0.85rem 0;
+  padding: 0.45rem 0.75rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--nill-border);
+  border-radius: 8px;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+.em-search-bar:focus-within {
+  border-color: rgba(197,165,114,0.35);
+  background: rgba(255,255,255,0.055);
+}
+.em-search-icon { color: var(--nill-text-mute); display: flex; align-items: center; flex-shrink: 0; }
+.em-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 0.8rem; color: var(--nill-text);
+  caret-color: var(--nill-gold);
+}
+.em-search-input::placeholder { color: var(--nill-text-dim); }
+.em-search-clear {
+  display: flex; align-items: center;
+  color: var(--nill-text-mute); background: none; border: none;
+  cursor: pointer; padding: 0.1rem; border-radius: 4px;
+  transition: color 0.15s;
+}
+.em-search-clear:hover { color: var(--nill-text); }
+
+/* ── Filterleiste ────────────────────────────────────────── */
+.em-filter-bar {
+  position: relative;
+  padding: 0.5rem 0.85rem 0;
+  flex-shrink: 0;
+}
+.em-filter-toggle {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem; color: var(--nill-text-mute);
+  background: var(--nill-panel); border: 1px solid var(--nill-border);
+  border-radius: 20px; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.em-filter-toggle:hover { border-color: var(--nill-border-lg); color: var(--nill-text); }
+.em-filter-toggle--active {
+  border-color: rgba(197,165,114,0.35);
+  color: var(--nill-gold);
+  background: var(--nill-gold-dim);
+}
+.em-filter-clear {
+  display: flex; align-items: center;
+  margin-left: 0.15rem;
+  opacity: 0.6; transition: opacity 0.15s;
+}
+.em-filter-clear:hover { opacity: 1; }
+
+.em-filter-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0.85rem; z-index: 50;
+  background: #0d1628;
+  border: 1px solid var(--nill-border-lg);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  overflow: hidden; min-width: 170px;
+  animation: em-fade-in 0.1s ease;
+}
+.em-filter-option {
+  display: block; width: 100%;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem; color: var(--nill-text-sub);
+  background: none; border: none; text-align: left; cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.em-filter-option:hover { background: var(--nill-panel-hov); color: var(--nill-text); }
+.em-filter-option--active { color: var(--nill-gold); font-weight: 600; }
+
+/* Ergebnis-Info */
+.em-result-info {
+  padding: 0.4rem 1.1rem 0;
+  font-size: 0.73rem; color: var(--nill-text-mute);
+  flex-shrink: 0; margin: 0;
+}
+.em-result-info strong { color: var(--nill-text-sub); font-weight: 600; }
+
+/* ── Email-Einträge ──────────────────────────────────────── */
 .em-list {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  list-style: none; padding: 0.4rem 0 0; margin: 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.08) transparent;
+  scrollbar-color: rgba(255,255,255,0.07) transparent;
 }
 .em-list::-webkit-scrollbar { width: 4px; }
-.em-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.em-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
 
 .em-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
   padding: 3rem 1.5rem;
-  font-size: 0.82rem;
-  color: #475569;
+  font-size: 0.8rem; color: var(--nill-text-mute);
 }
 .em-state--error { color: #f87171; }
-.em-state--empty { color: #475569; }
+.em-state--empty { color: var(--nill-text-dim); }
 
 .em-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem 1.25rem;
+  display: flex; align-items: flex-start; gap: 0.7rem;
+  padding: 0.8rem 1.1rem;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--nill-border);
   transition: background 0.1s;
   position: relative;
 }
-.em-item:hover { background: rgba(255,255,255,0.04); }
-.em-item--active { background: rgba(255,255,255,0.07) !important; }
+.em-item:hover { background: var(--nill-panel-hov); }
+.em-item--active { background: var(--nill-gold-dim) !important; }
 .em-item--unread::before {
   content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  position: absolute; left: 0; top: 0; bottom: 0;
   width: 3px;
-  background: #3b82f6;
+  background: var(--nill-gold);
   border-radius: 0 2px 2px 0;
 }
 
 .em-item-body { flex: 1; min-width: 0; }
 .em-item-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.2rem;
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 0.4rem; margin-bottom: 0.2rem;
 }
 .em-item-sender {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  truncate: true;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 170px;
+  font-size: 0.8rem; font-weight: 600;
+  color: var(--nill-text-sub);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;
 }
-.em-item--unread .em-item-sender { color: #f8fafc; }
+.em-item--unread .em-item-sender { color: var(--nill-text); }
+.em-item--active .em-item-sender { color: var(--nill-gold); }
+
 .em-item-date {
-  font-size: 0.72rem;
-  color: #475569;
-  white-space: nowrap;
-  shrink: 0;
+  font-size: 0.7rem; color: var(--nill-text-dim); white-space: nowrap; flex-shrink: 0;
 }
+.em-item--unread .em-item-date { color: var(--nill-text-mute); }
+
 .em-item-subject {
-  font-size: 0.78rem;
-  color: #64748b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin: 0;
+  font-size: 0.77rem; color: var(--nill-text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0;
 }
-.em-item--unread .em-item-subject { color: #94a3b8; }
+.em-item--unread .em-item-subject { color: var(--nill-text-sub); }
 
 /* ── Detail ───────────────────────────────────────────────── */
 .em-detail-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: rgba(255,255,255,0.005);
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
 }
-
 .em-detail-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: #334155;
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; color: var(--nill-text-dim);
 }
-
-.em-detail {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
+.em-detail { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
 .em-detail-topbar {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  shrink: 0;
+  display: flex; align-items: center;
+  padding: 0.7rem 1.5rem;
+  border-bottom: 1px solid var(--nill-border);
+  flex-shrink: 0;
+  background: rgba(7,16,35,0.3);
 }
-
 .em-back {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  color: #64748b;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  display: flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; color: var(--nill-text-mute);
+  background: none; border: none; cursor: pointer;
+  padding: 0.25rem 0.6rem; border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
 }
-.em-back:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+.em-back:hover { color: var(--nill-text); background: var(--nill-panel-hov); }
 
-/* Der innere Bereich scrollt — NUR dieser, nicht die Page */
+/* Scrollender Innenbereich — EINZIGER Scroll der App */
 .em-detail-inner {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1.75rem 2rem 3rem;
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 2rem 2.25rem 3rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.08) transparent;
+  scrollbar-color: rgba(255,255,255,0.07) transparent;
 }
 .em-detail-inner::-webkit-scrollbar { width: 5px; }
-.em-detail-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.em-detail-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
 
 .em-detail-subject {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #f1f5f9;
-  line-height: 1.3;
-  margin: 0 0 1.25rem;
+  font-size: 1.2rem; font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.3; margin: 0 0 1.25rem;
 }
 
 .em-detail-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  display: flex; align-items: center; gap: 0.85rem;
   padding: 0.85rem 0;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--nill-border);
+  border-bottom: 1px solid var(--nill-border);
   margin-bottom: 1.75rem;
 }
-.em-detail-meta-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  flex: 1;
-  min-width: 0;
-}
-.em-detail-meta-name { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; }
-.em-detail-meta-email { font-size: 0.75rem; color: #475569; }
-.em-detail-meta-date { font-size: 0.75rem; color: #475569; white-space: nowrap; }
+.em-detail-meta-info { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
+.em-detail-meta-name  { font-size: 0.83rem; font-weight: 600; color: var(--nill-text); }
+.em-detail-meta-email { font-size: 0.73rem; color: var(--nill-text-mute); }
+.em-detail-meta-date  { font-size: 0.73rem; color: var(--nill-text-mute); white-space: nowrap; flex-shrink: 0; }
 
-/* ── Email-Body: kein eigener max-height/Scroll mehr ──
-   Der parent .em-detail-inner übernimmt das Scrolling.
-   SafeEmailHtml rendert jetzt flat ohne Scroll-Container. */
-.em-detail-body {
-  width: 100%;
-}
+.em-detail-body { width: 100%; }
 
 /* ── AI ─────────────────────────────────────────────────── */
 .em-ai-pending {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  display: flex; align-items: center; gap: 0.6rem;
   padding: 1rem 0;
-  font-size: 0.82rem;
-  color: #64748b;
+  font-size: 0.8rem; color: var(--nill-text-mute);
 }
 .em-ai-box {
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
+  margin-top: 1.5rem; padding: 1rem 1.25rem;
+  background: var(--nill-panel);
+  border: 1px solid var(--nill-gold-dim);
   border-radius: 10px;
 }
 .em-ai-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #c5a572;
-  margin: 0 0 0.5rem;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--nill-gold); margin: 0 0 0.5rem;
 }
-.em-ai-text { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; margin: 0; }
+.em-ai-text { font-size: 0.83rem; color: var(--nill-text-sub); line-height: 1.6; margin: 0; }
 
-/* ── Actions ─────────────────────────────────────────────── */
+/* ── Aktionen ────────────────────────────────────────────── */
 .em-detail-actions {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 1.5rem; padding-top: 1rem;
+  border-top: 1px solid var(--nill-border);
 }
 .em-reply-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.25rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.3);
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.55rem 1.2rem;
+  font-size: 0.8rem; font-weight: 600;
+  background: var(--nill-blue-dim);
+  border: 1px solid var(--nill-blue-glow);
   color: #93c5fd;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 8px; cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 .em-reply-btn:hover {
@@ -421,20 +469,20 @@ body {
 
 /* ── Mobile ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .em-sidebar { display: none; }
-  .em-list-col { width: 100%; min-width: 0; border-right: none; }
-  .em-list-col--pushed { display: none; }
-  .em-detail-col { display: none; width: 100%; }
-  .em-detail-col--open { display: flex; }
-  .em-detail-inner { padding: 1.25rem 1rem 2rem; }
+  .em-sidebar           { display: none; }
+  .em-list-col          { width: 100%; min-width: 0; border-right: none; }
+  .em-list-col--pushed  { display: none; }
+  .em-detail-col        { display: none; width: 100%; }
+  .em-detail-col--open  { display: flex; }
+  .em-detail-inner      { padding: 1.25rem 1rem 2rem; }
 }
 
-/* ── Animation ────────────────────────────────────────────── */
-@keyframes em-spin { to { transform: rotate(360deg); } }
+/* ── Animationen ─────────────────────────────────────────── */
+@keyframes em-spin    { to { transform: rotate(360deg); } }
+@keyframes em-fade-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 /* ==========================================================
-   SAFE EMAIL HTML — angepasst für flat rendering
-   (kein eigener Scroll-Container mehr)
+   EMAIL BODY RENDER (SafeEmailHtml)
    ========================================================== */
 
 .email-body-render {
@@ -446,7 +494,6 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* HTML-Mail: Newsletter-Wrapper zähmen */
 .email-body-render.html-mail > div,
 .email-body-render.html-mail > table,
 .email-body-render.html-mail > center {
@@ -455,38 +502,39 @@ body {
 }
 .email-body-render center { text-align: left; }
 
-/* Typografie */
 .email-body-render a { color: #93c5fd; text-decoration: underline; text-underline-offset: 2px; }
 .email-body-render a:hover { color: #bfdbfe; }
-.email-body-render h1, .email-body-render h2, .email-body-render h3, .email-body-render h4 {
+
+.email-body-render h1, .email-body-render h2,
+.email-body-render h3, .email-body-render h4 {
   color: #f1f5f9; font-weight: 600; margin: 1em 0 0.4em; line-height: 1.3;
 }
-.email-body-render p { margin: 0.5em 0; }
+.email-body-render p  { margin: 0.5em 0; }
+.email-body-render ul,
+.email-body-render ol { padding-left: 1.5em; margin: 0.4em 0; }
 .email-body-render blockquote {
-  border-left: 2px solid rgba(255,255,255,0.12);
+  border-left: 2px solid var(--nill-border-lg);
   margin: 0.75em 0; padding: 0.4em 1em;
-  color: #64748b; font-size: 0.82rem;
+  color: var(--nill-text-mute); font-size: 0.82rem;
 }
-.email-body-render hr { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 1em 0; }
-.email-body-render ul, .email-body-render ol { padding-left: 1.5em; margin: 0.4em 0; }
+.email-body-render hr { border: none; border-top: 1px solid var(--nill-border); margin: 1em 0; }
 
-/* Bilder */
 .email-body-render img { max-width: 100%; height: auto; display: inline-block; border-radius: 3px; }
 .email-body-render img[width="1"], .email-body-render img[height="1"],
 .email-body-render img[width="0"], .email-body-render img[height="0"] { display: none !important; }
 
-/* Tabellen */
-.email-body-render table { width: 100% !important; max-width: 100% !important; border-collapse: collapse; table-layout: fixed; }
-.email-body-render td, .email-body-render th { max-width: 100%; word-break: break-word; vertical-align: top; }
-.email-body-render td[bgcolor], .email-body-render table[bgcolor] { background-color: transparent !important; }
+.email-body-render table        { width: 100% !important; max-width: 100% !important; border-collapse: collapse; table-layout: fixed; }
+.email-body-render td,
+.email-body-render th           { max-width: 100%; word-break: break-word; vertical-align: top; }
+.email-body-render td[bgcolor],
+.email-body-render table[bgcolor] { background-color: transparent !important; }
 
-/* Plain text */
 .email-body-render.plain-text pre {
   white-space: pre-wrap; font-family: inherit;
   font-size: 0.875rem; color: #cbd5e1; line-height: 1.7; margin: 0;
 }
 
-/* Farb-Fallbacks (Safety-Net nach JS-Normalisierung) */
+/* Farb-Fallbacks */
 .email-body-render [style*="background:#fff"],
 .email-body-render [style*="background: #fff"],
 .email-body-render [style*="background:#ffffff"],
