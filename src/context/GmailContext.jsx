@@ -127,16 +127,25 @@ export const GmailProvider = ({ children }) => {
   }, [connected]);
 
   // ── Email Detail ─────────────────────────────────────────────────────────────
-  const openEmail = useCallback(async (id) => {
-    if (!id) return null;
-    try {
-      const res  = await fetch(`${API_BASE}/gmail/emails/${id}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load email detail");
-      const data = await res.json();
-      setActiveEmail(data);
-      return data;
-    } catch (err) { console.error("Detail fetch error:", err); return null; }
-  }, []);
+const openEmail = useCallback(async (id) => {
+  if (!id) return null;
+  try {
+    const res  = await fetch(`${API_BASE}/gmail/emails/${id}`, { credentials: "include" });
+    if (!res.ok) throw new Error("Failed to load email detail");
+    const data = await res.json();
+    setActiveEmail(data);
+
+    // NEU: als gelesen markieren
+    if (!data.read) {
+      fetch(`${API_BASE}/gmail/emails/${id}/read`, {
+        method: "PATCH",
+        credentials: "include",
+      }).catch(() => {}); // fire-and-forget, kein await nötig
+    }
+
+    return data;
+  } catch (err) { console.error("Detail fetch error:", err); return null; }
+}, []);
 
   const closeEmail = useCallback(() => setActiveEmail(null), []);
 
