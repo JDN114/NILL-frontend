@@ -557,3 +557,163 @@ body {
 .email-body-render [style*="color:#333"],
 .email-body-render [style*="color: #333"],
 .email-body-render [style*="color:#333333"] { color: inherit !important; }
+
+/* ==========================================================
+   ERGÄNZUNGEN zur email_layout.css
+   Diese Blöcke ans Ende der bestehenden email_layout.css
+   anfügen (nicht ersetzen).
+   ========================================================== */
+
+/* ── NILL Logo in Sidebar ────────────────────────────────── */
+.em-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+  padding: 0.1rem 0.25rem;
+  border-radius: 8px;
+  transition: opacity 0.15s;
+}
+.em-logo:hover { opacity: 0.75; }
+
+.em-logo-mark {
+  width: 28px; height: 28px;
+  background: var(--nill-gold);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 900;
+  color: #03060a;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.em-logo-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--nill-gold);
+  letter-spacing: 0.06em;
+}
+
+/* ── Priority Dot in Liste ───────────────────────────────── */
+.em-item-top-right {
+  display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;
+}
+.em-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%; flex-shrink: 0;
+}
+.em-dot--high   { background: #f87171; box-shadow: 0 0 5px rgba(248,113,113,0.6); }
+.em-dot--medium { background: #fbbf24; }
+.em-dot--low    { background: #475569; }
+
+/* ── Kategorie-Chip in Liste ─────────────────────────────── */
+.em-item-category {
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: 0.67rem;
+  color: var(--nill-text-mute);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--nill-border);
+  border-radius: 10px;
+  padding: 0 6px;
+  line-height: 1.7;
+}
+
+/* ── KI Panel ────────────────────────────────────────────── */
+.em-ai-panel {
+  margin-bottom: 1.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(197,165,114,0.05);
+  border: 1px solid rgba(197,165,114,0.14);
+  border-radius: 12px;
+}
+.em-ai-panel--loading {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: var(--nill-panel);
+  border-color: var(--nill-border);
+  font-size: 0.8rem; color: var(--nill-text-mute);
+}
+.em-ai-panel--failed {
+  padding: 0.65rem 1rem;
+  background: rgba(248,113,113,0.05);
+  border-color: rgba(248,113,113,0.15);
+}
+.em-ai-failed-label { font-size: 0.78rem; color: #f87171; }
+
+.em-ai-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.em-ai-title {
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--nill-gold);
+}
+.em-ai-badges { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+
+/* Priority Badge */
+.em-priority {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.72rem; font-weight: 600;
+  padding: 0.2rem 0.6rem; border-radius: 20px;
+}
+.em-priority--high   { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.em-priority--medium { background: rgba(251,191,36,0.10);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+.em-priority--low    { background: rgba(255,255,255,0.04); color: var(--nill-text-mute); border: 1px solid var(--nill-border); }
+
+/* Sentiment Badge */
+.em-sentiment {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.72rem; font-weight: 500;
+  padding: 0.2rem 0.6rem; border-radius: 20px;
+  border: 1px solid var(--nill-border);
+  color: var(--nill-text-mute);
+  background: var(--nill-panel);
+}
+.em-sentiment--pos { color: #86efac; border-color: rgba(134,239,172,0.2); background: rgba(134,239,172,0.06); }
+.em-sentiment--neg { color: #f87171; border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.06); }
+
+/* Category Badge */
+.em-category {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.6rem; border-radius: 20px;
+  border: 1px solid var(--nill-border);
+  color: var(--nill-text-mute);
+  background: var(--nill-panel);
+}
+
+/* Summary */
+.em-ai-summary {
+  font-size: 0.83rem; color: var(--nill-text-sub);
+  line-height: 1.6; margin: 0 0 0.75rem;
+}
+
+/* Sections */
+.em-ai-section { margin-top: 0.75rem; }
+.em-ai-section-label {
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--nill-text-dim); margin: 0 0 0.4rem;
+}
+.em-ai-actions { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.em-ai-action-item {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  font-size: 0.8rem; color: var(--nill-text-sub); line-height: 1.5;
+}
+.em-ai-action-icon {
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 0.15rem; color: var(--nill-gold); flex-shrink: 0;
+}
+
+/* Datum-Chips */
+.em-ai-dates { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.em-ai-date-chip {
+  font-size: 0.73rem;
+  padding: 0.2rem 0.65rem; border-radius: 20px;
+  background: var(--nill-blue-dim);
+  border: 1px solid var(--nill-blue-glow);
+  color: #93c5fd;
+}
