@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from "react";
+kimport React, { createContext, useContext, useMemo } from "react";
 import { GmailContext } from "./GmailContext";
 import { OutlookContext } from "./OutlookContext";
 
@@ -8,29 +8,24 @@ export const MailProvider = ({ children }) => {
   const gmail   = useContext(GmailContext);
   const outlook = useContext(OutlookContext);
 
-  // Provider-Auswahl: Outlook hat Vorrang wenn beide verbunden
   const provider = useMemo(() => {
     if (outlook?.connected?.connected) return "outlook";
     if (gmail?.connected?.connected)   return "gmail";
     return null;
   }, [outlook?.connected?.connected, gmail?.connected?.connected]);
 
-  // initializing: true solange der aktive Provider seinen Status noch lädt
   const initializing = useMemo(() => {
     if (provider === "outlook") return outlook?.initializing ?? false;
     if (provider === "gmail")   return gmail?.initializing   ?? false;
-    // Kein Provider — warten bis beide Statuses geladen sind
-    // (connected === null bedeutet: noch nie gefetcht)
     const gmailPending   = gmail?.connected   === null;
     const outlookPending = outlook?.connected === null;
     return gmailPending || outlookPending;
   }, [provider, gmail?.initializing, outlook?.initializing, gmail?.connected, outlook?.connected]);
 
-  // Gecachte Email-Listen aus den Sub-Contexts
   const emails = useMemo(() => {
     if (!provider) return [];
-    if (provider === "outlook") return outlook.emails ?? [];
-    if (provider === "gmail")   return [...(gmail.emails ?? []), ...(gmail.sentEmails ?? [])];
+    if (provider === "outlook") return outlook?.emails ?? [];
+    if (provider === "gmail")   return [...(gmail?.emails ?? []), ...(gmail?.sentEmails ?? [])];
     return [];
   }, [provider, outlook?.emails, gmail?.emails, gmail?.sentEmails]);
 
@@ -40,33 +35,41 @@ export const MailProvider = ({ children }) => {
     return null;
   }, [provider, outlook?.activeEmail, gmail?.activeEmail]);
 
-  // --------------------------------------------------
-  // fetchEmails — kein eigener useEffect nötig, EmailsPage ruft direkt auf
-  // --------------------------------------------------
-  const fetchEmails = async (box = null) => {
+  const hasMore = useMemo(() => {
+    if (provider === "gmail") return { inbox: gmail?.hasMoreInbox, sent: gmail?.hasMoreSent };
+    return { inbox: false, sent: false };
+  }, [provider, gmail?.hasMoreInbox, gmail?.hasMoreSent]);
+
+  // Normales Laden (Lazy Loading — append=true für "Mehr laden")
+  const fetchEmails = async (box = null, append = false) => {
     if (!provider) return [];
-
     if (provider === "outlook") {
-      const fetched = await outlook.fetchEmails();
-      return box ? fetched.filter((m) => m.mailbox === box) : fetched;
+      const f = await outlook.fetchEmails();
+      return box ? f.filter(m => m.mailbox === box) : f;
     }
-
     if (provider === "gmail") {
-      if (box === "inbox") {
-        return await gmail.fetchInboxEmails();
-      }
-      if (box === "sent") {
-        return await gmail.fetchSentEmails();
-      }
-      // Beide parallel laden
+      if (box === "inbox") return await gmail.fetchInboxEmails({ append });
+      if (box === "sent")  return await gmail.fetchSentEmails({ append });
       const [inbox, sent] = await Promise.all([
-        gmail.fetchInboxEmails(),
-        gmail.fetchSentEmails(),
+        gmail.fetchInboxEmails({ append }),
+        gmail.fetchSentEmails({ append }),
       ]);
       return [...inbox, ...sent];
     }
-
     return [];
+  };
+
+  // DB-seitige Suche — findet auch alte Emails
+  const searchEmails = async (q, box = null) => {
+    if (!provider) return [];
+    if (provider === "gmail") return await gmail.searchEmails(q, box);
+    // Outlook: client-side fallback auf gecachte Emails
+    const all = emails;
+    const ql  = q.toLowerCase();
+    return all.filter(m =>
+      (m.subject || "").toLowerCase().includes(ql) ||
+      (m.from_address || m.from || "").toLowerCase().includes(ql)
+    );
   };
 
   const openEmail = async (id) => {
@@ -87,19 +90,11 @@ export const MailProvider = ({ children }) => {
   };
 
   return (
-    <MailContext.Provider
-      value={{
-        provider,
-        connected: provider !== null,
-        emails,
-        activeEmail,
-        initializing,
-        fetchEmails,
-        openEmail,
-        closeEmail,
-        disconnectProvider,
-      }}
-    >
+    <MailContext.Provider value={{
+      provider, connected: provider !== null,
+      emails, activeEmail, initializing, hasMore,
+      fetchEmails, searchEmails, openEmail, closeEmail, disconnectProvider,
+    }}>
       {children}
     </MailContext.Provider>
   );

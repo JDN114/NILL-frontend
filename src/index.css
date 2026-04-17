@@ -717,3 +717,34 @@ body {
   border: 1px solid var(--nill-blue-glow);
   color: #93c5fd;
 }
+
+/* Ans Ende von email_layout_additions.css anfügen */
+
+/* ── Mehr laden ──────────────────────────────────────────── */
+.em-load-more {
+  list-style: none;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--nill-border);
+}
+.em-load-more-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem;
+  font-size: 0.78rem; color: var(--nill-text-mute);
+  background: var(--nill-panel);
+  border: 1px solid var(--nill-border);
+  border-radius: 8px; cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.em-load-more-btn:hover:not(:disabled) {
+  background: var(--nill-panel-hov);
+  color: var(--nill-text);
+  border-color: var(--nill-border-lg);
+}
+.em-load-more-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Suche: Scope-Hinweis ────────────────────────────────── */
+.em-result-scope {
+  color: var(--nill-text-dim);
+  font-size: 0.7rem;
+}

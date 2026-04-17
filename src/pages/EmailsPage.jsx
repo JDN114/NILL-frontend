@@ -18,6 +18,7 @@ const IC = {
   check:   (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
   tag:     (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>),
   smile:   (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>),
+  more:    (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
 };
 
 const FILTERS = [
@@ -30,123 +31,90 @@ const FILTERS = [
   { key: "withAI", label: "KI analysiert" },
 ];
 
-const PRIORITY_CFG = {
-  high:   { label: "Dringend",  cls: "em-priority--high",   dot: "em-dot--high" },
-  medium: { label: "Normal",    cls: "em-priority--medium", dot: "em-dot--medium" },
-  low:    { label: "Niedrig",   cls: "em-priority--low",    dot: "em-dot--low" },
+const PRIO = {
+  high:   { label: "Dringend", cls: "em-priority--high",   dot: "em-dot--high" },
+  medium: { label: "Normal",   cls: "em-priority--medium", dot: "em-dot--medium" },
+  low:    { label: "Niedrig",  cls: "em-priority--low",    dot: "em-dot--low" },
 };
-
-const SENTIMENT_CFG = {
-  positive: { label: "Positiv",  cls: "em-sentiment--pos" },
-  neutral:  { label: "Neutral",  cls: "em-sentiment--neu" },
-  negative: { label: "Negativ",  cls: "em-sentiment--neg" },
+const SENT_CFG = {
+  positive: { label: "Positiv", cls: "em-sentiment--pos" },
+  neutral:  { label: "Neutral", cls: "em-sentiment--neu" },
+  negative: { label: "Negativ", cls: "em-sentiment--neg" },
 };
 
 function extractSender(mail) {
   const raw = mail.from_address || mail.from || mail.from_raw || "";
-  const nameMatch  = raw.match(/^(.+?)\s*<.+>$/);
-  const emailMatch = raw.match(/<(.+?)>/);
-  const name  = nameMatch ? nameMatch[1].replace(/"/g, "").trim() : raw;
-  const email = emailMatch ? emailMatch[1] : raw;
-  return { name: name || email, email };
+  const nm  = raw.match(/^(.+?)\s*<.+>$/);
+  const em  = raw.match(/<(.+?)>/);
+  return { name: (nm ? nm[1].replace(/"/g,"").trim() : raw) || raw, email: em ? em[1] : raw };
 }
-
-function formatDateShort(str) {
+function fmtShort(str) {
   if (!str) return "";
   const d = new Date(str), now = new Date();
-  if (d.toDateString() === now.toDateString())
-    return d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  if (d.getFullYear() === now.getFullYear())
-    return d.toLocaleDateString("de-DE", { day: "numeric", month: "short" });
-  return d.toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" });
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+  if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString("de-DE",{day:"numeric",month:"short"});
+  return d.toLocaleDateString("de-DE",{day:"numeric",month:"short",year:"numeric"});
 }
-
-function formatDateLong(str) {
+function fmtLong(str) {
   if (!str) return "";
-  return new Date(str).toLocaleString("de-DE", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
-  });
+  return new Date(str).toLocaleString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
 }
-
 function Avatar({ name }) {
-  const letter = (name || "?")[0].toUpperCase();
-  const hue = [...(name || "")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-  return <div style={{ background: `hsl(${hue},35%,32%)` }} className="em-avatar">{letter}</div>;
+  const letter = (name||"?")[0].toUpperCase();
+  const hue = [...(name||"")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
+  return <div style={{background:`hsl(${hue},35%,32%)`}} className="em-avatar">{letter}</div>;
 }
 function Spinner({ sm }) {
-  return <div className={sm ? "em-spinner em-spinner--sm" : "em-spinner"} />;
+  return <div className={sm?"em-spinner em-spinner--sm":"em-spinner"}/>;
 }
 
-// ── KI-Panel ──────────────────────────────────────────────────────────────────
 function AiPanel({ email }) {
-  const status = email.ai_status;
+  const s = email.ai_status;
+  if (s === "pending" || s === "processing") return (
+    <div className="em-ai-panel em-ai-panel--loading">
+      <Spinner sm /><span>{s==="processing"?"KI analysiert…":"Warte auf Analyse…"}</span>
+    </div>
+  );
+  if (s === "failed") return (
+    <div className="em-ai-panel em-ai-panel--failed">
+      <span className="em-ai-failed-label">KI-Analyse fehlgeschlagen</span>
+    </div>
+  );
+  if (s !== "success") return null;
 
-  if (status === "pending" || status === "processing") {
-    return (
-      <div className="em-ai-panel em-ai-panel--loading">
-        <Spinner sm />
-        <span>{status === "processing" ? "KI analysiert…" : "Warte auf Analyse…"}</span>
-      </div>
-    );
-  }
-
-  if (status === "failed") {
-    return (
-      <div className="em-ai-panel em-ai-panel--failed">
-        <span className="em-ai-failed-label">KI-Analyse fehlgeschlagen</span>
-      </div>
-    );
-  }
-
-  if (status !== "success") return null;
-
-  const prio = PRIORITY_CFG[email.priority] || PRIORITY_CFG.medium;
-  const sent = SENTIMENT_CFG[email.sentiment] || SENTIMENT_CFG.neutral;
+  const prio = PRIO[email.priority] || PRIO.medium;
+  const sent = SENT_CFG[email.sentiment] || SENT_CFG.neutral;
 
   return (
     <div className="em-ai-panel">
       <div className="em-ai-header">
         <span className="em-ai-title">KI Analyse</span>
         <div className="em-ai-badges">
-          <span className={`em-priority ${prio.cls}`}>
-            {IC.bolt} {prio.label}
-          </span>
-          <span className={`em-sentiment ${sent.cls}`}>
-            {IC.smile} {sent.label}
-          </span>
-          {email.category && (
-            <span className="em-category">
-              {IC.tag} {email.category}
-            </span>
-          )}
+          <span className={`em-priority ${prio.cls}`}>{IC.bolt} {prio.label}</span>
+          <span className={`em-sentiment ${sent.cls}`}>{IC.smile} {sent.label}</span>
+          {email.category && <span className="em-category">{IC.tag} {email.category}</span>}
         </div>
       </div>
-
-      {email.summary && (
-        <p className="em-ai-summary">{email.summary}</p>
-      )}
-
+      {email.summary && <p className="em-ai-summary">{email.summary}</p>}
       {email.action_items?.length > 0 && (
         <div className="em-ai-section">
           <p className="em-ai-section-label">Handlungsbedarf</p>
           <ul className="em-ai-actions">
-            {email.action_items.map((item, i) => (
+            {email.action_items.map((item,i) => (
               <li key={i} className="em-ai-action-item">
-                <span className="em-ai-action-icon">{IC.check}</span>
-                {item}
+                <span className="em-ai-action-icon">{IC.check}</span>{item}
               </li>
             ))}
           </ul>
         </div>
       )}
-
       {email.detected_dates?.length > 0 && (
         <div className="em-ai-section">
           <p className="em-ai-section-label">Erwähnte Termine</p>
           <div className="em-ai-dates">
-            {email.detected_dates.map((d, i) => (
+            {email.detected_dates.map((d,i) => (
               <span key={i} className="em-ai-date-chip">
-                {new Date(d).toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })}
+                {new Date(d).toLocaleDateString("de-DE",{day:"numeric",month:"short",year:"numeric"})}
               </span>
             ))}
           </div>
@@ -160,60 +128,127 @@ function AiPanel({ email }) {
 export default function EmailsPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const { provider, connected, activeEmail, fetchEmails, openEmail, closeEmail, initializing, disconnectProvider } = useContext(MailContext);
+  const {
+    provider, connected, activeEmail,
+    fetchEmails, searchEmails, openEmail, closeEmail,
+    initializing, disconnectProvider, hasMore,
+  } = useContext(MailContext);
 
   const [mailbox, setMailbox]           = useState("inbox");
   const [replyOpen, setReplyOpen]       = useState(false);
   const [composeOpen, setComposeOpen]   = useState(false);
   const [loading, setLoading]           = useState(false);
+  const [loadingMore, setLoadingMore]   = useState(false);
   const [emails, setEmails]             = useState([]);
   const [error, setError]               = useState(null);
   const [search, setSearch]             = useState("");
+  const [searchResults, setSearchResults] = useState(null); // null = nicht gesucht
+  const [searching, setSearching]       = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [filterOpen, setFilterOpen]     = useState(false);
 
   const pollingRef     = useRef(null);
   const activeEmailRef = useRef(null);
+  const searchTimeout  = useRef(null);
 
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
   useEffect(() => { if (!user) navigate("/login", { replace: true }); }, [user, navigate]);
 
+  // ── Initiales Laden ───────────────────────────────────────────────────────
   const loadEmails = useCallback(async () => {
     if (!connected) return;
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setSearchResults(null);
     try {
       const f = (await fetchEmails(mailbox)) ?? [];
-      setEmails([...f].sort((a, b) => new Date(b.received_at || b.date || 0) - new Date(a.received_at || a.date || 0)));
+      setEmails([...f].sort((a,b) => new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)));
     } catch { setError("Laden fehlgeschlagen."); }
     finally { setLoading(false); }
   }, [connected, mailbox, fetchEmails]);
 
   useEffect(() => { if (connected && !initializing) loadEmails(); }, [connected, mailbox, initializing]);
 
+  // ── Mehr laden (Lazy Loading) ─────────────────────────────────────────────
+  const loadMore = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const more = (await fetchEmails(mailbox, true)) ?? [];
+      if (more.length > 0) {
+        setEmails(prev => {
+          const existingIds = new Set(prev.map(e => e.id));
+          const newOnes = more.filter(e => !existingIds.has(e.id));
+          return [...prev, ...newOnes].sort((a,b) =>
+            new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)
+          );
+        });
+      }
+    } catch { /* still show existing */ }
+    finally { setLoadingMore(false); }
+  };
+
+  // ── Suche: kurz → client-side, lang / Enter → DB ─────────────────────────
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    clearTimeout(searchTimeout.current);
+
+    if (!val.trim()) {
+      setSearchResults(null);
+      return;
+    }
+
+    // Client-seitige Vorschau (instant, aus gecachten Emails)
+    const q = val.toLowerCase();
+    const clientHits = emails.filter(m =>
+      (m.subject||"").toLowerCase().includes(q) ||
+      extractSender(m).name.toLowerCase().includes(q) ||
+      extractSender(m).email.toLowerCase().includes(q)
+    );
+    setSearchResults(clientHits);
+
+    // Nach 600ms DB-Suche starten (findet ältere Emails)
+    if (val.trim().length >= 2) {
+      searchTimeout.current = setTimeout(async () => {
+        setSearching(true);
+        try {
+          const dbResults = await searchEmails(val.trim(), mailbox);
+          setSearchResults(
+            [...dbResults].sort((a,b) =>
+              new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)
+            )
+          );
+        } catch { /* keep client results */ }
+        finally { setSearching(false); }
+      }, 600);
+    }
+  };
+
+  useEffect(() => () => clearTimeout(searchTimeout.current), []);
+
+  // ── Client-seitiger Filter (auf aktuelle Liste oder Suchergebnisse) ────────
   const displayEmails = useMemo(() => {
+    const base = searchResults !== null ? searchResults : emails;
+    if (activeFilter === "all") return base;
+
     const now = new Date(), sow = new Date(now);
     sow.setDate(now.getDate() - now.getDay());
-    return emails.filter((mail) => {
-      if (search.trim()) {
-        const q = search.toLowerCase(), s = extractSender(mail);
-        if (!(mail.subject || "").toLowerCase().includes(q) &&
-            !s.name.toLowerCase().includes(q) && !s.email.toLowerCase().includes(q))
-          return false;
-      }
+
+    return base.filter(mail => {
       switch (activeFilter) {
         case "unread":  return !mail.read;
         case "read":    return  mail.read;
         case "high":    return  mail.priority === "high";
-        case "today":   return new Date(mail.received_at || 0).toDateString() === now.toDateString();
-        case "week":    return new Date(mail.received_at || 0) >= sow;
+        case "today":   return new Date(mail.received_at||0).toDateString() === now.toDateString();
+        case "week":    return new Date(mail.received_at||0) >= sow;
         case "withAI":  return ["success","done"].includes(mail.ai_status);
         default:        return true;
       }
     });
-  }, [emails, search, activeFilter]);
+  }, [emails, searchResults, activeFilter]);
 
   const unreadCount = useMemo(() => emails.filter(m => !m.read && m.mailbox !== "sent").length, [emails]);
+  const canLoadMore = searchResults === null && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
 
+  // ── Polling ───────────────────────────────────────────────────────────────
   const stopPolling  = () => { clearInterval(pollingRef.current); pollingRef.current = null; };
   const startPolling = (id) => {
     stopPolling();
@@ -237,17 +272,14 @@ export default function EmailsPage() {
   };
 
   if (initializing) return (
-    <div className="em-shell em-shell--center">
-      <Spinner /><p className="em-center-label">Prüfe Verbindung…</p>
-    </div>
+    <div className="em-shell em-shell--center"><Spinner/><p className="em-center-label">Prüfe Verbindung…</p></div>
   );
   if (!connected) return (
-    <div className="em-shell em-shell--center">
-      <p className="em-center-label">Kein E-Mail-Konto verbunden.</p>
-    </div>
+    <div className="em-shell em-shell--center"><p className="em-center-label">Kein E-Mail-Konto verbunden.</p></div>
   );
 
   const filterLabel = FILTERS.find(f => f.key === activeFilter)?.label;
+  const isSearching = search.trim().length > 0;
 
   return (
     <>
@@ -270,7 +302,7 @@ export default function EmailsPage() {
               { key: "sent",  label: "Gesendet" },
             ].map(({ key, label, badge }) => (
               <button key={key}
-                onClick={() => { setMailbox(key); setSearch(""); setActiveFilter("all"); handleClose(); }}
+                onClick={() => { setMailbox(key); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
                 className={`em-nav-item ${mailbox === key ? "em-nav-item--active" : ""}`}>
                 <span>{label}</span>
                 {badge > 0 && <span className="em-badge">{badge}</span>}
@@ -294,13 +326,17 @@ export default function EmailsPage() {
             </button>
           </div>
 
+          {/* Suche */}
           <div className="em-search-bar">
-            <span className="em-search-icon">{IC.search}</span>
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Betreff oder Absender…" className="em-search-input" />
-            {search && <button onClick={() => setSearch("")} className="em-search-clear">{IC.close}</button>}
+            <span className="em-search-icon">{searching ? <Spinner sm /> : IC.search}</span>
+            <input type="text" value={search}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="Suche in allen E-Mails…"
+              className="em-search-input" />
+            {search && <button onClick={() => { setSearch(""); setSearchResults(null); }} className="em-search-clear">{IC.close}</button>}
           </div>
 
+          {/* Filter */}
           <div className="em-filter-bar">
             <button onClick={() => setFilterOpen(o => !o)}
               className={`em-filter-toggle ${activeFilter !== "all" ? "em-filter-toggle--active" : ""}`}>
@@ -325,25 +361,30 @@ export default function EmailsPage() {
             )}
           </div>
 
-          {(search || activeFilter !== "all") && !loading && (
+          {/* Ergebnis-Info */}
+          {(isSearching || activeFilter !== "all") && !loading && (
             <p className="em-result-info">
               {displayEmails.length} Ergebnis{displayEmails.length !== 1 ? "se" : ""}
-              {search && <> für „<strong>{search}</strong>"</>}
+              {isSearching && <> für „<strong>{search}</strong>"</>}
               {activeFilter !== "all" && <> · {filterLabel}</>}
+              {isSearching && searchResults !== null && !searching && (
+                <span className="em-result-scope"> (inkl. älterer E-Mails)</span>
+              )}
             </p>
           )}
 
+          {/* Liste */}
           <ul className="em-list">
-            {error   && <li className="em-state em-state--error">{error}</li>}
+            {error && <li className="em-state em-state--error">{error}</li>}
             {!error && loading && emails.length === 0 && <li className="em-state"><Spinner sm /></li>}
             {!error && !loading && displayEmails.length === 0 && (
               <li className="em-state em-state--empty">
-                {search || activeFilter !== "all" ? "Keine Treffer." : "Keine E-Mails."}
+                {isSearching ? "Keine Treffer." : activeFilter !== "all" ? "Keine Treffer." : "Keine E-Mails."}
               </li>
             )}
             {displayEmails.map((mail) => {
               const s    = extractSender(mail);
-              const prio = PRIORITY_CFG[mail.priority];
+              const prio = PRIO[mail.priority];
               return (
                 <li key={mail.id} onClick={() => handleOpen(mail.id)}
                   className={`em-item ${activeEmail?.id === mail.id ? "em-item--active" : ""} ${!mail.read ? "em-item--unread" : ""}`}>
@@ -352,18 +393,25 @@ export default function EmailsPage() {
                     <div className="em-item-top">
                       <span className="em-item-sender">{s.name}</span>
                       <div className="em-item-top-right">
-                        {prio && <span className={`em-dot ${prio.dot}`} title={prio.label} />}
-                        <span className="em-item-date">{formatDateShort(mail.received_at || mail.date)}</span>
+                        {prio && <span className={`em-dot ${prio.dot}`} title={prio.label}/>}
+                        <span className="em-item-date">{fmtShort(mail.received_at||mail.date)}</span>
                       </div>
                     </div>
-                    <p className="em-item-subject">{mail.subject || "(Kein Betreff)"}</p>
-                    {mail.category && (
-                      <span className="em-item-category">{mail.category}</span>
-                    )}
+                    <p className="em-item-subject">{mail.subject||"(Kein Betreff)"}</p>
+                    {mail.category && <span className="em-item-category">{mail.category}</span>}
                   </div>
                 </li>
               );
             })}
+
+            {/* Mehr laden */}
+            {canLoadMore && (
+              <li className="em-load-more">
+                <button onClick={loadMore} disabled={loadingMore} className="em-load-more-btn">
+                  {loadingMore ? <><Spinner sm /> Lädt…</> : <>{IC.more} Weitere E-Mails laden</>}
+                </button>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -376,33 +424,27 @@ export default function EmailsPage() {
               <div className="em-detail-topbar">
                 <button onClick={handleClose} className="em-back">{IC.back} Zurück</button>
               </div>
-
               <div className="em-detail-inner">
-                <h2 className="em-detail-subject">{activeEmail.subject || "(Kein Betreff)"}</h2>
-
+                <h2 className="em-detail-subject">{activeEmail.subject||"(Kein Betreff)"}</h2>
                 <div className="em-detail-meta">
                   {(() => {
                     const s = extractSender(activeEmail);
                     return (
                       <>
-                        <Avatar name={s.name} />
+                        <Avatar name={s.name}/>
                         <div className="em-detail-meta-info">
                           <span className="em-detail-meta-name">{s.name}</span>
                           <span className="em-detail-meta-email">&lt;{s.email}&gt;</span>
                         </div>
-                        <span className="em-detail-meta-date">{formatDateLong(activeEmail.received_at)}</span>
+                        <span className="em-detail-meta-date">{fmtLong(activeEmail.received_at)}</span>
                       </>
                     );
                   })()}
                 </div>
-
-                {/* KI-Panel — über dem Body */}
                 <AiPanel email={activeEmail} />
-
                 <div className="em-detail-body">
-                  <SafeEmailHtml html={activeEmail.body ?? ""} />
+                  <SafeEmailHtml html={activeEmail.body??""} />
                 </div>
-
                 <div className="em-detail-actions">
                   <button onClick={() => setReplyOpen(true)} className="em-reply-btn">
                     {IC.reply} Antworten
