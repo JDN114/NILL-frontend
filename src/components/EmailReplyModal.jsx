@@ -29,6 +29,12 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [cc, setCc]               = useState("");
+  const [showCc, setShowCc]       = useState(false);
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [templateId, setTemplateId]   = useState("Standard");
+  const [files, setFiles]         = useState([]);
+  const fileRef                   = useRef();
 
   /**
    * Reset beim Öffnen / Wechsel der E-Mail
@@ -79,39 +85,30 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
    */
   const handleSend = async () => {
     if (!emailId || loading) return;
-
     const safeBody = sanitizeReply(body);
-
-    if (!safeBody) {
-      setError("Antwort darf nicht leer sein.");
-      return;
-    }
-
+    if (!safeBody) { setError("Antwort darf nicht leer sein."); return; }
     try {
-      setLoading(true);
-      setError(null);
-
-      await api.post(
-        `/gmail/emails/${emailId}/reply`,
-        { body: safeBody },
-        {
-          headers: {
-            "X-CSRF-Token": localStorage.getItem("csrf_token") || "",
-          },
-        }
-      );
-
-      onSent?.(safeBody);
-      setBody("");
-      onClose();
+      setLoading(true); setError(null);
+      const fd = new FormData();
+      fd.append("body", safeBody);
+      if (showCc && cc) fd.append("cc", cc);
+      fd.append("use_template", useTemplate);
+      if (useTemplate) fd.append("template_id", templateId);
+      files.forEach(f => fd.append("files", f));
+      await api.post(`/gmail/emails/${emailId}/reply`, fd, {
+        headers: {
+          "Content-Type": files.length ? "multipart/form-data" : "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrf_token") || "",
+        },
+      });
+      onSent?.(safeBody); setBody(""); onClose();
     } catch (err) {
-      console.error("Send reply error:", err);
       setError("Antwort konnte nicht gesendet werden.");
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <Modal open={open} onClose={onClose} title="Antworten">
       <div className="space-y-4">
