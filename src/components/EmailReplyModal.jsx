@@ -1,88 +1,70 @@
-// src/components/EmailReplyModal.jsx
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import api from "../services/api";
 
-/**
- * 🔒 Security-Konstanten
- */
-const MAX_REPLY_LENGTH = 5000;
+const MAX_LENGTH = 5000;
+const TEMPLATES = ["Standard", "Newsletter", "Angebot", "Support"];
 
-/**
- * 🔒 Sanitizer: entfernt HTML, Control-Chars, begrenzt Länge
- * Defense-in-Depth: schützt Mail, Logs, Backend & spätere Darstellung
- */
 function sanitizeReply(text) {
   if (!text || typeof text !== "string") return "";
+  return text.replace(/<\/?[^>]+(>|$)/g, "").replace(/[\u0000-\u001F\u007F]/g, "").trim().slice(0, MAX_LENGTH);
+}
 
-  // Entfernt HTML-Tags komplett
-  const withoutHtml = text.replace(/<\/?[^>]+(>|$)/g, "");
+const inputCls = [
+  "w-full px-3 py-2 rounded-lg text-sm text-slate-200 outline-none transition-all",
+  "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)]",
+  "placeholder:text-slate-600",
+  "focus:bg-[rgba(255,255,255,0.06)] focus:border-[rgba(197,165,114,0.4)]",
+].join(" ");
 
-  // Entfernt Control Characters (ASCII 0–31 & 127)
-  const normalized = withoutHtml.replace(/[\u0000-\u001F\u007F]/g, "");
-
-  return normalized.trim().slice(0, MAX_REPLY_LENGTH);
+function Toggle({ checked, onChange, label }) {
+  return (
+    <div className="flex items-center gap-2 cursor-pointer" onClick={onChange}>
+      <div className={`relative w-8 h-5 rounded-full border transition-all flex-shrink-0 ${checked ? "bg-[rgba(197,165,114,0.2)] border-[rgba(197,165,114,0.4)]" : "bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"}`}>
+        <span className={`absolute top-0.5 w-3 h-3 rounded-full transition-transform ${checked ? "translate-x-3.5 bg-[#C5A572]" : "translate-x-0.5 bg-slate-500"}`} />
+      </div>
+      <span className="text-xs text-slate-500 select-none">{label}</span>
+    </div>
+  );
 }
 
 export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
-  const [body, setBody] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [cc, setCc]               = useState("");
-  const [showCc, setShowCc]       = useState(false);
+  const [body, setBody]               = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [aiLoading, setAiLoading]     = useState(false);
+  const [error, setError]             = useState(null);
+  const [cc, setCc]                   = useState("");
+  const [showCc, setShowCc]           = useState(false);
   const [useTemplate, setUseTemplate] = useState(false);
   const [templateId, setTemplateId]   = useState("Standard");
-  const [files, setFiles]         = useState([]);
-  const fileRef                   = useRef();
+  const [files, setFiles]             = useState([]);
+  const fileRef                       = useRef();
 
-  /**
-   * Reset beim Öffnen / Wechsel der E-Mail
-   */
   useEffect(() => {
     if (open) {
-      setBody("");
-      setError(null);
-      setLoading(false);
-      setAiLoading(false);
+      setBody(""); setError(null); setLoading(false);
+      setAiLoading(false); setCc(""); setShowCc(false);
+      setUseTemplate(false); setFiles([]);
     }
   }, [open, emailId]);
 
   if (!open) return null;
 
-  /**
-   * 🤖 KI-Antwort laden (AI = untrusted input!)
-   */
   const handleAiReply = async () => {
     if (!emailId || aiLoading) return;
-
     try {
-      setAiLoading(true);
-      setError(null);
-
-      const res = await api.post(
-        `/gmail/emails/${emailId}/ai-reply`,
-        null,
-        {
-          headers: {
-            "X-CSRF-Token": localStorage.getItem("csrf_token") || "",
-          },
-        }
-      );
-
-      const safeReply = sanitizeReply(res.data?.reply || "");
-      setBody(safeReply);
-    } catch (err) {
-      console.error("AI reply error:", err);
+      setAiLoading(true); setError(null);
+      const res = await api.post(`/gmail/emails/${emailId}/ai-reply`, null, {
+        headers: { "X-CSRF-Token": localStorage.getItem("csrf_token") || "" },
+      });
+      setBody(sanitizeReply(res.data?.reply || ""));
+    } catch {
       setError("KI-Antwort konnte nicht geladen werden.");
     } finally {
       setAiLoading(false);
     }
   };
 
-  /**
-   * ✉️ Antwort senden
-   */
   const handleSend = async () => {
     if (!emailId || loading) return;
     const safeBody = sanitizeReply(body);
@@ -102,64 +84,92 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
         },
       });
       onSent?.(safeBody); setBody(""); onClose();
-    } catch (err) {
+    } catch {
       setError("Antwort konnte nicht gesendet werden.");
     } finally {
       setLoading(false);
     }
   };
-  
+
+  const addFiles = (f) => setFiles(prev => [...prev, ...Array.from(f)]);
+
   return (
     <Modal open={open} onClose={onClose} title="Antworten">
-      <div className="space-y-4">
-        {/* Fehleranzeige */}
-        {error && (
-          <div className="text-red-500 text-sm bg-red-500/10 p-2 rounded">
-            {error}
+      <div className="space-y-3">
+
+        {error && <div className="text-red-400 text-xs bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.2)] px-3 py-2 rounded-lg">{error}</div>}
+
+        <Toggle checked={showCc} onChange={() => setShowCc(v => !v)} label="CC hinzufügen" />
+        {showCc && (
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">CC</label>
+            <input value={cc} onChange={e => setCc(e.target.value)} placeholder="cc@mail.de" className={inputCls} />
           </div>
         )}
 
-        {/* Textarea */}
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Schreibe deine Antwort hier..."
-          rows={6}
-          className="w-full p-2 border border-gray-700 rounded bg-gray-900 text-white resize-none"
-          disabled={loading}
-          autoFocus
-        />
-
-        {/* Zeichenlimit */}
-        <div className="text-xs text-gray-400 text-right">
-          {body.length}/{MAX_REPLY_LENGTH}
+        <div>
+          <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Antwort</label>
+          <textarea value={body} onChange={e => setBody(e.target.value)} rows={6}
+            placeholder="Schreibe deine Antwort hier…" disabled={loading} autoFocus
+            className={`${inputCls} resize-none`} />
+          <div className={`text-right text-[11px] mt-0.5 ${body.length > MAX_LENGTH * 0.85 ? "text-amber-400" : "text-slate-600"}`}>
+            {body.length} / {MAX_LENGTH}
+          </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <button
-            onClick={handleAiReply}
-            disabled={aiLoading || !emailId}
-            className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-4 py-2 rounded"
-          >
-            {aiLoading ? "KI denkt…" : "NILL antworten lassen"}
-          </button>
+        <div className="border-t border-[rgba(255,255,255,0.07)] pt-3 space-y-3">
 
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={onClose}
-              disabled={loading}
-              className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-4 py-2 rounded"
-            >
+          <Toggle checked={useTemplate} onChange={() => setUseTemplate(v => !v)} label="Vorlage / Branding verwenden" />
+          {useTemplate && (
+            <div className="flex flex-wrap gap-2">
+              {TEMPLATES.map(t => (
+                <button key={t} onClick={() => setTemplateId(t)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                    templateId === t
+                      ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]"
+                      : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-slate-500 hover:text-slate-300"
+                  }`}>{t}</button>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Anhänge</div>
+            {files.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {files.map((f, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-full px-2.5 py-0.5 text-[11px] text-slate-400">
+                    {f.name}
+                    <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
+                      className="text-slate-600 hover:text-red-400 transition-colors leading-none">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div onClick={() => fileRef.current.click()} onDragOver={e => e.preventDefault()}
+              onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+              className="border border-dashed border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-center cursor-pointer hover:border-[rgba(197,165,114,0.35)] hover:bg-[rgba(197,165,114,0.05)] transition-all">
+              <div className="text-[12px] text-slate-500">Anhang hinzufügen oder hierher ziehen</div>
+            </div>
+            <input ref={fileRef} type="file" multiple className="hidden" onChange={e => addFiles(e.target.files)} />
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center flex-wrap gap-2 pt-1">
+          <button onClick={handleAiReply} disabled={aiLoading || !emailId}
+            className="px-4 py-2 rounded-lg text-sm font-semibold text-[#C5A572] border border-[rgba(197,165,114,0.3)] bg-[rgba(197,165,114,0.1)] hover:bg-[rgba(197,165,114,0.18)] disabled:opacity-40 transition-all flex items-center gap-2">
+            {aiLoading
+              ? <><span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />KI denkt…</>
+              : "NILL antworten lassen"}
+          </button>
+          <div className="flex gap-2">
+            <button onClick={onClose} disabled={loading}
+              className="px-4 py-2 rounded-lg text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-40 transition-all">
               Abbrechen
             </button>
-
-            <button
-              onClick={handleSend}
-              disabled={loading || !body.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded"
-            >
-              {loading ? "Senden…" : "Senden"}
+            <button onClick={handleSend} disabled={loading || !body.trim()}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-blue-300 border border-[rgba(59,130,246,0.4)] bg-[rgba(59,130,246,0.12)] hover:bg-[rgba(59,130,246,0.22)] disabled:opacity-40 transition-all flex items-center gap-2">
+              {loading ? <><span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />Senden…</> : "Senden"}
             </button>
           </div>
         </div>
