@@ -1,5 +1,5 @@
 // src/components/EmailReplyModal.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import api from "../services/api";
 
