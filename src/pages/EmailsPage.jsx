@@ -5,6 +5,8 @@ import { MailContext } from "../context/MailContext";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import EmailReplyModal from "../components/EmailReplyModal";
 import EmailComposeModal from "../components/EmailComposeModal";
+import api from "../services/api";
+import SmartFolderModal from "../components/SmartFolderModal";
 
 const IC = {
   refresh: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>),
@@ -135,6 +137,10 @@ export default function EmailsPage() {
   } = useContext(MailContext);
 
   const [mailbox, setMailbox]           = useState("inbox");
+  const [activeFolder, setActiveFolder] = useState(null); // Smart Folder ID
+  const [folders, setFolders]           = useState([]);
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [editingFolder, setEditingFolder]     = useState(null);
   const [replyOpen, setReplyOpen]       = useState(false);
   const [composeOpen, setComposeOpen]   = useState(false);
   const [loading, setLoading]           = useState(false);
@@ -152,6 +158,13 @@ export default function EmailsPage() {
   const searchTimeout  = useRef(null);
 
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
+
+  // Smart Folders laden
+  useEffect(() => {
+    if (connected) {
+      api.get("/gmail/folders").then(r => setFolders(r.data?.folders || [])).catch(() => {});
+    }
+  }, [connected]);
   useEffect(() => { if (!user) navigate("/login", { replace: true }); }, [user, navigate]);
 
   // ── Initiales Laden ───────────────────────────────────────────────────────
@@ -159,13 +172,18 @@ export default function EmailsPage() {
     if (!connected) return;
     setLoading(true); setError(null); setSearchResults(null);
     try {
-      const f = (await fetchEmails(mailbox)) ?? [];
-      setEmails([...f].sort((a,b) => new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)));
+      if (activeFolder) {
+        const r = await api.get(\`/gmail/folders/\${activeFolder}/emails\`);
+        setEmails((r.data?.emails || []).sort((a,b) => new Date(b.received_at||0)-new Date(a.received_at||0)));
+      } else {
+        const f = (await fetchEmails(mailbox)) ?? [];
+        setEmails([...f].sort((a,b) => new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)));
+      }
     } catch { setError("Laden fehlgeschlagen."); }
     finally { setLoading(false); }
-  }, [connected, mailbox, fetchEmails]);
+  }, [connected, mailbox, activeFolder, fetchEmails]);
 
-  useEffect(() => { if (connected && !initializing) loadEmails(); }, [connected, mailbox, initializing]);
+  useEffect(() => { if (connected && !initializing) loadEmails(); }, [connected, mailbox, activeFolder, initializing]);
 
   // ── Mehr laden (Lazy Loading) ─────────────────────────────────────────────
   const loadMore = async () => {
@@ -302,12 +320,39 @@ export default function EmailsPage() {
               { key: "sent",  label: "Gesendet" },
             ].map(({ key, label, badge }) => (
               <button key={key}
-                onClick={() => { setMailbox(key); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
-                className={`em-nav-item ${mailbox === key ? "em-nav-item--active" : ""}`}>
+                onClick={() => { setMailbox(key); setActiveFolder(null); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
+                className={`em-nav-item ${mailbox === key && !activeFolder ? "em-nav-item--active" : ""}`}>
                 <span>{label}</span>
                 {badge > 0 && <span className="em-badge">{badge}</span>}
               </button>
             ))}
+
+            {/* Smart Folders */}
+            {folders.length > 0 && (
+              <div className="em-nav-divider"/>
+            )}
+            {folders.map(f => (
+              <div key={f.id} className="flex items-center group">
+                <button
+                  onClick={() => { setActiveFolder(f.id); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
+                  className={`em-nav-item flex-1 ${activeFolder === f.id ? "em-nav-item--active" : ""}`}
+                  style={activeFolder === f.id ? {background: `${f.color}22`, color: f.color} : {}}
+                >
+                  <span>{f.icon} {f.name}</span>
+                </button>
+                <button
+                  onClick={() => { setEditingFolder(f); setFolderModalOpen(true); }}
+                  className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-slate-400 px-1 transition-all text-xs"
+                  title="Bearbeiten"
+                >✏️</button>
+              </div>
+            ))}
+
+            {/* Ordner hinzufügen */}
+            <button onClick={() => { setEditingFolder(null); setFolderModalOpen(true); }}
+              className="em-nav-item" style={{color: "var(--nill-text-dim)", marginTop: "4px"}}>
+              <span>+ Ordner</span>
+            </button>
           </nav>
 
           <div className="em-sidebar-foot">
@@ -319,7 +364,7 @@ export default function EmailsPage() {
         {/* ── Liste ── */}
         <div className={`em-list-col ${activeEmail ? "em-list-col--pushed" : ""}`}>
           <div className="em-list-header">
-            <span className="em-list-title">{mailbox === "inbox" ? "Posteingang" : "Gesendet"}</span>
+            <span className="em-list-title">{activeFolder ? (folders.find(f=>f.id===activeFolder)?.icon+" "+folders.find(f=>f.id===activeFolder)?.name) : mailbox === "inbox" ? "Posteingang" : "Gesendet"}</span>
             <button onClick={loadEmails} disabled={loading} title="Aktualisieren"
               className={`em-refresh ${loading ? "em-refresh--spin" : ""}`}>
               {IC.refresh}
@@ -472,6 +517,28 @@ export default function EmailsPage() {
 
       <EmailReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
       <EmailComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
+      <SmartFolderModal
+        open={folderModalOpen}
+        folder={editingFolder}
+        onClose={() => setFolderModalOpen(false)}
+        onSave={async (data) => {
+          if (editingFolder) {
+            await api.patch(\`/gmail/folders/\${editingFolder.id}\`, data);
+          } else {
+            await api.post("/gmail/folders", data);
+          }
+          const r = await api.get("/gmail/folders");
+          setFolders(r.data?.folders || []);
+          setFolderModalOpen(false);
+        }}
+        onDelete={async (id) => {
+          await api.delete(\`/gmail/folders/\${id}\`);
+          const r = await api.get("/gmail/folders");
+          setFolders(r.data?.folders || []);
+          if (activeFolder === id) setActiveFolder(null);
+          setFolderModalOpen(false);
+        }}
+      />
     </>
   );
 }
