@@ -49,7 +49,7 @@ export default function EmailComposeModal({ open, onClose }) {
   useEffect(() => {
     if (open) {
       setTo(""); setSubject(""); setBody(""); setCc(""); setBcc("");
-      setShowCc(false); setUseTemplate(false); setFiles([]);
+      setShowCc(false); setFiles([]);
       setError(null); setLoading(false);
     }
   }, [open]);
@@ -69,7 +69,7 @@ export default function EmailComposeModal({ open, onClose }) {
         fd.append("subject", subject.trim());
         fd.append("body", sanitize(body));
         if (showCc && cc) fd.append("cc", cc);
-        fd.append("use_template", useTemplate);
+        fd.append("use_template", !!templateId);
         files.forEach(f => fd.append("files", f));
         await api.post("/gmail/send-with-attachments", fd, { headers: { "Content-Type": "multipart/form-data" } });
       } else {
@@ -78,7 +78,7 @@ export default function EmailComposeModal({ open, onClose }) {
           cc: showCc && cc ? parseEmails(cc) : undefined,
           bcc: showCc && bcc ? parseEmails(bcc) : undefined,
           use_template: !!templateId,
-          template_id: useTemplate ? templateId : undefined,
+          template_id: templateId || undefined,
         });
       }
       onClose();

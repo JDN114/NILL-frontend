@@ -44,7 +44,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
     if (open) {
       setBody(""); setError(null); setLoading(false);
       setAiLoading(false); setCc(""); setShowCc(false);
-      setUseTemplate(false); setFiles([]);
+      setFiles([]);
     }
   }, [open, emailId]);
 
@@ -74,8 +74,8 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
       const fd = new FormData();
       fd.append("body", safeBody);
       if (showCc && cc) fd.append("cc", cc);
-      fd.append("use_template", useTemplate);
-      if (useTemplate) fd.append("template_id", templateId);
+      fd.append("use_template", !!templateId);
+      if (templateId) fd.append("template_id", templateId);
       files.forEach(f => fd.append("files", f));
       await api.post(`/gmail/emails/${emailId}/reply`, fd, {
         headers: {
