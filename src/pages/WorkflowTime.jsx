@@ -133,7 +133,7 @@ export default function WorkflowTimePage() {
       <div className="mb-6 p-4 bg-[#0a1120] border border-white/10 rounded-lg text-white">
         {activeEntry ? (
           <>
-            <p className="text-green-400 font-semibold">🟢 Aktuell eingestempelt</p>
+            <p className="text-green-400 font-semibold"> Aktuell eingestempelt</p>
             <p className="text-gray-300 mt-1">
               Seit: {new Date(activeEntry.clock_in).toLocaleString("de-DE")}
             </p>
@@ -147,7 +147,7 @@ export default function WorkflowTimePage() {
           </>
         ) : (
           <>
-            <p className="text-gray-400">⚪ Nicht eingestempelt</p>
+            <p className="text-gray-400"> Nicht eingestempelt</p>
             <button onClick={clockIn} disabled={actionLoading}
               className="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold">
               {actionLoading ? "..." : "Einstempeln"}
