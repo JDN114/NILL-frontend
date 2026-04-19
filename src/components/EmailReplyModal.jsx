@@ -119,7 +119,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
 
         <div className="border-t border-[rgba(255,255,255,0.07)] pt-3 space-y-3">
 
-          <EmailTemplatePicker value={templateId} onChange={setTemplateId} />
+          <EmailTemplatePicker value={templateId} onChange={setTemplateId} body={body} />
 
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Anhänge</div>
