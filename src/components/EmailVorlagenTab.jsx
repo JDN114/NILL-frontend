@@ -106,7 +106,8 @@ export default function EmailVorlagenTab() {
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState(null);
   const [error, setError]         = useState(null);
-  const [preview, setPreview]     = useState(false);
+  const [preview, setPreview]     = useState(true);  // direkt sichtbar
+  const [darkMode, setDarkMode]   = useState(false);
 
   useEffect(() => { fetchTemplates(); }, []);
 
@@ -163,7 +164,20 @@ export default function EmailVorlagenTab() {
   }
 
   const { header_html: prevHeader, footer_html: prevFooter } = buildHtml(form);
-  const previewHtml = `<div style="font-family:sans-serif;max-width:580px;margin:0 auto;">${prevHeader}<div style="padding:24px;color:#333;"><p>Sehr geehrte Damen und Herren,</p><p>dies ist eine Vorschau Ihrer E-Mail-Vorlage.</p></div>${prevFooter}</div>`;
+  const previewBg   = darkMode ? "#1a1a2e" : "#ffffff";
+  const previewText = darkMode ? "#e2e8f0" : "#333333";
+  const previewHtml = `
+    <html><body style="margin:0;padding:0;background:${previewBg};">
+    <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:${previewBg};">
+      ${prevHeader}
+      <div style="padding:24px;color:${previewText};">
+        <p style="margin:0 0 12px;">Sehr geehrte Damen und Herren,</p>
+        <p style="margin:0 0 12px;">dies ist eine Vorschau Ihrer E-Mail-Vorlage. Der eigentliche Inhalt Ihrer E-Mail erscheint an dieser Stelle.</p>
+        <p style="margin:0;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
+      </div>
+      ${prevFooter}
+    </div>
+    </body></html>`;
 
   if (editing) return (
     <Card title={editing === "new" ? "Neue Vorlage erstellen" : `Vorlage bearbeiten`} className="rounded-2xl shadow-md">
@@ -271,13 +285,33 @@ export default function EmailVorlagenTab() {
 
         {/* Vorschau */}
         <div>
-          <button onClick={() => setPreview(v => !v)}
-            className="text-sm text-[#C5A572] hover:opacity-80 underline underline-offset-2">
-            {preview ? "Vorschau ausblenden" : "Vorschau anzeigen"}
-          </button>
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => setPreview(v => !v)}
+              className="text-sm text-[#C5A572] hover:opacity-80 underline underline-offset-2">
+              {preview ? "Vorschau ausblenden" : "Vorschau anzeigen"}
+            </button>
+            {preview && (
+              <div className="flex items-center gap-1 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-full p-0.5">
+                <button onClick={() => setDarkMode(false)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${!darkMode ? "bg-white text-black" : "text-slate-500 hover:text-slate-300"}`}>
+                  ☀️ Hell
+                </button>
+                <button onClick={() => setDarkMode(true)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${darkMode ? "bg-slate-700 text-white" : "text-slate-500 hover:text-slate-300"}`}>
+                  🌙 Dunkel
+                </button>
+              </div>
+            )}
+          </div>
           {preview && (
-            <div className="mt-3 rounded-xl overflow-hidden border border-[rgba(255,255,255,0.07)]">
-              <iframe srcDoc={previewHtml} className="w-full h-64 bg-white" title="Vorschau" sandbox="allow-same-origin"/>
+            <div className="rounded-xl overflow-hidden border border-[rgba(255,255,255,0.07)] shadow-lg">
+              <iframe
+                srcDoc={previewHtml}
+                className="w-full transition-all"
+                style={{height: "320px", background: darkMode ? "#1a1a2e" : "#ffffff"}}
+                title="Vorschau"
+                sandbox="allow-same-origin"
+              />
             </div>
           )}
         </div>
