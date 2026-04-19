@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import api from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
 export default function WorkflowTimePage() {
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const { isCompanyAdmin, isSolo, org } = useAuth();
+  const isAdmin = isCompanyAdmin || isSolo;
 
-  const [activeEntry, setActiveEntry] = useState(null);
-  const [now, setNow] = useState(Date.now());
+  const [entries, setEntries]           = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [activeEntry, setActiveEntry]   = useState(null);
+  const [now, setNow]                   = useState(Date.now());
   const [actionLoading, setActionLoading] = useState(false);
+  const [autoHours, setAutoHours]       = useState(10);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsSaved, setSettingsSaved]   = useState(false);
 
   // live timer
   useEffect(() => {
@@ -24,10 +30,19 @@ export default function WorkflowTimePage() {
     fetchActive();
   }, [selectedMonth]);
 
+  // Auto-Clockout Setting aus Org laden
+  useEffect(() => {
+    if (org?.auto_clockout_hours) setAutoHours(org.auto_clockout_hours);
+  }, [org]);
+
   async function fetchActive() {
     try {
-      const res = await api.get("/workflow/time/summary");
-      setActiveEntry(res.data?.active_entry || null);
+      const res = await api.get("/workflow/time/active");
+      if (res.data && res.data.clock_in) {
+        setActiveEntry(res.data);
+      } else {
+        setActiveEntry(null);
+      }
     } catch (e) {
       console.error("active fetch failed", e);
     }
@@ -39,10 +54,9 @@ export default function WorkflowTimePage() {
       const res = await api.get("/workflow/time", {
         params: {
           start: format(startOfMonth(selectedMonth), "yyyy-MM-dd"),
-          end: format(endOfMonth(selectedMonth), "yyyy-MM-dd"),
+          end:   format(endOfMonth(selectedMonth),   "yyyy-MM-dd"),
         },
       });
-
       setEntries(res.data?.items || res.data?.entries || []);
       setError(false);
     } catch (err) {
@@ -79,11 +93,21 @@ export default function WorkflowTimePage() {
     }
   }
 
-  const startTime = activeEntry?.clock_in
-    ? new Date(activeEntry.clock_in).getTime()
-    : null;
+  async function saveSettings() {
+    setSavingSettings(true);
+    try {
+      await api.post("/workflow/time/settings", { auto_clockout_hours: autoHours });
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 2500);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingSettings(false);
+    }
+  }
 
-  const workedMs = startTime ? now - startTime : 0;
+  const startTime  = activeEntry?.clock_in ? new Date(activeEntry.clock_in).getTime() : null;
+  const workedMs   = startTime ? now - startTime : 0;
 
   const formatHM = (ms) => {
     const totalMin = Math.floor(ms / 1000 / 60);
@@ -92,9 +116,7 @@ export default function WorkflowTimePage() {
     return `${h}h ${m}m`;
   };
 
-  const formatDecimal = (ms) =>
-    (ms / 1000 / 60 / 60).toFixed(2);
-
+  const formatDecimal = (ms) => (ms / 1000 / 60 / 60).toFixed(2);
   const totalHours = entries.reduce((sum, e) => sum + (e.hours || 0), 0);
 
   const handleMonthChange = (delta) => {
@@ -111,97 +133,93 @@ export default function WorkflowTimePage() {
       <div className="mb-6 p-4 bg-[#0a1120] border border-white/10 rounded-lg text-white">
         {activeEntry ? (
           <>
-            <p className="text-green-400 font-semibold">
-              🟢 Aktuell eingestempelt
-            </p>
+            <p className="text-green-400 font-semibold">🟢 Aktuell eingestempelt</p>
             <p className="text-gray-300 mt-1">
-              Seit: {new Date(activeEntry.clock_in).toLocaleString()}
+              Seit: {new Date(activeEntry.clock_in).toLocaleString("de-DE")}
             </p>
-
-            <p className="mt-2 text-lg">
-              Arbeitszeit: {formatHM(workedMs)} ({formatDecimal(workedMs)}h)
+            <p className="text-white text-lg font-mono mt-1">
+              {formatHM(workedMs)} <span className="text-gray-400 text-sm">({formatDecimal(workedMs)} h)</span>
             </p>
-
-            <button
-              disabled={actionLoading}
-              onClick={clockOut}
-              className="mt-3 px-4 py-2 bg-red-600 rounded text-white"
-            >
-              Ausstempeln
+            <button onClick={clockOut} disabled={actionLoading}
+              className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-semibold">
+              {actionLoading ? "..." : "Ausstempeln"}
             </button>
           </>
         ) : (
           <>
-            <p className="text-gray-400">Nicht eingestempelt</p>
-            <button
-              disabled={actionLoading}
-              onClick={clockIn}
-              className="mt-3 px-4 py-2 bg-green-600 rounded text-white"
-            >
-              Einstempeln
+            <p className="text-gray-400">⚪ Nicht eingestempelt</p>
+            <button onClick={clockIn} disabled={actionLoading}
+              className="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold">
+              {actionLoading ? "..." : "Einstempeln"}
             </button>
           </>
         )}
       </div>
 
-      {/* MONTH CONTROL */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handleMonthChange(-1)}
-            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white"
-          >
-            ← Vorheriger Monat
-          </button>
-
-          <span className="font-semibold text-white">
-            {format(selectedMonth, "MMMM yyyy")}
-          </span>
-
-          <button
-            onClick={() => handleMonthChange(1)}
-            className="px-3 py-1 bg-[var(--accent)]/80 rounded text-white"
-          >
-            Nächster Monat →
-          </button>
+      {/* ADMIN: Auto-Clockout Einstellung */}
+      {isAdmin && (
+        <div className="mb-6 p-4 bg-[#0a1120] border border-white/10 rounded-lg text-white">
+          <p className="text-sm font-semibold text-gray-300 mb-2">
+            ⚙️ Auto-Ausstempeln (Admin)
+          </p>
+          <p className="text-xs text-gray-500 mb-3">
+            Mitarbeiter werden automatisch ausgestempelt wenn sie vergessen es zu tun.
+          </p>
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-gray-400">Nach</label>
+            <input
+              type="number" min="1" max="24" step="0.5"
+              value={autoHours}
+              onChange={e => setAutoHours(parseFloat(e.target.value))}
+              className="w-20 px-2 py-1 bg-white/5 border border-white/10 rounded text-white text-sm text-center"
+            />
+            <label className="text-sm text-gray-400">Stunden automatisch ausstempeln</label>
+            <button onClick={saveSettings} disabled={savingSettings}
+              className="px-3 py-1 bg-[#C5A572] hover:opacity-90 disabled:opacity-50 rounded text-sm font-semibold text-black">
+              {savingSettings ? "..." : settingsSaved ? "✓ Gespeichert" : "Speichern"}
+            </button>
+          </div>
         </div>
+      )}
 
-        <div className="font-semibold text-white">
-          Gesamtstunden: {totalHours.toFixed(2)}h
-        </div>
+      {/* MONAT NAVIGATION */}
+      <div className="flex items-center gap-4 mb-4">
+        <button onClick={() => handleMonthChange(-1)}
+          className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded text-white text-sm">← Zurück</button>
+        <span className="text-white font-semibold">
+          {format(selectedMonth, "MMMM yyyy")}
+        </span>
+        <button onClick={() => handleMonthChange(1)}
+          className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded text-white text-sm">Weiter →</button>
       </div>
 
-      {/* LIST */}
-      {loading && <p className="text-gray-400">Lade Zeiteinträge...</p>}
+      {/* GESAMT */}
+      <div className="mb-4 p-3 bg-[#0a1120] border border-white/10 rounded-lg">
+        <p className="text-gray-400 text-sm">Gesamt diesen Monat</p>
+        <p className="text-white text-xl font-bold">{totalHours.toFixed(2)} h</p>
+      </div>
 
-      {!loading && error && (
-        <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg text-red-400">
-          Fehler beim Laden der Zeiteinträge
-        </div>
-      )}
-
-      {!loading && !error && entries.length === 0 && (
-        <p className="text-gray-400">Keine Zeiteinträge vorhanden</p>
-      )}
-
-      {!loading && !error && entries.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {entries.map((e) => (
-            <div
-              key={e.id}
-              className="bg-[#0a1120] p-4 rounded-lg border border-white/5"
-            >
-              <p className="font-semibold text-white">
-                {e.taskTitle || "Arbeitszeit"}
-              </p>
-
-              <p className="text-gray-400 text-sm">
-                {e.clock_in && format(new Date(e.clock_in), "dd.MM.yyyy HH:mm")}
-              </p>
-
-              <p className="text-yellow-400 mt-2">
-                {e.hours?.toFixed(2) || 0} h
-              </p>
+      {/* EINTRÄGE */}
+      {loading ? (
+        <p className="text-gray-400">Lädt...</p>
+      ) : error ? (
+        <p className="text-red-400">Fehler beim Laden.</p>
+      ) : entries.length === 0 ? (
+        <p className="text-gray-500">Keine Einträge in diesem Monat.</p>
+      ) : (
+        <div className="space-y-2">
+          {entries.map((e, i) => (
+            <div key={i} className="p-3 bg-[#0a1120] border border-white/10 rounded-lg text-white flex justify-between items-center">
+              <div>
+                <p className="text-sm font-semibold">
+                  {e.clock_in && format(new Date(e.clock_in), "dd.MM.yyyy")}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {e.clock_in && format(new Date(e.clock_in), "HH:mm")} –{" "}
+                  {e.clock_out ? format(new Date(e.clock_out), "HH:mm") : <span className="text-green-400">läuft</span>}
+                </p>
+              </div>
+              <p className="text-sm font-mono text-[#C5A572]">{(e.hours || 0).toFixed(2)} h</p>
             </div>
           ))}
         </div>
