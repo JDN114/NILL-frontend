@@ -6,6 +6,7 @@ const BLANK = {
   name: "Neue Vorlage",
   brand_color: "#C5A572",
   is_default: false,
+  is_shared: false,
   // Visuelle Felder
   logo_url: "",
   company_name: "",
@@ -323,7 +324,11 @@ export default function EmailVorlagenTab() {
                 <div className="w-5 h-5 rounded-full flex-shrink-0 border border-white/10" style={{background: t.brand_color}}/>
                 <div>
                   <p className="text-white text-sm font-medium">{t.name}</p>
-                  {t.is_default && <span className="text-[10px] text-[#C5A572] font-bold uppercase tracking-wider">✓ Standard</span>}
+                  <div className="flex items-center gap-2">
+                    {t.is_default && <span className="text-[10px] text-[#C5A572] font-bold uppercase tracking-wider">✓ Standard</span>}
+                    {t.is_shared  && <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">⟳ Geteilt</span>}
+                    {!t.is_own    && <span className="text-[10px] text-slate-500 uppercase tracking-wider">Team</span>}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -336,11 +341,11 @@ export default function EmailVorlagenTab() {
                 <button onClick={() => openEdit(t)}
                   className="text-xs text-slate-400 hover:text-white border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-1.5 transition-all hover:bg-[rgba(255,255,255,0.05)]">
                   Bearbeiten
-                </button>
-                <button onClick={() => deleteTemplate(t.id)} disabled={deleting === t.id}
+                </button>}
+                {t.is_own !== false && <button onClick={() => deleteTemplate(t.id)} disabled={deleting === t.id}
                   className="text-xs text-red-400 hover:text-red-300 border border-[rgba(248,113,113,0.2)] rounded-lg px-3 py-1.5 transition-all hover:bg-[rgba(248,113,113,0.08)] disabled:opacity-40">
                   {deleting === t.id ? "..." : "Löschen"}
-                </button>
+                </button>}
               </div>
             </div>
           ))}

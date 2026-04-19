@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import api from "../services/api";
+import EmailTemplatePicker from "./EmailTemplatePicker";
 
 const MAX_LENGTH = 5000;
 const TEMPLATES = ["Standard", "Newsletter", "Angebot", "Support"];
@@ -35,8 +36,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
   const [error, setError]             = useState(null);
   const [cc, setCc]                   = useState("");
   const [showCc, setShowCc]           = useState(false);
-  const [useTemplate, setUseTemplate] = useState(false);
-  const [templateId, setTemplateId]   = useState("Standard");
+  const [templateId, setTemplateId]   = useState(null);
   const [files, setFiles]             = useState([]);
   const fileRef                       = useRef();
 
@@ -119,19 +119,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
 
         <div className="border-t border-[rgba(255,255,255,0.07)] pt-3 space-y-3">
 
-          <Toggle checked={useTemplate} onChange={() => setUseTemplate(v => !v)} label="Vorlage / Branding verwenden" />
-          {useTemplate && (
-            <div className="flex flex-wrap gap-2">
-              {TEMPLATES.map(t => (
-                <button key={t} onClick={() => setTemplateId(t)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                    templateId === t
-                      ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]"
-                      : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-slate-500 hover:text-slate-300"
-                  }`}>{t}</button>
-              ))}
-            </div>
-          )}
+          <EmailTemplatePicker value={templateId} onChange={setTemplateId} />
 
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Anhänge</div>
