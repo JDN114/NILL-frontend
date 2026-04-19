@@ -63,24 +63,16 @@ export default function EmailComposeModal({ open, onClose }) {
     if (!canSend) return;
     try {
       setLoading(true); setError(null);
-      if (files.length > 0) {
-        const fd = new FormData();
-        fd.append("to", to.trim());
-        fd.append("subject", subject.trim());
-        fd.append("body", sanitize(body));
-        if (showCc && cc) fd.append("cc", cc);
-        fd.append("use_template", !!templateId);
-        files.forEach(f => fd.append("files", f));
-        await api.post("/gmail/send-with-attachments", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      } else {
-        await api.post("/gmail/send", {
-          to: to.trim(), subject: subject.trim(), body: sanitize(body),
-          cc: showCc && cc ? parseEmails(cc) : undefined,
-          bcc: showCc && bcc ? parseEmails(bcc) : undefined,
-          use_template: !!templateId,
-          template_id: templateId || undefined,
-        });
-      }
+      const fd = new FormData();
+      fd.append("to", to.trim());
+      fd.append("subject", subject.trim());
+      fd.append("body", sanitize(body));
+      if (showCc && cc) fd.append("cc", cc);
+      if (showCc && bcc) fd.append("bcc", bcc);
+      fd.append("use_template", String(!!templateId));
+      if (templateId) fd.append("template_id", templateId);
+      files.forEach(f => fd.append("files", f));
+      await api.post("/gmail/send-with-attachments", fd, { headers: { "Content-Type": "multipart/form-data" } });
       onClose();
     } catch (err) {
       setError(err?.response?.data?.message || "E-Mail konnte nicht gesendet werden.");
