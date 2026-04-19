@@ -758,8 +758,8 @@ body {
 
 /* ── Fix: Page füllt den ganzen Screen ──────────────────── */
 .em-shell {
-  height: calc(100vh - 64px) !important;
-  max-height: calc(100vh - 64px) !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
 }
 
 /* ── Attachments ─────────────────────────────────────────── */
@@ -807,8 +807,8 @@ body {
 
 /* ── Fix: Shell füllt ganzen Screen ─────────────────────── */
 .em-shell {
-  height: calc(100vh - 64px) !important;
-  max-height: calc(100vh - 64px) !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
   overflow: hidden;
 }
 
