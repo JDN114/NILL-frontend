@@ -804,3 +804,61 @@ body {
   font-size: 0.68rem;
   color: var(--nill-text-mute);
 }
+
+/* ── Fix: Shell füllt ganzen Screen ─────────────────────── */
+.em-shell {
+  height: calc(100vh - 64px) !important;
+  max-height: calc(100vh - 64px) !important;
+  overflow: hidden;
+}
+
+/* ── Fix: Email-Body Text-Overflow ──────────────────────── */
+.em-detail-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Attachments ─────────────────────────────────────────── */
+.em-attachments {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--nill-border);
+}
+.em-attachments-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--nill-text-mute);
+  margin-bottom: 0.6rem;
+}
+.em-attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.em-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--nill-text-sub);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-decoration: none;
+}
+.em-attachment-chip:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(197,165,114,0.35);
+  color: var(--nill-gold);
+}
+.em-attachment-size {
+  font-size: 0.68rem;
+  color: var(--nill-text-mute);
+}
