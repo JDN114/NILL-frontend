@@ -445,6 +445,20 @@ export default function EmailsPage() {
                 <div className="em-detail-body">
                   <SafeEmailHtml html={activeEmail.body??""} />
                 </div>
+                {activeEmail.attachments?.length > 0 && (
+                  <div className="em-attachments">
+                    <div className="em-attachments-label">Anhänge ({activeEmail.attachments.length})</div>
+                    <div className="em-attachment-list">
+                      {activeEmail.attachments.map((att, i) => (
+                        <a key={i} href={`/api/gmail/attachments/${att.id}`} target="_blank" rel="noreferrer" className="em-attachment-chip" download={att.filename}>
+                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                          {att.filename}
+                          {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes/1024).toFixed(0)} KB</span>}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="em-detail-actions">
                   <button onClick={() => setReplyOpen(true)} className="em-reply-btn">
                     {IC.reply} Antworten
