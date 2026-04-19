@@ -862,3 +862,33 @@ body {
   font-size: 0.68rem;
   color: var(--nill-text-mute);
 }
+
+/* ── Fix: Email-Body Overflow ────────────────────────────── */
+.em-detail-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+.email-body-render {
+  max-width: 100%;
+  overflow: hidden;
+}
+.email-body-render * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+.email-body-render table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+}
+.email-body-render img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+.email-body-render pre {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
