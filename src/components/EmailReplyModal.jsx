@@ -94,7 +94,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
   const addFiles = (f) => setFiles(prev => [...prev, ...Array.from(f)]);
 
   return (
-    <Modal open={open} onClose={onClose} title="Antworten">
+    <Modal open={open} onClose={onClose} title="Antworten" maxWidth="max-w-2xl">
       <div className="space-y-3">
 
         {error && <div className="text-red-400 text-xs bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.2)] px-3 py-2 rounded-lg">{error}</div>}
