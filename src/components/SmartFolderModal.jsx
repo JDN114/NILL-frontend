@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import Modal from "./ui/Modal";
 
-const ICONS = ["📁","📬","💼","🔥","⭐","📌","👤","🏢","📝","💰","🔔","✅","📊","🎯","🤝"];
+const ICONS = ["","📁","📬","💼","🔥","⭐","📌","👤","🏢","📝","💰","🔔","✅","📊","🎯","🤝"];
 const RULE_TYPES = [
-  { value: "sender",      label: "Absender enthält" },
-  { value: "keyword",     label: "Betreff/Text enthält" },
-  { value: "category",    label: "KI-Kategorie enthält" },
-  { value: "ai_category", label: "KI-Gruppe enthält" },
+  { value: "sender",      label: "Absender",    hint: "z.B. @firma.de oder max@beispiel.de" },
+  { value: "keyword",     label: "Stichwort",   hint: "z.B. Rechnung, Projekt XY, Angebot" },
+  { value: "category",    label: "KI-Kategorie",hint: "z.B. Bewerbung, Newsletter, Support" },
+  { value: "ai_category", label: "KI-Gruppe",   hint: "z.B. work, personal, finance" },
 ];
 
 const BLANK = { name: "", icon: "📁", color: "#C5A572", rules: [] };
@@ -71,9 +71,10 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
           <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Icon</label>
           <div className="flex flex-wrap gap-2">
             {ICONS.map(ic => (
-              <button key={ic} onClick={() => set("icon", ic)}
-                className={`w-8 h-8 rounded-lg text-base transition-all ${form.icon === ic ? "bg-[rgba(197,165,114,0.2)] border border-[rgba(197,165,114,0.4)]" : "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.08)]"}`}>
-                {ic}
+              <button key={ic || "none"} onClick={() => set("icon", ic)}
+                className={`w-8 h-8 rounded-lg text-base transition-all ${form.icon === ic ? "bg-[rgba(197,165,114,0.2)] border border-[rgba(197,165,114,0.4)]" : "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.08)]"}`}
+                title={ic === "" ? "Kein Icon" : ic}>
+                {ic === "" ? <span className="text-slate-600 text-xs">∅</span> : ic}
               </button>
             ))}
           </div>
@@ -98,20 +99,46 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
             </div>
           )}
 
-          <div className="space-y-2">
-            {form.rules.map((rule, i) => (
-              <div key={i} className="flex gap-2 items-center">
-                <select value={rule.type} onChange={e => updateRule(i, "type", e.target.value)}
-                  className="px-2 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-300 text-xs focus:outline-none focus:border-[rgba(197,165,114,0.4)] flex-shrink-0">
-                  {RULE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-                <input value={rule.value} onChange={e => updateRule(i, "value", e.target.value)}
-                  placeholder="Wert eingeben..."
-                  className="flex-1 px-3 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)]"/>
-                <button onClick={() => removeRule(i)}
-                  className="text-slate-600 hover:text-red-400 transition-colors flex-shrink-0 text-lg leading-none">×</button>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {form.rules.map((rule, i) => {
+              const rtype = RULE_TYPES.find(t => t.value === rule.type);
+              return (
+                <div key={i} className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                      Regel {i + 1}
+                    </span>
+                    <button onClick={() => removeRule(i)}
+                      className="text-slate-600 hover:text-red-400 transition-colors text-xs">
+                      ✕ Entfernen
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] text-slate-600 mb-1">Filtertyp</label>
+                      <select value={rule.type} onChange={e => updateRule(i, "type", e.target.value)}
+                        className="w-full px-2 py-1.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-300 text-xs focus:outline-none focus:border-[rgba(197,165,114,0.4)]">
+                        {RULE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-600 mb-1">Wert</label>
+                      <input value={rule.value} onChange={e => updateRule(i, "value", e.target.value)}
+                        placeholder={rtype?.hint || "Wert eingeben..."}
+                        className="w-full px-2 py-1.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)]"/>
+                    </div>
+                  </div>
+                  {rtype && (
+                    <p className="text-[10px] text-slate-600">
+                      {rule.type === "sender" && "✉️ Emails von Absendern deren Adresse diesen Text enthält"}
+                      {rule.type === "keyword" && "🔍 Emails deren Betreff oder Inhalt dieses Stichwort enthält"}
+                      {rule.type === "category" && "🤖 Emails die die KI in diese Kategorie eingestuft hat"}
+                      {rule.type === "ai_category" && "🤖 Emails deren KI-Gruppe diesem Wert entspricht"}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
