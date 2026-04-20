@@ -16,6 +16,7 @@ export default function DashboardLanding() {
   const [showTour, setShowTour] = useState(false);
   const [userName, setUserName] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [nillNotifications, setNillNotifications] = useState([]);
   const { hasFeature, hasModule, isCompanyAdmin, org } = useAuth();
   const navigate = useNavigate();
 
@@ -49,9 +50,20 @@ export default function DashboardLanding() {
       }
     };
 
+    // NILL: Tagesabschluss & Dashboard-Benachrichtigungen laden
+    const fetchNillNotifications = async () => {
+      try {
+        const res = await api.get("/nill/notifications/dashboard");
+        setNillNotifications(res.data || []);
+      } catch (err) {
+        // NILL-Benachrichtigungen sind optional – kein harter Fehler
+      }
+    };
+
     fetchUser();
     checkOnboarding();
     fetchNotifications();
+    fetchNillNotifications();
   }, []);
 
   const handleWelcomeClose = async () => {
@@ -71,8 +83,28 @@ export default function DashboardLanding() {
     visible: { opacity: 1, y: 0 },
   };
 
+  // NILL-Benachrichtigungs-Icons je nach Typ
+  const nillIconMap = {
+    travel:      "✈️",
+    application: "👤",
+    contract:    "📄",
+    onboarding:  "🚀",
+    competitor:  "🔍",
+    meeting:     "📅",
+    daily:       "🤖",
+    default:     "💬",
+  };
+
   // feature = permission check (Rolle), module = plan check (Org)
   const cards = [
+    {
+      title: "NILL",
+      description: "Deine KI-Sekretärin",
+      link: "/dashboard/nill",
+      feature: "nill",
+      module: "nill",
+      isNill: true,
+    },
     { title: "Emails",        description: "Postfach, Filter & Kategorien",    link: "/dashboard/emails",     feature: "email",       module: "emails" },
     { title: "Buchhaltung",   description: "Rechnungen, Einnahmen & Ausgaben",  link: "/dashboard/accounting", feature: "accounting",  module: "accounting" },
     { title: "Kalender",      description: "Termine, Planung & Events",         link: "/dashboard/calendar",   feature: "calendar",    module: "calendar" },
@@ -100,6 +132,7 @@ export default function DashboardLanding() {
       <GuidedTourModal isOpen={showTour} onFinish={handleTourFinish} />
 
       <PageLayout>
+        {/* Hero Banner */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -130,6 +163,7 @@ export default function DashboardLanding() {
             Mit NILL Zeit und Geld sparen.
           </motion.p>
 
+          {/* Standard-Benachrichtigungen */}
           {notifications.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -144,13 +178,105 @@ export default function DashboardLanding() {
               ))}
             </motion.div>
           )}
+
+          {/* NILL-Benachrichtigungen im Hero */}
+          {nillNotifications.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-4 space-y-2"
+            >
+              {nillNotifications.slice(0, 3).map((n, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => navigate(`/dashboard/nill?module=${n.module || "applications"}`)}
+                  className="flex items-start gap-3 bg-indigo-900/40 border border-indigo-700/40 p-3 rounded-xl text-gray-200 text-sm cursor-pointer hover:bg-indigo-900/60 transition"
+                >
+                  <span className="text-base shrink-0 mt-0.5">
+                    {nillIconMap[n.type] || nillIconMap.default}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-indigo-300 text-xs uppercase tracking-wide mr-2">
+                      NILL
+                    </span>
+                    {n.message}
+                  </div>
+                  {n.requires_action && (
+                    <span className="shrink-0 text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full px-2 py-0.5">
+                      Aktion
+                    </span>
+                  )}
+                </div>
+              ))}
+            </motion.div>
+          )}
         </motion.div>
 
+        {/* Module Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {cards.map((card, idx) => {
             const moduleOk  = !card.module  || hasModule(card.module);
             const featureOk = !card.feature || hasFeature(card.feature);
             const unlocked  = moduleOk && featureOk;
+
+            // NILL bekommt eine besondere Karte
+            if (card.isNill && unlocked) {
+              return (
+                <motion.div
+                  key={idx}
+                  initial="hidden"
+                  animate="visible"
+                  variants={fadeInUp}
+                  transition={{ delay: 0.05 }}
+                  className="md:col-span-1"
+                >
+                  <Link
+                    to={card.link}
+                    className="focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl block"
+                  >
+                    <div className="relative rounded-xl border border-indigo-700/50 bg-gradient-to-br from-indigo-950/80 to-indigo-900/40 p-5 flex flex-col gap-3 hover:border-indigo-500/70 hover:shadow-lg hover:shadow-indigo-900/30 transition overflow-hidden">
+                      {/* Glow */}
+                      <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-indigo-500/15 blur-2xl pointer-events-none" />
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-600/80 flex items-center justify-center text-white font-bold text-base shrink-0">
+                          N
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold text-sm">NILL</p>
+                          <p className="text-indigo-300 text-xs">KI-Sekretärin</p>
+                        </div>
+                        {nillNotifications.filter(n => n.requires_action).length > 0 && (
+                          <span className="ml-auto shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold">
+                            {nillNotifications.filter(n => n.requires_action).length}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5 text-center">
+                        {[
+                          { label: "Bewerbungen", icon: "👤" },
+                          { label: "Reisen",      icon: "✈️" },
+                          { label: "Meetings",    icon: "📅" },
+                        ].map(m => (
+                          <div key={m.label} className="rounded-lg bg-indigo-900/50 py-1.5 px-1">
+                            <div className="text-sm">{m.icon}</div>
+                            <div className="text-indigo-300 text-xs mt-0.5 leading-tight">{m.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <p className="text-indigo-400 text-xs">
+                        {nillNotifications.length > 0
+                          ? `${nillNotifications.length} neue Meldung${nillNotifications.length !== 1 ? "en" : ""} von NILL`
+                          : "Alles erledigt · Keine offenen Aufgaben"}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            }
 
             return (
               <motion.div
