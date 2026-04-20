@@ -5,47 +5,170 @@ import { motion, AnimatePresence } from "framer-motion";
 import PageLayout from "../components/layout/PageLayout";
 import api from "../services/api";
 
-const MODULES = [
-  { id: "overview",     label: "Übersicht",           icon: "🤖", color: "#6366f1" },
-  { id: "applications", label: "Bewerbungen",          icon: "👤", color: "#0891b2" },
-  { id: "travel",       label: "Geschäftsreisen",      icon: "✈️", color: "#059669" },
-  { id: "contracts",    label: "Verträge",             icon: "📄", color: "#7c3aed" },
-  { id: "onboarding",   label: "Onboarding",           icon: "🚀", color: "#db2777" },
-  { id: "competitors",  label: "Wettbewerber",         icon: "🔍", color: "#d97706" },
-  { id: "meetings",     label: "Meeting-Vorbereitung", icon: "📅", color: "#dc2626" },
-];
-
-const STATUS_CFG = {
-  new:         { label: "Neu",         color: "#6366f1", bg: "#eef2ff" },
-  interesting: { label: "Interessant", color: "#0891b2", bg: "#ecfeff" },
-  interview:   { label: "Interview",   color: "#059669", bg: "#ecfdf5" },
-  rejected:    { label: "Abgelehnt",   color: "#dc2626", bg: "#fef2f2" },
-  hired:       { label: "Eingestellt", color: "#7c3aed", bg: "#f5f3ff" },
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+const T = {
+  bg0:       "#0a0a0c",
+  bg1:       "#111114",
+  bg2:       "#18181c",
+  bg3:       "#222228",
+  border:    "#2e2e36",
+  borderHi:  "#44444f",
+  textPri:   "#f0f0f2",
+  textSec:   "#8a8a96",
+  textTer:   "#55555f",
+  accent:    "#00d97e",
+  accentDim: "#00d97e22",
+  warn:      "#f5a623",
+  warnDim:   "#f5a62320",
+  danger:    "#ff4d4d",
+  dangerDim: "#ff4d4d18",
+  info:      "#4d9fff",
+  infoDim:   "#4d9fff18",
+  purple:    "#a78bfa",
+  purpleDim: "#a78bfa18",
 };
 
-// ─── Shared UI ────────────────────────────────────────────────────────────────
+const FONT_DISPLAY = "'Syne', sans-serif";
+const FONT_MONO    = "'DM Mono', monospace";
+const FONT_BODY    = "'Syne', sans-serif";
 
-function ScoreBadge({ score }) {
-  const color = score>=90?"#059669":score>=75?"#0891b2":score>=60?"#d97706":score>=40?"#ea580c":"#dc2626";
+const GOOGLE_FONTS = "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap";
+
+// ─── Global Styles injected once ─────────────────────────────────────────────
+const GLOBAL_CSS = `
+@import url('${GOOGLE_FONTS}');
+.nill-root * { box-sizing: border-box; }
+.nill-root input, .nill-root textarea, .nill-root select {
+  background: ${T.bg2};
+  color: ${T.textPri};
+  border: 1px solid ${T.border};
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-family: ${FONT_BODY};
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.nill-root input::placeholder, .nill-root textarea::placeholder {
+  color: ${T.textSec};
+  opacity: 1;
+}
+.nill-root input:focus, .nill-root textarea:focus {
+  border-color: ${T.borderHi};
+}
+.nill-root label {
+  display: block;
+  font-family: ${FONT_MONO};
+  font-size: 11px;
+  color: ${T.textSec};
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.nill-scrollbar::-webkit-scrollbar { width: 4px; }
+.nill-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.nill-scrollbar::-webkit-scrollbar-thumb { background: ${T.bg3}; border-radius: 4px; }
+.nill-card-hover { transition: border-color 0.15s, background 0.15s; }
+.nill-card-hover:hover { border-color: ${T.borderHi} !important; background: ${T.bg2} !important; }
+.nill-upload-zone { transition: border-color 0.15s, background 0.15s; }
+.nill-upload-zone:hover { border-color: ${T.borderHi} !important; background: ${T.bg2} !important; cursor: pointer; }
+`;
+
+function GlobalStyles() {
+  useEffect(() => {
+    if (document.getElementById("nill-global-styles")) return;
+    const el = document.createElement("style");
+    el.id = "nill-global-styles";
+    el.textContent = GLOBAL_CSS;
+    document.head.appendChild(el);
+  }, []);
+  return null;
+}
+
+// ─── Module config ────────────────────────────────────────────────────────────
+const MODULES = [
+  { id: "overview",     label: "Übersicht",           tag: "01" },
+  { id: "applications", label: "Bewerbungen",          tag: "02" },
+  { id: "travel",       label: "Geschäftsreisen",      tag: "03" },
+  { id: "contracts",    label: "Verträge",             tag: "04" },
+  { id: "onboarding",   label: "Onboarding",           tag: "05" },
+  { id: "competitors",  label: "Wettbewerber",         tag: "06" },
+  { id: "meetings",     label: "Meeting-Vorbereitung", tag: "07" },
+];
+
+const STATUS_APP = {
+  new:         { label: "NEU",         color: T.info,   dim: T.infoDim   },
+  interesting: { label: "INTERESSANT", color: T.accent, dim: T.accentDim },
+  interview:   { label: "INTERVIEW",   color: T.purple, dim: T.purpleDim },
+  rejected:    { label: "ABGELEHNT",   color: T.danger, dim: T.dangerDim },
+  hired:       { label: "EINGESTELLT", color: T.accent, dim: T.accentDim },
+};
+
+// ─── Shared primitives ────────────────────────────────────────────────────────
+
+function Tag({ children, color = T.textSec, dim = T.bg3 }) {
   return (
-    <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:44,height:44,borderRadius:"50%",border:`2px solid ${color}`,color,fontWeight:700,fontSize:14,flexShrink:0 }}>
-      {Math.round(score)}
-    </span>
+    <span style={{
+      display: "inline-block",
+      background: dim,
+      color,
+      border: `1px solid ${color}40`,
+      borderRadius: 3,
+      padding: "2px 8px",
+      fontFamily: FONT_MONO,
+      fontSize: 10,
+      fontWeight: 500,
+      letterSpacing: "0.1em",
+    }}>{children}</span>
+  );
+}
+
+function ScoreRing({ score }) {
+  const color =
+    score >= 90 ? T.accent :
+    score >= 75 ? T.info :
+    score >= 60 ? T.warn :
+    score >= 40 ? T.warn : T.danger;
+  return (
+    <div style={{
+      width: 46, height: 46, borderRadius: "50%",
+      border: `2px solid ${color}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0,
+    }}>
+      <span style={{ fontFamily: FONT_MONO, fontSize: 13, fontWeight: 500, color }}>{Math.round(score)}</span>
+    </div>
   );
 }
 
 function StatusPill({ status, onChange }) {
-  const cfg = STATUS_CFG[status]||STATUS_CFG.new;
-  const [open,setOpen] = useState(false);
+  const cfg = STATUS_APP[status] || STATUS_APP.new;
+  const [open, setOpen] = useState(false);
   return (
-    <div style={{ position:"relative",display:"inline-block" }}>
-      <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{ background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}40`,borderRadius:20,padding:"3px 10px",fontSize:12,fontWeight:600,cursor:"pointer" }}>
-        {cfg.label} ▾
-      </button>
-      {open&&(
-        <div onClick={e=>e.stopPropagation()} style={{ position:"absolute",top:"110%",left:0,zIndex:100,background:"#fff",border:"1px solid #e5e7eb",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.10)",minWidth:140,overflow:"hidden" }}>
-          {Object.entries(STATUS_CFG).map(([k,v])=>(
-            <button key={k} onClick={()=>{onChange(k);setOpen(false);}} style={{ display:"block",width:"100%",textAlign:"left",padding:"8px 14px",background:"none",border:"none",fontSize:13,color:v.color,cursor:"pointer",fontWeight:status===k?700:400 }}>{v.label}</button>
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }} style={{
+        background: cfg.dim, color: cfg.color,
+        border: `1px solid ${cfg.color}50`,
+        borderRadius: 3, padding: "3px 10px",
+        fontFamily: FONT_MONO, fontSize: 10, fontWeight: 500,
+        letterSpacing: "0.08em", cursor: "pointer",
+      }}>{cfg.label} ↓</button>
+      {open && (
+        <div onClick={e => e.stopPropagation()} style={{
+          position: "absolute", top: "110%", left: 0, zIndex: 200,
+          background: T.bg2, border: `1px solid ${T.border}`,
+          borderRadius: 6, overflow: "hidden", minWidth: 160,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+        }}>
+          {Object.entries(STATUS_APP).map(([k, v]) => (
+            <button key={k} onClick={() => { onChange(k); setOpen(false); }} style={{
+              display: "block", width: "100%", textAlign: "left",
+              padding: "9px 14px", background: "none", border: "none",
+              fontFamily: FONT_MONO, fontSize: 10, letterSpacing: "0.08em",
+              color: status === k ? v.color : T.textSec, cursor: "pointer",
+              borderBottom: `1px solid ${T.border}`,
+            }}>{v.label}</button>
           ))}
         </div>
       )}
@@ -53,91 +176,201 @@ function StatusPill({ status, onChange }) {
   );
 }
 
-function SectionHeader({ title, subtitle }) {
+function Divider() {
+  return <div style={{ height: 1, background: T.border, margin: "24px 0" }} />;
+}
+
+function MonoLabel({ children }) {
   return (
-    <div style={{ marginBottom:24 }}>
-      <h2 style={{ margin:0,fontSize:20,fontWeight:700,color:"#111827" }}>{title}</h2>
-      {subtitle&&<p style={{ margin:"4px 0 0",fontSize:14,color:"#6b7280" }}>{subtitle}</p>}
-    </div>
+    <p style={{
+      margin: "0 0 6px",
+      fontFamily: FONT_MONO, fontSize: 10, fontWeight: 500,
+      color: T.textTer, letterSpacing: "0.12em", textTransform: "uppercase",
+    }}>{children}</p>
   );
 }
 
-function EmptyState({ icon, title, subtitle }) {
+function SectionTitle({ title, subtitle, action }) {
   return (
-    <div style={{ textAlign:"center",padding:"48px 24px",border:"2px dashed #e5e7eb",borderRadius:12,color:"#9ca3af" }}>
-      <div style={{ fontSize:36,marginBottom:12 }}>{icon}</div>
-      <p style={{ margin:0,fontSize:15,fontWeight:600,color:"#6b7280" }}>{title}</p>
-      {subtitle&&<p style={{ margin:"6px 0 0",fontSize:13 }}>{subtitle}</p>}
-    </div>
-  );
-}
-
-function Modal({ onClose, maxWidth=600, children }) {
-  return (
-    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24 }}
-      onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth,maxHeight:"90vh",overflowY:"auto",padding:"28px 32px" }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ModalHeader({ title, subtitle, onClose }) {
-  return (
-    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
       <div>
-        <h2 style={{ margin:0,fontSize:18,color:"#111827" }}>{title}</h2>
-        {subtitle&&<p style={{ margin:"4px 0 0",fontSize:13,color:"#6b7280" }}>{subtitle}</p>}
+        <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
+        {subtitle && <p style={{ margin: "5px 0 0", fontFamily: FONT_MONO, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
       </div>
-      <button onClick={onClose} style={{ background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#9ca3af",flexShrink:0,marginLeft:12 }}>✕</button>
+      {action}
     </div>
   );
 }
 
-function FormField({ label, value, onChange, type="text", placeholder="", rows }) {
-  const style = { width:"100%",padding:"8px 10px",border:"1px solid #d1d5db",borderRadius:7,fontSize:13,boxSizing:"border-box" };
+function PrimaryBtn({ onClick, disabled, children, color = T.accent }) {
+  return (
+    <button onClick={onClick} disabled={disabled} style={{
+      background: color + "18",
+      color,
+      border: `1px solid ${color}60`,
+      borderRadius: 6, padding: "9px 20px",
+      fontFamily: FONT_MONO, fontSize: 11, fontWeight: 500,
+      letterSpacing: "0.06em", cursor: "pointer",
+      transition: "background 0.15s, border-color 0.15s",
+      opacity: disabled ? 0.5 : 1,
+      whiteSpace: "nowrap",
+    }}
+      onMouseEnter={e => { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = color + "18"; e.currentTarget.style.borderColor = color + "60"; }}
+    >{children}</button>
+  );
+}
+
+function GhostBtn({ onClick, children }) {
+  return (
+    <button onClick={onClick} style={{
+      background: "none", color: T.textSec,
+      border: `1px solid ${T.border}`,
+      borderRadius: 6, padding: "9px 20px",
+      fontFamily: FONT_MONO, fontSize: 11, letterSpacing: "0.06em", cursor: "pointer",
+      transition: "color 0.15s, border-color 0.15s",
+    }}
+      onMouseEnter={e => { e.currentTarget.style.color = T.textPri; e.currentTarget.style.borderColor = T.borderHi; }}
+      onMouseLeave={e => { e.currentTarget.style.color = T.textSec; e.currentTarget.style.borderColor = T.border; }}
+    >{children}</button>
+  );
+}
+
+function Card({ onClick, children, style = {} }) {
+  return (
+    <div
+      onClick={onClick}
+      className={onClick ? "nill-card-hover" : ""}
+      style={{
+        background: T.bg1, border: `1px solid ${T.border}`,
+        borderRadius: 8, padding: "18px 22px",
+        cursor: onClick ? "pointer" : "default",
+        ...style,
+      }}
+    >{children}</div>
+  );
+}
+
+function FormGrid({ children, cols = 2 }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14 }}>
+      {children}
+    </div>
+  );
+}
+
+function FormField({ label, value, onChange, type = "text", placeholder = "", rows }) {
   return (
     <div>
-      <label style={{ fontSize:12,color:"#6b7280",display:"block",marginBottom:4 }}>{label}</label>
+      <label>{label}</label>
       {rows
-        ? <textarea rows={rows} placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)} style={{ ...style,resize:"vertical" }} />
-        : <input type={type} placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)} style={style} />
+        ? <textarea rows={rows} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} />
+        : <input type={type} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} />
       }
     </div>
   );
 }
 
-function PrimaryButton({ onClick, disabled, color="#6366f1", children }) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{ background:color,color:"#fff",border:"none",borderRadius:7,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer" }}>
-      {children}
-    </button>
-  );
-}
-
-function GhostButton({ onClick, children }) {
-  return (
-    <button onClick={onClick} style={{ background:"none",border:"1px solid #d1d5db",borderRadius:7,padding:"8px 18px",fontSize:13,cursor:"pointer",color:"#6b7280" }}>
-      {children}
-    </button>
-  );
-}
-
-function UploadZone({ onFiles, loading, color="#6366f1", accept=".pdf", label="PDF ablegen oder klicken" }) {
+function UploadZone({ onFiles, loading, accept = ".pdf", label, sublabel }) {
   const ref = useRef();
   return (
     <div
-      onDragOver={e=>e.preventDefault()}
-      onDrop={e=>{e.preventDefault();Array.from(e.dataTransfer.files).forEach(onFiles);}}
-      onClick={()=>ref.current?.click()}
-      style={{ border:"2px dashed #d1d5db",borderRadius:10,padding:"20px 16px",textAlign:"center",cursor:"pointer",background:"#fafafa",marginBottom:20 }}
+      ref={ref}
+      className="nill-upload-zone"
+      onDragOver={e => e.preventDefault()}
+      onDrop={e => { e.preventDefault(); Array.from(e.dataTransfer.files).forEach(onFiles); }}
+      onClick={() => ref.current?.querySelector("input")?.click()}
+      style={{
+        border: `1px dashed ${T.border}`,
+        borderRadius: 8, padding: "28px 24px",
+        textAlign: "center", background: T.bg1, marginBottom: 20,
+      }}
     >
-      <input ref={ref} type="file" accept={accept} multiple style={{ display:"none" }} onChange={e=>Array.from(e.target.files).forEach(onFiles)} />
-      {loading
-        ? <p style={{ margin:0,fontSize:14,color,fontWeight:500 }}>🤖 NILL analysiert…</p>
-        : <p style={{ margin:0,fontSize:14,color:"#6b7280" }}>📎 {label}</p>
-      }
+      <input type="file" accept={accept} multiple style={{ display: "none" }} onChange={e => Array.from(e.target.files).forEach(onFiles)} />
+      {loading ? (
+        <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 12, color: T.accent, letterSpacing: "0.06em" }}>NILL ANALYSIERT ...</p>
+      ) : (
+        <>
+          <p style={{ margin: "0 0 4px", fontFamily: FONT_MONO, fontSize: 12, color: T.textPri, letterSpacing: "0.04em" }}>{label || "DATEI ABLEGEN ODER KLICKEN"}</p>
+          {sublabel && <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 10, color: T.textTer }}>{sublabel}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function EmptySlate({ title, body }) {
+  return (
+    <div style={{ textAlign: "center", padding: "52px 24px", border: `1px dashed ${T.border}`, borderRadius: 8 }}>
+      <div style={{ width: 1, height: 40, background: T.border, margin: "0 auto 20px" }} />
+      <p style={{ margin: "0 0 8px", fontFamily: FONT_DISPLAY, fontSize: 15, fontWeight: 600, color: T.textSec }}>{title}</p>
+      {body && <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>{body}</p>}
+    </div>
+  );
+}
+
+function ErrorBanner({ message }) {
+  return (
+    <div style={{ background: T.dangerDim, border: `1px solid ${T.danger}40`, borderRadius: 6, padding: "10px 14px", marginBottom: 14 }}>
+      <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 11, color: T.danger }}>{message}</p>
+    </div>
+  );
+}
+
+function Drawer({ onClose, title, subtitle, maxWidth = 580, children }) {
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 12 }}
+        transition={{ duration: 0.18 }}
+        className="nill-scrollbar"
+        style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth, maxHeight: "88vh", overflowY: "auto", padding: "28px 32px" }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+          <div>
+            <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 18, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
+            {subtitle && <p style={{ margin: "4px 0 0", fontFamily: FONT_MONO, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: T.textTer, fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 4, marginLeft: 16 }}>✕</button>
+        </div>
+        {children}
+      </motion.div>
+    </div>
+  );
+}
+
+function InfoBlock({ label, children, color = T.textSec }) {
+  return (
+    <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 6, padding: "12px 16px", marginBottom: 12 }}>
+      <MonoLabel>{label}</MonoLabel>
+      <div style={{ fontFamily: FONT_BODY, fontSize: 13, color, lineHeight: 1.65 }}>{children}</div>
+    </div>
+  );
+}
+
+function TwoCol({ left, right }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+      {left}
+      {right}
+    </div>
+  );
+}
+
+function FormPanel({ title, onSubmit, onCancel, submitLabel, submitColor = T.accent, children }) {
+  return (
+    <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20 }}>
+      <p style={{ margin: "0 0 18px", fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: T.textPri }}>{title}</p>
+      {children}
+      <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+        <PrimaryBtn onClick={onSubmit} color={submitColor}>{submitLabel}</PrimaryBtn>
+        <GhostBtn onClick={onCancel}>Abbrechen</GhostBtn>
+      </div>
     </div>
   );
 }
@@ -145,47 +378,49 @@ function UploadZone({ onFiles, loading, color="#6366f1", accept=".pdf", label="P
 // ─── Overview ─────────────────────────────────────────────────────────────────
 
 function OverviewModule({ nillNotifications, dailySummary }) {
-  const pending = nillNotifications.filter(n=>n.requires_action);
+  const pending = nillNotifications.filter(n => n.requires_action);
   const stats = [
-    { label:"Offene Aktionen",   value: pending.length },
-    { label:"Bewerbungen heute", value: dailySummary?.applications?.total_received??"—" },
-    { label:"Ø Score",           value: dailySummary?.applications?.average_score?`${dailySummary.applications.average_score}`:"—" },
-    { label:"Reisen ausstehend", value: dailySummary?.travel?.pending??"—" },
+    { label: "OFFENE AKTIONEN",   value: pending.length },
+    { label: "BEWERBUNGEN HEUTE", value: dailySummary?.applications?.total_received ?? "—" },
+    { label: "Ø BEWERBER-SCORE",  value: dailySummary?.applications?.average_score  ?? "—" },
+    { label: "REISEN AUSSTEHEND", value: dailySummary?.travel?.pending              ?? "—" },
   ];
   return (
     <div>
-      <SectionHeader title="NILL Übersicht" subtitle="Tagesabschluss & offene Aktionen" />
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:24 }}>
-        {stats.map(s=>(
-          <div key={s.label} style={{ background:"#f9fafb",borderRadius:10,padding:"14px 16px" }}>
-            <p style={{ margin:0,fontSize:12,color:"#9ca3af" }}>{s.label}</p>
-            <p style={{ margin:"4px 0 0",fontSize:26,fontWeight:700,color:"#111827" }}>{s.value}</p>
+      <SectionTitle title="Übersicht" subtitle={`Stand: ${new Date().toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long" })}`} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 1, border: `1px solid ${T.border}`, borderRadius: 8, overflow: "hidden", marginBottom: 28 }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{ background: T.bg2, padding: "18px 20px", borderRight: i < stats.length - 1 ? `1px solid ${T.border}` : "none" }}>
+            <p style={{ margin: "0 0 8px", fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.12em" }}>{s.label}</p>
+            <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 28, fontWeight: 500, color: T.textPri, lineHeight: 1 }}>{s.value}</p>
           </div>
         ))}
       </div>
-      {dailySummary?.message&&(
-        <div style={{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)",borderRadius:12,padding:"18px 22px",marginBottom:24,color:"#fff" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
-            <span style={{ fontSize:16 }}>🤖</span>
-            <span style={{ fontWeight:700,fontSize:14 }}>NILL Tagesabschluss</span>
-            <span style={{ fontSize:12,opacity:0.75,marginLeft:"auto" }}>{new Date().toLocaleDateString("de-DE")}</span>
+
+      {dailySummary?.message && (
+        <>
+          <MonoLabel>Tagesabschluss</MonoLabel>
+          <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `3px solid ${T.accent}`, borderRadius: "0 6px 6px 0", padding: "14px 18px", marginBottom: 28 }}>
+            <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{dailySummary.message}</p>
           </div>
-          <p style={{ margin:0,fontSize:13,opacity:0.95,lineHeight:1.6 }}>{dailySummary.message}</p>
-        </div>
+        </>
       )}
-      {pending.length>0?(
-        <div>
-          <h3 style={{ fontSize:14,fontWeight:600,color:"#374151",margin:"0 0 10px" }}>Offene Aktionen</h3>
-          {pending.map((n,i)=>(
-            <div key={i} style={{ display:"flex",alignItems:"center",gap:12,background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:10,padding:"12px 16px",marginBottom:8 }}>
-              <span style={{ fontSize:18 }}>⚠️</span>
-              <p style={{ flex:1,margin:0,fontSize:13,color:"#92400e" }}>{n.message}</p>
-              <span style={{ background:"#f59e0b",color:"#fff",border:"none",borderRadius:6,padding:"5px 12px",fontSize:12,fontWeight:600 }}>Aktion</span>
+
+      <MonoLabel>Offene Aktionen</MonoLabel>
+      {pending.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {pending.map((n, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, background: T.warnDim, border: `1px solid ${T.warn}40`, borderRadius: 6, padding: "12px 16px" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.warn, flexShrink: 0 }} />
+              <p style={{ flex: 1, margin: 0, fontFamily: FONT_BODY, fontSize: 13, color: T.textPri }}>{n.message}</p>
+              <Tag color={T.warn} dim={T.warnDim}>AKTION</Tag>
             </div>
           ))}
         </div>
-      ):(
-        <EmptyState icon="✅" title="Alles erledigt" subtitle="Keine offenen Aktionen für heute." />
+      ) : (
+        <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 6, padding: "14px 18px" }}>
+          <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>KEINE OFFENEN AKTIONEN</p>
+        </div>
       )}
     </div>
   );
@@ -202,13 +437,13 @@ function ApplicationsModule() {
   const [position, setPosition] = useState("");
   const [error, setError] = useState(null);
 
-  useEffect(()=>{ fetchApps(); },[filterStatus]);
+  useEffect(() => { fetchApps(); }, [filterStatus]);
 
   async function fetchApps() {
     setLoading(true);
     try {
       const p = new URLSearchParams();
-      if (filterStatus) p.set("status",filterStatus);
+      if (filterStatus) p.set("status", filterStatus);
       const res = await api.get(`/nill/applications?${p}`);
       setApplications(res.data);
     } catch { setError("Fehler beim Laden."); }
@@ -219,92 +454,130 @@ function ApplicationsModule() {
     setUploading(true); setError(null);
     try {
       const form = new FormData();
-      form.append("file",file);
-      if(position) form.append("position",position);
-      const res = await api.post("/nill/applications/upload",form,{ headers:{"Content-Type":"multipart/form-data"} });
-      setApplications(prev=>[res.data,...prev]);
+      form.append("file", file);
+      if (position) form.append("position", position);
+      const res = await api.post("/nill/applications/upload", form, { headers: { "Content-Type": "multipart/form-data" } });
+      setApplications(prev => [res.data, ...prev]);
     } catch { setError("Upload fehlgeschlagen."); }
     finally { setUploading(false); }
   }
 
-  async function handleStatusChange(id,status) {
+  async function handleStatusChange(id, status) {
     try {
-      const res = await api.patch(`/nill/applications/${id}/status`,{ status });
-      setApplications(prev=>prev.map(a=>a.id===id?res.data:a));
-      if(selected?.id===id) setSelected(res.data);
+      const res = await api.patch(`/nill/applications/${id}/status`, { status });
+      setApplications(prev => prev.map(a => a.id === id ? res.data : a));
+      if (selected?.id === id) setSelected(res.data);
     } catch {}
   }
 
+  const filters = ["", "new", "interesting", "interview", "rejected", "hired"];
+  const filterLabels = { "": "ALLE", new: "NEU", interesting: "INTERESSANT", interview: "INTERVIEW", rejected: "ABGELEHNT", hired: "EINGESTELLT" };
+
   return (
     <div>
-      <SectionHeader title="Bewerbungen" subtitle={`${applications.length} Bewerbung${applications.length!==1?"en":""} gesamt`} />
-      <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
-        {["","new","interesting","interview","rejected","hired"].map(s=>(
-          <button key={s} onClick={()=>setFilterStatus(s)} style={{ padding:"5px 14px",borderRadius:20,fontSize:12,cursor:"pointer",border:`1px solid ${filterStatus===s?"#6366f1":"#d1d5db"}`,background:filterStatus===s?"#eff6ff":"#fff",color:filterStatus===s?"#6366f1":"#6b7280",fontWeight:filterStatus===s?600:400 }}>
-            {s?STATUS_CFG[s]?.label:"Alle"}
-          </button>
-        ))}
+      <SectionTitle title="Bewerbungen" subtitle={`${applications.length} Eingang${applications.length !== 1 ? "änge" : ""} gesamt`} />
+
+      {/* Filter row */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 20, background: T.bg2, borderRadius: 6, padding: 3, border: `1px solid ${T.border}` }}>
+        {filters.map(s => {
+          const active = filterStatus === s;
+          return (
+            <button key={s} onClick={() => setFilterStatus(s)} style={{
+              flex: 1, padding: "7px 4px",
+              background: active ? T.bg3 : "none",
+              border: active ? `1px solid ${T.border}` : "1px solid transparent",
+              borderRadius: 4,
+              fontFamily: FONT_MONO, fontSize: 9, letterSpacing: "0.08em",
+              color: active ? T.textPri : T.textTer, cursor: "pointer",
+              transition: "all 0.12s",
+            }}>{filterLabels[s]}</button>
+          );
+        })}
       </div>
-      <UploadZone onFiles={handleUpload} loading={uploading} />
-      <input type="text" placeholder="Stelle (optional)" value={position} onChange={e=>setPosition(e.target.value)}
-        style={{ marginTop:-12,marginBottom:16,width:"100%",padding:"8px 12px",border:"1px solid #d1d5db",borderRadius:8,fontSize:13,boxSizing:"border-box" }} />
-      {error&&<div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#dc2626" }}>{error}</div>}
-      {loading?<div style={{ textAlign:"center",padding:40,color:"#9ca3af" }}>Lade…</div>
-      :applications.length===0?<EmptyState icon="📭" title="Noch keine Bewerbungen" subtitle="PDF hochladen um zu starten." />
-      :(
-        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-          {applications.map(app=>(
-            <div key={app.id} onClick={()=>setSelected(app)} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 18px",cursor:"pointer",display:"flex",gap:14,alignItems:"flex-start" }}>
-              <ScoreBadge score={app.ai_score??0} />
-              <div style={{ flex:1,minWidth:0 }}>
-                <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap" }}>
-                  <span style={{ fontWeight:600,fontSize:15,color:"#111827" }}>{app.candidate_name}</span>
-                  {app.position&&<span style={{ fontSize:12,color:"#6b7280",background:"#f3f4f6",borderRadius:4,padding:"1px 7px" }}>{app.position}</span>}
+
+      <UploadZone onFiles={handleUpload} loading={uploading} sublabel="PDF · Lebenslauf oder Anschreiben" />
+      <div style={{ marginTop: -12, marginBottom: 20 }}>
+        <input
+          type="text" placeholder="Stelle (optional)"
+          value={position} onChange={e => setPosition(e.target.value)}
+          style={{ background: T.bg2, color: T.textPri, border: `1px solid ${T.border}`, borderRadius: 6, padding: "9px 14px", fontFamily: FONT_BODY, fontSize: 13, width: "100%", outline: "none" }}
+        />
+      </div>
+
+      {error && <ErrorBanner message={error} />}
+
+      {loading ? (
+        <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
+      ) : applications.length === 0 ? (
+        <EmptySlate title="Keine Bewerbungen" body="PDF hochladen — NILL analysiert und bewertet automatisch" />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {applications.map((app, i) => {
+            const cfg = STATUS_APP[app.status] || STATUS_APP.new;
+            return (
+              <div
+                key={app.id}
+                className="nill-card-hover"
+                onClick={() => setSelected(app)}
+                style={{
+                  background: T.bg1, border: `1px solid ${T.border}`,
+                  borderRadius: i === 0 ? "8px 8px 2px 2px" : i === applications.length - 1 ? "2px 2px 8px 8px" : 2,
+                  padding: "16px 20px", cursor: "pointer", display: "flex", gap: 16, alignItems: "center",
+                }}
+              >
+                <ScoreRing score={app.ai_score ?? 0} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
+                    <span style={{ fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: T.textPri }}>{app.candidate_name}</span>
+                    {app.position && <Tag>{app.position}</Tag>}
+                  </div>
+                  <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>
+                    {app.ai_summary?.slice(0, 120)}{app.ai_summary?.length > 120 ? "…" : ""}
+                  </p>
                 </div>
-                <p style={{ fontSize:13,color:"#6b7280",margin:"0 0 8px",lineHeight:1.4 }}>{app.ai_summary?.slice(0,110)}{app.ai_summary?.length>110?"…":""}</p>
-                <StatusPill status={app.status} onChange={s=>handleStatusChange(app.id,s)} />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+                  <StatusPill status={app.status} onChange={s => handleStatusChange(app.id, s)} />
+                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: T.textTer }}>
+                    {app.uploaded_at ? new Date(app.uploaded_at).toLocaleDateString("de-DE") : ""}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      {selected&&(
-        <Modal onClose={()=>setSelected(null)} maxWidth={600}>
-          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24 }}>
-            <div>
-              <h2 style={{ margin:0,fontSize:22,color:"#111827" }}>{selected.candidate_name}</h2>
-              {selected.email&&<p style={{ margin:"4px 0 0",fontSize:13,color:"#6b7280" }}>{selected.email}</p>}
-              {selected.position&&<p style={{ margin:"2px 0 0",fontSize:13,color:"#6b7280" }}>Stelle: {selected.position}</p>}
+
+      <AnimatePresence>
+        {selected && (
+          <Drawer onClose={() => setSelected(null)} title={selected.candidate_name} subtitle={selected.position ? `Bewerbung · ${selected.position}` : "Bewerbung"} maxWidth={600}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+              <ScoreRing score={selected.ai_score ?? 0} />
+              <div>
+                {selected.email && <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 11, color: T.textSec }}>{selected.email}</p>}
+                <StatusPill status={selected.status} onChange={s => handleStatusChange(selected.id, s)} />
+              </div>
             </div>
-            <div style={{ display:"flex",gap:12,alignItems:"center" }}>
-              <ScoreBadge score={selected.ai_score??0} />
-              <button onClick={()=>setSelected(null)} style={{ background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#9ca3af" }}>✕</button>
-            </div>
-          </div>
-          <section style={{ marginBottom:20 }}>
-            <h3 style={{ fontSize:12,fontWeight:600,color:"#6b7280",letterSpacing:"0.05em",margin:"0 0 8px" }}>ZUSAMMENFASSUNG</h3>
-            <p style={{ fontSize:14,color:"#374151",lineHeight:1.6,margin:0 }}>{selected.ai_summary}</p>
-          </section>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20 }}>
-            <section style={{ background:"#f0fdf4",borderRadius:8,padding:"12px 16px" }}>
-              <h3 style={{ fontSize:12,fontWeight:600,color:"#15803d",margin:"0 0 8px" }}>STÄRKEN</h3>
-              <ul style={{ margin:0,padding:"0 0 0 16px" }}>{(selected.ai_strengths||[]).map((s,i)=><li key={i} style={{ fontSize:13,color:"#166534",marginBottom:4 }}>{s}</li>)}</ul>
-            </section>
-            <section style={{ background:"#fef2f2",borderRadius:8,padding:"12px 16px" }}>
-              <h3 style={{ fontSize:12,fontWeight:600,color:"#dc2626",margin:"0 0 8px" }}>SCHWÄCHEN</h3>
-              <ul style={{ margin:0,padding:"0 0 0 16px" }}>{(selected.ai_weaknesses||[]).map((w,i)=><li key={i} style={{ fontSize:13,color:"#991b1b",marginBottom:4 }}>{w}</li>)}</ul>
-            </section>
-          </div>
-          <section style={{ background:"#eff6ff",borderRadius:8,padding:"12px 16px",marginBottom:24 }}>
-            <h3 style={{ fontSize:12,fontWeight:600,color:"#1d4ed8",margin:"0 0 6px" }}>NILL-EMPFEHLUNG</h3>
-            <p style={{ fontSize:13,color:"#1e40af",margin:0,lineHeight:1.5 }}>{selected.ai_recommendation}</p>
-          </section>
-          <div style={{ display:"flex",gap:10,alignItems:"center" }}>
-            <span style={{ fontSize:13,color:"#6b7280" }}>Status:</span>
-            <StatusPill status={selected.status} onChange={s=>handleStatusChange(selected.id,s)} />
-          </div>
-        </Modal>
-      )}
+            <InfoBlock label="Zusammenfassung" color={T.textPri}>{selected.ai_summary}</InfoBlock>
+            <TwoCol
+              left={
+                <InfoBlock label="Stärken" color={T.accent}>
+                  <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
+                    {(selected.ai_strengths || []).map((s, i) => <li key={i} style={{ marginBottom: 4 }}>{s}</li>)}
+                  </ul>
+                </InfoBlock>
+              }
+              right={
+                <InfoBlock label="Schwächen" color={T.danger}>
+                  <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
+                    {(selected.ai_weaknesses || []).map((w, i) => <li key={i} style={{ marginBottom: 4 }}>{w}</li>)}
+                  </ul>
+                </InfoBlock>
+              }
+            />
+            <InfoBlock label="NILL-Empfehlung" color={T.info}>{selected.ai_recommendation}</InfoBlock>
+          </Drawer>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -312,81 +585,87 @@ function ApplicationsModule() {
 // ─── Travel ───────────────────────────────────────────────────────────────────
 
 const TRAVEL_STATUS = {
-  pending_approval:{ label:"Wartet",    color:"#d97706",bg:"#fffbeb" },
-  approved:        { label:"Genehmigt", color:"#059669",bg:"#ecfdf5" },
-  booked:          { label:"Gebucht",   color:"#6366f1",bg:"#eef2ff" },
-  cancelled:       { label:"Abgesagt",  color:"#dc2626",bg:"#fef2f2" },
+  pending_approval: { label: "WARTET",    color: T.warn,   dim: T.warnDim   },
+  approved:         { label: "GENEHMIGT", color: T.accent, dim: T.accentDim },
+  booked:           { label: "GEBUCHT",   color: T.info,   dim: T.infoDim   },
+  cancelled:        { label: "ABGESAGT",  color: T.danger, dim: T.dangerDim },
 };
 
 function TravelModule() {
-  const [trips,setTrips] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [showForm,setShowForm] = useState(false);
-  const [form,setForm] = useState({ destination:"",purpose:"",departure_date:"",return_date:"",budget:"",notes:"" });
-  const [submitting,setSubmitting] = useState(false);
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ destination: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(()=>{ api.get("/nill/travel").then(r=>setTrips(r.data)).finally(()=>setLoading(false)); },[]);
+  useEffect(() => { api.get("/nill/travel").then(r => setTrips(r.data)).finally(() => setLoading(false)); }, []);
 
   async function handleSubmit() {
     setSubmitting(true);
-    try { const r=await api.post("/nill/travel",form); setTrips(p=>[r.data,...p]); setShowForm(false); setForm({ destination:"",purpose:"",departure_date:"",return_date:"",budget:"",notes:"" }); }
-    catch {} finally { setSubmitting(false); }
+    try {
+      const r = await api.post("/nill/travel", form);
+      setTrips(p => [r.data, ...p]);
+      setShowForm(false);
+      setForm({ destination: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
+    } catch {} finally { setSubmitting(false); }
   }
 
   async function handleConfirm(id) {
-    try { const r=await api.patch(`/nill/travel/${id}/confirm`); setTrips(p=>p.map(t=>t.id===id?r.data:t)); }
+    try { const r = await api.patch(`/nill/travel/${id}/confirm`); setTrips(p => p.map(t => t.id === id ? r.data : t)); }
     catch {}
   }
 
-  const fields = [
-    {key:"destination",label:"Reiseziel",placeholder:"z.B. Berlin"},
-    {key:"purpose",label:"Zweck",placeholder:"z.B. Kundengespräch"},
-    {key:"departure_date",label:"Abreise",type:"date"},
-    {key:"return_date",label:"Rückkehr",type:"date"},
-    {key:"budget",label:"Budget (€)",placeholder:"z.B. 800"},
-  ];
-
   return (
     <div>
-      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24 }}>
-        <SectionHeader title="Geschäftsreisen" subtitle="NILL plant, du bestätigst." />
-        <PrimaryButton onClick={()=>setShowForm(v=>!v)} color="#059669">+ Neue Reise</PrimaryButton>
-      </div>
-      {showForm&&(
-        <div style={{ background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:12,padding:20,marginBottom:20 }}>
-          <h3 style={{ margin:"0 0 14px",fontSize:15,fontWeight:600 }}>Reiseanfrage an NILL</h3>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
-            {fields.map(f=><FormField key={f.key} label={f.label} value={form[f.key]} onChange={v=>setForm(p=>({...p,[f.key]:v}))} type={f.type||"text"} placeholder={f.placeholder||""} />)}
+      <SectionTitle
+        title="Geschäftsreisen"
+        subtitle="NILL plant — du bestätigst"
+        action={<PrimaryBtn onClick={() => setShowForm(v => !v)} color={T.accent}>+ Neue Reise</PrimaryBtn>}
+      />
+
+      {showForm && (
+        <FormPanel title="Reiseanfrage" onSubmit={handleSubmit} onCancel={() => setShowForm(false)} submitLabel={submitting ? "NILL PLANT ..." : "An NILL senden"} submitColor={T.accent}>
+          <FormGrid>
+            <FormField label="Reiseziel" value={form.destination} onChange={v => setForm(p => ({ ...p, destination: v }))} placeholder="z.B. Berlin" />
+            <FormField label="Zweck" value={form.purpose} onChange={v => setForm(p => ({ ...p, purpose: v }))} placeholder="z.B. Kundengespräch" />
+            <FormField label="Abreise" value={form.departure_date} onChange={v => setForm(p => ({ ...p, departure_date: v }))} type="date" />
+            <FormField label="Rückkehr" value={form.return_date} onChange={v => setForm(p => ({ ...p, return_date: v }))} type="date" />
+            <FormField label="Budget (EUR)" value={form.budget} onChange={v => setForm(p => ({ ...p, budget: v }))} placeholder="z.B. 800" />
+          </FormGrid>
+          <div style={{ marginTop: 14 }}>
+            <FormField label="Notizen" value={form.notes} onChange={v => setForm(p => ({ ...p, notes: v }))} rows={2} placeholder="Besondere Anforderungen, Präferenzen ..." />
           </div>
-          <FormField label="Notizen" value={form.notes} onChange={v=>setForm(p=>({...p,notes:v}))} rows={2} placeholder="Besondere Anforderungen…" />
-          <div style={{ display:"flex",gap:10,marginTop:14 }}>
-            <PrimaryButton onClick={handleSubmit} disabled={submitting} color="#059669">{submitting?"NILL plant…":"An NILL senden"}</PrimaryButton>
-            <GhostButton onClick={()=>setShowForm(false)}>Abbrechen</GhostButton>
-          </div>
-        </div>
+        </FormPanel>
       )}
-      {loading?<div style={{ textAlign:"center",padding:40,color:"#9ca3af" }}>Lade…</div>
-      :trips.length===0?<EmptyState icon="✈️" title="Keine Reisen geplant" subtitle="Reiseanfrage stellen – NILL übernimmt die Planung." />
-      :(
-        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-          {trips.map(t=>{
-            const cfg=TRAVEL_STATUS[t.status]||TRAVEL_STATUS.pending_approval;
+
+      {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
+      : trips.length === 0 ? <EmptySlate title="Keine Reisen geplant" body="Reiseanfrage stellen — NILL übernimmt die Planung" />
+      : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {trips.map(t => {
+            const cfg = TRAVEL_STATUS[t.status] || TRAVEL_STATUS.pending_approval;
             return (
-              <div key={t.id} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 18px" }}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
+              <Card key={t.id} style={{ borderRadius: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                   <div>
-                    <p style={{ margin:0,fontWeight:600,fontSize:15,color:"#111827" }}>✈️ {t.destination}</p>
-                    <p style={{ margin:"2px 0 0",fontSize:13,color:"#6b7280" }}>{t.purpose}</p>
+                    <p style={{ margin: "0 0 3px", fontFamily: FONT_DISPLAY, fontSize: 15, fontWeight: 600, color: T.textPri }}>{t.destination}</p>
+                    <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec }}>{t.purpose}</p>
                   </div>
-                  <span style={{ background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}30`,borderRadius:20,padding:"3px 10px",fontSize:12,fontWeight:600 }}>{cfg.label}</span>
+                  <Tag color={cfg.color} dim={cfg.dim}>{cfg.label}</Tag>
                 </div>
-                <div style={{ display:"flex",gap:16,fontSize:12,color:"#9ca3af" }}>
-                  {t.departure_date&&<span>📅 {t.departure_date} → {t.return_date}</span>}
-                  {t.budget&&<span>💶 {t.budget} €</span>}
+                <div style={{ display: "flex", gap: 20, marginBottom: t.ai_suggestion || t.status === "pending_approval" ? 12 : 0 }}>
+                  {t.departure_date && <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>{t.departure_date} → {t.return_date}</span>}
+                  {t.budget && <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>{t.budget} EUR</span>}
                 </div>
-                {t.ai_suggestion&&<div style={{ background:"#eff6ff",borderRadius:8,padding:"8px 12px",marginTop:10 }}><p style={{ margin:0,fontSize:12,color:"#1e40af" }}>🤖 {t.ai_suggestion}</p></div>}
-                {t.status==="pending_approval"&&<button onClick={()=>handleConfirm(t.id)} style={{ marginTop:10,background:"#059669",color:"#fff",border:"none",borderRadius:7,padding:"7px 16px",fontSize:13,fontWeight:600,cursor:"pointer" }}>✓ Bestätigen & Buchen</button>}
-              </div>
+                {t.ai_suggestion && (
+                  <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `2px solid ${T.info}`, borderRadius: "0 4px 4px 0", padding: "8px 12px", marginBottom: t.status === "pending_approval" ? 12 : 0 }}>
+                    <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec }}>{t.ai_suggestion}</p>
+                  </div>
+                )}
+                {t.status === "pending_approval" && (
+                  <PrimaryBtn onClick={() => handleConfirm(t.id)} color={T.accent}>Bestätigen und buchen</PrimaryBtn>
+                )}
+              </Card>
             );
           })}
         </div>
@@ -398,57 +677,72 @@ function TravelModule() {
 // ─── Contracts ────────────────────────────────────────────────────────────────
 
 function ContractsModule() {
-  const [contracts,setContracts] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [uploading,setUploading] = useState(false);
-  const [selected,setSelected] = useState(null);
+  const [contracts, setContracts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [selected, setSelected] = useState(null);
 
-  useEffect(()=>{ api.get("/nill/contracts").then(r=>setContracts(r.data)).finally(()=>setLoading(false)); },[]);
+  useEffect(() => { api.get("/nill/contracts").then(r => setContracts(r.data)).finally(() => setLoading(false)); }, []);
 
   async function handleUpload(file) {
     setUploading(true);
-    try { const form=new FormData(); form.append("file",file); const r=await api.post("/nill/contracts/upload",form,{headers:{"Content-Type":"multipart/form-data"}}); setContracts(p=>[r.data,...p]); }
-    catch {} finally { setUploading(false); }
+    try {
+      const form = new FormData(); form.append("file", file);
+      const r = await api.post("/nill/contracts/upload", form, { headers: { "Content-Type": "multipart/form-data" } });
+      setContracts(p => [r.data, ...p]);
+    } catch {} finally { setUploading(false); }
   }
 
-  const URGENCY={ high:{color:"#dc2626",bg:"#fef2f2",label:"Dringend"},medium:{color:"#d97706",bg:"#fffbeb",label:"Normal"},low:{color:"#059669",bg:"#ecfdf5",label:"Niedrig"} };
+  const URGENCY = {
+    high:   { label: "DRINGEND", color: T.danger, dim: T.dangerDim },
+    medium: { label: "NORMAL",   color: T.warn,   dim: T.warnDim   },
+    low:    { label: "NIEDRIG",  color: T.accent, dim: T.accentDim },
+  };
 
   return (
     <div>
-      <SectionHeader title="Verträge" subtitle="NILL liest, fasst zusammen und warnt vor Fristen." />
-      <UploadZone onFiles={handleUpload} loading={uploading} accept=".pdf,.docx" label="PDF oder DOCX ablegen" color="#7c3aed" />
-      {loading?<div style={{ textAlign:"center",padding:40,color:"#9ca3af" }}>Lade…</div>
-      :contracts.length===0?<EmptyState icon="📄" title="Keine Verträge" subtitle="Vertrag hochladen – NILL fasst zusammen und meldet Fristen." />
-      :(
-        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-          {contracts.map(c=>{
-            const urg=URGENCY[c.urgency]||URGENCY.low;
+      <SectionTitle title="Verträge" subtitle="NILL liest, fasst zusammen, warnt vor Fristen" />
+      <UploadZone onFiles={handleUpload} loading={uploading} accept=".pdf,.docx" label="VERTRAG ABLEGEN" sublabel="PDF oder DOCX" color={T.purple} />
+
+      {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
+      : contracts.length === 0 ? <EmptySlate title="Keine Verträge" body="Vertrag hochladen — NILL fasst zusammen und überwacht Fristen" />
+      : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {contracts.map(c => {
+            const urg = URGENCY[c.urgency] || URGENCY.low;
             return (
-              <div key={c.id} onClick={()=>setSelected(c)} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 18px",cursor:"pointer" }}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6 }}>
-                  <p style={{ margin:0,fontWeight:600,fontSize:15,color:"#111827" }}>{c.title||c.filename}</p>
-                  <span style={{ background:urg.bg,color:urg.color,border:`1px solid ${urg.color}30`,borderRadius:20,padding:"3px 10px",fontSize:12,fontWeight:600,flexShrink:0,marginLeft:8 }}>{urg.label}</span>
+              <Card key={c.id} onClick={() => setSelected(c)} style={{ borderRadius: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                  <p style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: T.textPri }}>{c.title || c.filename}</p>
+                  <Tag color={urg.color} dim={urg.dim}>{urg.label}</Tag>
                 </div>
-                {c.ai_summary&&<p style={{ margin:0,fontSize:13,color:"#6b7280",lineHeight:1.4 }}>{c.ai_summary.slice(0,120)}…</p>}
-                {c.deadline&&<p style={{ margin:"6px 0 0",fontSize:12,color:"#dc2626",fontWeight:500 }}>⏰ Frist: {c.deadline}</p>}
-              </div>
+                {c.ai_summary && <p style={{ margin: "0 0 8px", fontFamily: FONT_BODY, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>{c.ai_summary.slice(0, 130)}…</p>}
+                {c.deadline && <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 10, color: T.danger }}>FRIST: {c.deadline}</p>}
+              </Card>
             );
           })}
         </div>
       )}
-      {selected&&(
-        <Modal onClose={()=>setSelected(null)} maxWidth={560}>
-          <ModalHeader title={selected.title||selected.filename} onClose={()=>setSelected(null)} />
-          {selected.ai_summary&&<p style={{ fontSize:14,color:"#374151",lineHeight:1.6 }}>{selected.ai_summary}</p>}
-          {(selected.key_points||[]).length>0&&(
-            <div style={{ background:"#f9fafb",borderRadius:8,padding:"12px 16px",marginTop:12 }}>
-              <p style={{ margin:"0 0 8px",fontSize:12,fontWeight:600,color:"#6b7280" }}>KERNPUNKTE</p>
-              <ul style={{ margin:0,padding:"0 0 0 16px" }}>{selected.key_points.map((k,i)=><li key={i} style={{ fontSize:13,color:"#374151",marginBottom:4 }}>{k}</li>)}</ul>
-            </div>
-          )}
-          {selected.deadline&&<div style={{ background:"#fef2f2",borderRadius:8,padding:"10px 14px",marginTop:12 }}><p style={{ margin:0,fontSize:13,color:"#dc2626",fontWeight:600 }}>⏰ Frist: {selected.deadline}</p></div>}
-        </Modal>
-      )}
+
+      <AnimatePresence>
+        {selected && (
+          <Drawer onClose={() => setSelected(null)} title={selected.title || selected.filename} maxWidth={560}>
+            {selected.ai_summary && <InfoBlock label="Zusammenfassung" color={T.textPri}>{selected.ai_summary}</InfoBlock>}
+            {(selected.key_points || []).length > 0 && (
+              <InfoBlock label="Kernpunkte">
+                <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
+                  {selected.key_points.map((k, i) => <li key={i} style={{ fontFamily: FONT_BODY, fontSize: 13, color: T.textSec, marginBottom: 4 }}>{k}</li>)}
+                </ul>
+              </InfoBlock>
+            )}
+            {selected.deadline && (
+              <div style={{ background: T.dangerDim, border: `1px solid ${T.danger}40`, borderRadius: 6, padding: "10px 14px" }}>
+                <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 11, color: T.danger }}>FRIST: {selected.deadline}</p>
+              </div>
+            )}
+          </Drawer>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -456,73 +750,77 @@ function ContractsModule() {
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
 function OnboardingModule() {
-  const [employees,setEmployees] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [showForm,setShowForm] = useState(false);
-  const [form,setForm] = useState({ name:"",role:"",start_date:"",email:"" });
-  const [submitting,setSubmitting] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", role: "", start_date: "", email: "" });
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(()=>{ api.get("/nill/onboarding").then(r=>setEmployees(r.data)).finally(()=>setLoading(false)); },[]);
+  useEffect(() => { api.get("/nill/onboarding").then(r => setEmployees(r.data)).finally(() => setLoading(false)); }, []);
 
   async function handleSubmit() {
     setSubmitting(true);
-    try { const r=await api.post("/nill/onboarding",form); setEmployees(p=>[r.data,...p]); setShowForm(false); setForm({ name:"",role:"",start_date:"",email:"" }); }
-    catch {} finally { setSubmitting(false); }
+    try {
+      const r = await api.post("/nill/onboarding", form);
+      setEmployees(p => [r.data, ...p]);
+      setShowForm(false); setForm({ name: "", role: "", start_date: "", email: "" });
+    } catch {} finally { setSubmitting(false); }
   }
 
-  async function toggleTask(eid,tid) {
-    try { const r=await api.patch(`/nill/onboarding/${eid}/tasks/${tid}/toggle`); setEmployees(p=>p.map(e=>e.id===eid?r.data:e)); }
+  async function toggleTask(eid, tid) {
+    try { const r = await api.patch(`/nill/onboarding/${eid}/tasks/${tid}/toggle`); setEmployees(p => p.map(e => e.id === eid ? r.data : e)); }
     catch {}
   }
 
   return (
     <div>
-      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24 }}>
-        <SectionHeader title="Onboarding" subtitle="NILL erstellt Checklisten für neue Mitarbeiter." />
-        <PrimaryButton onClick={()=>setShowForm(v=>!v)} color="#db2777">+ Neuer Mitarbeiter</PrimaryButton>
-      </div>
-      {showForm&&(
-        <div style={{ background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:12,padding:20,marginBottom:20 }}>
-          <h3 style={{ margin:"0 0 14px",fontSize:15,fontWeight:600 }}>Neuen Mitarbeiter anlegen</h3>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14 }}>
-            <FormField label="Name" value={form.name} onChange={v=>setForm(p=>({...p,name:v}))} />
-            <FormField label="Stelle" value={form.role} onChange={v=>setForm(p=>({...p,role:v}))} />
-            <FormField label="E-Mail" value={form.email} onChange={v=>setForm(p=>({...p,email:v}))} type="email" />
-            <FormField label="Startdatum" value={form.start_date} onChange={v=>setForm(p=>({...p,start_date:v}))} type="date" />
-          </div>
-          <div style={{ display:"flex",gap:10 }}>
-            <PrimaryButton onClick={handleSubmit} disabled={submitting} color="#db2777">{submitting?"NILL erstellt Checkliste…":"Anlegen"}</PrimaryButton>
-            <GhostButton onClick={()=>setShowForm(false)}>Abbrechen</GhostButton>
-          </div>
-        </div>
+      <SectionTitle
+        title="Onboarding"
+        subtitle="NILL erstellt Checklisten automatisch"
+        action={<PrimaryBtn onClick={() => setShowForm(v => !v)} color={T.purple}>+ Neuer Mitarbeiter</PrimaryBtn>}
+      />
+
+      {showForm && (
+        <FormPanel title="Mitarbeiter anlegen" onSubmit={handleSubmit} onCancel={() => setShowForm(false)} submitLabel={submitting ? "NILL ERSTELLT CHECKLISTE ..." : "Anlegen"} submitColor={T.purple}>
+          <FormGrid>
+            <FormField label="Name" value={form.name} onChange={v => setForm(p => ({ ...p, name: v }))} placeholder="Vollständiger Name" />
+            <FormField label="Stelle" value={form.role} onChange={v => setForm(p => ({ ...p, role: v }))} placeholder="z.B. Frontend Developer" />
+            <FormField label="E-Mail" value={form.email} onChange={v => setForm(p => ({ ...p, email: v }))} type="email" placeholder="name@unternehmen.de" />
+            <FormField label="Startdatum" value={form.start_date} onChange={v => setForm(p => ({ ...p, start_date: v }))} type="date" />
+          </FormGrid>
+        </FormPanel>
       )}
-      {loading?<div style={{ textAlign:"center",padding:40,color:"#9ca3af" }}>Lade…</div>
-      :employees.length===0?<EmptyState icon="🚀" title="Noch kein Onboarding" subtitle="Neuen Mitarbeiter anlegen – NILL erstellt die Checkliste automatisch." />
-      :(
-        <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
-          {employees.map(emp=>{
-            const tasks=emp.tasks||[];
-            const done=tasks.filter(t=>t.done).length;
-            const pct=tasks.length>0?Math.round((done/tasks.length)*100):0;
+
+      {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
+      : employees.length === 0 ? <EmptySlate title="Kein Onboarding aktiv" body="Neuen Mitarbeiter anlegen — NILL erstellt die Checkliste automatisch" />
+      : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {employees.map(emp => {
+            const tasks = emp.tasks || [];
+            const done = tasks.filter(t => t.done).length;
+            const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
             return (
-              <div key={emp.id} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px 20px" }}>
-                <div style={{ display:"flex",justifyContent:"space-between",marginBottom:10 }}>
+              <Card key={emp.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                   <div>
-                    <p style={{ margin:0,fontWeight:600,fontSize:15,color:"#111827" }}>{emp.name}</p>
-                    <p style={{ margin:"2px 0 0",fontSize:13,color:"#6b7280" }}>{emp.role} · Start: {emp.start_date}</p>
+                    <p style={{ margin: "0 0 2px", fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: T.textPri }}>{emp.name}</p>
+                    <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 10, color: T.textTer }}>{emp.role} · START: {emp.start_date}</p>
                   </div>
-                  <span style={{ fontSize:13,fontWeight:700,color:pct===100?"#059669":"#6366f1",background:pct===100?"#ecfdf5":"#eff6ff",borderRadius:20,padding:"3px 10px" }}>{pct}%</span>
+                  <span style={{ fontFamily: FONT_MONO, fontSize: 13, fontWeight: 500, color: pct === 100 ? T.accent : T.textSec }}>{pct}%</span>
                 </div>
-                <div style={{ background:"#e5e7eb",borderRadius:99,height:4,marginBottom:12,overflow:"hidden" }}>
-                  <div style={{ height:"100%",background:pct===100?"#059669":"#6366f1",width:`${pct}%`,transition:"width 0.3s",borderRadius:99 }} />
+                <div style={{ background: T.bg2, borderRadius: 99, height: 2, marginBottom: 14, overflow: "hidden" }}>
+                  <div style={{ height: "100%", background: pct === 100 ? T.accent : T.borderHi, width: `${pct}%`, transition: "width 0.4s" }} />
                 </div>
-                {tasks.map(task=>(
-                  <label key={task.id} style={{ display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:6 }}>
-                    <input type="checkbox" checked={task.done} onChange={()=>toggleTask(emp.id,task.id)} style={{ width:16,height:16,accentColor:"#6366f1",cursor:"pointer" }} />
-                    <span style={{ fontSize:13,color:task.done?"#9ca3af":"#374151",textDecoration:task.done?"line-through":"none" }}>{task.label}</span>
-                  </label>
-                ))}
-              </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {tasks.map(task => (
+                    <label key={task.id} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <input type="checkbox" checked={task.done} onChange={() => toggleTask(emp.id, task.id)}
+                        style={{ width: 14, height: 14, accentColor: T.accent, cursor: "pointer", flexShrink: 0 }} />
+                      <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: task.done ? T.textTer : T.textPri, textDecoration: task.done ? "line-through" : "none" }}>{task.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </Card>
             );
           })}
         </div>
@@ -534,64 +832,73 @@ function OnboardingModule() {
 // ─── Competitors ──────────────────────────────────────────────────────────────
 
 function CompetitorsModule() {
-  const [reports,setReports] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [refreshing,setRefreshing] = useState(false);
-  const [selected,setSelected] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selected, setSelected] = useState(null);
 
-  useEffect(()=>{ api.get("/nill/competitors").then(r=>setReports(r.data)).finally(()=>setLoading(false)); },[]);
+  useEffect(() => { api.get("/nill/competitors").then(r => setReports(r.data)).finally(() => setLoading(false)); }, []);
 
   async function triggerRefresh() {
     setRefreshing(true);
-    try { const r=await api.post("/nill/competitors/refresh"); setReports(r.data); }
+    try { const r = await api.post("/nill/competitors/refresh"); setReports(r.data); }
     catch {} finally { setRefreshing(false); }
   }
 
-  const SENT={ positive:{color:"#059669",bg:"#ecfdf5",label:"Positiv"},neutral:{color:"#d97706",bg:"#fffbeb",label:"Neutral"},negative:{color:"#dc2626",bg:"#fef2f2",label:"Kritisch"} };
+  const SENT = {
+    positive: { label: "POSITIV",  color: T.accent, dim: T.accentDim },
+    neutral:  { label: "NEUTRAL",  color: T.warn,   dim: T.warnDim   },
+    negative: { label: "KRITISCH", color: T.danger, dim: T.dangerDim },
+  };
 
   return (
     <div>
-      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24 }}>
-        <SectionHeader title="Wettbewerber-Monitoring" subtitle="NILL beobachtet täglich deine Mitbewerber." />
-        <PrimaryButton onClick={triggerRefresh} disabled={refreshing} color="#d97706">{refreshing?"Aktualisiere…":"🔄 Jetzt aktualisieren"}</PrimaryButton>
-      </div>
-      {loading?<div style={{ textAlign:"center",padding:40,color:"#9ca3af" }}>Lade…</div>
-      :reports.length===0?<EmptyState icon="🔍" title="Keine Berichte" subtitle="NILL sammelt täglich neue Infos über eure Wettbewerber." />
-      :(
-        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-          {reports.map(r=>{
-            const sent=SENT[r.sentiment]||SENT.neutral;
+      <SectionTitle
+        title="Wettbewerber"
+        subtitle="Tägliches Monitoring durch NILL"
+        action={<PrimaryBtn onClick={triggerRefresh} disabled={refreshing} color={T.warn}>{refreshing ? "AKTUALISIERE ..." : "Jetzt aktualisieren"}</PrimaryBtn>}
+      />
+
+      {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
+      : reports.length === 0 ? <EmptySlate title="Keine Berichte" body="NILL sammelt täglich neue Informationen über deine Wettbewerber" />
+      : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {reports.map(r => {
+            const sent = SENT[r.sentiment] || SENT.neutral;
             return (
-              <div key={r.id} onClick={()=>setSelected(r)} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 18px",cursor:"pointer" }}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6 }}>
-                  <p style={{ margin:0,fontWeight:600,fontSize:15,color:"#111827" }}>{r.competitor_name}</p>
-                  <span style={{ background:sent.bg,color:sent.color,border:`1px solid ${sent.color}30`,borderRadius:20,padding:"3px 10px",fontSize:12,fontWeight:600,flexShrink:0,marginLeft:8 }}>{sent.label}</span>
+              <Card key={r.id} onClick={() => setSelected(r)} style={{ borderRadius: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
+                  <p style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: T.textPri }}>{r.competitor_name}</p>
+                  <Tag color={sent.color} dim={sent.dim}>{sent.label}</Tag>
                 </div>
-                <p style={{ margin:0,fontSize:13,color:"#6b7280",lineHeight:1.4 }}>{r.summary?.slice(0,130)}…</p>
-                <p style={{ margin:"6px 0 0",fontSize:11,color:"#9ca3af" }}>{r.updated_at?new Date(r.updated_at).toLocaleDateString("de-DE"):""}</p>
-              </div>
+                <p style={{ margin: "0 0 8px", fontFamily: FONT_BODY, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>{r.summary?.slice(0, 140)}…</p>
+                <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 9, color: T.textTer }}>{r.updated_at ? new Date(r.updated_at).toLocaleDateString("de-DE") : ""}</p>
+              </Card>
             );
           })}
         </div>
       )}
-      {selected&&(
-        <Modal onClose={()=>setSelected(null)} maxWidth={560}>
-          <ModalHeader title={selected.competitor_name} onClose={()=>setSelected(null)} />
-          {selected.summary&&<p style={{ fontSize:14,color:"#374151",lineHeight:1.6 }}>{selected.summary}</p>}
-          {(selected.highlights||[]).length>0&&(
-            <div style={{ background:"#f9fafb",borderRadius:8,padding:"12px 16px",marginTop:12 }}>
-              <p style={{ margin:"0 0 8px",fontSize:12,fontWeight:600,color:"#6b7280" }}>HIGHLIGHTS</p>
-              <ul style={{ margin:0,padding:"0 0 0 16px" }}>{selected.highlights.map((h,i)=><li key={i} style={{ fontSize:13,color:"#374151",marginBottom:4 }}>{h}</li>)}</ul>
-            </div>
-          )}
-          {(selected.sources||[]).length>0&&(
-            <div style={{ marginTop:12 }}>
-              <p style={{ margin:"0 0 6px",fontSize:12,color:"#9ca3af" }}>Quellen</p>
-              {selected.sources.map((s,i)=><a key={i} href={s} target="_blank" rel="noreferrer" style={{ display:"block",fontSize:12,color:"#6366f1",marginBottom:2 }}>{s}</a>)}
-            </div>
-          )}
-        </Modal>
-      )}
+
+      <AnimatePresence>
+        {selected && (
+          <Drawer onClose={() => setSelected(null)} title={selected.competitor_name} maxWidth={540}>
+            {selected.summary && <InfoBlock label="Zusammenfassung" color={T.textPri}>{selected.summary}</InfoBlock>}
+            {(selected.highlights || []).length > 0 && (
+              <InfoBlock label="Highlights">
+                <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
+                  {selected.highlights.map((h, i) => <li key={i} style={{ fontFamily: FONT_BODY, fontSize: 13, color: T.textSec, marginBottom: 4 }}>{h}</li>)}
+                </ul>
+              </InfoBlock>
+            )}
+            {(selected.sources || []).length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <MonoLabel>Quellen</MonoLabel>
+                {selected.sources.map((s, i) => <a key={i} href={s} target="_blank" rel="noreferrer" style={{ display: "block", fontFamily: FONT_MONO, fontSize: 11, color: T.info, marginBottom: 4 }}>{s}</a>)}
+              </div>
+            )}
+          </Drawer>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -599,73 +906,76 @@ function CompetitorsModule() {
 // ─── Meetings ─────────────────────────────────────────────────────────────────
 
 function MeetingsModule() {
-  const [meetings,setMeetings] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [showForm,setShowForm] = useState(false);
-  const [form,setForm] = useState({ title:"",date:"",participants:"",agenda:"",context:"" });
-  const [submitting,setSubmitting] = useState(false);
-  const [selected,setSelected] = useState(null);
+  const [meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: "", date: "", participants: "", agenda: "", context: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [selected, setSelected] = useState(null);
 
-  useEffect(()=>{ api.get("/nill/meetings").then(r=>setMeetings(r.data)).finally(()=>setLoading(false)); },[]);
+  useEffect(() => { api.get("/nill/meetings").then(r => setMeetings(r.data)).finally(() => setLoading(false)); }, []);
 
   async function handleSubmit() {
     setSubmitting(true);
-    try { const r=await api.post("/nill/meetings",form); setMeetings(p=>[r.data,...p]); setShowForm(false); setForm({ title:"",date:"",participants:"",agenda:"",context:"" }); }
-    catch {} finally { setSubmitting(false); }
+    try {
+      const r = await api.post("/nill/meetings", form);
+      setMeetings(p => [r.data, ...p]);
+      setShowForm(false); setForm({ title: "", date: "", participants: "", agenda: "", context: "" });
+    } catch {} finally { setSubmitting(false); }
   }
 
   return (
     <div>
-      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24 }}>
-        <SectionHeader title="Meeting-Vorbereitung" subtitle="NILL erstellt ein vollständiges Briefing vor jedem Meeting." />
-        <PrimaryButton onClick={()=>setShowForm(v=>!v)} color="#dc2626">+ Meeting anlegen</PrimaryButton>
-      </div>
-      {showForm&&(
-        <div style={{ background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:12,padding:20,marginBottom:20 }}>
-          <h3 style={{ margin:"0 0 14px",fontSize:15,fontWeight:600 }}>Meeting-Briefing anfordern</h3>
-          <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-            <FormField label="Titel" value={form.title} onChange={v=>setForm(p=>({...p,title:v}))} placeholder="z.B. Quartalsgespräch mit Kunde XY" />
-            <FormField label="Datum & Uhrzeit" value={form.date} onChange={v=>setForm(p=>({...p,date:v}))} type="datetime-local" />
-            <FormField label="Teilnehmer" value={form.participants} onChange={v=>setForm(p=>({...p,participants:v}))} placeholder="Namen oder E-Mails, kommagetrennt" />
-            <FormField label="Agenda / Themen" value={form.agenda} onChange={v=>setForm(p=>({...p,agenda:v}))} rows={2} placeholder="Was soll besprochen werden?" />
-            <FormField label="Kontext für NILL" value={form.context} onChange={v=>setForm(p=>({...p,context:v}))} rows={2} placeholder="Hintergrundinfos, bisherige Zusammenarbeit…" />
+      <SectionTitle
+        title="Meeting-Vorbereitung"
+        subtitle="NILL erstellt vollständige Briefings"
+        action={<PrimaryBtn onClick={() => setShowForm(v => !v)} color={T.danger}>+ Meeting anlegen</PrimaryBtn>}
+      />
+
+      {showForm && (
+        <FormPanel title="Briefing anfordern" onSubmit={handleSubmit} onCancel={() => setShowForm(false)} submitLabel={submitting ? "NILL ERSTELLT BRIEFING ..." : "Briefing erstellen"} submitColor={T.danger}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <FormField label="Titel" value={form.title} onChange={v => setForm(p => ({ ...p, title: v }))} placeholder="z.B. Quartalsgespräch mit Kunde XY" />
+            <FormGrid>
+              <FormField label="Datum und Uhrzeit" value={form.date} onChange={v => setForm(p => ({ ...p, date: v }))} type="datetime-local" />
+              <FormField label="Teilnehmer" value={form.participants} onChange={v => setForm(p => ({ ...p, participants: v }))} placeholder="Namen oder E-Mails" />
+            </FormGrid>
+            <FormField label="Agenda" value={form.agenda} onChange={v => setForm(p => ({ ...p, agenda: v }))} rows={2} placeholder="Was soll besprochen werden?" />
+            <FormField label="Kontext für NILL" value={form.context} onChange={v => setForm(p => ({ ...p, context: v }))} rows={2} placeholder="Hintergrundinfos, bisherige Zusammenarbeit ..." />
           </div>
-          <div style={{ display:"flex",gap:10,marginTop:14 }}>
-            <PrimaryButton onClick={handleSubmit} disabled={submitting} color="#dc2626">{submitting?"NILL erstellt Briefing…":"Briefing erstellen"}</PrimaryButton>
-            <GhostButton onClick={()=>setShowForm(false)}>Abbrechen</GhostButton>
-          </div>
-        </div>
+        </FormPanel>
       )}
-      {loading?<div style={{ textAlign:"center",padding:40,color:"#9ca3af" }}>Lade…</div>
-      :meetings.length===0?<EmptyState icon="📅" title="Kein Meeting vorbereitet" subtitle="Meeting anlegen – NILL erstellt ein vollständiges Briefing." />
-      :(
-        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-          {meetings.map(m=>(
-            <div key={m.id} onClick={()=>setSelected(m)} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 18px",cursor:"pointer" }}>
-              <p style={{ margin:0,fontWeight:600,fontSize:15,color:"#111827" }}>{m.title}</p>
-              <p style={{ margin:"3px 0 0",fontSize:13,color:"#6b7280" }}>📅 {m.date?new Date(m.date).toLocaleString("de-DE",{dateStyle:"medium",timeStyle:"short"}):"—"}</p>
-              {m.ai_briefing&&<p style={{ margin:"6px 0 0",fontSize:13,color:"#374151",lineHeight:1.4 }}>{m.ai_briefing.slice(0,120)}…</p>}
-            </div>
+
+      {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
+      : meetings.length === 0 ? <EmptySlate title="Kein Meeting vorbereitet" body="Meeting anlegen — NILL liefert ein vollständiges Briefing" />
+      : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {meetings.map(m => (
+            <Card key={m.id} onClick={() => setSelected(m)} style={{ borderRadius: 6 }}>
+              <p style={{ margin: "0 0 4px", fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 600, color: T.textPri }}>{m.title}</p>
+              <p style={{ margin: "0 0 8px", fontFamily: FONT_MONO, fontSize: 10, color: T.textTer }}>
+                {m.date ? new Date(m.date).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }) : "—"}
+              </p>
+              {m.ai_briefing && <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>{m.ai_briefing.slice(0, 130)}…</p>}
+            </Card>
           ))}
         </div>
       )}
-      {selected&&(
-        <Modal onClose={()=>setSelected(null)} maxWidth={580}>
-          <ModalHeader title={selected.title} subtitle={selected.date?new Date(selected.date).toLocaleString("de-DE",{dateStyle:"full",timeStyle:"short"}):""} onClose={()=>setSelected(null)} />
-          {selected.ai_briefing&&(
-            <div style={{ background:"#f9fafb",borderRadius:8,padding:"14px 16px",marginBottom:14 }}>
-              <p style={{ margin:"0 0 8px",fontSize:12,fontWeight:600,color:"#6b7280" }}>NILL-BRIEFING</p>
-              <p style={{ margin:0,fontSize:14,color:"#374151",lineHeight:1.6,whiteSpace:"pre-wrap" }}>{selected.ai_briefing}</p>
-            </div>
-          )}
-          {(selected.talking_points||[]).length>0&&(
-            <div>
-              <p style={{ margin:"0 0 8px",fontSize:12,fontWeight:600,color:"#6b7280" }}>GESPRÄCHSPUNKTE</p>
-              <ul style={{ margin:0,padding:"0 0 0 16px" }}>{selected.talking_points.map((pt,i)=><li key={i} style={{ fontSize:13,color:"#374151",marginBottom:4 }}>{pt}</li>)}</ul>
-            </div>
-          )}
-        </Modal>
-      )}
+
+      <AnimatePresence>
+        {selected && (
+          <Drawer onClose={() => setSelected(null)} title={selected.title} subtitle={selected.date ? new Date(selected.date).toLocaleString("de-DE", { dateStyle: "full", timeStyle: "short" }) : ""} maxWidth={580}>
+            {selected.ai_briefing && <InfoBlock label="Briefing" color={T.textPri}><span style={{ whiteSpace: "pre-wrap" }}>{selected.ai_briefing}</span></InfoBlock>}
+            {(selected.talking_points || []).length > 0 && (
+              <InfoBlock label="Gesprächspunkte">
+                <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
+                  {selected.talking_points.map((pt, i) => <li key={i} style={{ fontFamily: FONT_BODY, fontSize: 13, color: T.textSec, marginBottom: 4 }}>{pt}</li>)}
+                </ul>
+              </InfoBlock>
+            )}
+          </Drawer>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -674,66 +984,90 @@ function MeetingsModule() {
 
 export default function NILLModule() {
   const [searchParams] = useSearchParams();
-  const [activeModule, setActiveModule] = useState(searchParams.get("module")||"overview");
+  const [active, setActive] = useState(searchParams.get("module") || "overview");
   const [nillNotifications, setNillNotifications] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
 
-  useEffect(()=>{
+  useEffect(() => {
     Promise.all([
       api.get("/nill/notifications/dashboard"),
       api.get("/nill/summary/daily"),
-    ]).then(([nr,sr])=>{ setNillNotifications(nr.data||[]); setDailySummary(sr.data||null); }).catch(()=>{});
-  },[]);
+    ]).then(([nr, sr]) => {
+      setNillNotifications(nr.data || []);
+      setDailySummary(sr.data || null);
+    }).catch(() => {});
+  }, []);
 
-  const pendingCount = nillNotifications.filter(n=>n.requires_action).length;
+  const pendingCount = nillNotifications.filter(n => n.requires_action).length;
 
   return (
     <PageLayout>
-      <div style={{ display:"flex",gap:24,minHeight:"80vh" }}>
+      <GlobalStyles />
+      <div className="nill-root" style={{ display: "flex", gap: 20, minHeight: "80vh", fontFamily: FONT_BODY }}>
 
         {/* Sidebar */}
-        <aside style={{ width:220,background:"#fff",border:"1px solid #e5e7eb",borderRadius:14,display:"flex",flexDirection:"column",padding:"20px 0",flexShrink:0,alignSelf:"flex-start",position:"sticky",top:24 }}>
-          <div style={{ padding:"0 18px 16px",borderBottom:"1px solid #f3f4f6" }}>
-            <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-              <div style={{ width:34,height:34,borderRadius:9,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:15 }}>N</div>
-              <div>
-                <p style={{ margin:0,fontWeight:700,fontSize:14,color:"#111827" }}>NILL</p>
-                <p style={{ margin:0,fontSize:11,color:"#9ca3af" }}>KI-Sekretärin</p>
-              </div>
-            </div>
+        <aside style={{
+          width: 210, flexShrink: 0, alignSelf: "flex-start", position: "sticky", top: 24,
+          background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10,
+          display: "flex", flexDirection: "column", overflow: "hidden",
+        }}>
+          {/* Wordmark */}
+          <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${T.border}` }}>
+            <p style={{ margin: "0 0 2px", fontFamily: FONT_DISPLAY, fontSize: 20, fontWeight: 800, color: T.textPri, letterSpacing: "-0.04em" }}>NILL</p>
+            <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.12em" }}>KI-SEKRETÄRIN</p>
           </div>
-          <nav style={{ flex:1,padding:"12px 8px" }}>
-            {MODULES.map(m=>{
-              const active=activeModule===m.id;
+
+          {/* Nav */}
+          <nav style={{ padding: "10px 8px", flex: 1 }}>
+            {MODULES.map(m => {
+              const isActive = active === m.id;
               return (
-                <button key={m.id} onClick={()=>setActiveModule(m.id)} style={{ display:"flex",alignItems:"center",gap:9,width:"100%",padding:"9px 10px",borderRadius:8,border:"none",cursor:"pointer",background:active?"#f5f3ff":"none",color:active?m.color:"#374151",fontWeight:active?600:400,fontSize:13,textAlign:"left",marginBottom:1,transition:"background 0.1s" }}>
-                  <span style={{ fontSize:15 }}>{m.icon}</span>
-                  <span style={{ flex:1 }}>{m.label}</span>
-                  {m.id==="overview"&&pendingCount>0&&(
-                    <span style={{ background:"#f59e0b",color:"#fff",borderRadius:99,fontSize:10,fontWeight:700,padding:"1px 6px",minWidth:16,textAlign:"center" }}>{pendingCount}</span>
+                <button key={m.id} onClick={() => setActive(m.id)} style={{
+                  display: "flex", alignItems: "center", gap: 10, width: "100%",
+                  padding: "9px 12px", borderRadius: 6, border: "none",
+                  background: isActive ? T.bg3 : "none",
+                  cursor: "pointer", textAlign: "left", marginBottom: 1,
+                  transition: "background 0.1s",
+                }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = T.bg2; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "none"; }}
+                >
+                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: isActive ? T.textTer : T.textTer, letterSpacing: "0.06em", minWidth: 16 }}>{m.tag}</span>
+                  <span style={{ fontFamily: FONT_BODY, fontSize: 13, fontWeight: isActive ? 500 : 400, color: isActive ? T.textPri : T.textSec, flex: 1 }}>{m.label}</span>
+                  {m.id === "overview" && pendingCount > 0 && (
+                    <span style={{ background: T.warn, color: T.bg0, borderRadius: 99, fontFamily: FONT_MONO, fontSize: 9, fontWeight: 700, padding: "1px 6px", minWidth: 16, textAlign: "center" }}>{pendingCount}</span>
                   )}
+                  {isActive && <div style={{ width: 3, height: 3, borderRadius: "50%", background: T.accent, flexShrink: 0 }} />}
                 </button>
               );
             })}
           </nav>
-          <div style={{ padding:"12px 18px",borderTop:"1px solid #f3f4f6",display:"flex",alignItems:"center",gap:6 }}>
-            <span style={{ width:7,height:7,borderRadius:"50%",background:"#059669",display:"inline-block" }} />
-            <span style={{ fontSize:12,color:"#6b7280" }}>Online</span>
+
+          {/* Footer */}
+          <div style={{ padding: "14px 20px", borderTop: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.accent }} />
+            <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.1em" }}>ONLINE</span>
           </div>
         </aside>
 
-        {/* Content */}
-        <main style={{ flex:1,minWidth:0 }}>
+        {/* Content pane */}
+        <main style={{ flex: 1, minWidth: 0 }}>
           <AnimatePresence mode="wait">
-            <motion.div key={activeModule} initial={{ opacity:0,y:8 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0,y:-8 }} transition={{ duration:0.15 }}
-              style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:14,padding:28 }}>
-              {activeModule==="overview"     && <OverviewModule nillNotifications={nillNotifications} dailySummary={dailySummary} />}
-              {activeModule==="applications" && <ApplicationsModule />}
-              {activeModule==="travel"       && <TravelModule />}
-              {activeModule==="contracts"    && <ContractsModule />}
-              {activeModule==="onboarding"   && <OnboardingModule />}
-              {activeModule==="competitors"  && <CompetitorsModule />}
-              {activeModule==="meetings"     && <MeetingsModule />}
+            <motion.div
+              key={active}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.14 }}
+              style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, padding: "32px 36px" }}
+            >
+              {active === "overview"     && <OverviewModule nillNotifications={nillNotifications} dailySummary={dailySummary} />}
+              {active === "applications" && <ApplicationsModule />}
+              {active === "travel"       && <TravelModule />}
+              {active === "contracts"    && <ContractsModule />}
+              {active === "onboarding"   && <OnboardingModule />}
+              {active === "competitors"  && <CompetitorsModule />}
+              {active === "meetings"     && <MeetingsModule />}
             </motion.div>
           </AnimatePresence>
         </main>
