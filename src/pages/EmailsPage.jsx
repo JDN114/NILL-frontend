@@ -173,7 +173,7 @@ export default function EmailsPage() {
     setLoading(true); setError(null); setSearchResults(null);
     try {
       if (activeFolder) {
-        const r = await api.get(\`/gmail/folders/\${activeFolder}/emails\`);
+        const r = await api.get(`/gmail/folders/${activeFolder}/emails`);
         setEmails((r.data?.emails || []).sort((a,b) => new Date(b.received_at||0)-new Date(a.received_at||0)));
       } else {
         const f = (await fetchEmails(mailbox)) ?? [];
