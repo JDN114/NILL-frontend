@@ -100,7 +100,7 @@ export default function DashboardLanding() {
     {
       title: "NILL",
       description: "Deine KI-Sekretärin",
-      link: "/dashboard/nill",
+      link: "/dashboard/nill-secretary",
       feature: "nill",
       module: "nill",
       isNill: true,
