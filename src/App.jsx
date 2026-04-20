@@ -40,6 +40,7 @@ import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
 import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
+import NILLModul from "./pages/NILLModul.jsx";
  
 function App() {
   return (
@@ -144,6 +145,9 @@ function App() {
 		<Route path="/admin" element={
 		  <ProtectedRoute><AdminPage /></ProtectedRoute>
 		}/>
+                <Route path="/dashboard/NILL-Secretary" element={
+                  <ProtectedRoute><NILLModul /></ProtectedRoute>
+                }/>
 	      </Routes>
             </Router>
           </MailProvider>
