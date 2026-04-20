@@ -523,7 +523,7 @@ export default function EmailsPage() {
         onClose={() => setFolderModalOpen(false)}
         onSave={async (data) => {
           if (editingFolder) {
-            await api.patch(\`/gmail/folders/\${editingFolder.id}\`, data);
+            await api.patch(`/gmail/folders/${editingFolder.id}`, data);
           } else {
             await api.post("/gmail/folders", data);
           }
@@ -532,7 +532,7 @@ export default function EmailsPage() {
           setFolderModalOpen(false);
         }}
         onDelete={async (id) => {
-          await api.delete(\`/gmail/folders/\${id}\`);
+          await api.delete(`/gmail/folders/${id}`);
           const r = await api.get("/gmail/folders");
           setFolders(r.data?.folders || []);
           if (activeFolder === id) setActiveFolder(null);
