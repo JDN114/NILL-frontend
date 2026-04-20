@@ -188,6 +188,8 @@ export default function EmailsPage() {
   // ── Mehr laden (Lazy Loading) ─────────────────────────────────────────────
   const loadMore = async () => {
     if (loadingMore) return;
+    // Im Smart Folder gibt es kein Pagination – alle Emails bereits geladen
+    if (activeFolder) return;
     setLoadingMore(true);
     try {
       const more = (await fetchEmails(mailbox, true)) ?? [];
