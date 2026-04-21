@@ -24,7 +24,7 @@ import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
 import WorkflowTeam from "./pages/WorkflowTeam";
 import TransactionPage from "./pages/TransactionPage";
-#import AdminPage from "./pages/AdminPage";
+// import AdminPage from "./pages/AdminPage";
 #import RedeemCoupon from "./pages/RedeemCouponPage";
 import Pricing from "./pages/PricingPage";
 import Impressum from "./pages/Impressum";
