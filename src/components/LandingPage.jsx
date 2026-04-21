@@ -665,9 +665,15 @@ const inlineScripts = `
 })();
 
 /* ---------- Hero reveal ---------- */
-addEventListener('load', () => {
-  document.querySelector('.hero').classList.add('revealed');
-});
+/* In React, 'load' already fired — trigger immediately */
+(function(){
+  const h = document.querySelector('.hero');
+  if (h) h.classList.add('revealed');
+  else window.addEventListener('load', () => {
+    const h2 = document.querySelector('.hero');
+    if (h2) h2.classList.add('revealed');
+  });
+})();
 
 /* ---------- Magnetic buttons ---------- */
 (() => {
@@ -774,7 +780,7 @@ addEventListener('load', () => {
   const renderer = new THREE.WebGLRenderer({
     canvas, antialias:true, alpha:false, powerPreference:'high-performance'
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.setClearColor(0x000000, 1);
 
   const scene = new THREE.Scene();
@@ -783,89 +789,7 @@ addEventListener('load', () => {
   camera.lookAt(0, 0, 0);
 
   /* ------- Shared shader chunks ------- */
-  const NOISE_GLSL = \`
-    vec3 mod289_3(vec3 x){return x-floor(x*(1./289.))*289.;}
-    vec4 mod289_4(vec4 x){return x-floor(x*(1./289.))*289.;}
-    vec4 permute(vec4 x){return mod289_4(((x*34.)+1.)*x);}
-    vec4 tiSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
-    float snoise(vec3 v){
-      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-      const vec4 D = vec4(0.0,0.5,1.0,2.0);
-      vec3 i  = floor(v + dot(v, C.yyy));
-      vec3 x0 = v - i + dot(i, C.xxx);
-      vec3 g = step(x0.yzx, x0.xyz);
-      vec3 l = 1.0 - g;
-      vec3 i1 = min(g.xyz, l.zxy);
-      vec3 i2 = max(g.xyz, l.zxy);
-      vec3 x1 = x0 - i1 + C.xxx;
-      vec3 x2 = x0 - i2 + C.yyy;
-      vec3 x3 = x0 - D.yyy;
-      i = mod289_3(i);
-      vec4 p = permute(permute(permute(
-               i.z + vec4(0.0, i1.z, i2.z, 1.0))
-             + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-             + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-      float n_ = 1.0/7.0;
-      vec3 ns = n_ * D.wyz - D.xzx;
-      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-      vec4 x_ = floor(j * ns.z);
-      vec4 y_ = floor(j - 7.0 * x_);
-      vec4 xx = x_ * ns.x + ns.yyyy;
-      vec4 yy = y_ * ns.x + ns.yyyy;
-      vec4 h = 1.0 - abs(xx) - abs(yy);
-      vec4 b0 = vec4(xx.xy, yy.xy);
-      vec4 b1 = vec4(xx.zw, yy.zw);
-      vec4 s0 = floor(b0)*2.0 + 1.0;
-      vec4 s1 = floor(b1)*2.0 + 1.0;
-      vec4 sh = -step(h, vec4(0.0));
-      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
-      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-      vec3 P0 = vec3(a0.xy,h.x);
-      vec3 P1 = vec3(a0.zw,h.y);
-      vec3 P2 = vec3(a1.xy,h.z);
-      vec3 P3 = vec3(a1.zw,h.w);
-      vec4 norm = tiSqrt(vec4(dot(P0,P0), dot(P1,P1), dot(P2,P2), dot(P3,P3)));
-      P0 *= norm.x; P1 *= norm.y; P2 *= norm.z; P3 *= norm.w;
-      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-      m = m*m;
-      return 42.0 * dot(m*m, vec4(dot(P0,x0), dot(P1,x1), dot(P2,x2), dot(P3,x3)));
-    }
-    float fbm(vec3 p){
-      float v = 0.0; float a = 0.5;
-      for(int i=0; i<4; i++){
-        v += a * snoise(p);
-        p = p*2.03 + vec3(11.3, 5.7, 17.2);
-        a *= 0.5;
-      }
-      return v;
-    }
-    float fbm3(vec3 p){
-      float v = 0.0; float a = 0.55;
-      for(int i=0; i<3; i++){ v += a * snoise(p); p *= 2.07; a *= 0.5; }
-      return v;
-    }
-    // Ridged noise — nur 3 Oktaven für Grate/Risse
-    float ridged(vec3 p){
-      float v = 0.0; float a = 0.55;
-      for(int i=0; i<3; i++){
-        float n = 1.0 - abs(snoise(p));
-        v += a * n * n;
-        p = p*2.11 + vec3(3.1, 7.7, 1.3);
-        a *= 0.5;
-      }
-      return v;
-    }
-    // Domain warp (günstig: 3-Oktaven-Basis)
-    vec3 warp(vec3 p, float s){
-      vec3 q = vec3(fbm3(p), fbm3(p + vec3(5.2,1.3,7.1)), fbm3(p + vec3(9.1,3.3,2.7)));
-      return p + q * s;
-    }
-    // Reinhard + Gamma
-    vec3 tonemap(vec3 c){
-      c = c / (c + vec3(1.0));
-      return pow(c, vec3(1.0/2.2));
-    }
-  \`;
+  const NOISE_GLSL = ``;
 
   /* ------- Skybox: sauberes tiefes Schwarz, nur Stern-Pinpricks ------- */
   const sky = new THREE.Mesh(
@@ -973,7 +897,7 @@ addEventListener('load', () => {
       }
     \`
   });
-  const sunCore = new THREE.Mesh(new THREE.SphereGeometry(0.92, 96, 72), sunMat);
+  const sunCore = new THREE.Mesh(new THREE.SphereGeometry(0.92, 32, 24), sunMat);
   sunGroup.add(sunCore);
 
   // Corona-Shells (additive)
@@ -1186,7 +1110,7 @@ addEventListener('load', () => {
     system.add(orbit);
 
     // Planet — hochauflösend
-    const geo = new THREE.SphereGeometry(m.size, 128, 96);
+    const geo = new THREE.SphereGeometry(m.size, 32, 24);
     const mat = new THREE.ShaderMaterial({
       extensions: { derivatives: true },
       uniforms: {
@@ -1308,7 +1232,7 @@ addEventListener('load', () => {
   const sunWorldPos = new THREE.Vector3();
   const start = performance.now();
   let last = start, lastRender = 0;
-  const FRAME_MS = 1000 / 60; // 60 fps — Szene ist schlank genug
+  const FRAME_MS = 1000 / 45; // 45 fps cap for performance
 
   const animate = () => {
     requestAnimationFrame(animate);
@@ -1447,6 +1371,10 @@ export default function LandingPage() {
 
     // Set page title
     document.title = "NILL — Intelligenz, die mitarbeitet.";
+
+    // Immediately reveal hero (React mounts after load event already fired)
+    const heroEl = document.querySelector('.hero');
+    if (heroEl) heroEl.classList.add('revealed');
 
     // Load Three.js, then run inline scripts
     const threeScript = document.createElement("script");
