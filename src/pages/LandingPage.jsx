@@ -827,8 +827,8 @@ function Nav({ onDemo }) {
           </ul>
         </nav>
         <div className="nav-auth">
-          <a href="https://app.nillai.de/login" className="btn-auth">Login</a>
-          <a href="https://app.nillai.de/register" className="btn-auth primary">Registrieren</a>
+          <a href="https://nillai.de/login" className="btn-auth">Login</a>
+          <a href="https://nillai.de/register" className="btn-auth primary">Registrieren</a>
         </div>
       </div>
     </header>
