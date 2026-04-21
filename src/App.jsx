@@ -24,15 +24,15 @@ import WorkflowTasks from "./pages/WorkflowTasks";
 import WorkflowTime from "./pages/WorkflowTime";
 import WorkflowTeam from "./pages/WorkflowTeam";
 import TransactionPage from "./pages/TransactionPage";
-// import AdminPage from "./pages/AdminPage";
-// import RedeemCoupon from "./pages/RedeemCouponPage";
+import AdminPage from "./pages/AdminPage";
+import RedeemCoupon from "./pages/RedeemCouponPage";
 import Pricing from "./pages/PricingPage";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
-// import AboutNillPage from "./pages/AboutNillPage";
-// import AboutUsPage from "./pages/AboutUsPage";
-// import Founder from "./pages/Founder";
-// import Roadmap from "./pages/Roadmap";
+import AboutNillPage from "./pages/AboutNillPage";
+import AboutUsPage from "./pages/AboutUsPage";
+import Founder from "./pages/Founder";
+import Roadmap from "./pages/Roadmap";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
@@ -62,10 +62,10 @@ function App() {
  		<Route path="/verification-failed" element={<VerificationFailed />} />
 		<Route path="/Impressum" element={<Impressum />} />
 		<Route path="/Datenschutz" element={<Datenschutz />} />
-//		<Route path="/about-nill" element={<AboutNillPage />} />
-//		<Route path="/about-us" element={<AboutUsPage />} />
-//		<Route path="/founder" element={<Founder />} />
-//		<Route path="/roadmap" element={<Roadmap />} />
+		<Route path="/about-nill" element={<AboutNillPage />} />
+		<Route path="/about-us" element={<AboutUsPage />} />
+		<Route path="/founder" element={<Founder />} />
+		<Route path="/roadmap" element={<Roadmap />} />
 		<Route path="/invite/:token" element={<InviteAcceptPage />} />
 
 		{/* Upgrade / Access Denied */}
@@ -132,20 +132,19 @@ function App() {
                     <AdminGuard><WorkflowDeliveryNotes /></AdminGuard>
                   </ProtectedRoute>
                 }/>
-//		<Route path="/redeem-coupon" element={
-//		  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
-//		}/>
+		<Route path="/redeem-coupon" element={
+		  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
+		}/>
 
-//		{/* Company Admin only */}
+		{/* Company Admin only */}
 		<Route path="/dashboard/settings" element={
                   <ProtectedRoute><SettingsPage /></ProtectedRoute>
                 }/>
 
-//		{/* NILL Superadmin */}
-//		<Route path="/admin" element={
-//		  <ProtectedRoute><AdminPage /></ProtectedRoute>
-//		}/>
-
+		{/* NILL Superadmin */}
+		<Route path="/admin" element={
+		  <ProtectedRoute><AdminPage /></ProtectedRoute>
+		}/>
                 <Route path="/dashboard/NILL-Secretary" element={
                   <ProtectedRoute><NILLModule /></ProtectedRoute>
                 }/>
