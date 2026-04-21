@@ -584,20 +584,6 @@ function ApplicationsModule() {
 
 // ─── Travel ───────────────────────────────────────────────────────────────────
 
-// ─── Design tokens (gleich wie NILLModule) ────────────────────────────────────
-const T = {
-  bg0: "#0a0a0c", bg1: "#111114", bg2: "#18181c", bg3: "#222228",
-  border: "#2e2e36", borderHi: "#44444f",
-  textPri: "#f0f0f2", textSec: "#8a8a96", textTer: "#55555f",
-  accent: "#00d97e", accentDim: "#00d97e22",
-  warn: "#f5a623",   warnDim: "#f5a62320",
-  danger: "#ff4d4d", dangerDim: "#ff4d4d18",
-  info: "#4d9fff",   infoDim: "#4d9fff18",
-  purple: "#a78bfa", purpleDim: "#a78bfa18",
-};
-const FM = "'DM Mono', monospace";
-const FB = "'Syne', sans-serif";
-
 const TRAVEL_STATUS = {
   pending_approval: { label: "WARTET",    color: T.warn,   dim: T.warnDim   },
   approved:         { label: "GENEHMIGT", color: T.accent, dim: T.accentDim },
