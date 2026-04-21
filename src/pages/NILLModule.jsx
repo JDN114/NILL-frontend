@@ -32,6 +32,9 @@ const FONT_DISPLAY = "'Syne', sans-serif";
 const FONT_MONO    = "'DM Mono', monospace";
 const FONT_BODY    = "'Syne', sans-serif";
 
+const FM = FONT_MONO;
+const FB = FONT_BODY;
+
 const GOOGLE_FONTS = "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap";
 
 // ─── Global Styles injected once ─────────────────────────────────────────────
@@ -107,7 +110,7 @@ const STATUS_APP = {
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
-function Tag2({ children, color = T.textSec, dim = T.bg3 }) {
+function Tag({ children, color = T.textSec, dim = T.bg3 }) {
   return (
     <span style={{
       display: "inline-block",
@@ -176,16 +179,12 @@ function StatusPill({ status, onChange }) {
   );
 }
 
-function Divider() {
-  return <div style={{ height: 1, background: T.border, margin: "24px 0" }} />;
-}
-
-function MonoLabel2({ children }) {
+function MonoLabel({ children, color = T.textTer }) {
   return (
     <p style={{
       margin: "0 0 6px",
       fontFamily: FONT_MONO, fontSize: 10, fontWeight: 500,
-      color: T.textTer, letterSpacing: "0.12em", textTransform: "uppercase",
+      color, letterSpacing: "0.12em", textTransform: "uppercase",
     }}>{children}</p>
   );
 }
@@ -202,7 +201,7 @@ function SectionTitle({ title, subtitle, action }) {
   );
 }
 
-function PrimaryBtn2({ onClick, disabled, children, color = T.accent }) {
+function PrimaryBtn({ onClick, disabled, children, color = T.accent }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
       background: color + "18",
@@ -221,7 +220,7 @@ function PrimaryBtn2({ onClick, disabled, children, color = T.accent }) {
   );
 }
 
-function GhostBtn2({ onClick, children }) {
+function GhostBtn({ onClick, children }) {
   return (
     <button onClick={onClick} style={{
       background: "none", color: T.textSec,
@@ -259,7 +258,7 @@ function FormGrid({ children, cols = 2 }) {
   );
 }
 
-function FormField2({ label, value, onChange, type = "text", placeholder = "", rows }) {
+function FormField({ label, value, onChange, type = "text", placeholder = "", rows }) {
   return (
     <div>
       <label>{label}</label>
@@ -317,7 +316,7 @@ function ErrorBanner({ message }) {
   );
 }
 
-function Drawer2({ onClose, title, subtitle, maxWidth = 580, children }) {
+function Drawer({ onClose, title, subtitle, maxWidth = 580, children }) {
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
@@ -477,7 +476,6 @@ function ApplicationsModule() {
     <div>
       <SectionTitle title="Bewerbungen" subtitle={`${applications.length} Eingang${applications.length !== 1 ? "änge" : ""} gesamt`} />
 
-      {/* Filter row */}
       <div style={{ display: "flex", gap: 2, marginBottom: 20, background: T.bg2, borderRadius: 6, padding: 3, border: `1px solid ${T.border}` }}>
         {filters.map(s => {
           const active = filterStatus === s;
@@ -591,71 +589,11 @@ const TRAVEL_STATUS = {
   cancelled:        { label: "ABGELEHNT", color: T.danger, dim: T.dangerDim },
 };
 
-// ─── Primitive components ─────────────────────────────────────────────────────
-
-function Tag2({ children, color = T.textSec, dim = T.bg3 }) {
-  return (
-    <span style={{ display: "inline-block", background: dim, color, border: `1px solid ${color}40`, borderRadius: 3, padding: "2px 8px", fontFamily: FM, fontSize: 10, fontWeight: 500, letterSpacing: "0.1em" }}>
-      {children}
-    </span>
-  );
-}
-
-function MonoLabel2({ children, color = T.textTer }) {
-  return <p style={{ margin: "0 0 6px", fontFamily: FM, fontSize: 10, fontWeight: 500, color, letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</p>;
-}
-
-function Row({ label, value, valueColor = T.textPri, mono = false }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${T.border}` }}>
-      <span style={{ fontFamily: FM, fontSize: 11, color: T.textTer }}>{label}</span>
-      <span style={{ fontFamily: mono ? FM : FB, fontSize: mono ? 12 : 13, color: valueColor, fontWeight: 500 }}>{value}</span>
-    </div>
-  );
-}
-
-function PrimaryBtn2({ onClick, disabled, color = T.accent, children, style = {} }) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{ background: color + "18", color, border: `1px solid ${color}60`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, fontWeight: 500, letterSpacing: "0.06em", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all 0.15s", ...style }}
-      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; } }}
-      onMouseLeave={e => { e.currentTarget.style.background = color + "18"; e.currentTarget.style.borderColor = color + "60"; }}
-    >{children}</button>
-  );
-}
-
-function GhostBtn2({ onClick, children }) {
-  return (
-    <button onClick={onClick} style={{ background: "none", color: T.textSec, border: `1px solid ${T.border}`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, letterSpacing: "0.06em", cursor: "pointer", transition: "all 0.15s" }}
-      onMouseEnter={e => { e.currentTarget.style.color = T.textPri; e.currentTarget.style.borderColor = T.borderHi; }}
-      onMouseLeave={e => { e.currentTarget.style.color = T.textSec; e.currentTarget.style.borderColor = T.border; }}
-    >{children}</button>
-  );
-}
-
 function Block({ label, children, accent }) {
   return (
     <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: accent ? `2px solid ${accent}` : undefined, borderRadius: accent ? "0 6px 6px 0" : 6, padding: "14px 16px", marginBottom: 12 }}>
       {label && <MonoLabel>{label}</MonoLabel>}
       {children}
-    </div>
-  );
-}
-
-function Drawer2({ onClose, title, subtitle, children }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth: 720, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px" }}
-        className="nill-scrollbar">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-          <div>
-            <h2 style={{ margin: 0, fontFamily: FB, fontSize: 18, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
-            {subtitle && <p style={{ margin: "4px 0 0", fontFamily: FM, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
-          </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: T.textTer, fontSize: 18, cursor: "pointer", padding: 4, marginLeft: 16 }}>✕</button>
-        </div>
-        {children}
-      </div>
     </div>
   );
 }
@@ -669,7 +607,6 @@ function TransportLeg({ leg, title }) {
 
   return (
     <Block label={title} accent={T.info}>
-      {/* Option selector */}
       {leg.options.length > 1 && (
         <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
           {leg.options.map((o, i) => (
@@ -680,7 +617,6 @@ function TransportLeg({ leg, title }) {
         </div>
       )}
 
-      {/* Selected option detail */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <div>
           <p style={{ margin: 0, fontFamily: FM, fontSize: 11, color: T.textTer }}>Abfahrt</p>
@@ -893,8 +829,6 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
 
   return (
     <Drawer onClose={onClose} title={`${trip.destination}`} subtitle={`${trip.departure_date || "—"} → ${trip.return_date || "—"} · ${trip.purpose || ""}`}>
-
-      {/* Status + Actions */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <Tag color={cfg.color} dim={cfg.dim}>{cfg.label}</Tag>
         <div style={{ display: "flex", gap: 8 }}>
@@ -923,31 +857,18 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
         </div>
       ) : (
         <>
-          {/* NILL Summary */}
           {plan.summary && (
             <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `2px solid ${T.accent}`, borderRadius: "0 6px 6px 0", padding: "12px 16px", marginBottom: 16 }}>
               <MonoLabel>NILL-Zusammenfassung</MonoLabel>
               <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{plan.summary}</p>
             </div>
           )}
-
-          {/* Transport */}
-          <TransportLeg leg={plan.outbound}        title="Hinreise" />
-          <TransportLeg leg={plan.return_journey}  title="Rückreise" />
-
-          {/* Hotel */}
+          <TransportLeg leg={plan.outbound}       title="Hinreise" />
+          <TransportLeg leg={plan.return_journey} title="Rückreise" />
           <HotelSection hotels={plan.hotels} />
-
-          {/* Transfer */}
           <TransferSection transfers={plan.transfers} />
-
-          {/* Restaurants */}
           <RestaurantSection restaurants={plan.restaurants} />
-
-          {/* Cost Breakdown */}
           <CostSection breakdown={plan.cost_breakdown} />
-
-          {/* NILL Recommendation */}
           {plan.nill_recommendation && (
             <Block label="NILL-Empfehlung" accent={T.accent}>
               <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{plan.nill_recommendation}</p>
@@ -959,13 +880,20 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
   );
 }
 
-  const [loading,     setLoading]     = useState(true);
-  const [showForm,    setShowForm]    = useState(false);
-  const [submitting,  setSubmitting]  = useState(false);
-  const [selected,    setSelected]    = useState(null);
-  const [showReject,  setShowReject]  = useState(false);
+// ─── Travel Module ────────────────────────────────────────────────────────────
+
+function TravelModule() {
+  const [trips,        setTrips]        = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [showForm,     setShowForm]     = useState(false);
+  const [submitting,   setSubmitting]   = useState(false);
+  const [selected,     setSelected]     = useState(null);
+  const [showReject,   setShowReject]   = useState(false);
   const [regenerating, setRegenerating] = useState(false);
-  const [form, setForm] = useState({ destination: "", origin: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
+  const [form, setForm] = useState({
+    destination: "", origin: "", purpose: "",
+    departure_date: "", return_date: "", budget: "", notes: "",
+  });
 
   useEffect(() => {
     api.get("/nill/travel").then(r => setTrips(r.data)).finally(() => setLoading(false));
@@ -980,8 +908,8 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
       setTrips(p => [r.data, ...p]);
       setShowForm(false);
       setForm({ destination: "", origin: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
-      setSelected(r.data);  // open the new plan immediately
-    } catch (e) {
+      setSelected(r.data);
+    } catch {
       alert("Fehler beim Erstellen der Reiseanfrage.");
     } finally {
       setSubmitting(false);
@@ -1017,13 +945,11 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
       alert("Plan-Generierung fehlgeschlagen.");
     } finally {
       setRegenerating(false);
-function TravelModule() {
     }
   }
 
   return (
     <div>
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
         <div>
           <h2 style={{ margin: 0, fontFamily: FB, fontSize: 22, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>Geschäftsreisen</h2>
@@ -1032,7 +958,6 @@ function TravelModule() {
         <PrimaryBtn onClick={() => setShowForm(v => !v)} color={T.accent}>+ Neue Reise</PrimaryBtn>
       </div>
 
-      {/* Form */}
       {showForm && (
         <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20 }}>
           <p style={{ margin: "0 0 18px", fontFamily: FB, fontSize: 14, fontWeight: 600, color: T.textPri }}>Reiseanfrage</p>
@@ -1059,7 +984,6 @@ function TravelModule() {
         </div>
       )}
 
-      {/* List */}
       {loading
         ? <p style={{ textAlign: "center", padding: 40, fontFamily: FM, fontSize: 11, color: T.textTer }}>LADE ...</p>
         : trips.length === 0
@@ -1076,7 +1000,6 @@ function TravelModule() {
               const plan = t.ai_plan;
               const costMin = plan?.cost_breakdown?.total_min;
               const costMax = plan?.cost_breakdown?.total_max;
-
               return (
                 <div key={t.id}
                   onClick={() => setSelected(t)}
@@ -1101,7 +1024,6 @@ function TravelModule() {
                       <Tag color={cfg.color} dim={cfg.dim}>{cfg.label}</Tag>
                     </div>
                   </div>
-
                   {t.ai_suggestion && (
                     <p style={{ margin: 0, fontFamily: FB, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>
                       {t.ai_suggestion.slice(0, 120)}{t.ai_suggestion.length > 120 ? "…" : ""}
@@ -1114,27 +1036,25 @@ function TravelModule() {
         )
       }
 
-      {/* Detail Drawer */}
       {selected && !showReject && (
         <TravelPlanDrawer
-          trip         = {selected}
-          onClose      = {() => setSelected(null)}
-          onConfirm    = {handleConfirm}
-          onReject     = {() => setShowReject(true)}
-          onRegenerate = {handleRegenerate}
+          trip         ={selected}
+          onClose      ={() => setSelected(null)}
+          onConfirm    ={handleConfirm}
+          onReject     ={() => setShowReject(true)}
+          onRegenerate ={handleRegenerate}
         />
       )}
 
-      {/* Reject Modal */}
       {showReject && (
         <RejectModal
-          onConfirm = {handleReject}
-          onCancel  = {() => setShowReject(false)}
+          onConfirm={handleReject}
+          onCancel={() => setShowReject(false)}
         />
       )}
     </div>
-}
   );
+}
 
 // ─── Contracts ────────────────────────────────────────────────────────────────
 
@@ -1164,7 +1084,7 @@ function ContractsModule() {
   return (
     <div>
       <SectionTitle title="Verträge" subtitle="NILL liest, fasst zusammen, warnt vor Fristen" />
-      <UploadZone onFiles={handleUpload} loading={uploading} accept=".pdf,.docx" label="VERTRAG ABLEGEN" sublabel="PDF oder DOCX" color={T.purple} />
+      <UploadZone onFiles={handleUpload} loading={uploading} accept=".pdf,.docx" label="VERTRAG ABLEGEN" sublabel="PDF oder DOCX" />
 
       {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
       : contracts.length === 0 ? <EmptySlate title="Keine Verträge" body="Vertrag hochladen — NILL fasst zusammen und überwacht Fristen" />
@@ -1230,8 +1150,10 @@ function OnboardingModule() {
   }
 
   async function toggleTask(eid, tid) {
-    try { const r = await api.patch(`/nill/onboarding/${eid}/tasks/${tid}/toggle`); setEmployees(p => p.map(e => e.id === eid ? r.data : e)); }
-    catch {}
+    try {
+      const r = await api.patch(`/nill/onboarding/${eid}/tasks/${tid}/toggle`);
+      setEmployees(p => p.map(e => e.id === eid ? r.data : e));
+    } catch {}
   }
 
   return (
@@ -1245,9 +1167,9 @@ function OnboardingModule() {
       {showForm && (
         <FormPanel title="Mitarbeiter anlegen" onSubmit={handleSubmit} onCancel={() => setShowForm(false)} submitLabel={submitting ? "NILL ERSTELLT CHECKLISTE ..." : "Anlegen"} submitColor={T.purple}>
           <FormGrid>
-            <FormField label="Name" value={form.name} onChange={v => setForm(p => ({ ...p, name: v }))} placeholder="Vollständiger Name" />
-            <FormField label="Stelle" value={form.role} onChange={v => setForm(p => ({ ...p, role: v }))} placeholder="z.B. Frontend Developer" />
-            <FormField label="E-Mail" value={form.email} onChange={v => setForm(p => ({ ...p, email: v }))} type="email" placeholder="name@unternehmen.de" />
+            <FormField label="Name"       value={form.name}       onChange={v => setForm(p => ({ ...p, name: v }))}       placeholder="Vollständiger Name" />
+            <FormField label="Stelle"     value={form.role}       onChange={v => setForm(p => ({ ...p, role: v }))}       placeholder="z.B. Frontend Developer" />
+            <FormField label="E-Mail"     value={form.email}      onChange={v => setForm(p => ({ ...p, email: v }))}      type="email" placeholder="name@unternehmen.de" />
             <FormField label="Startdatum" value={form.start_date} onChange={v => setForm(p => ({ ...p, start_date: v }))} type="date" />
           </FormGrid>
         </FormPanel>
@@ -1399,10 +1321,10 @@ function MeetingsModule() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <FormField label="Titel" value={form.title} onChange={v => setForm(p => ({ ...p, title: v }))} placeholder="z.B. Quartalsgespräch mit Kunde XY" />
             <FormGrid>
-              <FormField label="Datum und Uhrzeit" value={form.date} onChange={v => setForm(p => ({ ...p, date: v }))} type="datetime-local" />
-              <FormField label="Teilnehmer" value={form.participants} onChange={v => setForm(p => ({ ...p, participants: v }))} placeholder="Namen oder E-Mails" />
+              <FormField label="Datum und Uhrzeit" value={form.date}         onChange={v => setForm(p => ({ ...p, date: v }))}         type="datetime-local" />
+              <FormField label="Teilnehmer"        value={form.participants} onChange={v => setForm(p => ({ ...p, participants: v }))} placeholder="Namen oder E-Mails" />
             </FormGrid>
-            <FormField label="Agenda" value={form.agenda} onChange={v => setForm(p => ({ ...p, agenda: v }))} rows={2} placeholder="Was soll besprochen werden?" />
+            <FormField label="Agenda"          value={form.agenda}   onChange={v => setForm(p => ({ ...p, agenda: v }))}   rows={2} placeholder="Was soll besprochen werden?" />
             <FormField label="Kontext für NILL" value={form.context} onChange={v => setForm(p => ({ ...p, context: v }))} rows={2} placeholder="Hintergrundinfos, bisherige Zusammenarbeit ..." />
           </div>
         </FormPanel>
@@ -1467,19 +1389,16 @@ export default function NILLModule() {
       <GlobalStyles />
       <div className="nill-root" style={{ display: "flex", gap: 20, minHeight: "80vh", fontFamily: FONT_BODY }}>
 
-        {/* Sidebar */}
         <aside style={{
           width: 210, flexShrink: 0, alignSelf: "flex-start", position: "sticky", top: 24,
           background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10,
           display: "flex", flexDirection: "column", overflow: "hidden",
         }}>
-          {/* Wordmark */}
           <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${T.border}` }}>
             <p style={{ margin: "0 0 2px", fontFamily: FONT_DISPLAY, fontSize: 20, fontWeight: 800, color: T.textPri, letterSpacing: "-0.04em" }}>NILL</p>
             <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.12em" }}>KI-SEKRETÄRIN</p>
           </div>
 
-          {/* Nav */}
           <nav style={{ padding: "10px 8px", flex: 1 }}>
             {MODULES.map(m => {
               const isActive = active === m.id;
@@ -1494,7 +1413,7 @@ export default function NILLModule() {
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = T.bg2; }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "none"; }}
                 >
-                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: isActive ? T.textTer : T.textTer, letterSpacing: "0.06em", minWidth: 16 }}>{m.tag}</span>
+                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.06em", minWidth: 16 }}>{m.tag}</span>
                   <span style={{ fontFamily: FONT_BODY, fontSize: 13, fontWeight: isActive ? 500 : 400, color: isActive ? T.textPri : T.textSec, flex: 1 }}>{m.label}</span>
                   {m.id === "overview" && pendingCount > 0 && (
                     <span style={{ background: T.warn, color: T.bg0, borderRadius: 99, fontFamily: FONT_MONO, fontSize: 9, fontWeight: 700, padding: "1px 6px", minWidth: 16, textAlign: "center" }}>{pendingCount}</span>
@@ -1505,14 +1424,12 @@ export default function NILLModule() {
             })}
           </nav>
 
-          {/* Footer */}
           <div style={{ padding: "14px 20px", borderTop: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.accent }} />
             <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.1em" }}>ONLINE</span>
           </div>
         </aside>
 
-        {/* Content pane */}
         <main style={{ flex: 1, minWidth: 0 }}>
           <AnimatePresence mode="wait">
             <motion.div
