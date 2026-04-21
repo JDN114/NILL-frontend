@@ -136,12 +136,12 @@ function App() {
 //		  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
 //		}/>
 
-		{/* Company Admin only */}
+//		{/* Company Admin only */}
 		<Route path="/dashboard/settings" element={
                   <ProtectedRoute><SettingsPage /></ProtectedRoute>
                 }/>
 
-		{/* NILL Superadmin */}
+//		{/* NILL Superadmin */}
 //		<Route path="/admin" element={
 //		  <ProtectedRoute><AdminPage /></ProtectedRoute>
 //		}/>
