@@ -1017,6 +1017,7 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
       alert("Plan-Generierung fehlgeschlagen.");
     } finally {
       setRegenerating(false);
+function TravelModule() {
     }
   }
 
@@ -1132,6 +1133,7 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
         />
       )}
     </div>
+}
   );
 
 // ─── Contracts ────────────────────────────────────────────────────────────────
