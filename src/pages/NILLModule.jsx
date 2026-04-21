@@ -959,25 +959,6 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
   );
 }
 
-// ─── Form fields ──────────────────────────────────────────────────────────────
-
-function FormField2({ label, value, onChange, type = "text", placeholder = "", rows }) {
-  const s = { width: "100%", background: T.bg2, color: T.textPri, border: `1px solid ${T.border}`, borderRadius: 6, padding: "10px 14px", fontFamily: FB, fontSize: 13, outline: "none", boxSizing: "border-box" };
-  return (
-    <div>
-      <label style={{ display: "block", fontFamily: FM, fontSize: 10, color: T.textSec, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
-      {rows
-        ? <textarea rows={rows} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={{ ...s, resize: "vertical" }} />
-        : <input type={type} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={s} />
-      }
-    </div>
-  );
-}
-
-// ─── Main Module ──────────────────────────────────────────────────────────────
-
-function TravelModule() {
-  const [trips,       setTrips]       = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [showForm,    setShowForm]    = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
