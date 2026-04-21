@@ -10,7 +10,7 @@ import { MailProvider } from "./context/MailContext";
 import ProtectedRoute from "./ProtectedRoute";
 import AdminGuard from "./components/AdminGuard";
 
-import LandingPage from "./pages/LandingPage.html";
+import LandingPage from "./pages/LandingPage.jsx";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OnboardingPage from "./pages/OnboardingPage";
