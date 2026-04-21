@@ -1,13 +1,6 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>NILL — Intelligenz, die mitarbeitet.</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
+import { useRef, useEffect, useState, useCallback } from "react";
+
+const __css = `
 :root{
   --bg:#040407;--bg-2:#08080c;--ink:#efede7;--ink-dim:rgba(239,237,231,.5);--ink-faint:rgba(239,237,231,.14);
   --line:rgba(239,237,231,.07);--glass:rgba(255,255,255,.035);--glass-strong:rgba(255,255,255,.06);
@@ -288,16 +281,26 @@ textarea{min-height:92px;resize:vertical}
 .modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
 .modal-close:hover{background:rgba(255,255,255,.06);color:var(--ink)}
 @media(max-width:540px){.form-row{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-<script type="text/babel">
-const { useRef, useEffect, useState, useCallback } = React;
+`;
+
+// Inject CSS and Three.js once at module load
+let __initialized = false;
+let __threeLoaded = false;
+function ensureInit() {
+  if (__initialized) return;
+  __initialized = true;
+  const style = document.createElement("style");
+  style.textContent = __css;
+  document.head.appendChild(style);
+  document.title = "NILL — Intelligenz, die mitarbeitet.";
+  if (!window.THREE && !__threeLoaded) {
+    __threeLoaded = true;
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    document.head.appendChild(s);
+  }
+}
+
 
 /* ─── HOOKS ─────────────────────────────────────────────── */
 function useReveal(threshold = 0.12) {
@@ -786,10 +789,19 @@ function buildScene(canvas) {
 
 function HeroCanvas() {
   const ref = useRef(null);
+  const [threeReady, setThreeReady] = useState(!!window.THREE);
+  useEffect(() => {
+    if (window.THREE) { setThreeReady(true); return; }
+    // Poll until Three.js script has loaded
+    const id = setInterval(() => {
+      if (window.THREE) { clearInterval(id); setThreeReady(true); }
+    }, 50);
+    return () => clearInterval(id);
+  }, []);
   useEffect(() => {
     if (!ref.current || !window.THREE) return;
     return buildScene(ref.current);
-  }, []);
+  }, [threeReady]);
   return <canvas ref={ref} style={{position:'absolute',inset:0,zIndex:0,display:'block',width:'100%',height:'100%'}}/>;
 }
 
@@ -1293,7 +1305,8 @@ function Modal({ intent, onClose }) {
 }
 
 /* ─── APP ────────────────────────────────────────────────── */
-function App() {
+export default function LandingPage() {
+  ensureInit();
   const [modalIntent, setModalIntent] = useState(null);
   const openModal = useCallback((intent) => setModalIntent(intent || 'default'), []);
   const closeModal = useCallback(() => setModalIntent(null), []);
@@ -1319,6 +1332,3 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
-</body>
-</html>
