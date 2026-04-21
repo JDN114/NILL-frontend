@@ -584,21 +584,427 @@ function ApplicationsModule() {
 
 // ─── Travel ───────────────────────────────────────────────────────────────────
 
+// ─── Design tokens (gleich wie NILLModule) ────────────────────────────────────
+const T = {
+  bg0: "#0a0a0c", bg1: "#111114", bg2: "#18181c", bg3: "#222228",
+  border: "#2e2e36", borderHi: "#44444f",
+  textPri: "#f0f0f2", textSec: "#8a8a96", textTer: "#55555f",
+  accent: "#00d97e", accentDim: "#00d97e22",
+  warn: "#f5a623",   warnDim: "#f5a62320",
+  danger: "#ff4d4d", dangerDim: "#ff4d4d18",
+  info: "#4d9fff",   infoDim: "#4d9fff18",
+  purple: "#a78bfa", purpleDim: "#a78bfa18",
+};
+const FM = "'DM Mono', monospace";
+const FB = "'Syne', sans-serif";
+
 const TRAVEL_STATUS = {
   pending_approval: { label: "WARTET",    color: T.warn,   dim: T.warnDim   },
   approved:         { label: "GENEHMIGT", color: T.accent, dim: T.accentDim },
   booked:           { label: "GEBUCHT",   color: T.info,   dim: T.infoDim   },
-  cancelled:        { label: "ABGESAGT",  color: T.danger, dim: T.dangerDim },
+  cancelled:        { label: "ABGELEHNT", color: T.danger, dim: T.dangerDim },
 };
 
-function TravelModule() {
-  const [trips, setTrips] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ destination: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
-  const [submitting, setSubmitting] = useState(false);
+// ─── Primitive components ─────────────────────────────────────────────────────
 
-  useEffect(() => { api.get("/nill/travel").then(r => setTrips(r.data)).finally(() => setLoading(false)); }, []);
+function Tag({ children, color = T.textSec, dim = T.bg3 }) {
+  return (
+    <span style={{ display: "inline-block", background: dim, color, border: `1px solid ${color}40`, borderRadius: 3, padding: "2px 8px", fontFamily: FM, fontSize: 10, fontWeight: 500, letterSpacing: "0.1em" }}>
+      {children}
+    </span>
+  );
+}
+
+function MonoLabel({ children, color = T.textTer }) {
+  return <p style={{ margin: "0 0 6px", fontFamily: FM, fontSize: 10, fontWeight: 500, color, letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</p>;
+}
+
+function Row({ label, value, valueColor = T.textPri, mono = false }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${T.border}` }}>
+      <span style={{ fontFamily: FM, fontSize: 11, color: T.textTer }}>{label}</span>
+      <span style={{ fontFamily: mono ? FM : FB, fontSize: mono ? 12 : 13, color: valueColor, fontWeight: 500 }}>{value}</span>
+    </div>
+  );
+}
+
+function PrimaryBtn({ onClick, disabled, color = T.accent, children, style = {} }) {
+  return (
+    <button onClick={onClick} disabled={disabled} style={{ background: color + "18", color, border: `1px solid ${color}60`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, fontWeight: 500, letterSpacing: "0.06em", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all 0.15s", ...style }}
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; } }}
+      onMouseLeave={e => { e.currentTarget.style.background = color + "18"; e.currentTarget.style.borderColor = color + "60"; }}
+    >{children}</button>
+  );
+}
+
+function GhostBtn({ onClick, children }) {
+  return (
+    <button onClick={onClick} style={{ background: "none", color: T.textSec, border: `1px solid ${T.border}`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, letterSpacing: "0.06em", cursor: "pointer", transition: "all 0.15s" }}
+      onMouseEnter={e => { e.currentTarget.style.color = T.textPri; e.currentTarget.style.borderColor = T.borderHi; }}
+      onMouseLeave={e => { e.currentTarget.style.color = T.textSec; e.currentTarget.style.borderColor = T.border; }}
+    >{children}</button>
+  );
+}
+
+function Block({ label, children, accent }) {
+  return (
+    <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: accent ? `2px solid ${accent}` : undefined, borderRadius: accent ? "0 6px 6px 0" : 6, padding: "14px 16px", marginBottom: 12 }}>
+      {label && <MonoLabel>{label}</MonoLabel>}
+      {children}
+    </div>
+  );
+}
+
+function Drawer({ onClose, title, subtitle, children }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth: 720, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px" }}
+        className="nill-scrollbar">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+          <div>
+            <h2 style={{ margin: 0, fontFamily: FB, fontSize: 18, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
+            {subtitle && <p style={{ margin: "4px 0 0", fontFamily: FM, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: T.textTer, fontSize: 18, cursor: "pointer", padding: 4, marginLeft: 16 }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Travel Plan Sections ─────────────────────────────────────────────────────
+
+function TransportLeg({ leg, title }) {
+  if (!leg?.options?.length) return null;
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const opt = leg.options[selectedIdx];
+
+  return (
+    <Block label={title} accent={T.info}>
+      {/* Option selector */}
+      {leg.options.length > 1 && (
+        <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+          {leg.options.map((o, i) => (
+            <button key={i} onClick={() => setSelectedIdx(i)} style={{ padding: "4px 12px", fontFamily: FM, fontSize: 10, letterSpacing: "0.06em", borderRadius: 4, cursor: "pointer", border: `1px solid ${i === selectedIdx ? T.info : T.border}`, background: i === selectedIdx ? T.infoDim : "none", color: i === selectedIdx ? T.info : T.textTer, transition: "all 0.12s" }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Selected option detail */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, marginBottom: 12 }}>
+        <div>
+          <p style={{ margin: 0, fontFamily: FM, fontSize: 11, color: T.textTer }}>Abfahrt</p>
+          <p style={{ margin: "2px 0 0", fontFamily: FM, fontSize: 20, fontWeight: 500, color: T.textPri }}>{opt.departure_time}</p>
+          <p style={{ margin: "2px 0 0", fontFamily: FB, fontSize: 12, color: T.textSec }}>{opt.departure_station}</p>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ margin: 0, fontFamily: FM, fontSize: 10, color: T.textTer }}>{Math.floor(opt.duration_minutes / 60)}h {opt.duration_minutes % 60}min</p>
+          <div style={{ height: 1, background: T.border, margin: "6px 0", position: "relative" }}>
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: T.bg2, padding: "0 6px", fontFamily: FM, fontSize: 9, color: T.textTer }}>
+              {opt.changes === 0 ? "DIREKT" : `${opt.changes}× UMSTIEG`}
+            </div>
+          </div>
+          <p style={{ margin: 0, fontFamily: FM, fontSize: 10, color: T.accent, fontWeight: 500 }}>{opt.carrier}</p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ margin: 0, fontFamily: FM, fontSize: 11, color: T.textTer }}>Ankunft</p>
+          <p style={{ margin: "2px 0 0", fontFamily: FM, fontSize: 20, fontWeight: 500, color: T.textPri }}>{opt.arrival_time}</p>
+          <p style={{ margin: "2px 0 0", fontFamily: FB, fontSize: 12, color: T.textSec }}>{opt.arrival_station}</p>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontFamily: FM, fontSize: 11, color: T.textSec }}>{opt.price_type}</span>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ fontFamily: FM, fontSize: 22, fontWeight: 500, color: T.textPri }}>{opt.price_eur?.toFixed(2)} EUR</span>
+          {opt.booking_url && (
+            <a href={opt.booking_url} target="_blank" rel="noreferrer" style={{ fontFamily: FM, fontSize: 10, color: T.info, textDecoration: "none", border: `1px solid ${T.info}40`, borderRadius: 3, padding: "2px 8px" }}>BUCHEN</a>
+          )}
+        </div>
+      </div>
+    </Block>
+  );
+}
+
+function HotelSection({ hotels }) {
+  if (!hotels?.length) return null;
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const h = hotels[selectedIdx];
+
+  return (
+    <Block label="Hotel" accent={T.purple}>
+      {hotels.length > 1 && (
+        <div style={{ display: "flex", gap: 4, marginBottom: 12, flexWrap: "wrap" }}>
+          {hotels.map((hotel, i) => (
+            <button key={i} onClick={() => setSelectedIdx(i)} style={{ padding: "4px 12px", fontFamily: FM, fontSize: 10, letterSpacing: "0.06em", borderRadius: 4, cursor: "pointer", border: `1px solid ${i === selectedIdx ? T.purple : T.border}`, background: i === selectedIdx ? T.purpleDim : "none", color: i === selectedIdx ? T.purple : T.textTer, transition: "all 0.12s" }}>
+              {hotel.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+          <div>
+            <p style={{ margin: 0, fontFamily: FB, fontSize: 15, fontWeight: 600, color: T.textPri }}>{h.name}</p>
+            <p style={{ margin: "3px 0 0", fontFamily: FM, fontSize: 11, color: T.textSec }}>{h.address}</p>
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 12 }}>
+            <p style={{ margin: 0, fontFamily: FM, fontSize: 18, fontWeight: 500, color: T.textPri }}>{h.total_price_eur?.toFixed(0)} EUR</p>
+            <p style={{ margin: "2px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>{h.nights} Nächte · {h.price_per_night_eur?.toFixed(0)} EUR/Nacht</p>
+          </div>
+        </div>
+
+        {h.distance_to_venue && (
+          <p style={{ margin: "0 0 8px", fontFamily: FM, fontSize: 10, color: T.accent }}>{h.distance_to_venue}</p>
+        )}
+
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+          {(h.amenities || []).map((a, i) => <Tag key={i} color={T.textSec} dim={T.bg3}>{a}</Tag>)}
+          {h.breakfast_included
+            ? <Tag color={T.accent} dim={T.accentDim}>Frühstück inklusive</Tag>
+            : h.breakfast_price_eur
+              ? <Tag color={T.textTer} dim={T.bg3}>Frühstück +{h.breakfast_price_eur?.toFixed(2)} EUR</Tag>
+              : null
+          }
+        </div>
+
+        {h.booking_url && (
+          <a href={h.booking_url} target="_blank" rel="noreferrer" style={{ fontFamily: FM, fontSize: 10, color: T.info, textDecoration: "none", border: `1px solid ${T.info}40`, borderRadius: 3, padding: "3px 10px", display: "inline-block" }}>HOTEL BUCHEN</a>
+        )}
+      </div>
+    </Block>
+  );
+}
+
+function TransferSection({ transfers }) {
+  if (!transfers?.length) return null;
+  return (
+    <Block label="Transfer">
+      {transfers.map((t, i) => (
+        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i < transfers.length - 1 ? `1px solid ${T.border}` : "none" }}>
+          <div>
+            <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri }}>{t.type}</p>
+            <p style={{ margin: "2px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>
+              {t.from_ || t.from} → {t.to}
+              {t.line ? ` · ${t.line}` : ""}
+              {t.notes ? ` · ${t.notes}` : ""}
+            </p>
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 12 }}>
+            <p style={{ margin: 0, fontFamily: FM, fontSize: 13, fontWeight: 500, color: T.textPri }}>{t.price_eur?.toFixed(2)} EUR</p>
+            <p style={{ margin: "2px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>{t.duration_minutes} Min.</p>
+          </div>
+        </div>
+      ))}
+    </Block>
+  );
+}
+
+function RestaurantSection({ restaurants }) {
+  if (!restaurants?.length) return null;
+  return (
+    <Block label="Verpflegung">
+      {restaurants.map((r, i) => (
+        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: i < restaurants.length - 1 ? `1px solid ${T.border}` : "none" }}>
+          <div>
+            <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri }}>{r.name}</p>
+            <p style={{ margin: "2px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>{r.cuisine}{r.address ? ` · ${r.address}` : ""}</p>
+            {r.notes && <p style={{ margin: "3px 0 0", fontFamily: FB, fontSize: 12, color: T.textSec }}>{r.notes}</p>}
+          </div>
+          <div style={{ flexShrink: 0, marginLeft: 12, textAlign: "right" }}>
+            <Tag color={T.warn} dim={T.warnDim}>{r.price_range}</Tag>
+            {r.avg_price_per_person_eur && <p style={{ margin: "4px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>~{r.avg_price_per_person_eur?.toFixed(0)} EUR/P.</p>}
+          </div>
+        </div>
+      ))}
+    </Block>
+  );
+}
+
+function CostSection({ breakdown }) {
+  if (!breakdown) return null;
+  const rows = [
+    { label: "Hinreise",     min: breakdown.transport_outbound_min, max: breakdown.transport_outbound_max },
+    { label: "Rückreise",    min: breakdown.transport_return_min,   max: breakdown.transport_return_max   },
+    { label: "Hotel",        min: breakdown.hotel_min,              max: breakdown.hotel_max              },
+    { label: "Transfers",    min: breakdown.transfers_estimated,    max: breakdown.transfers_estimated    },
+    { label: "Verpflegung",  min: breakdown.meals_estimated,        max: breakdown.meals_estimated        },
+  ];
+
+  return (
+    <Block label="Kostenzusammenfassung" accent={breakdown.within_budget ? T.accent : T.danger}>
+      {rows.map(r => (
+        <div key={r.label} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: `1px solid ${T.border}` }}>
+          <span style={{ fontFamily: FM, fontSize: 11, color: T.textTer }}>{r.label}</span>
+          <span style={{ fontFamily: FM, fontSize: 11, color: T.textSec }}>
+            {r.min === r.max ? `${r.min?.toFixed(2)} EUR` : `${r.min?.toFixed(2)} – ${r.max?.toFixed(2)} EUR`}
+          </span>
+        </div>
+      ))}
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0 4px" }}>
+        <span style={{ fontFamily: FM, fontSize: 12, fontWeight: 500, color: T.textPri }}>GESAMT</span>
+        <span style={{ fontFamily: FM, fontSize: 14, fontWeight: 500, color: T.textPri }}>
+          {breakdown.total_min?.toFixed(0)} – {breakdown.total_max?.toFixed(0)} EUR
+        </span>
+      </div>
+      {breakdown.budget_eur && (
+        <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 4 }}>
+          <span style={{ fontFamily: FM, fontSize: 11, color: T.textTer }}>BUDGET</span>
+          <span style={{ fontFamily: FM, fontSize: 11, color: T.textTer }}>{breakdown.budget_eur?.toFixed(0)} EUR</span>
+        </div>
+      )}
+      {breakdown.buffer_eur !== undefined && (
+        <div style={{ marginTop: 8, background: breakdown.within_budget ? T.accentDim : T.dangerDim, border: `1px solid ${breakdown.within_budget ? T.accent : T.danger}40`, borderRadius: 4, padding: "6px 10px" }}>
+          <p style={{ margin: 0, fontFamily: FM, fontSize: 10, color: breakdown.within_budget ? T.accent : T.danger }}>
+            {breakdown.within_budget
+              ? `PUFFER: ${breakdown.buffer_eur?.toFixed(0)} EUR · Im Budget`
+              : `BUDGET-ÜBERSCHREITUNG: ~${Math.abs(breakdown.buffer_eur)?.toFixed(0)} EUR`
+            }
+          </p>
+        </div>
+      )}
+    </Block>
+  );
+}
+
+// ─── Reject Modal ─────────────────────────────────────────────────────────────
+
+function RejectModal({ onConfirm, onCancel }) {
+  const [reason, setReason] = useState("");
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth: 420, padding: "24px 28px" }}>
+        <p style={{ margin: "0 0 16px", fontFamily: FB, fontSize: 16, fontWeight: 600, color: T.textPri }}>Reiseplan ablehnen</p>
+        <label style={{ display: "block", fontFamily: FM, fontSize: 10, color: T.textTer, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Ablehnungsgrund (optional)</label>
+        <textarea
+          rows={3}
+          placeholder="z.B. Budget zu hoch, falsches Hotel, anderer Termin ..."
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          style={{ width: "100%", background: T.bg2, color: T.textPri, border: `1px solid ${T.border}`, borderRadius: 6, padding: "9px 12px", fontFamily: FB, fontSize: 13, resize: "vertical", outline: "none", boxSizing: "border-box" }}
+        />
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <PrimaryBtn onClick={() => onConfirm(reason)} color={T.danger}>Ablehnen</PrimaryBtn>
+          <GhostBtn onClick={onCancel}>Abbrechen</GhostBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Plan Detail Drawer ───────────────────────────────────────────────────────
+
+function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) {
+  const plan    = trip.ai_plan;
+  const cfg     = TRAVEL_STATUS[trip.status] || TRAVEL_STATUS.pending_approval;
+  const isPending = trip.status === "pending_approval";
+
+  return (
+    <Drawer onClose={onClose} title={`${trip.destination}`} subtitle={`${trip.departure_date || "—"} → ${trip.return_date || "—"} · ${trip.purpose || ""}`}>
+
+      {/* Status + Actions */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <Tag color={cfg.color} dim={cfg.dim}>{cfg.label}</Tag>
+        <div style={{ display: "flex", gap: 8 }}>
+          {isPending && (
+            <>
+              <PrimaryBtn onClick={onReject} color={T.danger}>Ablehnen</PrimaryBtn>
+              <PrimaryBtn onClick={onConfirm} color={T.accent}>Bestätigen</PrimaryBtn>
+            </>
+          )}
+          <GhostBtn onClick={onRegenerate}>Plan neu generieren</GhostBtn>
+        </div>
+      </div>
+
+      {trip.rejection_reason && (
+        <div style={{ background: T.dangerDim, border: `1px solid ${T.danger}40`, borderRadius: 6, padding: "10px 14px", marginBottom: 16 }}>
+          <MonoLabel color={T.danger}>Ablehnungsgrund</MonoLabel>
+          <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri }}>{trip.rejection_reason}</p>
+        </div>
+      )}
+
+      {!plan ? (
+        <div style={{ background: T.warnDim, border: `1px solid ${T.warn}40`, borderRadius: 6, padding: "14px 18px" }}>
+          <p style={{ margin: 0, fontFamily: FM, fontSize: 11, color: T.warn }}>
+            KEIN PLAN VERFÜGBAR — Plan neu generieren um aktuelle Verbindungen und Preise zu laden.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* NILL Summary */}
+          {plan.summary && (
+            <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `2px solid ${T.accent}`, borderRadius: "0 6px 6px 0", padding: "12px 16px", marginBottom: 16 }}>
+              <MonoLabel>NILL-Zusammenfassung</MonoLabel>
+              <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{plan.summary}</p>
+            </div>
+          )}
+
+          {/* Transport */}
+          <TransportLeg leg={plan.outbound}        title="Hinreise" />
+          <TransportLeg leg={plan.return_journey}  title="Rückreise" />
+
+          {/* Hotel */}
+          <HotelSection hotels={plan.hotels} />
+
+          {/* Transfer */}
+          <TransferSection transfers={plan.transfers} />
+
+          {/* Restaurants */}
+          <RestaurantSection restaurants={plan.restaurants} />
+
+          {/* Cost Breakdown */}
+          <CostSection breakdown={plan.cost_breakdown} />
+
+          {/* NILL Recommendation */}
+          {plan.nill_recommendation && (
+            <Block label="NILL-Empfehlung" accent={T.accent}>
+              <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{plan.nill_recommendation}</p>
+            </Block>
+          )}
+        </>
+      )}
+    </Drawer>
+  );
+}
+
+// ─── Form fields ──────────────────────────────────────────────────────────────
+
+function FormField({ label, value, onChange, type = "text", placeholder = "", rows }) {
+  const s = { width: "100%", background: T.bg2, color: T.textPri, border: `1px solid ${T.border}`, borderRadius: 6, padding: "10px 14px", fontFamily: FB, fontSize: 13, outline: "none", boxSizing: "border-box" };
+  return (
+    <div>
+      <label style={{ display: "block", fontFamily: FM, fontSize: 10, color: T.textSec, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
+      {rows
+        ? <textarea rows={rows} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={{ ...s, resize: "vertical" }} />
+        : <input type={type} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={s} />
+      }
+    </div>
+  );
+}
+
+// ─── Main Module ──────────────────────────────────────────────────────────────
+
+export default function TravelModule() {
+  const [trips,       setTrips]       = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [showForm,    setShowForm]    = useState(false);
+  const [submitting,  setSubmitting]  = useState(false);
+  const [selected,    setSelected]    = useState(null);
+  const [showReject,  setShowReject]  = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [form, setForm] = useState({ destination: "", origin: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
+
+  useEffect(() => {
+    api.get("/nill/travel").then(r => setTrips(r.data)).finally(() => setLoading(false));
+  }, []);
+
+  const f = k => v => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSubmit() {
     setSubmitting(true);
@@ -606,69 +1012,157 @@ function TravelModule() {
       const r = await api.post("/nill/travel", form);
       setTrips(p => [r.data, ...p]);
       setShowForm(false);
-      setForm({ destination: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
-    } catch {} finally { setSubmitting(false); }
+      setForm({ destination: "", origin: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
+      setSelected(r.data);  // open the new plan immediately
+    } catch (e) {
+      alert("Fehler beim Erstellen der Reiseanfrage.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  async function handleConfirm(id) {
-    try { const r = await api.patch(`/nill/travel/${id}/confirm`); setTrips(p => p.map(t => t.id === id ? r.data : t)); }
-    catch {}
+  async function handleConfirm() {
+    if (!selected) return;
+    const r = await api.patch(`/nill/travel/${selected.id}/confirm`);
+    const updated = r.data;
+    setTrips(p => p.map(t => t.id === selected.id ? updated : t));
+    setSelected(updated);
+  }
+
+  async function handleReject(reason) {
+    if (!selected) return;
+    const r = await api.patch(`/nill/travel/${selected.id}/reject`, { reason, cancelled_by: "user" });
+    const updated = r.data;
+    setTrips(p => p.map(t => t.id === selected.id ? updated : t));
+    setSelected(updated);
+    setShowReject(false);
+  }
+
+  async function handleRegenerate() {
+    if (!selected) return;
+    setRegenerating(true);
+    try {
+      const r = await api.post(`/nill/travel/${selected.id}/regenerate`);
+      const updated = r.data;
+      setTrips(p => p.map(t => t.id === selected.id ? updated : t));
+      setSelected(updated);
+    } catch {
+      alert("Plan-Generierung fehlgeschlagen.");
+    } finally {
+      setRegenerating(false);
+    }
   }
 
   return (
     <div>
-      <SectionTitle
-        title="Geschäftsreisen"
-        subtitle="NILL plant — du bestätigst"
-        action={<PrimaryBtn onClick={() => setShowForm(v => !v)} color={T.accent}>+ Neue Reise</PrimaryBtn>}
-      />
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
+        <div>
+          <h2 style={{ margin: 0, fontFamily: FB, fontSize: 22, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>Geschäftsreisen</h2>
+          <p style={{ margin: "5px 0 0", fontFamily: FM, fontSize: 11, color: T.textSec }}>NILL plant konkret — du bestätigst</p>
+        </div>
+        <PrimaryBtn onClick={() => setShowForm(v => !v)} color={T.accent}>+ Neue Reise</PrimaryBtn>
+      </div>
 
+      {/* Form */}
       {showForm && (
-        <FormPanel title="Reiseanfrage" onSubmit={handleSubmit} onCancel={() => setShowForm(false)} submitLabel={submitting ? "NILL PLANT ..." : "An NILL senden"} submitColor={T.accent}>
-          <FormGrid>
-            <FormField label="Reiseziel" value={form.destination} onChange={v => setForm(p => ({ ...p, destination: v }))} placeholder="z.B. Berlin" />
-            <FormField label="Zweck" value={form.purpose} onChange={v => setForm(p => ({ ...p, purpose: v }))} placeholder="z.B. Kundengespräch" />
-            <FormField label="Abreise" value={form.departure_date} onChange={v => setForm(p => ({ ...p, departure_date: v }))} type="date" />
-            <FormField label="Rückkehr" value={form.return_date} onChange={v => setForm(p => ({ ...p, return_date: v }))} type="date" />
-            <FormField label="Budget (EUR)" value={form.budget} onChange={v => setForm(p => ({ ...p, budget: v }))} placeholder="z.B. 800" />
-          </FormGrid>
-          <div style={{ marginTop: 14 }}>
-            <FormField label="Notizen" value={form.notes} onChange={v => setForm(p => ({ ...p, notes: v }))} rows={2} placeholder="Besondere Anforderungen, Präferenzen ..." />
+        <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20 }}>
+          <p style={{ margin: "0 0 18px", fontFamily: FB, fontSize: 14, fontWeight: 600, color: T.textPri }}>Reiseanfrage</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <FormField label="Reiseziel"    value={form.destination}    onChange={f("destination")}    placeholder="z.B. Berlin" />
+            <FormField label="Abfahrtsort"  value={form.origin}         onChange={f("origin")}         placeholder="z.B. München Hbf" />
+            <FormField label="Zweck"        value={form.purpose}        onChange={f("purpose")}        placeholder="z.B. Kundengespräch" />
+            <FormField label="Budget (EUR)" value={form.budget}         onChange={f("budget")}         placeholder="z.B. 800" />
+            <FormField label="Abreise"      value={form.departure_date} onChange={f("departure_date")} type="date" />
+            <FormField label="Rückkehr"     value={form.return_date}    onChange={f("return_date")}    type="date" />
           </div>
-        </FormPanel>
+          <FormField label="Notizen" value={form.notes} onChange={f("notes")} rows={2} placeholder="Präferenzen, besondere Anforderungen ..." />
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            <PrimaryBtn onClick={handleSubmit} disabled={submitting} color={T.accent}>
+              {submitting ? "NILL RECHERCHIERT ..." : "Reiseplan anfordern"}
+            </PrimaryBtn>
+            <GhostBtn onClick={() => setShowForm(false)}>Abbrechen</GhostBtn>
+          </div>
+          {submitting && (
+            <p style={{ margin: "10px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>
+              NILL recherchiert Verbindungen, Hotels und Preise — dies kann 10–20 Sekunden dauern.
+            </p>
+          )}
+        </div>
       )}
 
-      {loading ? <p style={{ textAlign: "center", padding: 40, fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>LADE ...</p>
-      : trips.length === 0 ? <EmptySlate title="Keine Reisen geplant" body="Reiseanfrage stellen — NILL übernimmt die Planung" />
-      : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {trips.map(t => {
-            const cfg = TRAVEL_STATUS[t.status] || TRAVEL_STATUS.pending_approval;
-            return (
-              <Card key={t.id} style={{ borderRadius: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                  <div>
-                    <p style={{ margin: "0 0 3px", fontFamily: FONT_DISPLAY, fontSize: 15, fontWeight: 600, color: T.textPri }}>{t.destination}</p>
-                    <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec }}>{t.purpose}</p>
+      {/* List */}
+      {loading
+        ? <p style={{ textAlign: "center", padding: 40, fontFamily: FM, fontSize: 11, color: T.textTer }}>LADE ...</p>
+        : trips.length === 0
+        ? (
+          <div style={{ textAlign: "center", padding: "52px 24px", border: `1px dashed ${T.border}`, borderRadius: 8 }}>
+            <div style={{ width: 1, height: 40, background: T.border, margin: "0 auto 20px" }} />
+            <p style={{ margin: "0 0 8px", fontFamily: FB, fontSize: 15, fontWeight: 600, color: T.textSec }}>Keine Reisen geplant</p>
+            <p style={{ margin: 0, fontFamily: FM, fontSize: 11, color: T.textTer }}>Reiseanfrage stellen — NILL recherchiert konkrete Verbindungen und Preise</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {trips.map((t, i) => {
+              const cfg = TRAVEL_STATUS[t.status] || TRAVEL_STATUS.pending_approval;
+              const plan = t.ai_plan;
+              const costMin = plan?.cost_breakdown?.total_min;
+              const costMax = plan?.cost_breakdown?.total_max;
+
+              return (
+                <div key={t.id}
+                  onClick={() => setSelected(t)}
+                  style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: i === 0 ? "8px 8px 2px 2px" : i === trips.length - 1 ? "2px 2px 8px 8px" : 2, padding: "14px 20px", cursor: "pointer", transition: "all 0.12s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = T.borderHi; e.currentTarget.style.background = T.bg2; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = T.border;   e.currentTarget.style.background = T.bg1; }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                    <div>
+                      <p style={{ margin: 0, fontFamily: FB, fontSize: 15, fontWeight: 600, color: T.textPri }}>{t.destination}</p>
+                      <p style={{ margin: "3px 0 0", fontFamily: FM, fontSize: 10, color: T.textTer }}>
+                        {t.departure_date || "—"} → {t.return_date || "—"}
+                        {t.purpose ? ` · ${t.purpose}` : ""}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, marginLeft: 12 }}>
+                      {costMin !== undefined && (
+                        <span style={{ fontFamily: FM, fontSize: 12, color: T.textSec }}>
+                          {costMin?.toFixed(0)}–{costMax?.toFixed(0)} EUR
+                        </span>
+                      )}
+                      <Tag color={cfg.color} dim={cfg.dim}>{cfg.label}</Tag>
+                    </div>
                   </div>
-                  <Tag color={cfg.color} dim={cfg.dim}>{cfg.label}</Tag>
+
+                  {t.ai_suggestion && (
+                    <p style={{ margin: 0, fontFamily: FB, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>
+                      {t.ai_suggestion.slice(0, 120)}{t.ai_suggestion.length > 120 ? "…" : ""}
+                    </p>
+                  )}
                 </div>
-                <div style={{ display: "flex", gap: 20, marginBottom: t.ai_suggestion || t.status === "pending_approval" ? 12 : 0 }}>
-                  {t.departure_date && <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>{t.departure_date} → {t.return_date}</span>}
-                  {t.budget && <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: T.textTer }}>{t.budget} EUR</span>}
-                </div>
-                {t.ai_suggestion && (
-                  <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `2px solid ${T.info}`, borderRadius: "0 4px 4px 0", padding: "8px 12px", marginBottom: t.status === "pending_approval" ? 12 : 0 }}>
-                    <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec }}>{t.ai_suggestion}</p>
-                  </div>
-                )}
-                {t.status === "pending_approval" && (
-                  <PrimaryBtn onClick={() => handleConfirm(t.id)} color={T.accent}>Bestätigen und buchen</PrimaryBtn>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
+      }
+
+      {/* Detail Drawer */}
+      {selected && !showReject && (
+        <TravelPlanDrawer
+          trip         = {selected}
+          onClose      = {() => setSelected(null)}
+          onConfirm    = {handleConfirm}
+          onReject     = {() => setShowReject(true)}
+          onRegenerate = {handleRegenerate}
+        />
+      )}
+
+      {/* Reject Modal */}
+      {showReject && (
+        <RejectModal
+          onConfirm = {handleReject}
+          onCancel  = {() => setShowReject(false)}
+        />
       )}
     </div>
   );
