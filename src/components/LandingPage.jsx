@@ -789,7 +789,7 @@ const inlineScripts = `
   camera.lookAt(0, 0, 0);
 
   /* ------- Shared shader chunks ------- */
-  const NOISE_GLSL = ``;
+  const NOISE_GLSL = "";
 
   /* ------- Skybox: sauberes tiefes Schwarz, nur Stern-Pinpricks ------- */
   const sky = new THREE.Mesh(
