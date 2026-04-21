@@ -107,7 +107,7 @@ const STATUS_APP = {
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
-function Tag({ children, color = T.textSec, dim = T.bg3 }) {
+function Tag2({ children, color = T.textSec, dim = T.bg3 }) {
   return (
     <span style={{
       display: "inline-block",
@@ -180,7 +180,7 @@ function Divider() {
   return <div style={{ height: 1, background: T.border, margin: "24px 0" }} />;
 }
 
-function MonoLabel({ children }) {
+function MonoLabel2({ children }) {
   return (
     <p style={{
       margin: "0 0 6px",
@@ -202,7 +202,7 @@ function SectionTitle({ title, subtitle, action }) {
   );
 }
 
-function PrimaryBtn({ onClick, disabled, children, color = T.accent }) {
+function PrimaryBtn2({ onClick, disabled, children, color = T.accent }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
       background: color + "18",
@@ -221,7 +221,7 @@ function PrimaryBtn({ onClick, disabled, children, color = T.accent }) {
   );
 }
 
-function GhostBtn({ onClick, children }) {
+function GhostBtn2({ onClick, children }) {
   return (
     <button onClick={onClick} style={{
       background: "none", color: T.textSec,
@@ -259,7 +259,7 @@ function FormGrid({ children, cols = 2 }) {
   );
 }
 
-function FormField({ label, value, onChange, type = "text", placeholder = "", rows }) {
+function FormField2({ label, value, onChange, type = "text", placeholder = "", rows }) {
   return (
     <div>
       <label>{label}</label>
@@ -317,7 +317,7 @@ function ErrorBanner({ message }) {
   );
 }
 
-function Drawer({ onClose, title, subtitle, maxWidth = 580, children }) {
+function Drawer2({ onClose, title, subtitle, maxWidth = 580, children }) {
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
@@ -593,7 +593,7 @@ const TRAVEL_STATUS = {
 
 // ─── Primitive components ─────────────────────────────────────────────────────
 
-function Tag({ children, color = T.textSec, dim = T.bg3 }) {
+function Tag2({ children, color = T.textSec, dim = T.bg3 }) {
   return (
     <span style={{ display: "inline-block", background: dim, color, border: `1px solid ${color}40`, borderRadius: 3, padding: "2px 8px", fontFamily: FM, fontSize: 10, fontWeight: 500, letterSpacing: "0.1em" }}>
       {children}
@@ -601,7 +601,7 @@ function Tag({ children, color = T.textSec, dim = T.bg3 }) {
   );
 }
 
-function MonoLabel({ children, color = T.textTer }) {
+function MonoLabel2({ children, color = T.textTer }) {
   return <p style={{ margin: "0 0 6px", fontFamily: FM, fontSize: 10, fontWeight: 500, color, letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</p>;
 }
 
@@ -614,7 +614,7 @@ function Row({ label, value, valueColor = T.textPri, mono = false }) {
   );
 }
 
-function PrimaryBtn({ onClick, disabled, color = T.accent, children, style = {} }) {
+function PrimaryBtn2({ onClick, disabled, color = T.accent, children, style = {} }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{ background: color + "18", color, border: `1px solid ${color}60`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, fontWeight: 500, letterSpacing: "0.06em", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all 0.15s", ...style }}
       onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; } }}
@@ -623,7 +623,7 @@ function PrimaryBtn({ onClick, disabled, color = T.accent, children, style = {} 
   );
 }
 
-function GhostBtn({ onClick, children }) {
+function GhostBtn2({ onClick, children }) {
   return (
     <button onClick={onClick} style={{ background: "none", color: T.textSec, border: `1px solid ${T.border}`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, letterSpacing: "0.06em", cursor: "pointer", transition: "all 0.15s" }}
       onMouseEnter={e => { e.currentTarget.style.color = T.textPri; e.currentTarget.style.borderColor = T.borderHi; }}
@@ -641,7 +641,7 @@ function Block({ label, children, accent }) {
   );
 }
 
-function Drawer({ onClose, title, subtitle, children }) {
+function Drawer2({ onClose, title, subtitle, children }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -961,7 +961,7 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
 
 // ─── Form fields ──────────────────────────────────────────────────────────────
 
-function FormField({ label, value, onChange, type = "text", placeholder = "", rows }) {
+function FormField2({ label, value, onChange, type = "text", placeholder = "", rows }) {
   const s = { width: "100%", background: T.bg2, color: T.textPri, border: `1px solid ${T.border}`, borderRadius: 6, padding: "10px 14px", fontFamily: FB, fontSize: 13, outline: "none", boxSizing: "border-box" };
   return (
     <div>
@@ -976,7 +976,7 @@ function FormField({ label, value, onChange, type = "text", placeholder = "", ro
 
 // ─── Main Module ──────────────────────────────────────────────────────────────
 
-export default function TravelModule() {
+function TravelModule() {
   const [trips,       setTrips]       = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [showForm,    setShowForm]    = useState(false);
