@@ -1,147 +1,167 @@
 // src/components/accounting/TaxDashboard.jsx
-import { useEffect, useState } from "react";
+// Updated: wired to /tax/summary + new /api/v1/buchhaltung/ust endpoints
+import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 
-const S = `
-  .td { font-family:"Inter",system-ui,sans-serif; color:#efede7; }
-  .td-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px; }
-  @media(max-width:700px) { .td-grid-3 { grid-template-columns:1fr 1fr; } }
-  .td-card { background:rgba(255,255,255,.035); border:1px solid rgba(239,237,231,.07); border-radius:16px; padding:20px; text-align:center; }
-  .td-val { font-family:"Fraunces",Georgia,serif; font-size:24px; letter-spacing:-.03em; margin-bottom:4px; }
-  .td-val em { font-style:normal; color:#c6ff3c; }
-  .td-label { font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:rgba(239,237,231,.5); }
-  .td-section { font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(239,237,231,.4); margin:20px 0 12px; display:flex; align-items:center; gap:10px; }
-  .td-section::after { content:""; flex:1; height:1px; background:rgba(239,237,231,.07); }
-  .td-modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(8px); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .td-modal { background:#08080c; border:1px solid rgba(239,237,231,.07); border-radius:20px; padding:32px; width:100%; max-width:400px; }
-  .td-modal-title { font-family:"Fraunces",Georgia,serif; font-weight:400; font-size:26px; letter-spacing:-.02em; margin:0 0 20px; }
-  .td-modal-title em { font-style:italic; color:#c6ff3c; }
-  .td-select { width:100%; background:rgba(255,255,255,.04); border:1px solid rgba(239,237,231,.08); border-radius:10px; padding:11px 14px; color:#efede7; font-size:14px; font-family:inherit; outline:none; margin-bottom:20px; transition:border-color .2s; appearance:none; cursor:pointer; }
-  .td-select:focus { border-color:rgba(198,255,60,.3); }
-  .td-btn { width:100%; padding:13px; background:#c6ff3c; color:#050505; font-size:14px; font-weight:500; border:none; border-radius:99px; cursor:pointer; transition:background .2s; font-family:inherit; }
-  .td-btn:hover:not(:disabled) { background:#fff; }
-  .td-btn:disabled { opacity:.4; cursor:not-allowed; }
-  .td-loading { text-align:center; padding:40px; color:rgba(239,237,231,.4); font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.1em; }
-`;
+const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 
-const fmt = (v) => Number(v || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const KZ_META = {
+  kz_21_umsaetze_19:          { kz:"21", label:"Umsätze 19%" },
+  kz_35_umsaetze_7:           { kz:"35", label:"Umsätze 7%" },
+  kz_41_ust_19:               { kz:"41", label:"USt 19%" },
+  kz_44_ust_7:                { kz:"44", label:"USt 7%" },
+  kz_59_vorsteuer_allgemein:  { kz:"59", label:"Vorsteuer" },
+  kz_65_zahllast:             { kz:"65", label:"Zahllast" },
+};
 
-export default function TaxDashboard() {
-  const [forms, setForms]           = useState([]);
-  const [legalForm, setLegalForm]   = useState("");
-  const [selectedForm, setSelected] = useState("");
-  const [summary, setSummary]       = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [saving, setSaving]         = useState(false);
-  const [showModal, setShowModal]   = useState(false);
-
-  useEffect(() => {
-    api.get("/tax/business-profile/options").then(r => setForms(r.data?.forms || [])).catch(() => {});
-    api.get("/tax/business-profile")
-      .then(r => { if (!r.data?.legal_form) { setShowModal(true); } else { setLegalForm(r.data.legal_form); } })
-      .catch(() => setShowModal(true))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (!legalForm) return;
-    api.get("/tax/summary").then(r => setSummary(r.data || {})).catch(() => setSummary({}));
-  }, [legalForm]);
+function LegalFormModal({ onClose }) {
+  const [form, setForm] = useState({ rechtsform: "", umsatzsteuer_pflichtig: true, kleinunternehmer: false });
+  const [loading, setLoading] = useState(false);
 
   const save = async () => {
-    if (!selectedForm) return;
-    setSaving(true);
+    setLoading(true);
     try {
-      await api.post("/tax/business-profile/legal-form", { legal_form: selectedForm });
-      setLegalForm(selectedForm);
-      setShowModal(false);
-    } catch { alert("Fehler beim Speichern"); }
-    finally { setSaving(false); }
+      await api.post("/tax/business-profile", form);
+      onClose();
+    } catch(e) {
+      alert(e.response?.data?.detail || "Fehler");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) return (
-    <>
-      <style>{S}</style>
-      <div className="td-loading">Lade Steuerdaten…</div>
-    </>
+  return (
+    <div className="ac-modal-backdrop">
+      <div className="ac-modal">
+        <div className="ac-modal-title">Unternehmensprofil</div>
+        <div className="ac-form-col" style={{ marginBottom:12 }}>
+          <label className="ac-label">Rechtsform</label>
+          <select className="ac-select" value={form.rechtsform}
+            onChange={e => setForm(f => ({...f, rechtsform: e.target.value}))}>
+            <option value="">— wählen —</option>
+            <option value="einzelunternehmen">Einzelunternehmen</option>
+            <option value="gbr">GbR</option>
+            <option value="ug">UG (haftungsbeschränkt)</option>
+            <option value="gmbh">GmbH</option>
+            <option value="ag">AG</option>
+            <option value="freiberufler">Freiberufler</option>
+          </select>
+        </div>
+        <div className="ac-form-col" style={{ marginBottom:12 }}>
+          <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:".9rem" }}>
+            <input type="checkbox" checked={form.umsatzsteuer_pflichtig}
+              onChange={e => setForm(f => ({...f, umsatzsteuer_pflichtig: e.target.checked}))} />
+            Umsatzsteuerpflichtig
+          </label>
+        </div>
+        <div className="ac-form-col" style={{ marginBottom:20 }}>
+          <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:".9rem" }}>
+            <input type="checkbox" checked={form.kleinunternehmer}
+              onChange={e => setForm(f => ({...f, kleinunternehmer: e.target.checked}))} />
+            Kleinunternehmer (§19 UStG)
+          </label>
+        </div>
+        <div className="ac-modal-footer">
+          <button className="ac-btn ac-btn-ghost" onClick={onClose}>Abbrechen</button>
+          <button className="ac-btn ac-btn-primary" onClick={save} disabled={loading}>
+            {loading ? "…" : "Speichern"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
+}
 
-  const vat = summary?.vat || {};
+export default function TaxDashboard() {
+  const [summary, setSummary] = useState(null);
+  const [ust, setUst] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
+
+  const today = new Date();
+  const von = `${today.getFullYear()}-01-01`;
+  const bis = today.toISOString().slice(0,10);
+
+  useEffect(() => {
+    Promise.all([
+      api.get("/tax/summary").catch(() => null),
+      api.get("/api/v1/buchhaltung/ust/berechnung", { params: { von, bis } }).catch(() => null),
+    ]).then(([s, u]) => {
+      setSummary(s?.data || null);
+      setUst(u?.data || null);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Steuerdaten…</div>;
+
+  const einnahmen = summary?.total_income ?? 0;
+  const ausgaben  = summary?.total_expenses ?? 0;
+  const gewinn    = einnahmen - ausgaben;
+  const est       = summary?.estimated_tax ?? 0;
+  const mwst      = summary?.vat_amount ?? 0;
 
   return (
-    <>
-      <style>{S}</style>
-      <div className="td">
-        <div style={{ filter: !legalForm ? "blur(6px)" : "none", pointerEvents: !legalForm ? "none" : "auto", transition: "filter .3s" }}>
-          {legalForm && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <span style={{ fontFamily: "var(--mono,monospace)", fontSize: 11, color: "rgba(239,237,231,.5)", letterSpacing: ".14em", textTransform: "uppercase" }}>Rechtsform</span>
-              <span style={{ fontFamily: "var(--mono,monospace)", fontSize: 12, color: "#c6ff3c", background: "rgba(198,255,60,.08)", border: "1px solid rgba(198,255,60,.2)", borderRadius: 99, padding: "2px 10px" }}>{legalForm}</span>
-              <button onClick={() => setShowModal(true)} style={{ marginLeft: "auto", background: "transparent", border: "1px solid rgba(239,237,231,.08)", borderRadius: 99, color: "rgba(239,237,231,.5)", fontSize: 11, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit" }}>Ändern</button>
-            </div>
-          )}
+    <div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <span style={{ fontFamily:"Fraunces,serif", fontSize:"1.1rem", fontWeight:600 }}>Steuer-Übersicht</span>
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowProfile(true)}>
+          ⚙ Unternehmensprofil
+        </button>
+      </div>
 
-          <div className="td-section">Ergebnis</div>
-          <div className="td-grid-3">
-            {[
-              { label: "Einnahmen",    val: fmt(summary?.income)       + " €" },
-              { label: "Ausgaben",     val: fmt(summary?.expenses)     + " €" },
-              { label: "Gewinn",       val: fmt(summary?.profit)       + " €", accent: true },
-            ].map(c => (
-              <div key={c.label} className="td-card">
-                <div className="td-val">{c.accent ? <em>{c.val}</em> : c.val}</div>
-                <div className="td-label">{c.label}</div>
-              </div>
-            ))}
-          </div>
+      <div className="ac-kpi-grid" style={{ marginBottom:20 }}>
+        <div className="ac-kpi">
+          <div className="ac-kpi-label">Einnahmen (lfd. Jahr)</div>
+          <div className="ac-kpi-value green">{fmtEur(einnahmen)}</div>
+        </div>
+        <div className="ac-kpi">
+          <div className="ac-kpi-label">Ausgaben (lfd. Jahr)</div>
+          <div className="ac-kpi-value pink">{fmtEur(ausgaben)}</div>
+        </div>
+        <div className="ac-kpi">
+          <div className="ac-kpi-label">Gewinn / Verlust</div>
+          <div className={`ac-kpi-value ${gewinn >= 0 ? "green" : "pink"}`}>{fmtEur(gewinn)}</div>
+        </div>
+        <div className="ac-kpi">
+          <div className="ac-kpi-label">Geschätzte Steuerlast</div>
+          <div className="ac-kpi-value pink">{fmtEur(est)}</div>
+        </div>
+        <div className="ac-kpi">
+          <div className="ac-kpi-label">MwSt (nicht abgeführt)</div>
+          <div className="ac-kpi-value">{fmtEur(mwst)}</div>
+        </div>
+      </div>
 
-          <div className="td-section">Steuer</div>
-          <div className="td-grid-3">
-            {[
-              { label: "Steuerlast",      val: fmt(summary?.tax_total)   + " €" },
-              { label: "Netto nach Steuern", val: fmt(summary?.net_after_tax) + " €", accent: true },
-              { label: "Steuersatz (est.)", val: summary?.profit ? ((summary?.tax_total / summary?.profit) * 100).toFixed(1) + " %" : "—" },
-            ].map(c => (
-              <div key={c.label} className="td-card">
-                <div className="td-val">{c.accent ? <em>{c.val}</em> : c.val}</div>
-                <div className="td-label">{c.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="td-section">Mehrwertsteuer</div>
-          <div className="td-grid-3">
-            {[
-              { label: "Vorsteuer",   val: fmt(vat.input)  + " €" },
-              { label: "Umsatzsteuer",val: fmt(vat.output) + " €" },
-              { label: "Erstattung",  val: fmt(vat.refund) + " €", accent: true },
-            ].map(c => (
-              <div key={c.label} className="td-card">
-                <div className="td-val">{c.accent ? <em>{c.val}</em> : c.val}</div>
-                <div className="td-label">{c.label}</div>
+      {ust && (
+        <div className="ac-card">
+          <div className="ac-section-title">UStVA-Kennzahlen (lfd. Jahr)</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:12 }}>
+            {Object.entries(KZ_META).map(([key, meta]) => (
+              <div key={key} style={{ background:"var(--surface2)", borderRadius:8, padding:14 }}>
+                <div style={{ fontSize:".72rem", color:"var(--ink2)", textTransform:"uppercase", letterSpacing:".04em", marginBottom:6 }}>
+                  KZ {meta.kz} – {meta.label}
+                </div>
+                <div className="ac-mono" style={{
+                  fontSize:"1.1rem", fontWeight:700,
+                  color: meta.kz==="65"
+                    ? (ust[key]>=0 ? "var(--a3)" : "var(--accent)")
+                    : meta.kz.startsWith("5") || meta.kz==="61"
+                      ? "var(--a2)"
+                      : "var(--ink)"
+                }}>
+                  {fmtEur(ust[key])}
+                </div>
               </div>
             ))}
           </div>
         </div>
+      )}
 
-        {showModal && (
-          <div className="td-modal-bg" onClick={() => legalForm && setShowModal(false)}>
-            <div className="td-modal" onClick={e => e.stopPropagation()}>
-              <h2 className="td-modal-title">Rechts<em>form.</em></h2>
-              <p style={{ fontSize: 13, color: "rgba(239,237,231,.5)", marginBottom: 18, lineHeight: 1.5 }}>
-                Wähle deine Unternehmensform — sie bestimmt den Steuersatz und die Berechnungsmethode.
-              </p>
-              <select className="td-select" value={selectedForm} onChange={e => setSelected(e.target.value)}>
-                <option value="">Bitte wählen…</option>
-                {forms.map((f, i) => <option key={i} value={f.legal_form}>{f.legal_form}</option>)}
-              </select>
-              <button className="td-btn" onClick={save} disabled={!selectedForm || saving}>
-                {saving ? "Speichern…" : "Bestätigen →"}
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
+        ℹ Steuerliche Angaben ohne Gewähr. Bitte mit deinem Steuerberater abstimmen.
       </div>
-    </>
+
+      {showProfile && <LegalFormModal onClose={() => setShowProfile(false)} />}
+    </div>
   );
 }

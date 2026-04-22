@@ -1,283 +1,194 @@
-import { useState, useMemo } from "react";
+k// src/components/accounting/InvoiceList.jsx
+// Updated: added "Buchen" button → auto-book into double-entry system
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../services/api";
 
-export default function InvoiceList({ invoices = [], onUpdated }) {
-  const [sort, setSort] = useState("date_desc");
+const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
+
+const STATUS_META = {
+  paid:    { label:"Bezahlt",  cls:"ac-badge-green"  },
+  open:    { label:"Offen",    cls:"ac-badge-gray"   },
+  overdue: { label:"Überfällig",cls:"ac-badge-pink"  },
+  draft:   { label:"Entwurf",  cls:"ac-badge-gray"   },
+};
+
+export default function InvoiceList() {
+  const [invoices, setInvoices]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [filter, setFilter]       = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [vendorFilter, setVendorFilter] = useState("");
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [sortKey, setSortKey]     = useState("date");
+  const [sortAsc, setSortAsc]     = useState(false);
+  const [msg, setMsg]             = useState(null);
+  const [bookingIds, setBookingIds] = useState(new Set());
 
-  // -----------------------------
-  // Helpers (SAFE)
-  // -----------------------------
-  const getGross = (inv) => Number(inv?.gross_amount ?? inv?.amount ?? 0);
-  const getNet = (inv) => Number(inv?.net_amount ?? inv?.amount ?? 0);
-  const getVat = (inv) => Number(inv?.vat_amount ?? inv?.vat ?? 0);
+  const load = useCallback(() => {
+    setLoading(true);
+    api.get("/accounting/invoices")
+      .then(r => setInvoices(r.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  const safeDate = (d) => {
-    if (!d) return "-";
-    try {
-      return new Date(d).toLocaleDateString();
-    } catch {
-      return "-";
-    }
-  };
+  useEffect(() => { load(); }, [load]);
 
-  // -----------------------------
-  // Filter + Sort
-  // -----------------------------
-  const processedInvoices = useMemo(() => {
-    let data = Array.isArray(invoices)
-      ? invoices.filter(Boolean) // 🔥 remove null entries
-      : [];
-
-    if (statusFilter !== "all") {
-      data = data.filter((i) => i?.payment_status === statusFilter);
-    }
-
-    if (vendorFilter.trim()) {
-      const q = vendorFilter.toLowerCase();
-      data = data.filter((i) =>
-        (i?.vendor || "").toLowerCase().includes(q)
-      );
-    }
-
-    data.sort((a, b) => {
-      if (sort === "date_desc") return new Date(b?.invoice_date || 0) - new Date(a?.invoice_date || 0);
-      if (sort === "date_asc") return new Date(a?.invoice_date || 0) - new Date(b?.invoice_date || 0);
-      if (sort === "amount_desc") return getGross(b) - getGross(a);
-      if (sort === "amount_asc") return getGross(a) - getGross(b);
-      return 0;
-    });
-
-    return data;
-  }, [invoices, sort, statusFilter, vendorFilter]);
-
-  // -----------------------------
-  // Actions
-  // -----------------------------
   const markPaid = async (id) => {
     try {
-      await api.post(`/accounting/invoices/${id}/mark-paid`);
-      onUpdated?.();
-      setSelectedInvoice(null);
-    } catch (e) {
-      console.error("mark paid failed", e);
+      await api.patch(`/accounting/invoices/${id}`, { status: "paid" });
+      setMsg({ type:"ok", text:"Rechnung als bezahlt markiert." });
+      load();
+    } catch(e) {
+      setMsg({ type:"err", text:"Fehler beim Aktualisieren." });
     }
   };
 
   const deleteInvoice = async (id) => {
+    if (!window.confirm("Rechnung wirklich löschen?")) return;
     try {
       await api.delete(`/accounting/invoices/${id}`);
-      onUpdated?.();
-      setSelectedInvoice(null);
-    } catch (e) {
-      console.error("delete failed", e);
+      setMsg({ type:"ok", text:"Rechnung gelöscht." });
+      load();
+    } catch(e) {
+      setMsg({ type:"err", text:"Fehler beim Löschen." });
     }
   };
 
-  // -----------------------------
-  // Render
-  // -----------------------------
+  const autoBook = async (invoice) => {
+    setBookingIds(s => new Set(s).add(invoice.id));
+    try {
+      await api.post(`/api/v1/buchhaltung/buchungen/auto/${invoice.id}`);
+      setMsg({ type:"ok", text:`Rechnung ${invoice.invoice_number || invoice.id} automatisch gebucht.` });
+    } catch(e) {
+      setMsg({ type:"err", text: e.response?.data?.detail || "Automatikbuchung fehlgeschlagen." });
+    } finally {
+      setBookingIds(s => { const n = new Set(s); n.delete(invoice.id); return n; });
+    }
+  };
+
+  const sorted = useMemo(() => {
+    let list = invoices.filter(inv => {
+      const matchText = !filter ||
+        (inv.vendor || "").toLowerCase().includes(filter.toLowerCase()) ||
+        (inv.invoice_number || "").toLowerCase().includes(filter.toLowerCase());
+      const matchStatus = statusFilter === "all" || inv.status === statusFilter;
+      return matchText && matchStatus;
+    });
+    list = [...list].sort((a, b) => {
+      let va = a[sortKey] ?? "";
+      let vb = b[sortKey] ?? "";
+      if (sortKey === "amount" || sortKey === "net_amount") {
+        va = Number(va); vb = Number(vb);
+      }
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ?  1 : -1;
+      return 0;
+    });
+    return list;
+  }, [invoices, filter, statusFilter, sortKey, sortAsc]);
+
+  const toggleSort = (key) => {
+    if (sortKey === key) setSortAsc(a => !a);
+    else { setSortKey(key); setSortAsc(true); }
+  };
+
+  const th = (key, label) => (
+    <th style={{ cursor:"pointer", userSelect:"none" }} onClick={() => toggleSort(key)}>
+      {label} {sortKey === key ? (sortAsc ? "▲" : "▼") : ""}
+    </th>
+  );
+
+  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Rechnungen…</div>;
+
+  const totalOpen = invoices
+    .filter(i => i.status !== "paid")
+    .reduce((s, i) => s + Number(i.amount || 0), 0);
+
   return (
     <div>
-      {/* Controls */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          className="bg-gray-800 text-white px-3 py-1 rounded"
-        >
-          <option value="date_desc">Datum ↓</option>
-          <option value="date_asc">Datum ↑</option>
-          <option value="amount_desc">Betrag ↓</option>
-          <option value="amount_asc">Betrag ↑</option>
-        </select>
+      {msg && (
+        <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+          style={{cursor:"pointer"}} onClick={() => setMsg(null)}>
+          {msg.text}
+        </div>
+      )}
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-gray-800 text-white px-3 py-1 rounded"
-        >
-          <option value="all">Alle</option>
+      <div style={{ display:"flex", gap:12, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
+        <input className="ac-input" style={{ maxWidth:260 }} placeholder="Suche (Vendor, Nr.)…"
+          value={filter} onChange={e => setFilter(e.target.value)} />
+        <select className="ac-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="all">Alle Status</option>
+          <option value="open">Offen</option>
           <option value="paid">Bezahlt</option>
-          <option value="unpaid">Offen</option>
+          <option value="overdue">Überfällig</option>
+          <option value="draft">Entwurf</option>
         </select>
-
-        <input
-          type="text"
-          placeholder="Anbieter suchen..."
-          value={vendorFilter}
-          onChange={(e) => setVendorFilter(e.target.value)}
-          className="bg-gray-800 text-white px-3 py-1 rounded"
-        />
+        <span style={{ color:"var(--ink2)", fontSize:".85rem", marginLeft:"auto" }}>
+          Offen: <strong style={{color:"var(--a3)"}}>{fmtEur(totalOpen)}</strong>
+        </span>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-gray-400 border-b border-gray-700">
+      <div className="ac-card" style={{ padding:0 }}>
+        <table className="ac-table">
+          <thead>
             <tr>
-              <th className="text-left py-2">Datum</th>
-              <th className="text-left py-2">Anbieter</th>
-              <th className="text-left py-2">Brutto</th>
-              <th className="text-left py-2">Status</th>
-              <th className="text-right py-2">Aktionen</th>
+              {th("invoice_number","Nr.")}
+              {th("vendor","Vendor")}
+              {th("date","Datum")}
+              {th("amount","Brutto")}
+              {th("net_amount","Netto")}
+              {th("vat_rate","MwSt")}
+              {th("status","Status")}
+              <th>Aktionen</th>
             </tr>
           </thead>
-
           <tbody>
-            {(processedInvoices || []).map((inv) => {
-              if (!inv?.id) return null;
-
+            {sorted.length === 0 && (
+              <tr><td colSpan={8} className="ac-empty">Keine Rechnungen gefunden.</td></tr>
+            )}
+            {sorted.map(inv => {
+              const meta = STATUS_META[inv.status] || STATUS_META.open;
+              const booking = bookingIds.has(inv.id);
               return (
-                <tr
-                  key={inv.id}
-                  className="border-b border-gray-800 hover:bg-gray-900 cursor-pointer"
-                  onClick={() => setSelectedInvoice(inv)}
-                >
-                  <td className="py-2">
-                    {safeDate(inv.invoice_date)}
+                <tr key={inv.id}>
+                  <td className="ac-mono" style={{color:"var(--accent)", fontSize:".82rem"}}>
+                    {inv.invoice_number || "—"}
                   </td>
-
-                  <td>{inv.vendor || "-"}</td>
-
+                  <td>{inv.vendor || inv.description || "—"}</td>
+                  <td className="ac-mono">{inv.date || "—"}</td>
+                  <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(inv.amount)}</td>
+                  <td className="ac-mono" style={{textAlign:"right", color:"var(--ink2)"}}>
+                    {inv.net_amount ? fmtEur(inv.net_amount) : "—"}
+                  </td>
+                  <td className="ac-mono" style={{textAlign:"right", color:"var(--ink2)"}}>
+                    {inv.vat_rate != null ? `${inv.vat_rate} %` : "—"}
+                  </td>
+                  <td><span className={`ac-badge ${meta.cls}`}>{meta.label}</span></td>
                   <td>
-                    {(getGross(inv) || 0).toFixed(2)} €
-                  </td>
-
-                  <td>
-                    {inv.payment_status === "paid" ? (
-                      <span className="text-green-400">Bezahlt</span>
-                    ) : (
-                      <span className="text-yellow-400">Offen</span>
-                    )}
-                  </td>
-
-                  <td
-                    className="text-right space-x-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {inv.payment_status !== "paid" && (
+                    <div style={{ display:"flex", gap:4 }}>
+                      {inv.status !== "paid" && (
+                        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => markPaid(inv.id)}>
+                          ✓ Bezahlt
+                        </button>
+                      )}
                       <button
-                        onClick={() => markPaid(inv.id)}
-                        className="bg-green-600 px-2 py-1 rounded text-xs"
+                        className="ac-btn ac-btn-ghost ac-btn-sm"
+                        onClick={() => autoBook(inv)}
+                        disabled={booking}
+                        title="Automatisch in die Buchhaltung buchen"
                       >
-                        Bezahlt
+                        {booking ? "…" : "Buchen"}
                       </button>
-                    )}
-
-                    <button
-                      onClick={() => deleteInvoice(inv.id)}
-                      className="bg-red-600 px-2 py-1 rounded text-xs"
-                    >
-                      Löschen
-                    </button>
+                      <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => deleteInvoice(inv.id)}>
+                        ×
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
             })}
-
-            {/* Empty State */}
-            {(!processedInvoices || processedInvoices.length === 0) && (
-              <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
-                  Keine Rechnungen vorhanden
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
-
-      {/* Modal */}
-      {selectedInvoice?.id && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/70"
-            onClick={() => setSelectedInvoice(null)}
-          />
-
-          <div className="relative z-10 bg-gray-900 text-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6 shadow-xl border border-gray-700">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">
-                {selectedInvoice.title || "Rechnung"}
-              </h2>
-
-              <button
-                onClick={() => setSelectedInvoice(null)}
-                className="text-gray-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="grid grid-cols-2 gap-4 text-sm mb-6">
-              <div>
-                <p className="text-gray-400">Anbieter</p>
-                <p>{selectedInvoice.vendor || "-"}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-400">Datum</p>
-                <p>{safeDate(selectedInvoice.invoice_date)}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-400">Brutto</p>
-                <p>{(getGross(selectedInvoice) || 0).toFixed(2)} €</p>
-              </div>
-
-              <div>
-                <p className="text-gray-400">Netto</p>
-                <p>{(getNet(selectedInvoice) || 0).toFixed(2)} €</p>
-              </div>
-
-              <div>
-                <p className="text-gray-400">MwSt</p>
-                <p>{(getVat(selectedInvoice) || 0).toFixed(2)} €</p>
-              </div>
-
-              <div>
-                <p className="text-gray-400">MwSt Satz</p>
-                <p>{selectedInvoice.vat_rate ?? "-"}%</p>
-              </div>
-            </div>
-
-            {/* File Preview */}
-            {selectedInvoice.file_url && (
-              <div className="mb-6">
-                <iframe
-                  src={`${api.defaults.baseURL}${selectedInvoice.file_url}`}
-                  className="w-full h-[300px] rounded border border-gray-700"
-                  title="Rechnung"
-                />
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2">
-              {selectedInvoice.payment_status !== "paid" && (
-                <button
-                  onClick={() => markPaid(selectedInvoice.id)}
-                  className="bg-green-600 px-4 py-2 rounded text-sm"
-                >
-                  Als bezahlt markieren
-                </button>
-              )}
-
-              <button
-                onClick={() => deleteInvoice(selectedInvoice.id)}
-                className="bg-red-600 px-4 py-2 rounded text-sm"
-              >
-                Löschen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
