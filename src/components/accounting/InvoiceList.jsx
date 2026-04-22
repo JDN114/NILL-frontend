@@ -1,4 +1,4 @@
-k// src/components/accounting/InvoiceList.jsx
+// src/components/accounting/InvoiceList.jsx
 // Updated: added "Buchen" button → auto-book into double-entry system
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../services/api";
