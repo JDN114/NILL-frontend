@@ -14,6 +14,7 @@ import BerichteTab          from "../components/accounting/BerichteTab";
 import GeschaeftspartnerTab from "../components/accounting/GeschaeftspartnerTab";
 import TaxDashboard         from "../components/accounting/TaxDashboard";
 import InvoiceList          from "../components/accounting/InvoiceList";
+import AusgangsrechnungTab from "../components/accounting/AusgangsrechnungTab";
 import BankInsights         from "../components/accounting/BankInsights";
 import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
 
@@ -241,6 +242,7 @@ function ExportTab() {
 const HELP_MODULES = [
   { icon:"📊", id:"overview",   title:"Ubersicht",          desc:"Das Buchhaltungs-Cockpit. Zeigt Einnahmen, Ausgaben und Gewinn des laufenden Jahres. Cashflow-Chart und Kategorie-Auswertung.", tags:["Dashboard","KPIs","Cashflow"] },
   { icon:"🧾", id:"rechnungen", title:"Rechnungen",          desc:"Alle Eingangs- und Ausgangsrechnungen. Belege per KI-Scan hochladen, Status verfolgen (offen / bezahlt / uberfallig) und direkt buchen.", tags:["Invoices","Upload","KI-Erkennung"] },
+    { id:"ausgangsrechnung", label:"Ausgangsrechnungen u271f" },
   { icon:"📒", id:"buchungen",  title:"Journal (Buchungen)", desc:"Das Buchungsjournal der doppelten Buchfuhrung (HGB/GoB). Buchungssatze manuell anlegen, GoBD-konformer Storno statt Loschen.", tags:["Doppelte Buchfuhrung","GoBD","Storno"] },
   { icon:"📋", id:"kontenplan", title:"Kontenplan",          desc:"SKR03-Kontenrahmen automatisch geseeded. Alle Konten nach Klassen 0-9 gruppiert. Eigene Konten anlegen, Salden einsehen.", tags:["SKR03","Konten","Klassen 0-9"] },
   { icon:"🏗️",id:"anlagen",    title:"Anlagenbuch",         desc:"Anlagevermogen erfassen und automatisch abschreiben. Lineare AfA, Sofortabschreibung (GWG) und degressiv. AfA-Vorschau auf Knopfdruck.", tags:["AfA","GWG","Abschreibung"] },
@@ -313,6 +315,7 @@ function HilfeTab({ onNavigate }) {
 const TABS = [
   {id:"overview",  label:"Ubersicht"},
   {id:"rechnungen",label:"Rechnungen"},
+    { id:"ausgangsrechnung", label:"Ausgangsrechnungen u271f" },
   {id:"buchungen", label:"Journal"},
   {id:"kontenplan",label:"Kontenplan"},
   {id:"anlagen",   label:"Anlagenbuch"},
@@ -342,6 +345,7 @@ export default function AccountingPage() {
     switch(tab) {
       case "overview":   return <OverviewTab key={refreshKey}/>;
       case "rechnungen": return (
+      case "ausgangsrechnung": return <AusgangsrechnungTab key={refreshKey} />;
         <div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
             <div className="ac-section-title" style={{margin:0}}>Rechnungen</div>
