@@ -1,4 +1,4 @@
-k// src/components/accounting/AusgangsrechnungTab.jsx
+// src/components/accounting/AusgangsrechnungTab.jsx
 // Ausgangsrechnungen (§14 UStG) – Create, edit, finalize, PDF, Vorlagen
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../../services/api";
