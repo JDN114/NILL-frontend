@@ -14,10 +14,11 @@ import BerichteTab          from "../components/accounting/BerichteTab";
 import GeschaeftspartnerTab from "../components/accounting/GeschaeftspartnerTab";
 import TaxDashboard         from "../components/accounting/TaxDashboard";
 import InvoiceList          from "../components/accounting/InvoiceList";
-import AusgangsrechnungTab from "../components/accounting/AusgangsrechnungTab";
 import BankInsights         from "../components/accounting/BankInsights";
 import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
+import AusgangsrechnungTab  from "../components/accounting/AusgangsrechnungTab";
 
+// ── design system ─────────────────────────────────────────────────────────────
 const S = `
   :root {
     --accent:#c6ff3c; --a2:#7a5cff; --a3:#ff4d8d;
@@ -109,9 +110,11 @@ const S = `
   .ac-help-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 `;
 
+// ── helpers ───────────────────────────────────────────────────────────────────
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 const PIE_COLORS = ["#c6ff3c","#7a5cff","#ff4d8d","#ffb347","#38bdf8"];
 
+// ── Übersicht ─────────────────────────────────────────────────────────────────
 function OverviewTab() {
   const [dash, setDash] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -126,8 +129,8 @@ function OverviewTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Dashboard...</div>;
-  if (!dash)   return <div className="ac-empty">Dashboard nicht verfuegbar.</div>;
+  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Dashboard…</div>;
+  if (!dash)   return <div className="ac-empty">Dashboard nicht verfügbar.</div>;
 
   const gewinn   = (dash.einnahmen||0) - (dash.ausgaben||0);
   const areaData = (dash.monatsverlauf||[]).map(m => ({ name:m.monat, Einnahmen:m.einnahmen, Ausgaben:m.ausgaben }));
@@ -142,6 +145,7 @@ function OverviewTab() {
         <div className="ac-kpi"><div className="ac-kpi-label">Buchungen gesamt</div><div className="ac-kpi-value">{dash.buchungen_gesamt??0}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">USt-Zahllast lfd. Jahr</div><div className="ac-kpi-value">{fmtEur(dash.ust_zahllast)}</div></div>
       </div>
+
       <div className="ac-grid-2" style={{marginBottom:16}}>
         <div className="ac-card">
           <div className="ac-section-title">Cashflow</div>
@@ -176,7 +180,9 @@ function OverviewTab() {
           ) : <div className="ac-empty" style={{padding:24}}>Noch keine Daten</div>}
         </div>
       </div>
-      {dash._error && <div className="ac-alert ac-alert-warn" style={{marginBottom:16}}>&#9888; {dash._error}</div>}
+
+      {dash._error && <div className="ac-alert ac-alert-warn" style={{marginBottom:16}}>⚠ {dash._error}</div>}
+
       {dash.letzte_buchungen?.length > 0 && (
         <div className="ac-card">
           <div className="ac-section-title">Letzte Buchungen</div>
@@ -186,8 +192,8 @@ function OverviewTab() {
               {dash.letzte_buchungen.slice(0,8).map(b => (
                 <tr key={b.id}>
                   <td className="ac-mono">{b.buchungsdatum}</td>
-                  <td>{b.buchungstext||"--"}</td>
-                  <td className="ac-mono" style={{color:"var(--ink2)"}}>{b.beleg_nummer||"--"}</td>
+                  <td>{b.buchungstext||"—"}</td>
+                  <td className="ac-mono" style={{color:"var(--ink2)"}}>{b.beleg_nummer||"—"}</td>
                   <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(b.betrag)}</td>
                 </tr>
               ))}
@@ -199,6 +205,7 @@ function OverviewTab() {
   );
 }
 
+// ── Export ────────────────────────────────────────────────────────────────────
 function ExportTab() {
   const today = new Date();
   const [von, setVon]             = useState(`${today.getFullYear()}-01-01`);
@@ -232,26 +239,152 @@ function ExportTab() {
         <div className="ac-form-col"><label className="ac-label">Bis</label><input className="ac-input" type="date" value={bis} onChange={e=>setBis(e.target.value)}/></div>
         <div className="ac-form-col"><label className="ac-label">Beraternr.</label><input className="ac-input" value={beraternr} onChange={e=>setBeraternr(e.target.value)} maxLength={5}/></div>
         <div className="ac-form-col"><label className="ac-label">Mandantennr.</label><input className="ac-input" value={mandantnr} onChange={e=>setMandantnr(e.target.value)} maxLength={5}/></div>
-        <button className="ac-btn ac-btn-primary" onClick={doExport} disabled={loading}>{loading?"...":"DATEV exportieren"}</button>
+        <button className="ac-btn ac-btn-primary" onClick={doExport} disabled={loading}>{loading?"…":"DATEV exportieren"}</button>
       </div>
       <p style={{fontSize:".8rem",color:"var(--ink2)"}}>Direkt importierbar in DATEV Kanzlei-Rechnungswesen und DATEV Unternehmen Online.</p>
     </div>
   );
 }
 
+// ── Rechnungen (Eingehend + Ausgehend) ───────────────────────────────────────
+function RechnungenTab({ onUpload, onRefresh, refreshKey }) {
+  const [sub, setSub] = useState("eingehend");
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div style={{display:"flex",gap:4,background:"var(--surface)",borderRadius:10,padding:4}}>
+          {[["eingehend","📥 Eingehende Rechnungen"],["ausgehend","📤 Ausgehende Rechnungen"]].map(([s,l]) => (
+            <button key={s}
+              className={`ac-btn ${sub===s?"ac-btn-primary":"ac-btn-ghost"}`}
+              style={{fontSize:".82rem"}}
+              onClick={() => setSub(s)}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {sub === "eingehend" && (
+          <button className="ac-btn ac-btn-primary" onClick={onUpload}>+ Beleg hochladen</button>
+        )}
+      </div>
+      {sub === "eingehend" && <InvoiceList key={refreshKey} onRefresh={onRefresh} />}
+      {sub === "ausgehend" && <AusgangsrechnungTab key={refreshKey} />}
+    </div>
+  );
+}
+
+// ── Hilfe ─────────────────────────────────────────────────────────────────────
 const HELP_MODULES = [
-  { icon:"📊", id:"overview",   title:"Ubersicht",          desc:"Das Buchhaltungs-Cockpit. Zeigt Einnahmen, Ausgaben und Gewinn des laufenden Jahres. Cashflow-Chart und Kategorie-Auswertung.", tags:["Dashboard","KPIs","Cashflow"] },
-  { icon:"🧾", id:"rechnungen", title:"Rechnungen",          desc:"Alle Eingangs- und Ausgangsrechnungen. Belege per KI-Scan hochladen, Status verfolgen (offen / bezahlt / uberfallig) und direkt buchen.", tags:["Invoices","Upload","KI-Erkennung"] },
-    { id:"ausgangsrechnung", label:"Ausgangsrechnungen u271f" },
-  { icon:"📒", id:"buchungen",  title:"Journal (Buchungen)", desc:"Das Buchungsjournal der doppelten Buchfuhrung (HGB/GoB). Buchungssatze manuell anlegen, GoBD-konformer Storno statt Loschen.", tags:["Doppelte Buchfuhrung","GoBD","Storno"] },
-  { icon:"📋", id:"kontenplan", title:"Kontenplan",          desc:"SKR03-Kontenrahmen automatisch geseeded. Alle Konten nach Klassen 0-9 gruppiert. Eigene Konten anlegen, Salden einsehen.", tags:["SKR03","Konten","Klassen 0-9"] },
-  { icon:"🏗️",id:"anlagen",    title:"Anlagenbuch",         desc:"Anlagevermogen erfassen und automatisch abschreiben. Lineare AfA, Sofortabschreibung (GWG) und degressiv. AfA-Vorschau auf Knopfdruck.", tags:["AfA","GWG","Abschreibung"] },
-  { icon:"🏦", id:"ustva",      title:"UStVA",               desc:"Umsatzsteuer-Voranmeldung. Berechnet alle ELSTER-Kennzahlen (KZ 21, 35, 41, 44, 59, 61, 65, 86). Unterstuetzt Reverse Charge, OSS.", tags:["UStVA","ELSTER","Kennzahlen"] },
-  { icon:"📈", id:"berichte",   title:"Berichte",            desc:"HGB-Berichte: Bilanz §266, GuV §275, EUR §4 EStG, BWA und Summmen-/Saldenliste. Auf Knopfdruck fur beliebige Zeitraume.", tags:["Bilanz","GuV","EUR","BWA"] },
-  { icon:"🤝", id:"partner",    title:"Geschaftspartner",   desc:"Debitoren und Kreditoren verwalten. Adresse, USt-ID, Zahlungsziele. Mahnwesen: 1.-3. Mahnung und Inkasso mit Mahngebuhren.", tags:["Debitoren","Kreditoren","Mahnwesen"] },
-  { icon:"💳", id:"bank",       title:"Bank",                desc:"Bankkonten-Ubersicht mit Kontostand und Transaktionsliste. Cashflow-Chart nach Monat, Volltext-Suche uber alle Transaktionen.", tags:["Banking","Kontostand","Transaktionen"] },
-  { icon:"📉", id:"steuern",    title:"Steuern",             desc:"Steuerubersicht mit geschatzter Steuerlast. Zeigt aktuelle UStVA-Kennzahlen und Rechtsform fur die Berechnung.", tags:["Steuer","Steuerlast","Rechtsform"] },
-  { icon:"📤", id:"export",     title:"Export",              desc:"DATEV Buchungsstapel Format 700, CP1252 — direkt importierbar in DATEV Kanzlei-Rechnungswesen. Mit Beraternummer, Mandantennummer und Zeitraum.", tags:["DATEV","Format 700","Steuerberater"] },
+  {
+    icon: "📊", id: "overview", title: "Übersicht",
+    desc: "Das Buchhaltungs-Cockpit. Zeigt Einnahmen, Ausgaben und Gewinn des laufenden Jahres auf einen Blick — mit Cashflow-Chart (monatlich), Ausgaben-Kreisdiagramm nach Kategorie und einer Vorschau der letzten Buchungen. Ideal als täglicher Einstieg.",
+    tags: ["Dashboard","KPIs","Cashflow","Jahresübersicht"],
+    tips: [
+      "Der Cashflow-Chart aktualisiert sich bei jeder neuen Buchung automatisch.",
+      "Fehlende Kategorien? Buchungssätze mit aussagekräftigem Buchungstext anlegen.",
+    ],
+  },
+  {
+    icon: "🧾", id: "rechnungen", title: "Rechnungen",
+    desc: "Zentrale Rechnungsverwaltung in zwei Bereichen. Eingehende Rechnungen: Foto oder PDF hochladen, KI erkennt Vendor, Datum, Beträge und SKR03-Konto automatisch — per Klick in die doppelte Buchführung buchen. Ausgehende Rechnungen: rechtssichere Ausgangsrechnungen nach §14 UStG erstellen, mit automatischer laufender Nummer (RE-JJJJ-NNNN), Kleinunternehmer §19, Reverse Charge §13b, PDF im DIN 5008-Layout und wiederverwendbaren Vorlagen für Absenderstammdaten.",
+    tags: ["Eingangsrechnung","Ausgangsrechnung","§14 UStG","KI-Erkennung","PDF","Vorlagen","DIN 5008"],
+    tips: [
+      "Eingehende Belege: JPG, PNG oder PDF bis 10 MB hochladen — KI befüllt alle Felder automatisch.",
+      "Nach dem Scan: 'Jetzt automatisch buchen' erzeugt sofort den passenden Buchungssatz (SKR03).",
+      "Ausgehende Rechnungen: Vorlage einmalig mit Firmendaten anlegen, dann bei jeder neuen Rechnung per Klick einfügen.",
+      "Entwurf ist frei editierbar. Erst 'Finalisieren' sperrt die Rechnung und vergibt die GoBD-konforme Nummer.",
+      "PDF-Download steht für finalisierte Rechnungen (Status Offen/Bezahlt) bereit.",
+      "Stornierung ist unumkehrbar und GoBD-konform — die Originalrechnung bleibt sichtbar.",
+    ],
+  },
+  {
+    icon: "📒", id: "buchungen", title: "Journal (Buchungen)",
+    desc: "Das Herzstück der doppelten Buchführung nach HGB/GoB. Buchungssätze bestehen aus mindestens einer Soll- und einer Haben-Zeile, die bilanziell ausgeglichen sein müssen (Soll = Haben). GoBD-konformer Storno per Gegenbuchung statt Löschen. Buchungen können festgeschrieben werden.",
+    tags: ["Doppelte Buchführung","HGB","GoBD","Storno","Festschreibung"],
+    tips: [
+      "Soll-Konto = wo der Betrag herkommt, Haben-Konto = wo er hingeht (z.B. Kasse Soll / Umsatz Haben).",
+      "Stornobuchungen heben den ursprünglichen Buchungssatz auf — die Originalzeile bleibt sichtbar.",
+      "Automatische Buchungen aus Belegen erscheinen hier sofort.",
+    ],
+  },
+  {
+    icon: "📋", id: "kontenplan", title: "Kontenplan",
+    desc: "Vollständiger SKR03-Kontenrahmen, automatisch beim ersten Login für deinen Account angelegt. Konten sind nach Klassen 0–9 (Anlagevermögen, Umlaufvermögen, Eigenkapital, Verbindlichkeiten, Kosten, Erlöse) strukturiert. Salden werden aus den Buchungszeilen live berechnet.",
+    tags: ["SKR03","Kontenrahmen","Klassen 0–9","Salden"],
+    tips: [
+      "Eigene Konten (z.B. für Projektkostenstellen) im Bereich 9000–9999 anlegen.",
+      "Konto-Saldo = Summe aller Soll-Buchungen minus Haben-Buchungen auf diesem Konto.",
+      "Konten mit Saldo ≠ 0 erscheinen fett in der Saldenliste unter Berichte.",
+    ],
+  },
+  {
+    icon: "🏗️", id: "anlagen", title: "Anlagenbuch",
+    desc: "Anlagevermögen (Computer, Maschinen, Fahrzeuge, Software) erfassen und automatisch abschreiben. Unterstützt lineare AfA, Sofortabschreibung für GWG bis 800 € netto und degressive Methode. AfA-Vorschau zeigt Abschreibung für jedes Jahr der Nutzungsdauer. Ein Knopfdruck bucht die Jahres-AfA ins Journal.",
+    tags: ["AfA","GWG","Lineare AfA","Degressive AfA","§7 EStG"],
+    tips: [
+      "GWG-Grenze: 250 € → sofort als Aufwand, 250–800 € → Sofortabschreibung im Anlagenbuch.",
+      "Nutzungsdauer richtet sich nach der AfA-Tabelle des BMF (z.B. PC = 3 Jahre, Pkw = 6 Jahre).",
+      "Die AfA-Buchung auf Knopfdruck bucht auf Konto 4830 (AfA) gegen das jeweilige Anlage-Konto.",
+    ],
+  },
+  {
+    icon: "🧮", id: "ustva", title: "UStVA",
+    desc: "Umsatzsteuer-Voranmeldung vorbereiten. NILL berechnet alle ELSTER-Kennzahlen (KZ 21, 35, 41, 44, 59, 61, 65, 81, 86) aus deinen Buchungen für einen frei wählbaren Zeitraum. Zeigt Zahllast oder Erstattungsbetrag (KZ 65). Perioden-Übersicht mit Fälligkeitsdaten.",
+    tags: ["UStVA","ELSTER","KZ 21–86","§18 UStG","Voranmeldung"],
+    tips: [
+      "Fälligkeit der UStVA: Monatlich bis zum 10. des Folgemonats (ggf. Dauerfristverlängerung möglich).",
+      "Reverse-Charge-Umsätze (§13b) erscheinen in KZ 86 und erhöhen KZ 59 automatisch.",
+      "Die Berechnung ist eine Vorschau — die offizielle Meldung erfolgt via ELSTER-Portal.",
+    ],
+  },
+  {
+    icon: "📈", id: "berichte", title: "Berichte",
+    desc: "Vollwertige gesetzliche Abschlüsse auf Knopfdruck: Bilanz nach §266 HGB (Aktiva/Passiva), GuV nach §275 HGB (Gesamtkostenverfahren), EÜR nach §4 Abs. 3 EStG für Freiberufler und Kleingewerbe, Betriebswirtschaftliche Auswertung (BWA) und Summen-/Saldenliste aller Konten.",
+    tags: ["Bilanz §266","GuV §275","EÜR §4 EStG","BWA","Saldenliste"],
+    tips: [
+      "EÜR vs. Bilanz: Bei Umsatz < 600.000 € oder Gewinn < 60.000 € reicht die EÜR.",
+      "Die BWA ist kein Pflichtbericht, aber für Bankgespräche und Controlling unverzichtbar.",
+      "Berichte sind zeitraumbezogen — für Jahresabschluss: 01.01.–31.12. wählen.",
+    ],
+  },
+  {
+    icon: "🤝", id: "partner", title: "Geschäftspartner",
+    desc: "Stammdaten für Debitoren (Kunden) und Kreditoren (Lieferanten) pflegen: Name, Anschrift, USt-IdNr., E-Mail, Bankverbindung. Mahnwesen mit drei Mahnstufen (freundlich → Frist → letzte) und Übergabe an Inkasso. Mahngebühren und individuelle Mahntexte einstellbar.",
+    tags: ["Debitoren","Kreditoren","Mahnwesen","Inkasso","§286 HGB"],
+    tips: [
+      "Typ 'Beide': Partner, der sowohl Lieferant als auch Kunde ist (z.B. Schwesterunternehmen).",
+      "Mahngebühren sind ab der 2. Mahnung zulässig (§ 280 BGB, Verzugsschadensersatz).",
+      "USt-IdNr. wird für innergemeinschaftliche Lieferungen (§6a UStG) benötigt.",
+    ],
+  },
+  {
+    icon: "🏦", id: "bank", title: "Bank",
+    desc: "Bankkonten-Übersicht mit aktuellem Kontostand und vollständiger Transaktionsliste. Monatlicher Cashflow-Chart (Einnahmen grün, Ausgaben pink). Volltext-Suche über alle Transaktionsdetails. Grundlage für den Bankabgleich mit deinen Buchungen.",
+    tags: ["Banking","Kontostand","Transaktionen","Cashflow","Kontoabgleich"],
+    tips: [
+      "Transaktionen lassen sich nach Betrag, Datum oder Verwendungszweck durchsuchen.",
+      "Fehlende Buchungen? Über 'Eingangsbelege' können Bankumsätze direkt mit Belegen verknüpft werden.",
+    ],
+  },
+  {
+    icon: "📉", id: "steuern", title: "Steuern",
+    desc: "Steuer-Cockpit mit laufenden Kennzahlen: Einnahmen, Ausgaben, Gewinn und geschätzte Steuerlast (Einkommensteuer/Körperschaftsteuer je nach Rechtsform). UStVA-Schnellübersicht. Unternehmensprofil: Rechtsform, USt-Pflicht und Kleinunternehmer-Status einstellbar.",
+    tags: ["Steuerlast","EkSt","KSt","Rechtsform","§19 UStG"],
+    tips: [
+      "Steuerschätzung ist ein Richtwert — der genaue Betrag hängt von Sonderausgaben, Freibeträgen etc. ab.",
+      "Rechtsform beeinflusst die Steuerberechnung: Einzelunternehmen/Freiberufler = EkSt, GmbH/AG = KSt + GewSt.",
+      "Kleinunternehmer (§19 UStG): Umsatz < 22.000 € im Vorjahr und < 50.000 € im laufenden Jahr.",
+    ],
+  },
+  {
+    icon: "📤", id: "export", title: "Export",
+    desc: "DATEV Buchungsstapel im Format 700, CP1252-kodiert — direkt importierbar in DATEV Kanzlei-Rechnungswesen und DATEV Unternehmen Online. Export mit Beraternummer, Mandantennummer und frei wählbarem Zeitraum. Erleichtert die Zusammenarbeit mit dem Steuerberater erheblich.",
+    tags: ["DATEV","Format 700","CP1252","Steuerberater","Schnittstelle"],
+    tips: [
+      "Beraternummer und Mandantennummer beim Steuerberater erfragen.",
+      "Export für das Vorjahr zum 31. März abliefern (Abgabefrist Jahresabschluss).",
+      "DATEV-Datei nicht manuell öffnen oder bearbeiten — Zeichencodierung CP1252 würde zerstört.",
+    ],
+  },
 ];
 
 function HilfeTab({ onNavigate }) {
@@ -262,20 +395,36 @@ function HilfeTab({ onNavigate }) {
     return (
       <div>
         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setSelected(null)} style={{marginBottom:20}}>
-          Zuruck zur Ubersicht
+          ← Zurück zur Übersicht
         </button>
-        <div className="ac-card" style={{maxWidth:640}}>
+        <div className="ac-card" style={{maxWidth:680}}>
           <div style={{fontSize:"2.5rem",marginBottom:12}}>{m.icon}</div>
           <div className="ac-modal-title">{m.title}</div>
-          <p style={{color:"var(--ink2)",lineHeight:1.7,marginBottom:16}}>{m.desc}</p>
-          <div className="ac-help-tags">
+          <p style={{color:"var(--ink2)",lineHeight:1.75,marginBottom:16,fontSize:".92rem"}}>{m.desc}</p>
+          <div className="ac-help-tags" style={{marginBottom:20}}>
             {m.tags.map(t => <span key={t} className="ac-badge ac-badge-purple">{t}</span>)}
           </div>
-          <div style={{marginTop:24}}>
-            <button className="ac-btn ac-btn-primary" onClick={()=>onNavigate(m.id)}>
-              Zu {m.title}
-            </button>
-          </div>
+          {m.tips?.length > 0 && (
+            <div style={{
+              background:"var(--surface2)",borderRadius:10,padding:16,marginBottom:24,
+              borderLeft:"3px solid var(--accent)",
+            }}>
+              <div style={{fontSize:".75rem",color:"var(--accent)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10,fontWeight:600}}>
+                💡 Tipps & Hinweise
+              </div>
+              <ul style={{listStyle:"none",padding:0,margin:0,display:"flex",flexDirection:"column",gap:8}}>
+                {m.tips.map((tip,i) => (
+                  <li key={i} style={{fontSize:".83rem",color:"var(--ink2)",lineHeight:1.55,display:"flex",gap:10}}>
+                    <span style={{color:"var(--accent)",flexShrink:0}}>›</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <button className="ac-btn ac-btn-primary" onClick={()=>onNavigate(m.id)}>
+            Zu {m.title} →
+          </button>
         </div>
       </div>
     );
@@ -284,27 +433,37 @@ function HilfeTab({ onNavigate }) {
   return (
     <div>
       <div style={{marginBottom:24}}>
-        <div className="ac-section-title">Alle Module im Uberblick</div>
-        <p style={{color:"var(--ink2)",fontSize:".9rem"}}>NILL Buchhaltung ist ein vollwertiges deutsches Buchhaltungssystem nach HGB/GoB/GoBD. Klicke auf ein Modul fur Details.</p>
+        <div className="ac-section-title">Alle Module im Überblick</div>
+        <p style={{color:"var(--ink2)",fontSize:".9rem"}}>
+          NILL Buchhaltung ist ein vollwertiges deutsches Buchhaltungssystem nach HGB/GoB/GoBD.
+          Klicke auf ein Modul für Details.
+        </p>
       </div>
+
       <div className="ac-help-grid">
         {HELP_MODULES.map(m => (
           <div key={m.id} className="ac-help-card" onClick={()=>setSelected(m.id)}>
             <div className="ac-help-icon">{m.icon}</div>
             <div className="ac-help-title">{m.title}</div>
-            <div className="ac-help-desc">{m.desc.slice(0,100)}...</div>
+            <div className="ac-help-desc">{m.desc.slice(0,100)}…</div>
             <div className="ac-help-tags" style={{marginTop:10}}>
               {m.tags.map(t => <span key={t} className="ac-badge ac-badge-gray" style={{fontSize:".68rem"}}>{t}</span>)}
             </div>
           </div>
         ))}
       </div>
+
       <div className="ac-card" style={{marginTop:24,borderColor:"rgba(198,255,60,.15)"}}>
         <div style={{display:"flex",gap:16,alignItems:"flex-start"}}>
-          <div style={{fontSize:"1.5rem",flexShrink:0}}>&#9878;</div>
+          <div style={{fontSize:"1.5rem",flexShrink:0}}>⚖️</div>
           <div>
             <div style={{fontWeight:600,marginBottom:6}}>Rechtliche Hinweise</div>
-            <p style={{fontSize:".82rem",color:"var(--ink2)",lineHeight:1.6}}>NILL Buchhaltung dient als Hilfssystem. Alle steuerlichen Angaben ohne Gewahr -- bitte stimme Jahresabschlusse, UStVA-Meldungen und DATEV-Exporte mit deinem Steuerberater ab.</p>
+            <p style={{fontSize:".82rem",color:"var(--ink2)",lineHeight:1.6}}>
+              NILL Buchhaltung dient als Hilfssystem für deine kaufmännische Buchführung.
+              Alle steuerlichen Angaben ohne Gewähr — bitte stimme Jahresabschlüsse, UStVA-Meldungen
+              und DATEV-Exporte mit deinem Steuerberater ab. GoBD-Konformität liegt in der
+              Verantwortung des Anwenders.
+            </p>
           </div>
         </div>
       </div>
@@ -312,22 +471,23 @@ function HilfeTab({ onNavigate }) {
   );
 }
 
+// ── Tabs config ───────────────────────────────────────────────────────────────
 const TABS = [
-  {id:"overview",  label:"Ubersicht"},
-  {id:"rechnungen",label:"Rechnungen"},
-    { id:"ausgangsrechnung", label:"Ausgangsrechnungen u271f" },
-  {id:"buchungen", label:"Journal"},
-  {id:"kontenplan",label:"Kontenplan"},
-  {id:"anlagen",   label:"Anlagenbuch"},
-  {id:"ustva",     label:"UStVA"},
-  {id:"berichte",  label:"Berichte"},
-  {id:"partner",   label:"Geschaftspartner"},
-  {id:"bank",      label:"Bank"},
-  {id:"steuern",   label:"Steuern"},
-  {id:"export",    label:"Export"},
-  {id:"hilfe",     label:"Hilfe"},
+  {id:"overview",   label:"Übersicht"},
+  {id:"rechnungen", label:"Rechnungen"},
+  {id:"buchungen",  label:"Journal"},
+  {id:"kontenplan", label:"Kontenplan"},
+  {id:"anlagen",    label:"Anlagenbuch"},
+  {id:"ustva",      label:"UStVA"},
+  {id:"berichte",   label:"Berichte"},
+  {id:"partner",    label:"Geschäftspartner"},
+  {id:"bank",       label:"Bank"},
+  {id:"steuern",    label:"Steuern"},
+  {id:"export",     label:"Export"},
+  {id:"hilfe",      label:"❓ Hilfe"},
 ];
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AccountingPage() {
   const [tab, setTab]               = useState("overview");
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -337,21 +497,25 @@ export default function AccountingPage() {
     api.post("/api/v1/buchhaltung/kontenrahmen/init").catch(() => {});
   }, []);
 
-  const triggerRefresh = useCallback(() => setRefreshKey(k => k + 1), []);
+  const triggerRefresh = useCallback(() => {
+    setRefreshKey(k => k + 1);
+  }, []);
+
   const goTo = (tabId) => setTab(tabId);
-  const goToDashboard = () => { window.location.href = "/"; };
+
+  const goToDashboard = () => {
+    window.location.href = "/";
+  };
 
   const renderTab = () => {
     switch(tab) {
       case "overview":   return <OverviewTab key={refreshKey}/>;
       case "rechnungen": return (
-        <div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            <div className="ac-section-title" style={{margin:0}}>Rechnungen</div>
-            <button className="ac-btn ac-btn-primary" onClick={()=>setUploadOpen(true)}>+ Beleg hochladen</button>
-          </div>
-          <InvoiceList key={refreshKey} onRefresh={triggerRefresh}/>
-        </div>
+        <RechnungenTab
+          onUpload={() => setUploadOpen(true)}
+          onRefresh={triggerRefresh}
+          refreshKey={refreshKey}
+        />
       );
       case "buchungen":  return <BuchungenTab key={refreshKey}/>;
       case "kontenplan": return <KontenplanTab key={refreshKey}/>;
@@ -371,29 +535,40 @@ export default function AccountingPage() {
     <>
       <style>{S}</style>
       <div className="ac-page">
+
         <div className="ac-header">
-          <a className="ac-logo" onClick={goToDashboard} title="Zuruck zum Dashboard">
+          <a className="ac-logo" onClick={goToDashboard} title="Zurück zum Dashboard">
             NILL<span>.</span>
           </a>
           <div className="ac-header-divider"/>
           <span className="ac-title">Buchhaltung</span>
           <div className="ac-header-right">
-            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>Hilfe</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>❓ Hilfe</button>
             <button className="ac-btn ac-btn-primary" onClick={()=>setUploadOpen(true)}>+ Beleg</button>
           </div>
         </div>
+
         <div className="ac-tabs">
           {TABS.map(t => (
-            <button key={t.id} className={`ac-tab${tab===t.id?" active":""}`} onClick={()=>setTab(t.id)}>
+            <button
+              key={t.id}
+              className={`ac-tab${tab===t.id?" active":""}`}
+              onClick={()=>setTab(t.id)}
+            >
               {t.label}
             </button>
           ))}
         </div>
+
         {renderTab()}
+
         {uploadOpen && (
-          <ReceiptUploadModal onClose={()=>{ setUploadOpen(false); triggerRefresh(); }}/>
+          <ReceiptUploadModal
+            onClose={()=>{ setUploadOpen(false); triggerRefresh(); }}
+          />
         )}
       </div>
     </>
   );
 }
+
