@@ -345,7 +345,6 @@ export default function AccountingPage() {
     switch(tab) {
       case "overview":   return <OverviewTab key={refreshKey}/>;
       case "rechnungen": return (
-      case "ausgangsrechnung": return <AusgangsrechnungTab key={refreshKey} />;
         <div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
             <div className="ac-section-title" style={{margin:0}}>Rechnungen</div>
