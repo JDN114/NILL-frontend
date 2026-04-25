@@ -1,64 +1,226 @@
 /* /src/components/Calendar/calendar.css */
+/* ── NILL Calendar — Gold Design System ─────────────────── */
+
+.calendar-wrapper {
+  width: 100%;
+}
 
 .calendar-wrapper .react-calendar {
-  background: #0f172a;
-  border: none;
-  color: white;
-  width: 100%;
-  border-radius: 14px;
-  padding: 10px;
-}
-
-/* Navigation (Monat / Jahr) */
-.react-calendar__navigation {
-  margin-bottom: 10px;
-}
-
-.react-calendar__navigation button {
-  color: white;
-  font-weight: 600;
   background: transparent;
+  border: none;
+  color: var(--nill-text);
+  width: 100%;
+  border-radius: 0;
+  padding: 0;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* ── Navigation ─────────────────────────────────────────── */
+.calendar-wrapper .react-calendar__navigation {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  gap: 2px;
+  height: auto;
+}
+
+.calendar-wrapper .react-calendar__navigation button {
+  color: var(--nill-text-sub);
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: transparent;
+  border: none;
   border-radius: 8px;
-  padding: 6px 10px;
-  transition: 0.2s;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  min-width: unset;
 }
 
-.react-calendar__navigation button:hover {
-  background: rgba(99, 102, 241, 0.2);
+.calendar-wrapper .react-calendar__navigation button:enabled:hover,
+.calendar-wrapper .react-calendar__navigation button:enabled:focus {
+  background: var(--nill-panel-hov);
+  color: var(--nill-text);
 }
 
-/* Wochentage */
-.react-calendar__month-view__weekdays {
-  color: #9ca3af;
-  font-size: 12px;
+/* Monats-/Jahres-Label */
+.calendar-wrapper .react-calendar__navigation__label {
+  flex-grow: 1;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: var(--nill-text) !important;
+  letter-spacing: 0.01em;
+  text-align: center;
 }
 
-/* Tage */
-.react-calendar__tile {
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  color: white;
+.calendar-wrapper .react-calendar__navigation__label:enabled:hover {
+  background: var(--nill-panel-hov) !important;
+  color: var(--nill-gold) !important;
+}
+
+/* Pfeil-Buttons */
+.calendar-wrapper .react-calendar__navigation__arrow {
+  font-size: 1.1rem;
+  color: var(--nill-text-mute) !important;
+}
+
+.calendar-wrapper .react-calendar__navigation__arrow:enabled:hover {
+  color: var(--nill-gold) !important;
+  background: var(--nill-gold-dim) !important;
+}
+
+/* ── Wochentage ─────────────────────────────────────────── */
+.calendar-wrapper .react-calendar__month-view__weekdays {
+  margin-bottom: 0.35rem;
+}
+
+.calendar-wrapper .react-calendar__month-view__weekdays__weekday {
+  text-align: center;
+  padding: 0.3rem 0;
+}
+
+.calendar-wrapper .react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nill-text-dim);
+}
+
+/* ── Kacheln (Tage) ─────────────────────────────────────── */
+.calendar-wrapper .react-calendar__month-view__days {
+  gap: 2px;
+}
+
+.calendar-wrapper .react-calendar__tile {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: none;
+  padding: 0.55rem 0.25rem;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--nill-text-sub);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Nachbarmonat-Tage */
+.calendar-wrapper .react-calendar__month-view__days__day--neighboringMonth {
+  color: var(--nill-text-dim);
 }
 
 /* Hover */
-.react-calendar__tile:hover {
-  background: rgba(99, 102, 241, 0.2);
+.calendar-wrapper .react-calendar__tile:enabled:hover {
+  background: var(--nill-panel-hov);
+  color: var(--nill-text);
+  border-color: var(--nill-border);
 }
 
-/* Heute */
-.react-calendar__tile--now {
-  background: rgba(255, 255, 255, 0.08);
+/* ── Heute ──────────────────────────────────────────────── */
+.calendar-wrapper .react-calendar__tile--now {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: var(--nill-border-lg) !important;
+  color: var(--nill-text) !important;
+  font-weight: 700;
 }
 
-/* Aktiv */
-.react-calendar__tile--active {
-  background: #6366f1;
-  color: white;
+.calendar-wrapper .react-calendar__tile--now::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--nill-gold);
+  box-shadow: 0 0 5px rgba(197,165,114,0.7);
 }
 
-/* 🔥 EVENT DAY */
-.event-day {
-  background: rgba(99, 102, 241, 0.35) !important;
-  border: 1px solid rgba(99, 102, 241, 0.6);
+/* ── Aktiv / Ausgewählt ─────────────────────────────────── */
+.calendar-wrapper .react-calendar__tile--active,
+.calendar-wrapper .react-calendar__tile--active:enabled:hover,
+.calendar-wrapper .react-calendar__tile--active:enabled:focus {
+  background: var(--nill-gold-dim) !important;
+  border-color: rgba(197,165,114,0.4) !important;
+  color: var(--nill-gold) !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(197,165,114,0.12);
+}
+
+/* ── Event Day ──────────────────────────────────────────── */
+.calendar-wrapper .event-day {
+  background: rgba(197,165,114,0.08) !important;
+  border-color: rgba(197,165,114,0.22) !important;
+  color: var(--nill-text) !important;
   font-weight: 600;
+}
+
+/* Event-Dot unter der Zahl */
+.calendar-wrapper .event-day::before {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--nill-gold);
+  opacity: 0.85;
+}
+
+/* Heute + Event: Dot bleibt gold, after-Dot wird versteckt */
+.calendar-wrapper .react-calendar__tile--now.event-day::after {
+  display: none;
+}
+
+/* Aktiv + Event */
+.calendar-wrapper .react-calendar__tile--active.event-day {
+  background: var(--nill-gold-glow) !important;
+  border-color: rgba(197,165,114,0.5) !important;
+}
+
+.calendar-wrapper .react-calendar__tile--active.event-day::before {
+  background: #fff;
+  opacity: 0.9;
+}
+
+/* ── Range-Auswahl (falls genutzt) ──────────────────────── */
+.calendar-wrapper .react-calendar__tile--rangeStart,
+.calendar-wrapper .react-calendar__tile--rangeEnd {
+  background: var(--nill-gold-dim) !important;
+  border-color: rgba(197,165,114,0.4) !important;
+  color: var(--nill-gold) !important;
+}
+
+.calendar-wrapper .react-calendar__tile--rangeBothEnds {
+  border-radius: 9px;
+}
+
+/* ── Jahres-/Dekaden-Ansicht ────────────────────────────── */
+.calendar-wrapper .react-calendar__year-view__months__month,
+.calendar-wrapper .react-calendar__decade-view__years__year,
+.calendar-wrapper .react-calendar__century-view__decades__decade {
+  padding: 0.75rem 0.5rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  color: var(--nill-text-sub);
+  border: 1px solid transparent;
+}
+
+.calendar-wrapper .react-calendar__year-view__months__month:enabled:hover,
+.calendar-wrapper .react-calendar__decade-view__years__year:enabled:hover,
+.calendar-wrapper .react-calendar__century-view__decades__decade:enabled:hover {
+  background: var(--nill-panel-hov);
+  color: var(--nill-text);
+  border-color: var(--nill-border);
 }
