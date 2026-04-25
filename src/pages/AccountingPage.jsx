@@ -82,6 +82,8 @@ const S = `
   .ac-input:focus{border-color:var(--accent);}
   .ac-select{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:9px 12px;border-radius:8px;font-family:Inter,sans-serif;font-size:.85rem;outline:none;cursor:pointer;}
   .ac-select:focus{border-color:var(--accent);}
+  .recharts-wrapper,.recharts-surface{outline:none !important;}
+  svg:focus{outline:none;}
   .ac-form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}
   .ac-form-col{display:flex;flex-direction:column;gap:6px;flex:1;min-width:130px;}
   .ac-label{font-size:.75rem;color:var(--ink2);}
@@ -176,21 +178,28 @@ function OverviewTab() {
   useEffect(() => { load(); }, [load]);
 
   const allArea = useMemo(() =>
-    (dash?.monatsverlauf || []).map(m => ({ name:m.monat, Einnahmen:m.einnahmen, Ausgaben:m.ausgaben })),
-  [dash]);
+    (dash?.monatsverlauf || []).map(m => ({
+      name: m.monat, Einnahmen: m.einnahmen, Ausgaben: m.ausgaben,
+    })), [dash]);
 
-  const areaData = useMemo(() =>
-    periode === "all" ? allArea : allArea.slice(-parseInt(periode)),
-  [allArea, periode]);
+  const areaData = useMemo(() => {
+    if (periode === "all") return allArea;
+    const n = parseInt(periode, 10);
+    return allArea.slice(-n);
+  }, [allArea, periode]);
 
   const allPie = useMemo(() =>
-    (dash?.ausgaben_kategorien || []).map(k => ({ name:k.kategorie, value:k.betrag })),
+    (dash?.ausgaben_kategorien || []).map(k => ({ name: k.kategorie, value: k.betrag })),
   [dash]);
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Dashboard…</div>;
   if (!dash)   return <div className="ac-empty">Dashboard nicht verfügbar.</div>;
 
-  const gewinn = (dash.einnahmen||0) - (dash.ausgaben||0);
+  const gewinn = (dash.einnahmen || 0) - (dash.ausgaben || 0);
+  const perioden = [
+    { key:"3", label:"3M" }, { key:"6", label:"6M" },
+    { key:"12", label:"12M" }, { key:"all", label:"Alle" },
+  ];
 
   return (
     <div>
@@ -198,7 +207,7 @@ function OverviewTab() {
         <div className="ac-kpi"><div className="ac-kpi-label">Einnahmen lfd. Jahr</div><div className="ac-kpi-value green">{fmtEur(dash.einnahmen)}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">Ausgaben lfd. Jahr</div><div className="ac-kpi-value pink">{fmtEur(dash.ausgaben)}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">Gewinn / Verlust</div><div className={`ac-kpi-value ${gewinn>=0?"green":"pink"}`}>{fmtEur(gewinn)}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">Buchungen gesamt</div><div className="ac-kpi-value">{dash.buchungen_gesamt??0}</div></div>
+        <div className="ac-kpi"><div className="ac-kpi-label">Buchungen gesamt</div><div className="ac-kpi-value">{dash.buchungen_gesamt ?? 0}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">USt-Zahllast lfd. Jahr</div><div className="ac-kpi-value">{fmtEur(dash.ust_zahllast)}</div></div>
       </div>
 
@@ -209,13 +218,13 @@ function OverviewTab() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
             <div className="ac-section-title" style={{marginBottom:0}}>Cashflow</div>
             <div style={{display:"flex",gap:4}}>
-              {PERIODEN.map(p => (
+              {perioden.map(p => (
                 <button key={p.key} onClick={() => setPeriode(p.key)} style={{
                   padding:"3px 10px", borderRadius:6, border:"1px solid var(--border)",
-                  background:periode===p.key ? "var(--accent)" : "transparent",
-                  color:periode===p.key ? "#000" : "var(--ink2)",
+                  background: periode===p.key ? "var(--accent)" : "transparent",
+                  color: periode===p.key ? "#000" : "var(--ink2)",
                   fontSize:".72rem", cursor:"pointer",
-                  fontWeight:periode===p.key ? 600 : 400, transition:"all .15s",
+                  fontWeight: periode===p.key ? 600 : 400, transition:"all .15s",
                 }}>{p.label}</button>
               ))}
             </div>
@@ -236,14 +245,26 @@ function OverviewTab() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
                 <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
-                  tickFormatter={v => v>=1000 ? `${(v/1000).toFixed(0)}k` : v}/>
-                <Tooltip content={<CustomTooltip/>}/>
+                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}/>
+                <Tooltip content={({active,payload,label}) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
+                      <div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>
+                      {payload.map((p,i) => (
+                        <div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>
+                          {p.name}: {fmtEur(p.value)}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }}/>
                 <Area type="monotone" dataKey="Einnahmen" stroke="#c6ff3c" fill="url(#gE)"
                   strokeWidth={2} dot={false} activeDot={{r:5,fill:"#c6ff3c",strokeWidth:0}}
-                  animationDuration={800} animationEasing="ease-out"/>
+                  animationDuration={600} animationEasing="ease-out"/>
                 <Area type="monotone" dataKey="Ausgaben" stroke="#7a5cff" fill="url(#gA)"
                   strokeWidth={2} dot={false} activeDot={{r:5,fill:"#7a5cff",strokeWidth:0}}
-                  animationDuration={800} animationEasing="ease-out" animationBegin={150}/>
+                  animationDuration={600} animationEasing="ease-out" animationBegin={100}/>
               </AreaChart>
             </ResponsiveContainer>
           ) : <div className="ac-empty" style={{padding:40}}>Noch keine Verlaufsdaten</div>}
@@ -274,32 +295,54 @@ function OverviewTab() {
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie data={allPie} dataKey="value" nameKey="name"
-                    cx="50%" cy="50%" innerRadius={48} outerRadius={78}
-                    activeIndex={activeIdx} activeShape={PieActiveShape}
+                    cx="50%" cy="50%" innerRadius={50} outerRadius={80}
+                    activeIndex={activeIdx}
+                    activeShape={(props) => {
+                      const {cx,cy,innerRadius,outerRadius,startAngle,endAngle,fill,payload,value} = props;
+                      return (
+                        <g>
+                          <text x={cx} y={cy-8} textAnchor="middle" fill="var(--ink)"
+                            fontSize={12} fontWeight={600} fontFamily="JetBrains Mono,monospace">
+                            {fmtEur(value)}
+                          </text>
+                          <text x={cx} y={cy+10} textAnchor="middle" fill="var(--ink2)" fontSize={9}>
+                            {payload.name}
+                          </text>
+                          <Sector cx={cx} cy={cy} innerRadius={innerRadius}
+                            outerRadius={outerRadius+5} startAngle={startAngle}
+                            endAngle={endAngle} fill={fill}/>
+                          <Sector cx={cx} cy={cy} innerRadius={outerRadius+9}
+                            outerRadius={outerRadius+11} startAngle={startAngle}
+                            endAngle={endAngle} fill={fill} opacity={0.4}/>
+                        </g>
+                      );
+                    }}
                     onMouseEnter={(_,i) => setActiveIdx(i)}
                     onMouseLeave={() => setActiveIdx(null)}
                     onClick={d => setActiveKat(prev => prev===d.name ? null : d.name)}
-                    animationDuration={700} animationEasing="ease-out" paddingAngle={2}>
+                    animationDuration={600} animationEasing="ease-out" paddingAngle={2}>
                     {allPie.map((_,i) => (
-                      <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}
-                        opacity={activeKat && allPie[i].name!==activeKat ? 0.25 : 1}
-                        style={{cursor:"pointer",transition:"opacity .2s"}}/>
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}
+                        opacity={activeKat && allPie[i].name!==activeKat ? 0.2 : 1}
+                        style={{cursor:"pointer"}}/>
                     ))}
                   </Pie>
-                  <Tooltip formatter={v=>fmtEur(v)}
+                  <Tooltip formatter={v => fmtEur(v)}
                     contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",marginTop:4,justifyContent:"center"}}>
-                {allPie.slice(0,6).map((p,i) => (
-                  <div key={p.name} onClick={() => setActiveKat(prev => prev===p.name ? null : p.name)}
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px 12px",marginTop:6,justifyContent:"center"}}>
+                {allPie.slice(0,7).map((p,i) => (
+                  <div key={p.name}
+                    onClick={() => setActiveKat(prev => prev===p.name ? null : p.name)}
                     style={{
-                      display:"flex",alignItems:"center",gap:5,fontSize:".72rem",cursor:"pointer",
-                      color:activeKat===p.name ? "var(--ink)" : "var(--ink2)",
-                      opacity:activeKat && activeKat!==p.name ? 0.35 : 1,
+                      display:"flex", alignItems:"center", gap:5, fontSize:".72rem",
+                      cursor:"pointer",
+                      color: activeKat===p.name ? "var(--ink)" : "var(--ink2)",
+                      opacity: activeKat && activeKat!==p.name ? 0.3 : 1,
                       transition:"all .15s",
                     }}>
-                    <div style={{width:8,height:8,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}}/>
+                    <div style={{width:7,height:7,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}}/>
                     {p.name}
                   </div>
                 ))}
@@ -318,8 +361,8 @@ function OverviewTab() {
               {dash.letzte_buchungen.slice(0,8).map(b => (
                 <tr key={b.id}>
                   <td className="ac-mono">{b.buchungsdatum}</td>
-                  <td>{b.buchungstext||"—"}</td>
-                  <td className="ac-mono" style={{color:"var(--ink2)"}}>{b.beleg_nummer||"—"}</td>
+                  <td>{b.buchungstext || "—"}</td>
+                  <td className="ac-mono" style={{color:"var(--ink2)"}}>{b.beleg_nummer || "—"}</td>
                   <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(b.betrag)}</td>
                 </tr>
               ))}
@@ -330,7 +373,6 @@ function OverviewTab() {
     </div>
   );
 }
-
 
 // ── Export ────────────────────────────────────────────────────────────────────
 function ExportTab() {
