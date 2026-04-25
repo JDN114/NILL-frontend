@@ -94,6 +94,10 @@ const S = `
   .ac-alert-err{background:rgba(255,77,141,.1);border:1px solid rgba(255,77,141,.2);color:var(--a3);}
   .ac-alert-ok{background:rgba(198,255,60,.1);border:1px solid rgba(198,255,60,.2);color:var(--accent);}
 
+  .recharts-wrapper svg:focus,
+  .recharts-wrapper svg *:focus,
+  .recharts-surface:focus { outline: none !important; }
+
   .ac-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .ac-loading{display:flex;align-items:center;justify-content:center;gap:12px;padding:40px;color:var(--ink2);}
@@ -113,16 +117,79 @@ const S = `
 `;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
+
+// ── Session Loading Screen ─────────────────────────────────────────────────
+function NillLoader({ text = "Wird geladen…" }) {
+  return (
+    <div style={{
+      position:"fixed", inset:0,
+      background:"#040407",
+      display:"flex", flexDirection:"column",
+      alignItems:"center", justifyContent:"center",
+      zIndex:9999,
+    }}>
+      <style>{`
+        @keyframes nill-pulse {
+          0%,100% { opacity:1; }
+          50%      { opacity:0.35; }
+        }
+        @keyframes nill-bar {
+          0%   { transform:scaleX(0);   opacity:1; }
+          80%  { transform:scaleX(1);   opacity:1; }
+          100% { transform:scaleX(1);   opacity:0; }
+        }
+        @keyframes nill-dot {
+          0%,80%,100% { transform:scale(0.6); opacity:0.3; }
+          40%          { transform:scale(1);   opacity:1;   }
+        }
+      `}</style>
+      <div style={{
+        fontFamily:"Fraunces,serif", fontSize:"2.8rem", fontWeight:700,
+        color:"#efede7", letterSpacing:"-.02em", marginBottom:40,
+        animation:"nill-pulse 2.4s ease-in-out infinite",
+      }}>
+        NILL<span style={{color:"#c6ff3c"}}>.</span>
+      </div>
+      <div style={{
+        width:180, height:2, background:"rgba(239,237,231,.08)",
+        borderRadius:2, overflow:"hidden", marginBottom:28,
+      }}>
+        <div style={{
+          height:"100%", background:"#c6ff3c", borderRadius:2,
+          transformOrigin:"left",
+          animation:"nill-bar 1.6s cubic-bezier(.4,0,.2,1) infinite",
+        }}/>
+      </div>
+      <div style={{display:"flex", gap:8, marginBottom:24}}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{
+            width:5, height:5, borderRadius:"50%",
+            background:"#c6ff3c",
+            animation:`nill-dot 1.2s ease-in-out ${i*0.2}s infinite`,
+          }}/>
+        ))}
+      </div>
+      <div style={{
+        color:"rgba(155,152,144,.6)", fontSize:".78rem",
+        letterSpacing:".08em", textTransform:"uppercase",
+        fontFamily:"Inter,sans-serif",
+      }}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 const PIE_COLORS = [
   "#c6ff3c",
-  "rgba(198,255,60,0.6)",
-  "rgba(198,255,60,0.35)",
-  "rgba(198,255,60,0.18)",
-  "rgba(155,152,144,0.75)",
-  "rgba(155,152,144,0.5)",
-  "rgba(155,152,144,0.3)",
-  "rgba(155,152,144,0.15)",
+  "rgba(198,255,60,0.70)",
+  "rgba(198,255,60,0.45)",
+  "rgba(198,255,60,0.25)",
+  "#9b9890",
+  "rgba(155,152,144,0.65)",
+  "rgba(155,152,144,0.40)",
+  "rgba(155,152,144,0.20)",
 ];
 
 const PieActiveShape = (props) => {
@@ -661,9 +728,17 @@ export default function AccountingPage() {
   const [tab, setTab]               = useState("overview");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
     api.post("/api/v1/buchhaltung/kontenrahmen/init").catch(() => {});
+  }, []);
+
+  // init Kontenrahmen
+  useEffect(() => {
+    api.post("/api/v1/buchhaltung/kontenrahmen/init")
+      .catch(() => {})
+      .finally(() => setSessionReady(true));
   }, []);
 
   const triggerRefresh = useCallback(() => {
@@ -699,6 +774,8 @@ export default function AccountingPage() {
       default:           return null;
     }
   };
+
+  if (!sessionReady) return <NillLoader text="Buchhaltung wird initialisiert…" />;
 
   return (
     <>
