@@ -116,13 +116,13 @@ const S = `
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 const PIE_COLORS = [
   "#c6ff3c",
-  "#7a5cff",
-  "rgba(198,255,60,0.55)",
-  "rgba(122,92,255,0.6)",
-  "rgba(198,255,60,0.3)",
-  "rgba(122,92,255,0.35)",
-  "#9b9890",
+  "rgba(198,255,60,0.6)",
+  "rgba(198,255,60,0.35)",
+  "rgba(198,255,60,0.18)",
+  "rgba(155,152,144,0.75)",
   "rgba(155,152,144,0.5)",
+  "rgba(155,152,144,0.3)",
+  "rgba(155,152,144,0.15)",
 ];
 
 const PieActiveShape = (props) => {
