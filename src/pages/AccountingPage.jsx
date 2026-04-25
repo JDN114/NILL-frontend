@@ -1,9 +1,9 @@
 // src/pages/AccountingPage.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../services/api";
 import {
-  AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, PieChart, Pie, Cell, Sector,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 
 import BuchungenTab         from "../components/accounting/BuchungenTab";
@@ -112,12 +112,58 @@ const S = `
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
-const PIE_COLORS = ["#c6ff3c","#7a5cff","#ff4d8d","#ffb347","#38bdf8"];
+const PIE_COLORS = [
+  "#c6ff3c",
+  "#7a5cff",
+  "rgba(198,255,60,0.55)",
+  "rgba(122,92,255,0.6)",
+  "rgba(198,255,60,0.3)",
+  "rgba(122,92,255,0.35)",
+  "#9b9890",
+  "rgba(155,152,144,0.5)",
+];
 
-// ── Übersicht ─────────────────────────────────────────────────────────────────
+const PieActiveShape = (props) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
+  return (
+    <g>
+      <text x={cx} y={cy - 10} textAnchor="middle" fill="var(--ink)" fontSize={13} fontWeight={600}
+        fontFamily="JetBrains Mono,monospace">{fmtEur(value)}</text>
+      <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--ink2)" fontSize={10}>{payload.name}</text>
+      <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 6}
+        startAngle={startAngle} endAngle={endAngle} fill={fill} />
+      <Sector cx={cx} cy={cy} innerRadius={outerRadius + 10} outerRadius={outerRadius + 13}
+        startAngle={startAngle} endAngle={endAngle} fill={fill} opacity={0.5} />
+    </g>
+  );
+};
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
+      <div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>
+      {payload.map((p,i) => (
+        <div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>
+          {p.name}: {fmtEur(p.value)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── Übersicht ─────────────────────────────────────────────────────────────────────────────────
+const PERIODEN = [
+  { key:"3", label:"3M" }, { key:"6", label:"6M" },
+  { key:"12", label:"12M" }, { key:"all", label:"Alle" },
+];
+
 function OverviewTab() {
-  const [dash, setDash] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dash,      setDash]      = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [periode,   setPeriode]   = useState("12");
+  const [activeIdx, setActiveIdx] = useState(null);
+  const [activeKat, setActiveKat] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -129,12 +175,22 @@ function OverviewTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  const allArea = useMemo(() =>
+    (dash?.monatsverlauf || []).map(m => ({ name:m.monat, Einnahmen:m.einnahmen, Ausgaben:m.ausgaben })),
+  [dash]);
+
+  const areaData = useMemo(() =>
+    periode === "all" ? allArea : allArea.slice(-parseInt(periode)),
+  [allArea, periode]);
+
+  const allPie = useMemo(() =>
+    (dash?.ausgaben_kategorien || []).map(k => ({ name:k.kategorie, value:k.betrag })),
+  [dash]);
+
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Dashboard…</div>;
   if (!dash)   return <div className="ac-empty">Dashboard nicht verfügbar.</div>;
 
-  const gewinn   = (dash.einnahmen||0) - (dash.ausgaben||0);
-  const areaData = (dash.monatsverlauf||[]).map(m => ({ name:m.monat, Einnahmen:m.einnahmen, Ausgaben:m.ausgaben }));
-  const pieData  = (dash.ausgaben_kategorien||[]).map(k => ({ name:k.kategorie, value:k.betrag }));
+  const gewinn = (dash.einnahmen||0) - (dash.ausgaben||0);
 
   return (
     <div>
@@ -146,42 +202,112 @@ function OverviewTab() {
         <div className="ac-kpi"><div className="ac-kpi-label">USt-Zahllast lfd. Jahr</div><div className="ac-kpi-value">{fmtEur(dash.ust_zahllast)}</div></div>
       </div>
 
+      {dash._error && <div className="ac-alert ac-alert-warn" style={{marginBottom:16}}>⚠ {dash._error}</div>}
+
       <div className="ac-grid-2" style={{marginBottom:16}}>
         <div className="ac-card">
-          <div className="ac-section-title">Cashflow</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Cashflow</div>
+            <div style={{display:"flex",gap:4}}>
+              {PERIODEN.map(p => (
+                <button key={p.key} onClick={() => setPeriode(p.key)} style={{
+                  padding:"3px 10px", borderRadius:6, border:"1px solid var(--border)",
+                  background:periode===p.key ? "var(--accent)" : "transparent",
+                  color:periode===p.key ? "#000" : "var(--ink2)",
+                  fontSize:".72rem", cursor:"pointer",
+                  fontWeight:periode===p.key ? 600 : 400, transition:"all .15s",
+                }}>{p.label}</button>
+              ))}
+            </div>
+          </div>
           {areaData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={areaData}>
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={areaData} margin={{top:4,right:4,left:0,bottom:0}}>
                 <defs>
-                  <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c6ff3c" stopOpacity={0.3}/><stop offset="95%" stopColor="#c6ff3c" stopOpacity={0}/></linearGradient>
-                  <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ff4d8d" stopOpacity={0.3}/><stop offset="95%" stopColor="#ff4d8d" stopOpacity={0}/></linearGradient>
+                  <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#c6ff3c" stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor="#c6ff3c" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#7a5cff" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#7a5cff" stopOpacity={0}/>
+                  </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.05)"/>
-                <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:11}}/>
-                <YAxis tick={{fill:"#9b9890",fontSize:11}} tickFormatter={v=>`${(v/1000).toFixed(0)}k`}/>
-                <Tooltip formatter={v=>fmtEur(v)} contentStyle={{background:"#0d0d14",border:"1px solid rgba(239,237,231,.08)",borderRadius:8}}/>
-                <Area type="monotone" dataKey="Einnahmen" stroke="#c6ff3c" fill="url(#gE)" strokeWidth={2}/>
-                <Area type="monotone" dataKey="Ausgaben"  stroke="#ff4d8d" fill="url(#gA)" strokeWidth={2}/>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
+                  tickFormatter={v => v>=1000 ? `${(v/1000).toFixed(0)}k` : v}/>
+                <Tooltip content={<CustomTooltip/>}/>
+                <Area type="monotone" dataKey="Einnahmen" stroke="#c6ff3c" fill="url(#gE)"
+                  strokeWidth={2} dot={false} activeDot={{r:5,fill:"#c6ff3c",strokeWidth:0}}
+                  animationDuration={800} animationEasing="ease-out"/>
+                <Area type="monotone" dataKey="Ausgaben" stroke="#7a5cff" fill="url(#gA)"
+                  strokeWidth={2} dot={false} activeDot={{r:5,fill:"#7a5cff",strokeWidth:0}}
+                  animationDuration={800} animationEasing="ease-out" animationBegin={150}/>
               </AreaChart>
             </ResponsiveContainer>
-          ) : <div className="ac-empty" style={{padding:24}}>Noch keine Verlaufsdaten</div>}
+          ) : <div className="ac-empty" style={{padding:40}}>Noch keine Verlaufsdaten</div>}
+          {areaData.length > 0 && (
+            <div style={{display:"flex",gap:16,marginTop:8,justifyContent:"center"}}>
+              {[["Einnahmen","#c6ff3c"],["Ausgaben","#7a5cff"]].map(([l,col]) => (
+                <div key={l} style={{display:"flex",alignItems:"center",gap:6,fontSize:".75rem",color:"var(--ink2)"}}>
+                  <div style={{width:12,height:2,background:col,borderRadius:2}}/>{l}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
         <div className="ac-card">
-          <div className="ac-section-title">Ausgaben nach Kategorie</div>
-          {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={e=>e.name}>
-                  {pieData.map((_,i) => <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                </Pie>
-                <Tooltip formatter={v=>fmtEur(v)} contentStyle={{background:"#0d0d14",border:"1px solid rgba(239,237,231,.08)",borderRadius:8}}/>
-              </PieChart>
-            </ResponsiveContainer>
-          ) : <div className="ac-empty" style={{padding:24}}>Noch keine Daten</div>}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Ausgaben nach Kategorie</div>
+            {activeKat && (
+              <button onClick={() => setActiveKat(null)} style={{
+                fontSize:".72rem", padding:"3px 10px", borderRadius:6,
+                border:"1px solid var(--border)", background:"transparent",
+                color:"var(--ink2)", cursor:"pointer",
+              }}>✕ {activeKat}</button>
+            )}
+          </div>
+          {allPie.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={allPie} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" innerRadius={48} outerRadius={78}
+                    activeIndex={activeIdx} activeShape={PieActiveShape}
+                    onMouseEnter={(_,i) => setActiveIdx(i)}
+                    onMouseLeave={() => setActiveIdx(null)}
+                    onClick={d => setActiveKat(prev => prev===d.name ? null : d.name)}
+                    animationDuration={700} animationEasing="ease-out" paddingAngle={2}>
+                    {allPie.map((_,i) => (
+                      <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}
+                        opacity={activeKat && allPie[i].name!==activeKat ? 0.25 : 1}
+                        style={{cursor:"pointer",transition:"opacity .2s"}}/>
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={v=>fmtEur(v)}
+                    contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",marginTop:4,justifyContent:"center"}}>
+                {allPie.slice(0,6).map((p,i) => (
+                  <div key={p.name} onClick={() => setActiveKat(prev => prev===p.name ? null : p.name)}
+                    style={{
+                      display:"flex",alignItems:"center",gap:5,fontSize:".72rem",cursor:"pointer",
+                      color:activeKat===p.name ? "var(--ink)" : "var(--ink2)",
+                      opacity:activeKat && activeKat!==p.name ? 0.35 : 1,
+                      transition:"all .15s",
+                    }}>
+                    <div style={{width:8,height:8,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}}/>
+                    {p.name}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : <div className="ac-empty" style={{padding:40}}>Noch keine Daten</div>}
         </div>
       </div>
-
-      {dash._error && <div className="ac-alert ac-alert-warn" style={{marginBottom:16}}>⚠ {dash._error}</div>}
 
       {dash.letzte_buchungen?.length > 0 && (
         <div className="ac-card">
@@ -204,6 +330,7 @@ function OverviewTab() {
     </div>
   );
 }
+
 
 // ── Export ────────────────────────────────────────────────────────────────────
 function ExportTab() {
