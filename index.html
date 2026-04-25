@@ -1,12 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NILL Dashboard</title>
+    <title>NILL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; background: #040407; }
+
+      #nill-boot {
+        position: fixed;
+        inset: 0;
+        background: #040407;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.35s ease;
+      }
+      #nill-boot.fade-out { opacity: 0; pointer-events: none; }
+
+      .nb-logo {
+        font-family: 'Fraunces', serif;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #efede7;
+        letter-spacing: -0.02em;
+        margin-bottom: 40px;
+        animation: nb-pulse 2.4s ease-in-out infinite;
+      }
+      .nb-logo span { color: #c6ff3c; }
+
+      .nb-bar-wrap {
+        width: 180px;
+        height: 2px;
+        background: rgba(239,237,231,0.08);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 28px;
+      }
+      .nb-bar {
+        height: 100%;
+        background: #c6ff3c;
+        border-radius: 2px;
+        transform-origin: left;
+        animation: nb-bar 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
+      }
+
+      .nb-dots {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .nb-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #c6ff3c;
+        animation: nb-dot 1.2s ease-in-out infinite;
+      }
+      .nb-dot:nth-child(2) { animation-delay: 0.2s; }
+      .nb-dot:nth-child(3) { animation-delay: 0.4s; }
+
+      .nb-text {
+        color: rgba(155,152,144,0.6);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-family: 'Inter', sans-serif;
+      }
+
+      @keyframes nb-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.35; }
+      }
+      @keyframes nb-bar {
+        0%   { transform: scaleX(0); opacity: 1; }
+        80%  { transform: scaleX(1); opacity: 1; }
+        100% { transform: scaleX(1); opacity: 0; }
+      }
+      @keyframes nb-dot {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+        40%           { transform: scale(1);   opacity: 1;   }
+      }
+    </style>
   </head>
   <body>
+    <!-- Ladescreen — wird entfernt sobald React mountet -->
+    <div id="nill-boot">
+      <div class="nb-logo">NILL<span>.</span></div>
+      <div class="nb-bar-wrap"><div class="nb-bar"></div></div>
+      <div class="nb-dots">
+        <div class="nb-dot"></div>
+        <div class="nb-dot"></div>
+        <div class="nb-dot"></div>
+      </div>
+      <div class="nb-text">Wird geladen…</div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <script>
+      // Entferne den Loader sobald React den ersten Inhalt in #root rendert
+      (function () {
+        var loader = document.getElementById('nill-boot');
+        if (!loader) return;
+        var obs = new MutationObserver(function () {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            loader.classList.add('fade-out');
+            setTimeout(function () { loader.remove(); }, 380);
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.getElementById('root'), { childList: true });
+        // Fallback: nach 4s immer entfernen
+        setTimeout(function () { loader.classList.add('fade-out'); setTimeout(function () { loader.remove(); }, 380); }, 4000);
+      })();
+    </script>
   </body>
 </html>

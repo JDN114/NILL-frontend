@@ -1,6 +1,5 @@
 // src/components/accounting/BankInsights.jsx
-// Updated: migrated from Tailwind to ac-* design system + defensive hardening
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -8,71 +7,63 @@ import {
 
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 
-const TXN_COLORS = {
-  income:   "#c6ff3c",
-  expense:  "#ff4d8d",
-  transfer: "#7a5cff",
-  unknown:  "#9b9890",
-};
+// /bank/status   → { connected, soft_disconnected }
+// /bank/activity → { connected, activity: [{id,vendor,description,amount,currency,date,status,matched_invoice_id}] }
 
-// Normalize raw API response to a plain array of transactions
-const toArray = (raw) => {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  // Wrapped: { items: [...] } or { transactions: [...] } or { data: [...] }
-  if (Array.isArray(raw.items))        return raw.items;
-  if (Array.isArray(raw.transactions)) return raw.transactions;
-  if (Array.isArray(raw.data))         return raw.data;
-  return [];
-};
-
-// Normalize one transaction to consistent field names
-const normTxn = (t) => {
-  if (!t || typeof t !== "object") return null;
-  const rawAmt = t.amount ?? t.betrag ?? t.value ?? 0;
-  const amt    = parseFloat(rawAmt);
-  const rawDir = (t.type || t.direction || t.transaction_type || "").toLowerCase();
-  // Map various backend spellings to income / expense / transfer / unknown
-  const type =
-    rawDir === "income"   || rawDir === "credit" || rawDir === "einnahme" ? "income"   :
-    rawDir === "expense"  || rawDir === "debit"  || rawDir === "ausgabe"  ? "expense"  :
-    rawDir === "transfer"                                                  ? "transfer" :
-    "unknown";
-  return {
-    date:        t.date || t.booking_date || t.value_date || "",
-    description: t.description || t.purpose || t.reference || t.memo || "",
-    counterpart: t.counterpart || t.name || t.creditor_name || t.debtor_name || "",
-    type,
-    amount:      isNaN(amt) ? 0 : Math.abs(amt),
-    _raw:        t,
-  };
+const STATUS_META = {
+  matched:         { label:"Zugeordnet",     color:"#c6ff3c" },
+  possible_match:  { label:"Mögl. Match",    color:"#7a5cff" },
+  missing_invoice: { label:"Keine Rechnung", color:"#ff4d8d" },
+  unknown:         { label:"Unbekannt",      color:"#9b9890" },
 };
 
 export default function BankInsights() {
-  const [status, setStatus]     = useState(null);
-  const [activity, setActivity] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
-  const [filter, setFilter]     = useState("");
+  const [connected, setConnected]         = useState(false);
+  const [softDisc, setSoftDisc]           = useState(false);
+  const [activity, setActivity]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError]                 = useState(null);
+  const [filter, setFilter]               = useState("");
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     Promise.all([
       api.get("/bank/status").catch(() => null),
       api.get("/bank/activity").catch(() => null),
     ]).then(([s, a]) => {
       try {
-        setStatus(s?.data || null);
-        const raw  = toArray(a?.data);
-        const txns = raw.map(normTxn).filter(Boolean);
-        setActivity(txns);
+        const st = s?.data || {};
+        setConnected(!!st.connected);
+        setSoftDisc(!!st.soft_disconnected);
+        // Backend: { connected, activity: [...] }
+        const raw = a?.data?.activity ?? a?.data ?? [];
+        setActivity(Array.isArray(raw) ? raw : []);
       } catch (err) {
-        console.error("BankInsights: data normalization failed", err);
         setError(err.message || "Datenfehler");
       }
-    }).catch(err => {
-      setError(err.message || "Ladefehler");
-    }).finally(() => setLoading(false));
+    }).catch(err => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const connectBank = () => {
+    // GET /bank/connect gibt einen OAuth-Redirect zurück → direkt navigieren
+    window.location.href = `${import.meta.env.VITE_API_URL}/bank/connect`;
+  };
+
+  const disconnectBank = async () => {
+    setActionLoading(true);
+    try { await api.post("/bank/disconnect"); setConnected(false); setSoftDisc(true); } catch {}
+    setActionLoading(false);
+  };
+
+  const reconnectBank = async () => {
+    setActionLoading(true);
+    try { await api.post("/bank/reconnect"); setConnected(true); setSoftDisc(false); load(); } catch {}
+    setActionLoading(false);
+  };
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Bankdaten…</div>;
 
@@ -84,58 +75,104 @@ export default function BankInsights() {
     </div>
   );
 
-  const income  = activity.filter(t => t.type === "income") .reduce((s,t) => s + t.amount, 0);
-  const expense = activity.filter(t => t.type === "expense").reduce((s,t) => s + t.amount, 0);
+  // ── Nicht verbunden ─────────────────────────────────────────────────────────
+  if (!connected) {
+    return (
+      <div className="ac-card" style={{ textAlign:"center", padding:56 }}>
+        <div style={{ fontSize:"2.8rem", marginBottom:20 }}>🏦</div>
+        <div style={{
+          fontFamily:"Fraunces,serif", fontSize:"1.3rem", fontWeight:600,
+          marginBottom:10, color:"var(--ink)",
+        }}>
+          Bankkonto verknüpfen
+        </div>
+        <div style={{
+          color:"var(--ink2)", fontSize:".88rem", lineHeight:1.6,
+          maxWidth:380, margin:"0 auto 28px",
+        }}>
+          Verbinde dein Bankkonto über TrueLayer, um Transaktionen automatisch
+          abzugleichen und deinen Cashflow in Echtzeit zu sehen.
+        </div>
 
-  // Group by month for chart
+        {softDisc ? (
+          <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+            <button className="ac-btn ac-btn-ghost" onClick={reconnectBank} disabled={actionLoading}>
+              {actionLoading ? "…" : "↩ Wiederverbinden"}
+            </button>
+            <button className="ac-btn ac-btn-primary" onClick={connectBank}>
+              Neu verknüpfen
+            </button>
+          </div>
+        ) : (
+          <button
+            className="ac-btn ac-btn-primary"
+            onClick={connectBank}
+            style={{ fontSize:"1rem", padding:"13px 36px" }}
+          >
+            Konto verknüpfen
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // ── Verbunden ───────────────────────────────────────────────────────────────
+  const total   = activity.reduce((s, t) => s + Number(t.amount || 0), 0);
+  const matched = activity.filter(t => t.status === "matched").length;
+
   const monthMap = {};
   activity.forEach(t => {
-    const m = (t.date || "").slice(0,7);
+    const m = (t.date || "").slice(0, 7);
     if (!m) return;
-    if (!monthMap[m]) monthMap[m] = { name: m, Einnahmen: 0, Ausgaben: 0 };
-    if (t.type === "income")  monthMap[m].Einnahmen += t.amount;
-    if (t.type === "expense") monthMap[m].Ausgaben  += t.amount;
+    if (!monthMap[m]) monthMap[m] = { name: m, Umsatz: 0 };
+    monthMap[m].Umsatz += Number(t.amount || 0);
   });
   const chartData = Object.values(monthMap).sort((a,b) => a.name.localeCompare(b.name)).slice(-6);
 
   const lc = filter.toLowerCase();
   const filtered = activity.filter(t =>
     !filter ||
-    t.description.toLowerCase().includes(lc) ||
-    t.counterpart.toLowerCase().includes(lc)
+    (t.vendor       || "").toLowerCase().includes(lc) ||
+    (t.description  || "").toLowerCase().includes(lc)
   );
 
   return (
     <div>
-      <div className="ac-kpi-grid" style={{ marginBottom:16 }}>
-        {status && (
+      {/* KPIs + Aktionen */}
+      <div style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:16, flexWrap:"wrap" }}>
+        <div className="ac-kpi-grid" style={{ flex:1, marginBottom:0 }}>
           <div className="ac-kpi">
-            <div className="ac-kpi-label">Kontostand</div>
-            <div className={`ac-kpi-value ${Number(status.balance||0) >= 0 ? "green" : "pink"}`}>
-              {fmtEur(status.balance)}
-            </div>
-            <div className="ac-kpi-delta">{status.bank_name || ""}{status.iban ? ` • ${status.iban}` : ""}</div>
+            <div className="ac-kpi-label">Transaktionen</div>
+            <div className="ac-kpi-value">{activity.length}</div>
           </div>
-        )}
-        <div className="ac-kpi">
-          <div className="ac-kpi-label">Eingänge (sichtbar)</div>
-          <div className="ac-kpi-value green">{fmtEur(income)}</div>
+          <div className="ac-kpi">
+            <div className="ac-kpi-label">Gesamtvolumen</div>
+            <div className="ac-kpi-value green">{fmtEur(total)}</div>
+          </div>
+          <div className="ac-kpi">
+            <div className="ac-kpi-label">Zugeordnet</div>
+            <div className="ac-kpi-value">
+              {matched}
+              <span style={{ color:"var(--ink2)", fontWeight:400, fontSize:".9rem" }}> / {activity.length}</span>
+            </div>
+          </div>
         </div>
-        <div className="ac-kpi">
-          <div className="ac-kpi-label">Ausgänge (sichtbar)</div>
-          <div className="ac-kpi-value pink">{fmtEur(expense)}</div>
-        </div>
-        <div className="ac-kpi">
-          <div className="ac-kpi-label">Transaktionen</div>
-          <div className="ac-kpi-value">{activity.length}</div>
+        <div style={{ display:"flex", gap:8, paddingTop:4 }}>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={connectBank}>
+            ↻ Neu verknüpfen
+          </button>
+          <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={disconnectBank} disabled={actionLoading}>
+            {actionLoading ? "…" : "Trennen"}
+          </button>
         </div>
       </div>
 
+      {/* Chart */}
       {chartData.length > 0 && (
         <div className="ac-card" style={{ marginBottom:16 }}>
-          <div className="ac-section-title">Monatlicher Cashflow</div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData} barSize={18}>
+          <div className="ac-section-title">Monatliches Transaktionsvolumen</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={chartData} barSize={22}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.05)" />
               <XAxis dataKey="name" tick={{ fill:"#9b9890", fontSize:11 }} />
               <YAxis tick={{ fill:"#9b9890", fontSize:11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
@@ -143,54 +180,61 @@ export default function BankInsights() {
                 formatter={v => fmtEur(v)}
                 contentStyle={{ background:"#0d0d14", border:"1px solid rgba(239,237,231,.08)", borderRadius:8 }}
               />
-              <Bar dataKey="Einnahmen" fill="#c6ff3c" radius={[4,4,0,0]} isAnimationActive />
-              <Bar dataKey="Ausgaben"  fill="#ff4d8d" radius={[4,4,0,0]} isAnimationActive />
+              <Bar dataKey="Umsatz" fill="#c6ff3c" radius={[4,4,0,0]} isAnimationActive />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
+      {/* Suche */}
       <div style={{ marginBottom:12 }}>
-        <input className="ac-input" style={{ maxWidth:320 }} placeholder="Transaktionen durchsuchen…"
+        <input className="ac-input" style={{ maxWidth:320 }} placeholder="Vendor, Beschreibung…"
           value={filter} onChange={e => setFilter(e.target.value)} />
       </div>
 
+      {/* Tabelle */}
       <div className="ac-card" style={{ padding:0 }}>
         <table className="ac-table">
           <thead>
             <tr>
               <th>Datum</th>
+              <th>Vendor</th>
               <th>Beschreibung</th>
-              <th>Gegenseite</th>
-              <th>Typ</th>
+              <th>Status</th>
               <th style={{textAlign:"right"}}>Betrag</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr><td colSpan={5} className="ac-empty">
-                {activity.length === 0 ? "Keine Bankdaten vorhanden." : "Keine Transaktionen gefunden."}
+                {activity.length === 0
+                  ? "Noch keine Transaktionen synchronisiert."
+                  : "Keine Treffer."}
               </td></tr>
             )}
-            {filtered.slice(0, 100).map((t, i) => {
-              const col = TXN_COLORS[t.type] || TXN_COLORS.unknown;
+            {filtered.slice(0, 100).map(t => {
+              const sm = STATUS_META[t.status] || STATUS_META.unknown;
               return (
-                <tr key={i}>
-                  <td className="ac-mono">{t.date || "—"}</td>
-                  <td style={{ maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                <tr key={t.id}>
+                  <td className="ac-mono" style={{ whiteSpace:"nowrap" }}>
+                    {(t.date || "").slice(0, 10) || "—"}
+                  </td>
+                  <td style={{ maxWidth:180, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontWeight:500 }}>
+                    {t.vendor || "—"}
+                  </td>
+                  <td style={{ maxWidth:260, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", color:"var(--ink2)", fontSize:".82rem" }}>
                     {t.description || "—"}
                   </td>
-                  <td style={{ color:"var(--ink2)", fontSize:".82rem" }}>{t.counterpart || "—"}</td>
                   <td>
-                    <span className="ac-badge" style={{ background:`${col}20`, color:col }}>
-                      {t.type}
+                    <span className="ac-badge" style={{ background:`${sm.color}20`, color:sm.color }}>
+                      {sm.label}
                     </span>
                   </td>
-                  <td className="ac-mono" style={{
-                    textAlign:"right",
-                    color: t.type === "income" ? "var(--accent)" : t.type === "expense" ? "var(--a3)" : "var(--ink)"
-                  }}>
-                    {t.type === "expense" ? "−" : "+"}{fmtEur(t.amount)}
+                  <td className="ac-mono" style={{ textAlign:"right", fontWeight:600 }}>
+                    {fmtEur(t.amount)}
+                    {t.currency && t.currency !== "EUR" && (
+                      <span style={{ fontSize:".72rem", color:"var(--ink2)", marginLeft:4 }}>{t.currency}</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -199,7 +243,7 @@ export default function BankInsights() {
         </table>
         {filtered.length > 100 && (
           <div style={{ textAlign:"center", padding:12, color:"var(--ink2)", fontSize:".82rem" }}>
-            + {filtered.length - 100} weitere Transaktionen (Suchfilter verfeinern)
+            + {filtered.length - 100} weitere (Suchfilter verfeinern)
           </div>
         )}
       </div>
