@@ -1435,7 +1435,7 @@ export default function NILLModule() {
               Live-Modul
             </p>
             <button
-              onClick={() => navigate("/nill/anrufe")}
+              onClick={() => navigate("/dashboard/nill-secretary/calls")}
               style={{
                 display: "flex", alignItems: "center", gap: 10, width: "100%",
                 padding: "9px 12px", borderRadius: 6, border: "none",
