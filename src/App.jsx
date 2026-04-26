@@ -41,7 +41,7 @@ import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
 import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
-import CallModule from "./pages/CallModule.jsx";
+import CallsModule from "./pages/CallsModule.jsx";
  
 function App() {
   return (
@@ -150,7 +150,7 @@ function App() {
                   <ProtectedRoute><NILLModule /></ProtectedRoute>
                 }/>
                 <Route path="/dashboard/NILL-Secretary/Calls" element={
-                  <ProtectedRoute><CallModule /></ProtectedRoute>
+                  <ProtectedRoute><CallsModule /></ProtectedRoute>
                 }/>
 	      </Routes>
             </Router>
