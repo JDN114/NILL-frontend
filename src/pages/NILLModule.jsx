@@ -1,6 +1,6 @@
 // src/pages/NILLModule.jsx
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageLayout from "../components/layout/PageLayout";
 import api from "../services/api";
@@ -1368,6 +1368,7 @@ function MeetingsModule() {
 
 export default function NILLModule() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [active, setActive] = useState(searchParams.get("module") || "overview");
   const [nillNotifications, setNillNotifications] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
@@ -1424,6 +1425,46 @@ export default function NILLModule() {
             })}
           </nav>
 
+          {/* Sektion: Anrufe (eigene Route) */}
+          <div style={{ padding: "12px 8px", borderTop: `1px solid ${T.border}` }}>
+            <p style={{
+              margin: "4px 12px 8px",
+              fontFamily: FONT_MONO, fontSize: 9, color: T.textTer,
+              letterSpacing: "0.12em", textTransform: "uppercase",
+            }}>
+              Live-Modul
+            </p>
+            <button
+              onClick={() => navigate("/nill/anrufe")}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%",
+                padding: "9px 12px", borderRadius: 6, border: "none",
+                background: "none", cursor: "pointer", textAlign: "left",
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = T.bg2; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; }}
+            >
+              <span style={{
+                fontFamily: FONT_MONO, fontSize: 9, color: T.accent,
+                letterSpacing: "0.06em", minWidth: 16,
+              }}>08</span>
+              <span style={{
+                fontFamily: FONT_BODY, fontSize: 13, fontWeight: 400,
+                color: T.textSec, flex: 1,
+              }}>
+                Anrufe
+              </span>
+              <span
+                className="nill-live-dot"
+                style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: T.accent, boxShadow: `0 0 8px ${T.accent}`,
+                  flexShrink: 0,
+                }}
+              />
+            </button>
+          </div>
           <div style={{ padding: "14px 20px", borderTop: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.accent }} />
             <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.1em" }}>ONLINE</span>
