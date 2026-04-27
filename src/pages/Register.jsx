@@ -14,6 +14,28 @@ export default function Register() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const MIN_PASSWORD_LENGTH = 6;
 
+  // ✅ Mappt Backend-Fehlermeldungen auf nutzerfreundliche deutsche Texte
+  const mapApiError = (err) => {
+    const detail = err.response?.data?.detail;
+    const status = err.response?.status;
+
+    if (status === 429) return "Zu viele Versuche. Bitte warte eine Stunde und versuche es erneut.";
+    if (status === 500) return "Serverfehler. Bitte versuche es später erneut.";
+
+    if (typeof detail === "string") {
+      if (detail.includes("Email already registered"))
+        return "Diese E-Mail-Adresse ist bereits registriert. Möchtest du dich stattdessen einloggen?";
+      if (detail.includes("Missing email or password"))
+        return "Bitte E-Mail und Passwort angeben.";
+      if (detail.includes("Invalid JSON"))
+        return "Ungültige Anfrage. Bitte lade die Seite neu.";
+      if (detail.includes("Failed to send verification email"))
+        return "Bestätigungs-Mail konnte nicht gesendet werden. Bitte versuche es später erneut.";
+    }
+
+    return "Registrierung fehlgeschlagen. Bitte versuche es später erneut.";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -39,7 +61,7 @@ export default function Register() {
       setSuccess(true);
     } catch (err) {
       console.error("Registration error:", err);
-      setError(err.response?.data?.message || "Registrierung fehlgeschlagen. Bitte versuche es später erneut.");
+      setError(mapApiError(err));
     } finally {
       setLoading(false);
     }
@@ -164,6 +186,11 @@ export default function Register() {
       border-radius: 8px;
       margin-bottom: 14px;
     }
+    .nill-error a {
+      color: #c6ff3c;
+      cursor: pointer;
+      text-decoration: underline;
+    }
     .nill-btn-primary {
       width: 100%;
       margin-top: 8px;
@@ -218,6 +245,17 @@ export default function Register() {
       font-size: 20px;
     }
   `;
+
+  // ✅ "bereits registriert"-Fehler bekommt einen Login-Link direkt in der Fehlermeldung
+  const errorContent =
+    error.includes("bereits registriert") ? (
+      <>
+        Diese E-Mail-Adresse ist bereits registriert.{" "}
+        <a onClick={() => navigate("/login")}>Jetzt einloggen →</a>
+      </>
+    ) : (
+      error
+    );
 
   if (success) {
     return (
@@ -296,7 +334,7 @@ export default function Register() {
               />
             </div>
 
-            {error && <div className="nill-error">{error}</div>}
+            {error && <div className="nill-error">{errorContent}</div>}
 
             <button className="nill-btn-primary" type="submit" disabled={loading}>
               {loading ? "Registriere…" : "Registrieren →"}

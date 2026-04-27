@@ -137,7 +137,7 @@ export default function EmailsPage() {
   } = useContext(MailContext);
 
   const [mailbox, setMailbox]           = useState("inbox");
-  const [activeFolder, setActiveFolder] = useState(null); // Smart Folder ID
+  const [activeFolder, setActiveFolder] = useState(null);
   const [folders, setFolders]           = useState([]);
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [editingFolder, setEditingFolder]     = useState(null);
@@ -148,7 +148,7 @@ export default function EmailsPage() {
   const [emails, setEmails]             = useState([]);
   const [error, setError]               = useState(null);
   const [search, setSearch]             = useState("");
-  const [searchResults, setSearchResults] = useState(null); // null = nicht gesucht
+  const [searchResults, setSearchResults] = useState(null);
   const [searching, setSearching]       = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [filterOpen, setFilterOpen]     = useState(false);
@@ -157,39 +157,48 @@ export default function EmailsPage() {
   const activeEmailRef = useRef(null);
   const searchTimeout  = useRef(null);
 
+  // ✅ Ref für mailbox + activeFolder damit loadEmails keine stale closure hat
+  const mailboxRef     = useRef(mailbox);
+  const activeFolderRef = useRef(activeFolder);
+  useEffect(() => { mailboxRef.current = mailbox; }, [mailbox]);
+  useEffect(() => { activeFolderRef.current = activeFolder; }, [activeFolder]);
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
 
-  // Smart Folders laden
   useEffect(() => {
     if (connected) {
       api.get("/gmail/folders").then(r => setFolders(r.data?.folders || [])).catch(() => {});
     }
   }, [connected]);
+
   useEffect(() => { if (!user) navigate("/login", { replace: true }); }, [user, navigate]);
 
   // ── Initiales Laden ───────────────────────────────────────────────────────
+  // ✅ loadEmails aus den useEffect-Dependencies raus — wird per Ref aufgerufen
   const loadEmails = useCallback(async () => {
     if (!connected) return;
     setLoading(true); setError(null); setSearchResults(null);
     try {
-      if (activeFolder) {
-        const r = await api.get(`/gmail/folders/${activeFolder}/emails`);
+      if (activeFolderRef.current) {
+        const r = await api.get(`/gmail/folders/${activeFolderRef.current}/emails`);
         setEmails((r.data?.emails || []).sort((a,b) => new Date(b.received_at||0)-new Date(a.received_at||0)));
       } else {
-        const f = (await fetchEmails(mailbox)) ?? [];
+        const f = (await fetchEmails(mailboxRef.current)) ?? [];
         setEmails([...f].sort((a,b) => new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)));
       }
     } catch { setError("Laden fehlgeschlagen."); }
     finally { setLoading(false); }
-  }, [connected, mailbox, activeFolder, fetchEmails]);
+  }, [connected, fetchEmails]); // ✅ mailbox + activeFolder absichtlich raus (via Ref)
 
-  useEffect(() => { if (connected && !initializing) loadEmails(); }, [connected, mailbox, activeFolder, initializing]);
+  // ✅ Trigger nur wenn sich mailbox, activeFolder oder initializing ändert
+  //    — NICHT bei loadEmails-Referenzänderungen
+  useEffect(() => {
+    if (connected && !initializing) loadEmails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, mailbox, activeFolder, initializing]);
 
-  // ── Mehr laden (Lazy Loading) ─────────────────────────────────────────────
+  // ── Mehr laden ────────────────────────────────────────────────────────────
   const loadMore = async () => {
-    if (loadingMore) return;
-    // Im Smart Folder gibt es kein Pagination – alle Emails bereits geladen
-    if (activeFolder) return;
+    if (loadingMore || activeFolder) return;
     setLoadingMore(true);
     try {
       const more = (await fetchEmails(mailbox, true)) ?? [];
@@ -206,17 +215,11 @@ export default function EmailsPage() {
     finally { setLoadingMore(false); }
   };
 
-  // ── Suche: kurz → client-side, lang / Enter → DB ─────────────────────────
+  // ── Suche ────────────────────────────────────────────────────────────────
   const handleSearchChange = (val) => {
     setSearch(val);
     clearTimeout(searchTimeout.current);
-
-    if (!val.trim()) {
-      setSearchResults(null);
-      return;
-    }
-
-    // Client-seitige Vorschau (instant, aus gecachten Emails)
+    if (!val.trim()) { setSearchResults(null); return; }
     const q = val.toLowerCase();
     const clientHits = emails.filter(m =>
       (m.subject||"").toLowerCase().includes(q) ||
@@ -224,18 +227,14 @@ export default function EmailsPage() {
       extractSender(m).email.toLowerCase().includes(q)
     );
     setSearchResults(clientHits);
-
-    // Nach 600ms DB-Suche starten (findet ältere Emails)
     if (val.trim().length >= 2) {
       searchTimeout.current = setTimeout(async () => {
         setSearching(true);
         try {
           const dbResults = await searchEmails(val.trim(), mailbox);
-          setSearchResults(
-            [...dbResults].sort((a,b) =>
-              new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)
-            )
-          );
+          setSearchResults([...dbResults].sort((a,b) =>
+            new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)
+          ));
         } catch { /* keep client results */ }
         finally { setSearching(false); }
       }, 600);
@@ -244,14 +243,12 @@ export default function EmailsPage() {
 
   useEffect(() => () => clearTimeout(searchTimeout.current), []);
 
-  // ── Client-seitiger Filter (auf aktuelle Liste oder Suchergebnisse) ────────
+  // ── Filter ───────────────────────────────────────────────────────────────
   const displayEmails = useMemo(() => {
     const base = searchResults !== null ? searchResults : emails;
     if (activeFilter === "all") return base;
-
     const now = new Date(), sow = new Date(now);
     sow.setDate(now.getDate() - now.getDay());
-
     return base.filter(mail => {
       switch (activeFilter) {
         case "unread":  return !mail.read;
@@ -268,22 +265,33 @@ export default function EmailsPage() {
   const unreadCount = useMemo(() => emails.filter(m => !m.read && m.mailbox !== "sent").length, [emails]);
   const canLoadMore = searchResults === null && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
 
-  // ── Polling ───────────────────────────────────────────────────────────────
+  // ── Polling (nur für AI-Status des geöffneten Emails) ─────────────────────
+  // ✅ Polling ruft jetzt /outlook/emails/{id} direkt auf — NICHT die Liste
   const stopPolling  = () => { clearInterval(pollingRef.current); pollingRef.current = null; };
-  const startPolling = (id) => {
+
+  const startPolling = useCallback((id) => {
     stopPolling();
     pollingRef.current = setInterval(async () => {
       try {
-        const u = await openEmail(id);
-        if (["done","success","failed"].includes(u?.ai_status) || !activeEmailRef.current) stopPolling();
-      } catch { stopPolling(); }
-    }, 2500);
-  };
+        // ✅ Direkt den Einzel-Endpoint aufrufen, nicht die gesamte Emailliste
+        const updated = await openEmail(id);
+        const status = updated?.ai_status ?? activeEmailRef.current?.ai_status;
+        if (["done", "success", "failed"].includes(status) || !activeEmailRef.current) {
+          stopPolling();
+        }
+      } catch {
+        stopPolling();
+      }
+    }, 4000); // ✅ 4s statt 2.5s — weniger Druck auf den Server
+  }, [openEmail]);
+
   useEffect(() => () => stopPolling(), []);
 
-  const handleOpen  = async (id) => {
+  const handleOpen = async (id) => {
     if (!id || activeEmailRef.current?.id === id) return;
-    stopPolling(); await openEmail(id); startPolling(id);
+    stopPolling();
+    await openEmail(id);
+    startPolling(id);
   };
   const handleClose = () => { stopPolling(); setTimeout(closeEmail, 30); };
   const handleDisconnect = async () => {
@@ -329,10 +337,7 @@ export default function EmailsPage() {
               </button>
             ))}
 
-            {/* Smart Folders */}
-            {folders.length > 0 && (
-              <div className="em-nav-divider"/>
-            )}
+            {folders.length > 0 && <div className="em-nav-divider"/>}
             {folders.map(f => (
               <div key={f.id} className="flex items-center group">
                 <button
@@ -350,7 +355,6 @@ export default function EmailsPage() {
               </div>
             ))}
 
-            {/* Ordner hinzufügen */}
             <button onClick={() => { setEditingFolder(null); setFolderModalOpen(true); }}
               className="em-nav-item" style={{color: "var(--nill-text-dim)", marginTop: "4px"}}>
               <span>+ Ordner</span>
@@ -451,7 +455,6 @@ export default function EmailsPage() {
               );
             })}
 
-            {/* Mehr laden */}
             {canLoadMore && (
               <li className="em-load-more">
                 <button onClick={loadMore} disabled={loadingMore} className="em-load-more-btn">
