@@ -9,7 +9,10 @@ export const OutlookProvider = ({ children }) => {
   const [activeEmail, setActiveEmail] = useState(null);
   const [initializing, setInitializing] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+
   const lastStatusFetch = useRef(0);
+  // ✅ Ref speichert den aktuellen connected-Wert, ohne fetchEmails neu zu erzeugen
+  const connectedRef = useRef(false);
 
   // =========================
   // Status Check
@@ -17,42 +20,50 @@ export const OutlookProvider = ({ children }) => {
   const fetchStatus = useCallback(async () => {
     try {
       const now = Date.now();
-      if (now - lastStatusFetch.current < 5000) return; // 5s debounce
+      if (now - lastStatusFetch.current < 5000) return;
       lastStatusFetch.current = now;
 
       const res = await api.get("/outlook/status");
-      console.log("[OutlookContext] /status response:", res.data);
-
       const data = res.data || { connected: false };
-      setConnected(data);
+      const isConnected = Boolean(data.connected);
 
-      if (!data.connected) {
-        setEmails([]);
-        setActiveEmail(null);
+      // ✅ Nur setState wenn sich der Wert wirklich ändert — verhindert
+      //    neue Objekt-Referenz bei jedem Poll und damit den Render-Loop
+      if (isConnected !== connectedRef.current) {
+        connectedRef.current = isConnected;
+        setConnected(data);
+
+        if (!isConnected) {
+          setEmails([]);
+          setActiveEmail(null);
+        }
       }
     } catch (err) {
       console.error("[OutlookContext] Status error:", err);
-      setConnected({ connected: false });
-      setEmails([]);
-      setActiveEmail(null);
+      if (connectedRef.current !== false) {
+        connectedRef.current = false;
+        setConnected({ connected: false });
+        setEmails([]);
+        setActiveEmail(null);
+      }
     }
-  }, []);
+  }, []); // ✅ keine Dependencies → stabile Referenz
 
   // =========================
   // Fetch Emails List
   // =========================
   const fetchEmails = useCallback(async () => {
-    if (!connected?.connected) return [];
+    // ✅ Ref statt State als Dependency → fetchEmails wird nie neu erzeugt
+    if (!connectedRef.current) return [];
     setInitializing(true);
     try {
       const res = await api.get("/outlook/emails");
-      console.log("[OutlookContext] /emails response:", res.data);
-
       const rawEmails = res?.data?.emails ?? [];
       const safeEmails = rawEmails.map((m) => ({
         id: m.id,
         subject: m.subject ?? "(Kein Betreff)",
         from: m.from ?? "(Absender unbekannt)",
+        from_address: m.from_address ?? m.from ?? "(Absender unbekannt)",
         received_at: m.received_at ?? null,
         mailbox: m.mailbox ?? "inbox",
         body: m.body ?? "<p>Kein Inhalt</p>",
@@ -73,7 +84,7 @@ export const OutlookProvider = ({ children }) => {
     } finally {
       setInitializing(false);
     }
-  }, [connected]);
+  }, []); // ✅ keine Dependencies → stabile Referenz, kein Loop
 
   // =========================
   // Open Single Email
@@ -83,8 +94,6 @@ export const OutlookProvider = ({ children }) => {
     setInitializing(true);
     try {
       const res = await api.get(`/outlook/emails/${id}`);
-      console.log(`[OutlookContext] /emails/${id} response:`, res.data);
-
       const mail = res.data;
       if (!mail) return null;
 
@@ -92,6 +101,7 @@ export const OutlookProvider = ({ children }) => {
         id: mail.id,
         subject: mail.subject ?? "(Kein Betreff)",
         from: mail.from ?? "(Absender unbekannt)",
+        from_address: mail.from_address ?? mail.from ?? "(Absender unbekannt)",
         received_at: mail.received_at,
         body: mail.body ?? "<p>Kein Inhalt</p>",
         mailbox: mail.mailbox ?? "inbox",
@@ -100,6 +110,7 @@ export const OutlookProvider = ({ children }) => {
         priority: mail.priority ?? null,
         category: mail.category ?? null,
         category_group: mail.category_group ?? null,
+        sentiment: mail.sentiment ?? null,
         action_items: mail.action_items ?? [],
         detected_dates: mail.detected_dates ?? [],
       };
@@ -124,17 +135,16 @@ export const OutlookProvider = ({ children }) => {
   // Connect / Disconnect
   // =========================
   const connectOutlook = () => {
-    console.log("[OutlookContext] Redirecting to /auth-url");
     window.location.href = `${api.defaults.baseURL}/outlook/auth-url`;
   };
 
   const disconnectOutlook = useCallback(async () => {
     try {
       await api.post("/outlook/disconnect");
+      connectedRef.current = false;
       setConnected({ connected: false });
       setEmails([]);
       setActiveEmail(null);
-      console.log("[OutlookContext] Outlook disconnected");
     } catch (err) {
       console.error("[OutlookContext] Disconnect error:", err);
     }
@@ -145,7 +155,7 @@ export const OutlookProvider = ({ children }) => {
   // =========================
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 15000); // alle 15s prüfen
+    const interval = setInterval(fetchStatus, 15000);
     return () => clearInterval(interval);
   }, [fetchStatus]);
 
