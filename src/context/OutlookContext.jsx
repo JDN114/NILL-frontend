@@ -53,7 +53,8 @@ export const OutlookProvider = ({ children }) => {
   // Fetch Emails List
   // =========================
   const fetchEmails = useCallback(async () => {
-    // ✅ Ref statt State als Dependency → fetchEmails wird nie neu erzeugt
+    console.log("[DEBUG] fetchEmails called, connectedRef=", connectedRef.current);
+    console.trace();
     if (!connectedRef.current) return [];
     setInitializing(true);
     try {
