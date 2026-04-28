@@ -294,6 +294,8 @@ export default function EmailsPage() {
     if (!id || activeEmailRef.current?.id === id) return;
     stopPolling();
     await openEmail(id);
+    // ✅ Lokal als gelesen markieren
+    setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e));
     startPolling(id);
   };
   const handleClose = () => { stopPolling(); setTimeout(closeEmail, 30); };
