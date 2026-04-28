@@ -53,8 +53,6 @@ export const OutlookProvider = ({ children }) => {
   // Fetch Emails List
   // =========================
   const fetchEmails = useCallback(async () => {
-    console.log("[DEBUG] fetchEmails called, connectedRef=", connectedRef.current);
-    console.trace();
     if (!connectedRef.current) return [];
     try {
       const res = await api.get("/outlook/emails");
@@ -74,6 +72,7 @@ export const OutlookProvider = ({ children }) => {
         category_group: m.category_group ?? null,
         action_items: m.action_items ?? [],
         detected_dates: m.detected_dates ?? [],
+        read: m.read ?? false,
       }));
 
       setEmails(safeEmails);
