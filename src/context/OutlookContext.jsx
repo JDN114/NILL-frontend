@@ -115,6 +115,10 @@ export const OutlookProvider = ({ children }) => {
 
       setActiveEmail(active);
       setAiLoading(active.ai_status === "pending");
+      if (!mail.read) {
+        api.post(`/outlook/emails/${id}/read`).catch(() => {});
+        setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e));
+      }
       return active;
     } catch (err) {
       console.error("[OutlookContext] openEmail failed:", err);
