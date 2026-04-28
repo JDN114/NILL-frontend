@@ -89,12 +89,10 @@ export const OutlookProvider = ({ children }) => {
   // =========================
   const openEmail = useCallback(async (id) => {
     if (!id) return null;
-    // kein setInitializing
     try {
       const res = await api.get(`/outlook/emails/${id}`);
       const mail = res.data;
       if (!mail) return null;
-
       const active = {
         id: mail.id,
         subject: mail.subject ?? "(Kein Betreff)",
@@ -111,8 +109,8 @@ export const OutlookProvider = ({ children }) => {
         sentiment: mail.sentiment ?? null,
         action_items: mail.action_items ?? [],
         detected_dates: mail.detected_dates ?? [],
+        read: mail.read ?? false,
       };
-
       setActiveEmail(active);
       setAiLoading(active.ai_status === "pending");
       if (!mail.read) {
@@ -123,8 +121,6 @@ export const OutlookProvider = ({ children }) => {
     } catch (err) {
       console.error("[OutlookContext] openEmail failed:", err);
       return null;
-    } finally {
-      setInitializing(false);
     }
   }, []);
 
