@@ -158,10 +158,13 @@ export default function EmailsPage() {
   const searchTimeout  = useRef(null);
 
   // ✅ Ref für mailbox + activeFolder damit loadEmails keine stale closure hat
-  const mailboxRef     = useRef(mailbox);
+  const mailboxRef      = useRef(mailbox);
   const activeFolderRef = useRef(activeFolder);
+  // ✅ fetchEmails per Ref speichern — damit loadEmails keine neue Referenz bekommt
+  const fetchEmailsRef  = useRef(fetchEmails);
   useEffect(() => { mailboxRef.current = mailbox; }, [mailbox]);
   useEffect(() => { activeFolderRef.current = activeFolder; }, [activeFolder]);
+  useEffect(() => { fetchEmailsRef.current = fetchEmails; }, [fetchEmails]);
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
 
   useEffect(() => {
@@ -182,12 +185,12 @@ export default function EmailsPage() {
         const r = await api.get(`/gmail/folders/${activeFolderRef.current}/emails`);
         setEmails((r.data?.emails || []).sort((a,b) => new Date(b.received_at||0)-new Date(a.received_at||0)));
       } else {
-        const f = (await fetchEmails(mailboxRef.current)) ?? [];
+        const f = (await fetchEmailsRef.current(mailboxRef.current)) ?? [];
         setEmails([...f].sort((a,b) => new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)));
       }
     } catch { setError("Laden fehlgeschlagen."); }
     finally { setLoading(false); }
-  }, [connected, fetchEmails]); // ✅ mailbox + activeFolder absichtlich raus (via Ref)
+  }, [connected]); // ✅ fetchEmails via Ref — kein Loop
 
   // ✅ Trigger nur wenn sich mailbox, activeFolder oder initializing ändert
   //    — NICHT bei loadEmails-Referenzänderungen

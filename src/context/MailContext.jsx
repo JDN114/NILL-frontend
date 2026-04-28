@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { GmailContext } from "./GmailContext";
 import { OutlookContext } from "./OutlookContext";
 
@@ -40,8 +40,8 @@ export const MailProvider = ({ children }) => {
     return { inbox: false, sent: false };
   }, [provider, gmail?.hasMoreInbox, gmail?.hasMoreSent]);
 
-  // Normales Laden (Lazy Loading — append=true für "Mehr laden")
-  const fetchEmails = async (box = null, append = false) => {
+  // ✅ useCallback — stabile Referenz, löst den Render-Loop in EmailsPage
+  const fetchEmails = useCallback(async (box = null, append = false) => {
     if (!provider) return [];
     if (provider === "outlook") {
       const f = await outlook.fetchEmails();
@@ -57,37 +57,36 @@ export const MailProvider = ({ children }) => {
       return [...inbox, ...sent];
     }
     return [];
-  };
+  }, [provider, outlook?.fetchEmails, gmail?.fetchInboxEmails, gmail?.fetchSentEmails]);
 
-  // DB-seitige Suche — findet auch alte Emails
-  const searchEmails = async (q, box = null) => {
+  // ✅ useCallback auf allen weiteren Funktionen
+  const searchEmails = useCallback(async (q, box = null) => {
     if (!provider) return [];
     if (provider === "gmail") return await gmail.searchEmails(q, box);
-    // Outlook: client-side fallback auf gecachte Emails
-    const all = emails;
+    const all = outlook?.emails ?? [];
     const ql  = q.toLowerCase();
     return all.filter(m =>
       (m.subject || "").toLowerCase().includes(ql) ||
       (m.from_address || m.from || "").toLowerCase().includes(ql)
     );
-  };
+  }, [provider, gmail?.searchEmails, outlook?.emails]);
 
-  const openEmail = async (id) => {
+  const openEmail = useCallback(async (id) => {
     if (!id) return null;
     if (provider === "outlook") return await outlook.openEmail(id);
     if (provider === "gmail")   return await gmail.openEmail(id);
     return null;
-  };
+  }, [provider, outlook?.openEmail, gmail?.openEmail]);
 
-  const closeEmail = () => {
+  const closeEmail = useCallback(() => {
     if (provider === "outlook") outlook.closeEmail?.();
     if (provider === "gmail")   gmail.closeEmail?.();
-  };
+  }, [provider, outlook?.closeEmail, gmail?.closeEmail]);
 
-  const disconnectProvider = async () => {
+  const disconnectProvider = useCallback(async () => {
     if (provider === "gmail")   return await gmail.disconnectGmail?.();
     if (provider === "outlook") return await outlook.disconnectOutlook?.();
-  };
+  }, [provider, gmail?.disconnectGmail, outlook?.disconnectOutlook]);
 
   return (
     <MailContext.Provider value={{
