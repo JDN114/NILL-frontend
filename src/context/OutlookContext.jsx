@@ -89,7 +89,7 @@ export const OutlookProvider = ({ children }) => {
   // =========================
   const openEmail = useCallback(async (id) => {
     if (!id) return null;
-    setInitializing(true);
+    // kein setInitializing
     try {
       const res = await api.get(`/outlook/emails/${id}`);
       const mail = res.data;
