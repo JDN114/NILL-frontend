@@ -56,7 +56,6 @@ export const OutlookProvider = ({ children }) => {
     console.log("[DEBUG] fetchEmails called, connectedRef=", connectedRef.current);
     console.trace();
     if (!connectedRef.current) return [];
-    setInitializing(true);
     try {
       const res = await api.get("/outlook/emails");
       const rawEmails = res?.data?.emails ?? [];
@@ -82,8 +81,6 @@ export const OutlookProvider = ({ children }) => {
     } catch (err) {
       console.error("[OutlookContext] fetchEmails failed:", err);
       return [];
-    } finally {
-      setInitializing(false);
     }
   }, []); // ✅ keine Dependencies → stabile Referenz, kein Loop
 
