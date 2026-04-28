@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import api from "../services/api";
 
 export const OutlookContext = createContext();
@@ -157,22 +157,23 @@ export const OutlookProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [fetchStatus]);
 
+  const value = useMemo(() => ({
+    connected,
+    emails,
+    activeEmail,
+    initializing,
+    aiLoading,
+    fetchStatus,
+    fetchEmails,
+    openEmail,
+    closeEmail,
+    connectOutlook,
+    disconnectOutlook,
+  }), [connected, emails, activeEmail, initializing, aiLoading,
+       fetchStatus, fetchEmails, openEmail, closeEmail, connectOutlook, disconnectOutlook]);
+
   return (
-    <OutlookContext.Provider
-      value={{
-        connected,
-        emails,
-        activeEmail,
-        initializing,
-        aiLoading,
-        fetchStatus,
-        fetchEmails,
-        openEmail,
-        closeEmail,
-        connectOutlook,
-        disconnectOutlook,
-      }}
-    >
+    <OutlookContext.Provider value={value}>
       {children}
     </OutlookContext.Provider>
   );
