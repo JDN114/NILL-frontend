@@ -72,7 +72,7 @@ export default function EmailComposeModal({ open, onClose }) {
       fd.append("use_template", String(!!templateId));
       if (templateId) fd.append("template_id", templateId);
       files.forEach(f => fd.append("files", f));
-      await api.post("/gmail/send-with-attachments", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      await api.post("/gmail/send-with-attachments", fd);
       onClose();
     } catch (err) {
       setError(err?.response?.data?.message || "E-Mail konnte nicht gesendet werden.");
