@@ -6,7 +6,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
 import { OutlookProvider } from "./context/OutlookContext";
 import { MailProvider } from "./context/MailContext";
-import { ImapProvider } from "./context/ImapContext";
 
 import ProtectedRoute from "./ProtectedRoute";
 import AdminGuard from "./components/AdminGuard";
@@ -49,7 +48,6 @@ function App() {
     <AuthProvider>
       <GmailProvider>
         <OutlookProvider>
-          <ImapProvider>
           <MailProvider>
             <Router>
               <Routes>
@@ -157,7 +155,6 @@ function App() {
 	      </Routes>
             </Router>
           </MailProvider>
-          </ImapProvider>
         </OutlookProvider>
       </GmailProvider>
     </AuthProvider>
