@@ -1,33 +1,36 @@
+// src/pages/SettingsPage.jsx
+//
+// Drop-in Replacement — fügt IMAP/Custom-Domain als dritten Provider neben
+// Gmail/Outlook hinzu. Integrationen-Tab listet alle verbundenen Konten,
+// Provider-Picker bietet drei Optionen, IMAP-Accounts können einzeln getrennt
+// und bei needs_reauth-Status erneut verbunden werden.
+//
+// Bestehende Funktionalität (Konto, Unternehmen, Abonnement, Team,
+// E-Mail-Vorlagen, Modals) ist unverändert.
+
 import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-
 import PageLayout from "../components/layout/PageLayout";
 import Card from "../components/ui/Card";
-
 import { GmailContext } from "../context/GmailContext";
 import { OutlookContext } from "../context/OutlookContext";
+import { ImapContext } from "../context/ImapContext";
 import { useAuth } from "../context/AuthContext";
-
 import api, { logoutUser } from "../services/api";
-
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 import EmailVorlagenTab from "../components/EmailVorlagenTab";
+import ImapConnectModal from "../components/ImapConnectModal";
 
 const INDUSTRIES = [
   "Handwerk", "Reinigung", "Werkstatt", "Gastronomie",
   "Beratung", "Gesundheit", "IT & Software",
-  "Handel", "Transport", "Sonstiges"
+  "Handel", "Transport", "Sonstiges",
 ];
-
 const PERMISSION_LABELS = {
-  calendar:   "Kalender",
-  email:      "E-Mail",
-  accounting: "Buchhaltung",
-  schedules:  "Dienstplan",
-  documents:  "Dokumente",
-  inventory:  "Inventar",
-  wages:      "Lohn",
+  calendar: "Kalender", email: "E-Mail", accounting: "Buchhaltung",
+  schedules: "Dienstplan", documents: "Dokumente", inventory: "Inventar",
+  wages: "Lohn",
 };
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -56,7 +59,6 @@ const IconMail = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
   </svg>
 );
-
 const IconTeam = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
@@ -68,9 +70,7 @@ function SidebarTab({ id, label, icon, active, onClick }) {
     <button
       onClick={() => onClick(id)}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
-        active
-          ? "bg-white/10 text-white"
-          : "text-gray-400 hover:text-white hover:bg-white/5"
+        active ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
       }`}
     >
       <span className={active ? "text-white" : "text-gray-500"}>{icon}</span>
@@ -83,10 +83,9 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, org, updateOrg, isSolo, isCompanyAdmin } = useAuth();
-
   const showTeamTab = !isSolo() && org?.plan != null;
-
   const isAdmin = isCompanyAdmin();
+
   const TABS = [
     { id: "konto",         label: "Konto",         icon: <IconUser /> },
     ...(isAdmin ? [{ id: "unternehmen",   label: "Unternehmen",   icon: <IconBuilding /> }] : []),
@@ -98,15 +97,20 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState("konto");
 
+  // ── Provider Contexts ──────────────────────────────────────────────────
   const { connected: gmailConnected, connectGmail, disconnectGmail, fetchStatus: fetchGmailStatus } = useContext(GmailContext);
   const { connected: outlookConnected, connectOutlook, disconnectOutlook, fetchStatus: fetchOutlookStatus } = useContext(OutlookContext);
+  const imap = useContext(ImapContext);
+  const imapAccounts = imap?.accounts ?? [];
 
-  const [loadingStatus,     setLoadingStatus]     = useState(false);
-  const [showProviderModal, setShowProviderModal]  = useState(false);
-  const [showPasswordModal, setShowPasswordModal]  = useState(false);
-  const [showDeleteModal,   setShowDeleteModal]    = useState(false);
-  const [subscription,      setSubscription]       = useState(null);
-  const [loadingSub,        setLoadingSub]         = useState(true);
+  const [loadingStatus,     setLoadingStatus]    = useState(false);
+  const [showProviderModal, setShowProviderModal] = useState(false);
+  const [showImapModal,     setShowImapModal]    = useState(false);
+  const [reauthAccount,     setReauthAccount]    = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal,   setShowDeleteModal]   = useState(false);
+  const [subscription,      setSubscription]      = useState(null);
+  const [loadingSub,        setLoadingSub]        = useState(true);
 
   const [orgName,     setOrgName]     = useState(org?.name ?? "");
   const [orgIndustry, setOrgIndustry] = useState(org?.industry ?? "");
@@ -114,6 +118,7 @@ export default function SettingsPage() {
   const [orgSuccess,  setOrgSuccess]  = useState(false);
   const [orgError,    setOrgError]    = useState("");
 
+  // ── Status laden (alle drei Provider) ─────────────────────────────────
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -121,6 +126,7 @@ export default function SettingsPage() {
       try {
         if (typeof fetchGmailStatus === "function") await fetchGmailStatus();
         if (typeof fetchOutlookStatus === "function") await fetchOutlookStatus();
+        if (typeof imap?.fetchStatus === "function") await imap.fetchStatus();
       } catch (err) {
         console.error("[Settings] Status load error:", err);
       } finally {
@@ -129,8 +135,9 @@ export default function SettingsPage() {
     };
     load();
     return () => { mounted = false; };
-  }, [fetchGmailStatus, fetchOutlookStatus, location.key]);
+  }, [fetchGmailStatus, fetchOutlookStatus, imap?.fetchStatus, location.key]);
 
+  // ── Subscription ──────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
@@ -170,26 +177,34 @@ export default function SettingsPage() {
 
   const handleProviderSelect = (provider) => {
     setShowProviderModal(false);
-    if (provider === "gmail") connectGmail();
-    if (provider === "outlook") connectOutlook();
+    if (provider === "gmail")   return connectGmail();
+    if (provider === "outlook") return connectOutlook();
+    if (provider === "imap") {
+      setReauthAccount(null);
+      setShowImapModal(true);
+    }
   };
 
-  const handleDisconnect = async () => {
+  const handleReauth = (account) => {
+    setReauthAccount(account);
+    setShowImapModal(true);
+  };
+
+  const handleDisconnectImap = async (accountId) => {
+    if (!window.confirm("Postfach wirklich trennen?")) return;
     setLoadingStatus(true);
     try {
-      if (outlookIsConnected) await disconnectOutlook();
-      else if (gmailIsConnected) await disconnectGmail();
-    } catch (err) {
-      console.error("[Settings] Disconnect error:", err);
+      await imap.removeAccount(accountId);
     } finally {
       setLoadingStatus(false);
     }
   };
 
+  const handleDisconnectGmail   = async () => { setLoadingStatus(true); try { await disconnectGmail(); } finally { setLoadingStatus(false); } };
+  const handleDisconnectOutlook = async () => { setLoadingStatus(true); try { await disconnectOutlook(); } finally { setLoadingStatus(false); } };
+
   const gmailIsConnected   = gmailConnected === true || gmailConnected?.connected === true;
   const outlookIsConnected = outlookConnected === true || outlookConnected?.connected === true;
-  const anyConnected       = gmailIsConnected || outlookIsConnected;
-  const providerName       = outlookIsConnected ? "Microsoft Outlook" : gmailIsConnected ? "Gmail" : null;
 
   const planStatusClass = org?.plan_status === "active"
     ? "text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-400"
@@ -198,31 +213,25 @@ export default function SettingsPage() {
   return (
     <PageLayout>
       <div className="max-w-5xl">
-
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-1">Einstellungen</h1>
           <p className="text-gray-400 text-sm">Verwalte dein Konto, dein Unternehmen und deine Integrationen.</p>
         </div>
 
         <div className="flex gap-8 items-start">
-
           {/* Sidebar */}
           <nav className="w-48 shrink-0 sticky top-6 space-y-1">
             {TABS.map(tab => (
               <SidebarTab
-                key={tab.id}
-                id={tab.id}
-                label={tab.label}
-                icon={tab.icon}
-                active={activeTab === tab.id}
-                onClick={setActiveTab}
+                key={tab.id} id={tab.id}
+                label={tab.label} icon={tab.icon}
+                active={activeTab === tab.id} onClick={setActiveTab}
               />
             ))}
           </nav>
 
           {/* Content */}
           <div className="flex-1 min-w-0 space-y-6">
-
             {/* ══ KONTO ══ */}
             {activeTab === "konto" && (
               <>
@@ -237,16 +246,12 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-400 capitalize mt-0.5">{user?.role || "—"}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowPasswordModal(true)}
-                      className="w-full py-2.5 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition text-sm"
-                    >
+                    <button onClick={() => setShowPasswordModal(true)}
+                      className="w-full py-2.5 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition text-sm">
                       Passwort ändern
                     </button>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition text-sm"
-                    >
+                    <button onClick={handleLogout}
+                      className="w-full py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition text-sm">
                       Ausloggen
                     </button>
                   </div>
@@ -257,10 +262,8 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-400">
                       Das Löschen deines Accounts ist dauerhaft und kann nicht rückgängig gemacht werden.
                     </p>
-                    <button
-                      onClick={() => setShowDeleteModal(true)}
-                      className="w-full py-2.5 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition text-sm"
-                    >
+                    <button onClick={() => setShowDeleteModal(true)}
+                      className="w-full py-2.5 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition text-sm">
                       Account dauerhaft löschen
                     </button>
                   </div>
@@ -290,39 +293,26 @@ export default function SettingsPage() {
                       <span className={planStatusClass}>{org?.plan_status || "—"}</span>
                     </div>
                   </div>
-
                   <div>
                     <label className="text-gray-300 text-sm mb-1 block">Unternehmensname</label>
-                    <input
-                      type="text"
-                      value={orgName}
-                      onChange={e => setOrgName(e.target.value)}
+                    <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)}
                       placeholder="z.B. Müller Handwerk GmbH"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
-                    />
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm" />
                   </div>
                   <div>
                     <label className="text-gray-300 text-sm mb-1 block">
                       Branche <span className="text-gray-500">(optional)</span>
                     </label>
-                    <select
-                      value={orgIndustry}
-                      onChange={e => setOrgIndustry(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-gray-500 text-sm"
-                    >
+                    <select value={orgIndustry} onChange={e => setOrgIndustry(e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-gray-500 text-sm">
                       <option value="">Bitte wählen…</option>
                       {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                     </select>
                   </div>
-
                   {orgError   && <p className="text-red-400 text-sm">{orgError}</p>}
                   {orgSuccess && <p className="text-green-400 text-sm">Änderungen gespeichert.</p>}
-
-                  <button
-                    onClick={handleSaveOrg}
-                    disabled={orgSaving}
-                    className="px-6 py-2.5 rounded-xl font-medium bg-white text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 text-sm"
-                  >
+                  <button onClick={handleSaveOrg} disabled={orgSaving}
+                    className="px-6 py-2.5 rounded-xl font-medium bg-white text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 text-sm">
                     {orgSaving ? "Wird gespeichert…" : "Speichern"}
                   </button>
                 </div>
@@ -332,30 +322,78 @@ export default function SettingsPage() {
             {/* ══ INTEGRATIONEN ══ */}
             {activeTab === "integrationen" && (
               <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
-                <div className="space-y-4">
-                  {anyConnected ? (
+                <div className="space-y-3">
+                  {/* Gmail */}
+                  {gmailIsConnected && (
                     <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">{providerName}</p>
+                        <p className="text-xs text-gray-400 mb-0.5">Google Gmail</p>
                         <p className="font-semibold text-white text-sm">Verbunden</p>
                       </div>
-                      <button
-                        onClick={handleDisconnect}
-                        disabled={loadingStatus}
-                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm"
-                      >
+                      <button onClick={handleDisconnectGmail} disabled={loadingStatus}
+                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm">
                         Trennen
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowProviderModal(true)}
-                      className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition text-sm"
-                    >
-                      E-Mail Konto verbinden
-                    </button>
                   )}
-                  <p className="text-xs text-gray-500">Mehrere E-Mail Konten verbinden — bald verfügbar.</p>
+                  {/* Outlook */}
+                  {outlookIsConnected && (
+                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5">Microsoft Outlook</p>
+                        <p className="font-semibold text-white text-sm">Verbunden</p>
+                      </div>
+                      <button onClick={handleDisconnectOutlook} disabled={loadingStatus}
+                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm">
+                        Trennen
+                      </button>
+                    </div>
+                  )}
+                  {/* IMAP-Accounts */}
+                  {imapAccounts.map(a => (
+                    <div key={a.id} className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-400 mb-0.5">
+                          IMAP / Custom Domain
+                          {a.imap_host && <span className="text-gray-500"> · {a.imap_host}</span>}
+                        </p>
+                        <p className="font-semibold text-white text-sm truncate">
+                          {a.email}
+                        </p>
+                        {a.status === "needs_reauth" && (
+                          <p className="text-xs text-amber-400 mt-1">
+                            Verbindung unterbrochen — bitte erneut verbinden.
+                          </p>
+                        )}
+                        {a.status === "active" && a.connected_at && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            verbunden seit {new Date(a.connected_at).toLocaleDateString("de-DE")}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {a.status === "needs_reauth" && (
+                          <button onClick={() => handleReauth(a)}
+                            className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white transition text-sm">
+                            Erneuern
+                          </button>
+                        )}
+                        <button onClick={() => handleDisconnectImap(a.id)} disabled={loadingStatus}
+                          className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm">
+                          Trennen
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Verbinden-Button */}
+                  <button onClick={() => setShowProviderModal(true)}
+                    className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition text-sm">
+                    + E-Mail Konto verbinden
+                  </button>
+                  <p className="text-xs text-gray-500">
+                    Du kannst beliebig viele Postfächer parallel anbinden.
+                  </p>
                 </div>
               </Card>
             )}
@@ -394,10 +432,8 @@ export default function SettingsPage() {
                         </div>
                       )}
                     </div>
-                    <Link
-                      to="/redeem-coupon"
-                      className="inline-block px-5 py-2.5 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition text-sm"
-                    >
+                    <Link to="/redeem-coupon"
+                      className="inline-block px-5 py-2.5 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition text-sm">
                       Coupon einlösen
                     </Link>
                   </div>
@@ -426,7 +462,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </Card>
-
                 <Card title="Meine Rolle" className="rounded-2xl shadow-md">
                   {user?.role === "admin" ? (
                     <div className="bg-gray-800/50 rounded-xl p-4 space-y-3">
@@ -479,25 +514,39 @@ export default function SettingsPage() {
                 </Card>
               </>
             )}
-
           </div>
         </div>
       </div>
 
-      {/* Modals */}
+      {/* ══ Provider-Picker-Modal (jetzt mit IMAP) ══ */}
       {showProviderModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
-            <div className="space-y-3">
-              <button onClick={() => handleProviderSelect("gmail")} className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm">
-                Google (Gmail)
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 p-7 rounded-2xl w-full max-w-md space-y-5 shadow-2xl">
+            <div>
+              <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
+              <p className="text-sm text-gray-400 mt-1">Du kannst mehrere Konten parallel verbinden.</p>
+            </div>
+            <div className="space-y-2">
+              <button onClick={() => handleProviderSelect("gmail")}
+                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm text-left px-4">
+                <div className="font-medium">Google (Gmail)</div>
+                <div className="text-xs text-gray-400 mt-0.5">OAuth — sichere Anmeldung über Google</div>
               </button>
-              <button onClick={() => handleProviderSelect("outlook")} className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm">
-                Microsoft Outlook
+              <button onClick={() => handleProviderSelect("outlook")}
+                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm text-left px-4">
+                <div className="font-medium">Microsoft Outlook</div>
+                <div className="text-xs text-gray-400 mt-0.5">OAuth — sichere Anmeldung über Microsoft</div>
+              </button>
+              <button onClick={() => handleProviderSelect("imap")}
+                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm text-left px-4">
+                <div className="font-medium">Custom Domain (IMAP)</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  Eigene Domain — Mailbox.org, Posteo, IONOS, Strato und alle anderen IMAP-Provider
+                </div>
               </button>
             </div>
-            <button onClick={() => setShowProviderModal(false)} className="text-sm text-gray-400 hover:text-white transition">
+            <button onClick={() => setShowProviderModal(false)}
+              className="text-sm text-gray-400 hover:text-white transition">
               Abbrechen
             </button>
           </div>
@@ -505,13 +554,16 @@ export default function SettingsPage() {
       )}
 
       {/* ══ E-MAIL VORLAGEN ══ */}
-      {activeTab === "email_vorlagen" && isAdmin && (
-        <EmailVorlagenTab />
-      )}
+      {activeTab === "email_vorlagen" && isAdmin && <EmailVorlagenTab />}
 
       <ChangePasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
       <DeleteAccountModal  isOpen={showDeleteModal}   onClose={() => setShowDeleteModal(false)} />
-
+      <ImapConnectModal
+        open={showImapModal}
+        account={reauthAccount}
+        onClose={() => { setShowImapModal(false); setReauthAccount(null); }}
+        onConnected={() => { setShowImapModal(false); setReauthAccount(null); }}
+      />
     </PageLayout>
   );
 }

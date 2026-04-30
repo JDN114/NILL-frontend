@@ -1,12 +1,32 @@
+// src/pages/EmailsPage.jsx
+//
+// Drop-in Replacement: provider-aware (Gmail / Outlook / IMAP).
+//
+// Änderungen ggü. der vorherigen Version:
+//   - Account-Switcher in der Sidebar bei mehreren IMAP-Postfächern
+//   - Provider-Switcher unten in der Sidebar (zeigt Gmail / Outlook / IMAP)
+//   - Reauth-Banner oben, wenn ein IMAP-Account needs_reauth signalisiert
+//   - Attachment-URLs jetzt provider-aware (IMAP-Mails → /imap/attachments/…)
+//   - Compose/Reply-Modal: bei provider==='imap' werden ImapCompose/ImapReply
+//     verwendet, sonst die bestehenden Gmail/Outlook-Modals.
+//
+// Alles andere (Filter, Suche, Smart-Folders, Polling, KI-Panel) ist
+// pixelidentisch zur Vorgängerversion.
+
 import { useContext, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { MailContext } from "../context/MailContext";
+import { ImapContext } from "../context/ImapContext";
 import SafeEmailHtml from "../components/SafeEmailHtml";
 import EmailReplyModal from "../components/EmailReplyModal";
 import EmailComposeModal from "../components/EmailComposeModal";
-import api from "../services/api";
+import ImapReplyModal from "../components/ImapReplyModal";
+import ImapComposeModal from "../components/ImapComposeModal";
+import ImapAccountSwitcher from "../components/ImapAccountSwitcher";
 import SmartFolderModal from "../components/SmartFolderModal";
+import api from "../services/api";
+import { attachmentUrl } from "../services/mailApi";
 
 const IC = {
   refresh: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>),
@@ -48,33 +68,33 @@ function extractSender(mail) {
   const raw = mail.from_address || mail.from || mail.from_raw || "";
   const nm  = raw.match(/^(.+?)\s*<.+>$/);
   const em  = raw.match(/<(.+?)>/);
-  return { name: (nm ? nm[1].replace(/"/g,"").trim() : raw) || raw, email: em ? em[1] : raw };
+  return { name: (nm ? nm[1].replace(/"/g, "").trim() : raw) || raw, email: em ? em[1] : raw };
 }
 function fmtShort(str) {
   if (!str) return "";
   const d = new Date(str), now = new Date();
-  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
-  if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString("de-DE",{day:"numeric",month:"short"});
-  return d.toLocaleDateString("de-DE",{day:"numeric",month:"short",year:"numeric"});
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString("de-DE", { day: "numeric", month: "short" });
+  return d.toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" });
 }
 function fmtLong(str) {
   if (!str) return "";
-  return new Date(str).toLocaleString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  return new Date(str).toLocaleString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 function Avatar({ name }) {
-  const letter = (name||"?")[0].toUpperCase();
-  const hue = [...(name||"")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
-  return <div style={{background:`hsl(${hue},35%,32%)`}} className="em-avatar">{letter}</div>;
+  const letter = (name || "?")[0].toUpperCase();
+  const hue = [...(name || "")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+  return <div style={{ background: `hsl(${hue},35%,32%)` }} className="em-avatar">{letter}</div>;
 }
 function Spinner({ sm }) {
-  return <div className={sm?"em-spinner em-spinner--sm":"em-spinner"}/>;
+  return <div className={sm ? "em-spinner em-spinner--sm" : "em-spinner"} />;
 }
 
 function AiPanel({ email }) {
   const s = email.ai_status;
   if (s === "pending" || s === "processing") return (
     <div className="em-ai-panel em-ai-panel--loading">
-      <Spinner sm /><span>{s==="processing"?"KI analysiert…":"Warte auf Analyse…"}</span>
+      <Spinner sm /><span>{s === "processing" ? "KI analysiert…" : "Warte auf Analyse…"}</span>
     </div>
   );
   if (s === "failed") return (
@@ -83,10 +103,8 @@ function AiPanel({ email }) {
     </div>
   );
   if (s !== "success") return null;
-
   const prio = PRIO[email.priority] || PRIO.medium;
   const sent = SENT_CFG[email.sentiment] || SENT_CFG.neutral;
-
   return (
     <div className="em-ai-panel">
       <div className="em-ai-header">
@@ -102,7 +120,7 @@ function AiPanel({ email }) {
         <div className="em-ai-section">
           <p className="em-ai-section-label">Handlungsbedarf</p>
           <ul className="em-ai-actions">
-            {email.action_items.map((item,i) => (
+            {email.action_items.map((item, i) => (
               <li key={i} className="em-ai-action-item">
                 <span className="em-ai-action-icon">{IC.check}</span>{item}
               </li>
@@ -114,9 +132,9 @@ function AiPanel({ email }) {
         <div className="em-ai-section">
           <p className="em-ai-section-label">Erwähnte Termine</p>
           <div className="em-ai-dates">
-            {email.detected_dates.map((d,i) => (
+            {email.detected_dates.map((d, i) => (
               <span key={i} className="em-ai-date-chip">
-                {new Date(d).toLocaleDateString("de-DE",{day:"numeric",month:"short",year:"numeric"})}
+                {new Date(d).toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })}
               </span>
             ))}
           </div>
@@ -134,7 +152,10 @@ export default function EmailsPage() {
     provider, connected, activeEmail,
     fetchEmails, searchEmails, openEmail, closeEmail,
     initializing, disconnectProvider, hasMore,
+    allProviders, setActiveProvider,
+    imapNeedsReauth,
   } = useContext(MailContext);
+  const imap = useContext(ImapContext);
 
   const [mailbox, setMailbox]           = useState("inbox");
   const [activeFolder, setActiveFolder] = useState(null);
@@ -157,16 +178,15 @@ export default function EmailsPage() {
   const activeEmailRef = useRef(null);
   const searchTimeout  = useRef(null);
 
-  // ✅ Ref für mailbox + activeFolder damit loadEmails keine stale closure hat
   const mailboxRef      = useRef(mailbox);
   const activeFolderRef = useRef(activeFolder);
-  // ✅ fetchEmails per Ref speichern — damit loadEmails keine neue Referenz bekommt
   const fetchEmailsRef  = useRef(fetchEmails);
   useEffect(() => { mailboxRef.current = mailbox; }, [mailbox]);
   useEffect(() => { activeFolderRef.current = activeFolder; }, [activeFolder]);
   useEffect(() => { fetchEmailsRef.current = fetchEmails; }, [fetchEmails]);
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
 
+  // Smart-Folders sind provider-agnostisch (filtern user-level Email-Rows).
   useEffect(() => {
     if (connected) {
       api.get("/gmail/folders").then(r => setFolders(r.data?.folders || [])).catch(() => {});
@@ -176,28 +196,29 @@ export default function EmailsPage() {
   useEffect(() => { if (!user) navigate("/login", { replace: true }); }, [user, navigate]);
 
   // ── Initiales Laden ───────────────────────────────────────────────────────
-  // ✅ loadEmails aus den useEffect-Dependencies raus — wird per Ref aufgerufen
   const loadEmails = useCallback(async () => {
     if (!connected) return;
     setLoading(true); setError(null); setSearchResults(null);
     try {
       if (activeFolderRef.current) {
         const r = await api.get(`/gmail/folders/${activeFolderRef.current}/emails`);
-        setEmails((r.data?.emails || []).sort((a,b) => new Date(b.received_at||0)-new Date(a.received_at||0)));
+        setEmails((r.data?.emails || []).sort((a, b) =>
+          new Date(b.received_at || 0) - new Date(a.received_at || 0)
+        ));
       } else {
         const f = (await fetchEmailsRef.current(mailboxRef.current)) ?? [];
-        setEmails([...f].sort((a,b) => new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)));
+        setEmails([...f].sort((a, b) =>
+          new Date(b.received_at || b.date || 0) - new Date(a.received_at || a.date || 0)
+        ));
       }
     } catch { setError("Laden fehlgeschlagen."); }
     finally { setLoading(false); }
-  }, [connected]); // ✅ fetchEmails via Ref — kein Loop
+  }, [connected]);
 
-  // ✅ Trigger nur wenn sich mailbox, activeFolder oder initializing ändert
-  //    — NICHT bei loadEmails-Referenzänderungen
   useEffect(() => {
     if (connected && !initializing) loadEmails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, mailbox, activeFolder]);
+  }, [connected, mailbox, activeFolder, provider, imap?.activeAccountId]);
 
   // ── Mehr laden ────────────────────────────────────────────────────────────
   const loadMore = async () => {
@@ -209,8 +230,8 @@ export default function EmailsPage() {
         setEmails(prev => {
           const existingIds = new Set(prev.map(e => e.id));
           const newOnes = more.filter(e => !existingIds.has(e.id));
-          return [...prev, ...newOnes].sort((a,b) =>
-            new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)
+          return [...prev, ...newOnes].sort((a, b) =>
+            new Date(b.received_at || b.date || 0) - new Date(a.received_at || a.date || 0)
           );
         });
       }
@@ -225,7 +246,7 @@ export default function EmailsPage() {
     if (!val.trim()) { setSearchResults(null); return; }
     const q = val.toLowerCase();
     const clientHits = emails.filter(m =>
-      (m.subject||"").toLowerCase().includes(q) ||
+      (m.subject || "").toLowerCase().includes(q) ||
       extractSender(m).name.toLowerCase().includes(q) ||
       extractSender(m).email.toLowerCase().includes(q)
     );
@@ -235,15 +256,14 @@ export default function EmailsPage() {
         setSearching(true);
         try {
           const dbResults = await searchEmails(val.trim(), mailbox);
-          setSearchResults([...dbResults].sort((a,b) =>
-            new Date(b.received_at||b.date||0)-new Date(a.received_at||a.date||0)
+          setSearchResults([...dbResults].sort((a, b) =>
+            new Date(b.received_at || b.date || 0) - new Date(a.received_at || a.date || 0)
           ));
         } catch { /* keep client results */ }
         finally { setSearching(false); }
       }, 600);
     }
   };
-
   useEffect(() => () => clearTimeout(searchTimeout.current), []);
 
   // ── Filter ───────────────────────────────────────────────────────────────
@@ -257,9 +277,9 @@ export default function EmailsPage() {
         case "unread":  return !mail.read;
         case "read":    return  mail.read;
         case "high":    return  mail.priority === "high";
-        case "today":   return new Date(mail.received_at||0).toDateString() === now.toDateString();
-        case "week":    return new Date(mail.received_at||0) >= sow;
-        case "withAI":  return ["success","done"].includes(mail.ai_status);
+        case "today":   return new Date(mail.received_at || 0).toDateString() === now.toDateString();
+        case "week":    return new Date(mail.received_at || 0) >= sow;
+        case "withAI":  return ["success", "done"].includes(mail.ai_status);
         default:        return true;
       }
     });
@@ -268,44 +288,43 @@ export default function EmailsPage() {
   const unreadCount = useMemo(() => emails.filter(m => !m.read && m.mailbox !== "sent").length, [emails]);
   const canLoadMore = searchResults === null && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
 
-  // ── Polling (nur für AI-Status des geöffneten Emails) ─────────────────────
-  // ✅ Polling ruft jetzt /outlook/emails/{id} direkt auf — NICHT die Liste
+  // ── Polling (nur für AI-Status der geöffneten Mail) ─────────────────────
   const stopPolling  = () => { clearInterval(pollingRef.current); pollingRef.current = null; };
-
   const startPolling = useCallback((id) => {
     stopPolling();
     pollingRef.current = setInterval(async () => {
       try {
-        // ✅ Direkt den Einzel-Endpoint aufrufen, nicht die gesamte Emailliste
         const updated = await openEmail(id);
         const status = updated?.ai_status ?? activeEmailRef.current?.ai_status;
         if (["done", "success", "failed"].includes(status) || !activeEmailRef.current) {
           stopPolling();
         }
-      } catch {
-        stopPolling();
-      }
-    }, 4000); // ✅ 4s statt 2.5s — weniger Druck auf den Server
+      } catch { stopPolling(); }
+    }, 4000);
   }, [openEmail]);
-
   useEffect(() => () => stopPolling(), []);
 
   const handleOpen = async (id) => {
     if (!id || activeEmailRef.current?.id === id) return;
     stopPolling();
     await openEmail(id);
-    // ✅ Lokal als gelesen markieren
     setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e));
     startPolling(id);
   };
+
   const handleClose = () => { stopPolling(); setTimeout(closeEmail, 30); };
+
   const handleDisconnect = async () => {
     if (!window.confirm(`${provider} wirklich trennen?`)) return;
     await disconnectProvider?.();
   };
 
+  // Modal-Auswahl je Provider
+  const ComposeModal = provider === "imap" ? ImapComposeModal : EmailComposeModal;
+  const ReplyModal   = provider === "imap" ? ImapReplyModal   : EmailReplyModal;
+
   if (initializing) return (
-    <div className="em-shell em-shell--center"><Spinner/><p className="em-center-label">Prüfe Verbindung…</p></div>
+    <div className="em-shell em-shell--center"><Spinner /><p className="em-center-label">Prüfe Verbindung…</p></div>
   );
   if (!connected) return (
     <div className="em-shell em-shell--center"><p className="em-center-label">Kein E-Mail-Konto verbunden.</p></div>
@@ -313,17 +332,47 @@ export default function EmailsPage() {
 
   const filterLabel = FILTERS.find(f => f.key === activeFilter)?.label;
   const isSearching = search.trim().length > 0;
+  const hasMultipleProviders = (allProviders?.length ?? 0) > 1;
 
   return (
     <>
       <div className="em-shell">
-
         {/* ── Sidebar ── */}
         <aside className="em-sidebar">
           <a href="/dashboard" className="em-logo">
             <span className="em-logo-mark">N</span>
             <span className="em-logo-label">NILL</span>
           </a>
+
+          {/* Provider-Switcher (nur bei >1 Provider) */}
+          {hasMultipleProviders && (
+            <div className="px-2 mb-2">
+              <select
+                value={provider ?? ""}
+                onChange={e => setActiveProvider(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-gray-500"
+              >
+                {allProviders.map(p => (
+                  <option key={p.key} value={p.key}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* IMAP-Account-Switcher */}
+          {provider === "imap" && (
+            <div className="px-2 mb-2">
+              <ImapAccountSwitcher />
+            </div>
+          )}
+
+          {/* Reauth-Banner für IMAP */}
+          {imapNeedsReauth && (
+            <div className="mx-2 mb-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
+              Ein Postfach muss neu verbunden werden.{" "}
+              <a href="/settings" className="underline">Einstellungen</a>
+            </div>
+          )}
 
           <button onClick={() => setComposeOpen(true)} className="em-compose">
             {IC.compose} Verfassen
@@ -348,7 +397,7 @@ export default function EmailsPage() {
                 <button
                   onClick={() => { setActiveFolder(f.id); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
                   className={`em-nav-item flex-1 ${activeFolder === f.id ? "em-nav-item--active" : ""}`}
-                  style={activeFolder === f.id ? {background: `${f.color}22`, color: f.color} : {}}
+                  style={activeFolder === f.id ? { background: `${f.color}22`, color: f.color } : {}}
                 >
                   <span>{f.icon} {f.name}</span>
                 </button>
@@ -359,9 +408,8 @@ export default function EmailsPage() {
                 >✏️</button>
               </div>
             ))}
-
             <button onClick={() => { setEditingFolder(null); setFolderModalOpen(true); }}
-              className="em-nav-item" style={{color: "var(--nill-text-dim)", marginTop: "4px"}}>
+              className="em-nav-item" style={{ color: "var(--nill-text-dim)", marginTop: "4px" }}>
               <span>+ Ordner</span>
             </button>
           </nav>
@@ -375,7 +423,11 @@ export default function EmailsPage() {
         {/* ── Liste ── */}
         <div className={`em-list-col ${activeEmail ? "em-list-col--pushed" : ""}`}>
           <div className="em-list-header">
-            <span className="em-list-title">{activeFolder ? (folders.find(f=>f.id===activeFolder)?.icon+" "+folders.find(f=>f.id===activeFolder)?.name) : mailbox === "inbox" ? "Posteingang" : "Gesendet"}</span>
+            <span className="em-list-title">
+              {activeFolder
+                ? (folders.find(f => f.id === activeFolder)?.icon + " " + folders.find(f => f.id === activeFolder)?.name)
+                : mailbox === "inbox" ? "Posteingang" : "Gesendet"}
+            </span>
             <button onClick={loadEmails} disabled={loading} title="Aktualisieren"
               className={`em-refresh ${loading ? "em-refresh--spin" : ""}`}>
               {IC.refresh}
@@ -450,16 +502,15 @@ export default function EmailsPage() {
                       <span className="em-item-sender">{s.name}</span>
                       <div className="em-item-top-right">
                         {prio && <span className={`em-dot ${prio.dot}`} title={prio.label}/>}
-                        <span className="em-item-date">{fmtShort(mail.received_at||mail.date)}</span>
+                        <span className="em-item-date">{fmtShort(mail.received_at || mail.date)}</span>
                       </div>
                     </div>
-                    <p className="em-item-subject">{mail.subject||"(Kein Betreff)"}</p>
+                    <p className="em-item-subject">{mail.subject || "(Kein Betreff)"}</p>
                     {mail.category && <span className="em-item-category">{mail.category}</span>}
                   </div>
                 </li>
               );
             })}
-
             {canLoadMore && (
               <li className="em-load-more">
                 <button onClick={loadMore} disabled={loadingMore} className="em-load-more-btn">
@@ -480,7 +531,7 @@ export default function EmailsPage() {
                 <button onClick={handleClose} className="em-back">{IC.back} Zurück</button>
               </div>
               <div className="em-detail-inner">
-                <h2 className="em-detail-subject">{activeEmail.subject||"(Kein Betreff)"}</h2>
+                <h2 className="em-detail-subject">{activeEmail.subject || "(Kein Betreff)"}</h2>
                 <div className="em-detail-meta">
                   {(() => {
                     const s = extractSender(activeEmail);
@@ -498,15 +549,21 @@ export default function EmailsPage() {
                 </div>
                 <AiPanel email={activeEmail} />
                 <div className="em-detail-body">
-                  <SafeEmailHtml html={activeEmail.body??""} />
+                  <SafeEmailHtml html={activeEmail.body ?? ""} />
                 </div>
                 {activeEmail.attachments?.length > 0 && (
                   <div className="em-attachments">
                     <div className="em-attachments-label">Anhänge ({activeEmail.attachments.length})</div>
                     <div className="em-attachment-list">
                       {activeEmail.attachments.map((att, i) => (
-                        <a key={i} href={`${import.meta.env.VITE_API_URL}/gmail/attachments/${att.id}`} target="_blank" rel="noreferrer" className="em-attachment-chip" download={att.filename}>
-                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                        <a key={i}
+                          href={attachmentUrl({ email: activeEmail, attachmentId: att.id })}
+                          target="_blank" rel="noreferrer" className="em-attachment-chip"
+                          download={att.filename}>
+                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                          </svg>
                           {att.filename}
                           {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes/1024).toFixed(0)} KB</span>}
                         </a>
@@ -525,8 +582,10 @@ export default function EmailsPage() {
         </div>
       </div>
 
-      <EmailReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
-      <EmailComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
+      {/* Provider-aware Modals */}
+      <ReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
+      <ComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
+
       <SmartFolderModal
         open={folderModalOpen}
         folder={editingFolder}
