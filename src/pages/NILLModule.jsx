@@ -209,12 +209,12 @@ function PrimaryBtn({ onClick, disabled, children, color = T.accent }) {
       border: `1px solid ${color}60`,
       borderRadius: 6, padding: "9px 20px",
       fontFamily: FONT_MONO, fontSize: 11, fontWeight: 500,
-      letterSpacing: "0.06em", cursor: "pointer",
+      letterSpacing: "0.06em", cursor: disabled ? "not-allowed" : "pointer",
       transition: "background 0.15s, border-color 0.15s",
       opacity: disabled ? 0.5 : 1,
       whiteSpace: "nowrap",
     }}
-      onMouseEnter={e => { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; }}
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; } }}
       onMouseLeave={e => { e.currentTarget.style.background = color + "18"; e.currentTarget.style.borderColor = color + "60"; }}
     >{children}</button>
   );
@@ -581,25 +581,6 @@ function ApplicationsModule() {
 }
 
 // ─── Travel ───────────────────────────────────────────────────────────────────
-// src/pages/nill/TravelModule.jsx
-// Drop-in Ersatz für den TravelModule-Block in NILLModule.jsx
-
-import { useState, useEffect } from "react";
-import api from "../../services/api";
-
-// ─── Design tokens (gleich wie NILLModule) ────────────────────────────────────
-const T = {
-  bg0: "#0a0a0c", bg1: "#111114", bg2: "#18181c", bg3: "#222228",
-  border: "#2e2e36", borderHi: "#44444f",
-  textPri: "#f0f0f2", textSec: "#8a8a96", textTer: "#55555f",
-  accent: "#00d97e", accentDim: "#00d97e22",
-  warn: "#f5a623",   warnDim: "#f5a62320",
-  danger: "#ff4d4d", dangerDim: "#ff4d4d18",
-  info: "#4d9fff",   infoDim: "#4d9fff18",
-  purple: "#a78bfa", purpleDim: "#a78bfa18",
-};
-const FM = "'DM Mono', monospace";
-const FB = "'Syne', sans-serif";
 
 const TRAVEL_STATUS = {
   pending_approval: { label: "WARTET",    color: T.warn,   dim: T.warnDim   },
@@ -607,20 +588,6 @@ const TRAVEL_STATUS = {
   booked:           { label: "GEBUCHT",   color: T.info,   dim: T.infoDim   },
   cancelled:        { label: "ABGELEHNT", color: T.danger, dim: T.dangerDim },
 };
-
-// ─── Primitive components ─────────────────────────────────────────────────────
-
-function Tag({ children, color = T.textSec, dim = T.bg3 }) {
-  return (
-    <span style={{ display: "inline-block", background: dim, color, border: `1px solid ${color}40`, borderRadius: 3, padding: "2px 8px", fontFamily: FM, fontSize: 10, fontWeight: 500, letterSpacing: "0.1em" }}>
-      {children}
-    </span>
-  );
-}
-
-function MonoLabel({ children, color = T.textTer }) {
-  return <p style={{ margin: "0 0 6px", fontFamily: FM, fontSize: 10, fontWeight: 500, color, letterSpacing: "0.12em", textTransform: "uppercase" }}>{children}</p>;
-}
 
 function Row({ label, value, valueColor = T.textPri, mono = false }) {
   return (
@@ -631,48 +598,11 @@ function Row({ label, value, valueColor = T.textPri, mono = false }) {
   );
 }
 
-function PrimaryBtn({ onClick, disabled, color = T.accent, children, style = {} }) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{ background: color + "18", color, border: `1px solid ${color}60`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, fontWeight: 500, letterSpacing: "0.06em", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, transition: "all 0.15s", ...style }}
-      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = color + "30"; e.currentTarget.style.borderColor = color + "99"; } }}
-      onMouseLeave={e => { e.currentTarget.style.background = color + "18"; e.currentTarget.style.borderColor = color + "60"; }}
-    >{children}</button>
-  );
-}
-
-function GhostBtn({ onClick, children }) {
-  return (
-    <button onClick={onClick} style={{ background: "none", color: T.textSec, border: `1px solid ${T.border}`, borderRadius: 6, padding: "9px 20px", fontFamily: FM, fontSize: 11, letterSpacing: "0.06em", cursor: "pointer", transition: "all 0.15s" }}
-      onMouseEnter={e => { e.currentTarget.style.color = T.textPri; e.currentTarget.style.borderColor = T.borderHi; }}
-      onMouseLeave={e => { e.currentTarget.style.color = T.textSec; e.currentTarget.style.borderColor = T.border; }}
-    >{children}</button>
-  );
-}
-
 function Block({ label, children, accent }) {
   return (
     <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: accent ? `2px solid ${accent}` : undefined, borderRadius: accent ? "0 6px 6px 0" : 6, padding: "14px 16px", marginBottom: 12 }}>
       {label && <MonoLabel>{label}</MonoLabel>}
       {children}
-    </div>
-  );
-}
-
-function Drawer({ onClose, title, subtitle, children }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth: 720, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px" }}
-        className="nill-scrollbar">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-          <div>
-            <h2 style={{ margin: 0, fontFamily: FB, fontSize: 18, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
-            {subtitle && <p style={{ margin: "4px 0 0", fontFamily: FM, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
-          </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: T.textTer, fontSize: 18, cursor: "pointer", padding: 4, marginLeft: 16 }}>✕</button>
-        </div>
-        {children}
-      </div>
     </div>
   );
 }
@@ -909,7 +839,7 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
   const isPending = trip.status === "pending_approval";
 
   return (
-    <Drawer onClose={onClose} title={`${trip.destination}`} subtitle={`${trip.departure_date || "—"} → ${trip.return_date || "—"} · ${trip.purpose || ""}`}>
+    <Drawer onClose={onClose} title={`${trip.destination}`} subtitle={`${trip.departure_date || "—"} → ${trip.return_date || "—"} · ${trip.purpose || ""}`} maxWidth={720}>
 
       {/* Status + Actions */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -976,24 +906,9 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
   );
 }
 
-// ─── Form fields ──────────────────────────────────────────────────────────────
+// ─── Travel Module ────────────────────────────────────────────────────────────
 
-function FormField({ label, value, onChange, type = "text", placeholder = "", rows }) {
-  const s = { width: "100%", background: T.bg2, color: T.textPri, border: `1px solid ${T.border}`, borderRadius: 6, padding: "10px 14px", fontFamily: FB, fontSize: 13, outline: "none", boxSizing: "border-box" };
-  return (
-    <div>
-      <label style={{ display: "block", fontFamily: FM, fontSize: 10, color: T.textSec, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{label}</label>
-      {rows
-        ? <textarea rows={rows} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={{ ...s, resize: "vertical" }} />
-        : <input type={type} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={s} />
-      }
-    </div>
-  );
-}
-
-// ─── Main Module ──────────────────────────────────────────────────────────────
-
-export default function TravelModule() {
+function TravelModule() {
   const [trips,       setTrips]       = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [showForm,    setShowForm]    = useState(false);
