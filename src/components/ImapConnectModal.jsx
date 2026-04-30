@@ -10,17 +10,18 @@
 //     (Backend testet vor dem Speichern).
 //   - Reauth-Modus: wenn `account` prop gesetzt ist, sind alle Felder vorbefüllt
 //     und das Modal heißt „Verbindung erneuern".
+//   - Inline InfoHints neben jedem Server-Feld — User wissen ohne Provider-Doku
+//     was rein muss.
 //
 // Props:
 //   open       : bool
 //   onClose    : () => void
 //   onConnected: (account) => void  — nach erfolgreichem Connect
 //   account    : optional, Reauth-Modus
-//
-// Erfordert: ImapContext (für connectImap / reauthAccount)
 
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { ImapContext } from "../context/ImapContext";
+import InfoHint from "./InfoHint";
 
 // ── Provider-Presets (Top-DACH-Provider + ein paar internationale) ──────
 const PRESETS = {
@@ -43,7 +44,6 @@ function presetFor(email) {
   const dom = email.split("@")[1]?.toLowerCase();
   if (!dom) return null;
   if (PRESETS[dom]) return { domain: dom, ...PRESETS[dom] };
-  // Heuristik für „eigene Domain mit Standard-Setup": imap.<domain>:993 SSL
   return null;
 }
 
@@ -76,7 +76,6 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
   const isReauth = !!account;
 
-  // Reset wenn das Modal frisch geöffnet wird oder Account wechselt
   useEffect(() => {
     if (open) {
       setForm(initialFromAccount(account));
@@ -85,7 +84,6 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
     }
   }, [open, account]);
 
-  // Auto-Detection bei Email-Eingabe
   const detected = useMemo(() => presetFor(form.email), [form.email]);
   useEffect(() => {
     if (!detected || isReauth) return;
@@ -151,7 +149,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <form onSubmit={handleSubmit} className="p-7 space-y-5">
           <div>
             <h2 className="text-xl font-bold text-white">
@@ -166,7 +164,16 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
           {/* Email */}
           <div>
-            <label className="text-gray-300 text-sm mb-1 block">E-Mail Adresse</label>
+            <label className="text-gray-300 text-sm mb-1 flex items-center">
+              E-Mail Adresse
+              <InfoHint>
+                Deine vollständige Email-Adresse, z.B. <strong>info@deinefirma.de</strong>.
+                Wird gleichzeitig als Standard-Username für den IMAP-Login verwendet.
+                Falls dein Hoster einen anderen Benutzernamen verlangt (z.B. eine
+                Kundennummer), kannst du das weiter unten in den Server-Einstellungen
+                überschreiben.
+              </InfoHint>
+            </label>
             <input
               type="email"
               autoComplete="username"
@@ -186,8 +193,14 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
           {/* Anzeigename */}
           <div>
-            <label className="text-gray-300 text-sm mb-1 block">
-              Anzeigename <span className="text-gray-500">(optional)</span>
+            <label className="text-gray-300 text-sm mb-1 flex items-center">
+              Anzeigename <span className="text-gray-500 ml-1">(optional)</span>
+              <InfoHint>
+                Der Name, der bei deinen Empfängern als Absender erscheint —
+                z.B. <strong>Müller GmbH Service</strong> statt nur
+                „info@mueller-gmbh.de". Lass das Feld leer wenn dir die
+                blanke Email-Adresse reicht.
+              </InfoHint>
             </label>
             <input
               type="text"
@@ -200,7 +213,21 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
           {/* Passwort */}
           <div>
-            <label className="text-gray-300 text-sm mb-1 block">Passwort</label>
+            <label className="text-gray-300 text-sm mb-1 flex items-center">
+              Passwort
+              <InfoHint width="w-80">
+                Das gleiche Passwort, mit dem du dich auch im Web-Mailer
+                deines Anbieters anmelden würdest.
+                <br /><br />
+                <strong className="text-amber-300">Wichtig bei 2-Faktor-Authentifizierung:</strong>{" "}
+                Hast du 2FA bei deinem Provider aktiviert (z.B. Mailbox.org,
+                Fastmail, Yandex), funktioniert dein normales Passwort hier
+                <em> nicht</em>. Du brauchst stattdessen ein <strong>App-Passwort</strong>,
+                das du in den Sicherheitseinstellungen deines Providers
+                erzeugst — meist unter „App-Passwörter" oder
+                „Anwendungsspezifische Passwörter".
+              </InfoHint>
+            </label>
             <input
               type="password"
               autoComplete="current-password"
@@ -227,13 +254,31 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
           </div>
 
           {showAdvanced && (
-            <div className="space-y-4 border border-gray-800 rounded-xl p-4">
+            <div className="space-y-5 border border-gray-800 rounded-xl p-4">
               {/* IMAP */}
               <div>
-                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">Eingang (IMAP)</p>
+                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider flex items-center">
+                  Eingang (IMAP)
+                  <InfoHint width="w-80">
+                    IMAP ist das Protokoll zum <strong>Lesen</strong> von Mails.
+                    Der Server hier ist die Adresse von dem dein Posteingang
+                    abgeholt wird. Findest du in deiner Provider-Doku unter
+                    „IMAP-Einstellungen", „E-Mail-Konfiguration" oder
+                    „Postfach einrichten".
+                  </InfoHint>
+                </p>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <label className="text-gray-400 text-xs mb-1 block">Host</label>
+                    <label className="text-gray-400 text-xs mb-1 flex items-center">
+                      Host
+                      <InfoHint placement="bottom-left">
+                        Adresse des Eingangs-Servers, z.B.{" "}
+                        <strong>imap.mailbox.org</strong>,{" "}
+                        <strong>imap.ionos.de</strong> oder{" "}
+                        <strong>imap.strato.de</strong>. Bei einigen Hostern
+                        ist es einfach <strong>imap.deinedomain.de</strong>.
+                      </InfoHint>
+                    </label>
                     <input
                       type="text"
                       value={form.imap_host}
@@ -243,7 +288,16 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                     />
                   </div>
                   <div>
-                    <label className="text-gray-400 text-xs mb-1 block">Port</label>
+                    <label className="text-gray-400 text-xs mb-1 flex items-center">
+                      Port
+                      <InfoHint placement="bottom-right">
+                        <strong>993</strong> ist Standard und passt für 99%
+                        aller Provider (mit SSL/TLS).
+                        Nur ändern wenn dein Anbieter explizit etwas anderes
+                        vorgibt — z.B. <strong>143</strong> für sehr alte
+                        Setups mit STARTTLS statt SSL.
+                      </InfoHint>
+                    </label>
                     <input
                       type="number"
                       value={form.imap_port}
@@ -257,23 +311,51 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                     <input type="checkbox" checked={form.imap_use_ssl}
                       onChange={e => update("imap_use_ssl", e.target.checked)} />
                     SSL/TLS
+                    <InfoHint placement="top-left">
+                      Verbindung ist von Anfang an verschlüsselt — heute
+                      Standard. Bei Port 993 <strong>immer aktiv</strong> lassen.
+                    </InfoHint>
                   </label>
                   <label className="text-xs text-gray-300 flex items-center gap-2">
                     <input type="checkbox" checked={form.imap_starttls}
                       onChange={e => update("imap_starttls", e.target.checked)} />
                     STARTTLS
+                    <InfoHint placement="top-right">
+                      Alternative Verschlüsselungsart, die erst nach dem
+                      Verbindungsaufbau ausgehandelt wird. Brauchst du nur
+                      bei Port 143 mit älteren Server-Konfigurationen — bei
+                      Port 993 deaktiviert lassen.
+                    </InfoHint>
                   </label>
                 </div>
               </div>
 
               {/* SMTP */}
               <div>
-                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">
-                  Ausgang (SMTP) <span className="text-gray-600 normal-case">— optional, für Senden</span>
+                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider flex items-center">
+                  Ausgang (SMTP)
+                  <span className="text-gray-600 normal-case ml-1">— optional, für Senden</span>
+                  <InfoHint width="w-80">
+                    SMTP ist das Protokoll zum <strong>Senden</strong> von Mails.
+                    Wenn du das Feld leer lässt, kannst du Mails nur empfangen,
+                    nicht versenden — fürs reine Lesen reicht das.
+                    SMTP-Server hat oft denselben Anbieter wie IMAP, aber einen
+                    leicht anderen Hostnamen.
+                  </InfoHint>
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <label className="text-gray-400 text-xs mb-1 block">Host</label>
+                    <label className="text-gray-400 text-xs mb-1 flex items-center">
+                      Host
+                      <InfoHint placement="bottom-left">
+                        Adresse des Ausgangs-Servers, z.B.{" "}
+                        <strong>smtp.mailbox.org</strong>,{" "}
+                        <strong>smtp.ionos.de</strong> oder{" "}
+                        <strong>smtp.deinedomain.de</strong>.
+                        In der Provider-Doku oft direkt unter dem IMAP-Host
+                        gelistet.
+                      </InfoHint>
+                    </label>
                     <input
                       type="text"
                       value={form.smtp_host}
@@ -283,7 +365,15 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                     />
                   </div>
                   <div>
-                    <label className="text-gray-400 text-xs mb-1 block">Port</label>
+                    <label className="text-gray-400 text-xs mb-1 flex items-center">
+                      Port
+                      <InfoHint placement="bottom-right">
+                        <strong>465</strong> mit SSL (häufiger) oder{" "}
+                        <strong>587</strong> mit STARTTLS — beide sind heute
+                        üblich. Welcher passt, steht in deiner Provider-Doku;
+                        bei Mailbox.org/Posteo/IONOS/Strato meist 465.
+                      </InfoHint>
+                    </label>
                     <input
                       type="number"
                       value={form.smtp_port}
@@ -297,14 +387,31 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                     <input type="checkbox" checked={!!form.smtp_use_ssl}
                       onChange={e => update("smtp_use_ssl", e.target.checked)} />
                     SSL (Port 465). Sonst STARTTLS auf Port 587.
+                    <InfoHint placement="top-left">
+                      <strong>An lassen</strong> wenn dein Provider Port 465 nutzt
+                      (heute am häufigsten). <strong>Aus lassen</strong> bei Port 587 —
+                      dann wird automatisch STARTTLS verwendet. Wenn du
+                      unsicher bist und das Senden später fehlschlägt: einmal
+                      umschalten und Port entsprechend anpassen.
+                    </InfoHint>
                   </label>
                 </div>
               </div>
 
               {/* Username Override */}
               <div>
-                <label className="text-gray-400 text-xs mb-1 block">
-                  Login-Username <span className="text-gray-600">(falls abweichend von Email)</span>
+                <label className="text-gray-400 text-xs mb-1 flex items-center">
+                  Login-Username
+                  <span className="text-gray-600 ml-1">(falls abweichend von Email)</span>
+                  <InfoHint width="w-80">
+                    <strong>In 95% der Fälle leer lassen</strong> — der Login
+                    erfolgt dann mit deiner Email-Adresse als Username.
+                    Ausfüllen nur wenn dein Provider einen anderen Benutzernamen
+                    verlangt, z.B. eine Kundennummer wie <strong>k1234567</strong>{" "}
+                    bei manchen Strato/IONOS-Setups oder eine separat vergebene
+                    Mailbox-ID. Steht typischerweise in der Begrüßungsmail
+                    deines Hosters.
+                  </InfoHint>
                 </label>
                 <input
                   type="text"
