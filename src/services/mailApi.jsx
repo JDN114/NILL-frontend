@@ -18,7 +18,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "";
  */
 export async function sendEmail({ provider, accountId, payload }) {
   if (provider === "imap") {
-    return api.post("/imap/send", { account_id: accountId, ...payload });
+    return api.post("/imap/send", { account_id: accountId, ...payload }, { timeout: 60000 });
   }
   if (provider === "outlook") {
     return api.post("/outlook/send", payload);
@@ -47,9 +47,7 @@ export async function sendEmailWithAttachments({
     provider === "outlook" ? "/outlook/send-with-attachments" :
                              "/gmail/send-with-attachments"
   );
-  return api.post(path, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return api.post(path, form, { timeout: 60000 });
 }
 
 /** Reply mit FormData (Anhänge optional). */
@@ -67,9 +65,7 @@ export async function replyToEmail({ provider, emailId, body, cc, files,
     provider === "outlook" ? `/outlook/emails/${emailId}/reply` :
                              `/gmail/emails/${emailId}/reply`
   );
-  return api.post(path, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return api.post(path, form, { timeout: 60000 });
 }
 
 /** AI-Reply: derselbe Endpoint-Pfad-Stil wie der manuelle Reply. */
