@@ -1,5 +1,6 @@
 // src/pages/AccountingPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import {
   AreaChart, Area, PieChart, Pie, Cell, Sector,
@@ -17,7 +18,7 @@ import InvoiceList          from "../components/accounting/InvoiceList";
 import BankInsights         from "../components/accounting/BankInsights";
 import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
 import AusgangsrechnungTab  from "../components/accounting/AusgangsrechnungTab";
-import { HrDocsContent }    from "./HrDocuments";
+import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
 const S = `
@@ -740,6 +741,7 @@ const TABS = [
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AccountingPage() {
+  const navigate = useNavigate();
   const [tab, setTab]               = useState("overview");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -785,7 +787,7 @@ export default function AccountingPage() {
       case "bank":       return <ComingSoonTab title="Banksynchronisation" desc="Automatischer Bankabgleich mit deinen Buchungen — in Kürze verfügbar." />;
       case "bank_insights_disabled": return <BankInsights key={refreshKey}/>;
       case "steuern":    return <TaxDashboard key={refreshKey}/>;
-      case "lohnsteuer": return <HrDocsContent key={refreshKey} defaultFilterType="Lohnsteuerbescheinigung" />;
+      case "lohnsteuer": return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
       case "export":     return <ExportTab/>;
       case "hilfe":      return <HilfeTab onNavigate={goTo}/>;
       default:           return null;

@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
+// tabKey = navigates within the host page via onNavigate
+// to = external route link
 const MODULES = [
   {
     title: "Mitarbeiterverwaltung",
     description: "Stammdaten, Vertragsart, Eintrittsdatum & Lohngruppe",
-    to: "/dashboard/lohn/mitarbeiter",
+    tabKey: "mitarbeiter",
     adminOnly: true,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -21,7 +23,7 @@ const MODULES = [
   {
     title: "Lohnabrechnung",
     description: "Monatliche Abrechnung generieren, vorschauen & exportieren",
-    to: "/dashboard/lohn/abrechnung",
+    tabKey: "abrechnung",
     adminOnly: true,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -47,7 +49,7 @@ const MODULES = [
   {
     title: "Urlaubsverwaltung",
     description: "Resturlaub tracken, Abwesenheiten beantragen & genehmigen",
-    to: "/dashboard/lohn/urlaub",
+    tabKey: "urlaub",
     adminOnly: false,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -62,7 +64,7 @@ const MODULES = [
   {
     title: "HR Dokumente",
     description: "Lohnsteuerbescheinigungen & Mitarbeiterdokumente",
-    to: "/dashboard/workflow/hr-documents",
+    tabKey: "dokumente",
     adminOnly: false,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -77,7 +79,7 @@ const MODULES = [
   {
     title: "Abzüge & Zulagen",
     description: "Steuerklassen, KV, Prämien & Sonderzahlungen konfigurieren",
-    to: "/dashboard/lohn/mitarbeiter",
+    tabKey: "mitarbeiter",
     adminOnly: true,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -102,6 +104,79 @@ const MODULES = [
   },
 ];
 
+const cardStyle = {
+  padding: "1.35rem 1.4rem",
+  background: "rgba(255,255,255,0.025)",
+  border: "1px solid var(--nill-border)",
+  borderRadius: 14,
+  backdropFilter: "blur(6px)",
+  WebkitBackdropFilter: "blur(6px)",
+  cursor: "pointer",
+  transition: "background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s",
+  display: "flex", flexDirection: "column", gap: "0.85rem",
+  height: "100%", boxSizing: "border-box",
+  textDecoration: "none",
+};
+
+function ModuleCard({ mod, onNavigate }) {
+  const inner = (
+    <div
+      style={cardStyle}
+      onMouseOver={e => {
+        e.currentTarget.style.background = "rgba(197,165,114,0.06)";
+        e.currentTarget.style.borderColor = "rgba(197,165,114,0.28)";
+        e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.25)";
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseOut={e => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.025)";
+        e.currentTarget.style.borderColor = "var(--nill-border)";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
+    >
+      <div style={{
+        width: 38, height: 38, borderRadius: 10,
+        background: "var(--nill-gold-dim)",
+        border: "1px solid rgba(197,165,114,0.2)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "var(--nill-gold)", flexShrink: 0,
+      }}>
+        {mod.icon}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--nill-text)", lineHeight: 1.2 }}>
+          {mod.title}
+        </span>
+        <span style={{ fontSize: "0.75rem", color: "var(--nill-text-mute)", lineHeight: 1.4 }}>
+          {mod.description}
+        </span>
+      </div>
+      <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end", color: "var(--nill-text-dim)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </div>
+    </div>
+  );
+
+  if (mod.tabKey && onNavigate) {
+    return (
+      <div key={mod.title} onClick={() => onNavigate(mod.tabKey)} style={{ textDecoration: "none" }}>
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <Link key={mod.title} to={mod.to || "#"} style={{ textDecoration: "none" }}>
+      {inner}
+    </Link>
+  );
+}
+
 function StatCard({ label, value, sub, color = "var(--nill-gold)" }) {
   return (
     <div style={{
@@ -125,7 +200,7 @@ function StatCard({ label, value, sub, color = "var(--nill-gold)" }) {
   );
 }
 
-export default function LohnbuchhaltungLanding() {
+export function LohnbuchhaltungContent({ onNavigate }) {
   const { isCompanyAdmin } = useAuth();
   const isAdmin = Boolean(isCompanyAdmin());
 
@@ -151,21 +226,15 @@ export default function LohnbuchhaltungLanding() {
   const visibleModules = MODULES.filter(m => !m.adminOnly || isAdmin);
 
   return (
-    <PageLayout>
+    <>
       {/* Header */}
       <div style={{ marginBottom: "1.75rem" }}>
-        <span style={{
-          fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-          textTransform: "uppercase", color: "var(--nill-text-dim)",
-        }}>
-          Dashboard / Lohnbuchhaltung
-        </span>
-        <h1 style={{
-          fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0.3rem",
+        <h2 style={{
+          fontSize: "1.45rem", fontWeight: 800, margin: "0 0 0.3rem",
           color: "var(--nill-text)", letterSpacing: "-0.01em", lineHeight: 1.15,
         }}>
           Lohnbuchhaltung
-        </h1>
+        </h2>
         <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
           Mitarbeiterverwaltung, Lohnabrechnung & Personalplanung
         </p>
@@ -207,61 +276,17 @@ export default function LohnbuchhaltungLanding() {
         gap: "1rem",
       }}>
         {visibleModules.map((mod) => (
-          <Link key={mod.title} to={mod.to} style={{ textDecoration: "none" }}>
-            <div
-              style={{
-                padding: "1.35rem 1.4rem",
-                background: "rgba(255,255,255,0.025)",
-                border: "1px solid var(--nill-border)",
-                borderRadius: 14,
-                backdropFilter: "blur(6px)",
-                WebkitBackdropFilter: "blur(6px)",
-                cursor: "pointer",
-                transition: "background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s",
-                display: "flex", flexDirection: "column", gap: "0.85rem",
-                height: "100%", boxSizing: "border-box",
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = "rgba(197,165,114,0.06)";
-                e.currentTarget.style.borderColor = "rgba(197,165,114,0.28)";
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.25)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.025)";
-                e.currentTarget.style.borderColor = "var(--nill-border)";
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <div style={{
-                width: 38, height: 38, borderRadius: 10,
-                background: "var(--nill-gold-dim)",
-                border: "1px solid rgba(197,165,114,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "var(--nill-gold)", flexShrink: 0,
-              }}>
-                {mod.icon}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--nill-text)", lineHeight: 1.2 }}>
-                  {mod.title}
-                </span>
-                <span style={{ fontSize: "0.75rem", color: "var(--nill-text-mute)", lineHeight: 1.4 }}>
-                  {mod.description}
-                </span>
-              </div>
-              <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end", color: "var(--nill-text-dim)" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                  <polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </div>
-            </div>
-          </Link>
+          <ModuleCard key={mod.title} mod={mod} onNavigate={onNavigate} />
         ))}
       </div>
+    </>
+  );
+}
+
+export default function LohnbuchhaltungLanding() {
+  return (
+    <PageLayout>
+      <LohnbuchhaltungContent onNavigate={null} />
     </PageLayout>
   );
 }

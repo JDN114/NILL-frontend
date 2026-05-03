@@ -1,5 +1,6 @@
 // src/pages/WorkflowTeam.jsx
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
@@ -7,6 +8,7 @@ import { HrDocsContent } from "./HrDocuments";
 import { MitarbeiterContent } from "./MitarbeiterVerwaltung";
 import { LohnAbrechnungContent } from "./LohnAbrechnung";
 import { UrlaubsContent } from "./UrlaubsVerwaltung";
+import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 const ALL_PERMISSIONS = [
   { key: "calendar",   label: "Kalender" },
@@ -150,12 +152,13 @@ function BtnSecondary({ children, onClick }) {
 /* ── Haupt-Komponente ───────────────────────────────────── */
 export default function WorkflowTeam() {
   const { user, isCompanyAdmin } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [members, setMembers]     = useState([]);
   const [roles, setRoles]         = useState([]);
   const [invites, setInvites]     = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [activeTab, setActiveTab] = useState("members");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "members");
 
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [editingRole, setEditingRole]     = useState(null);
@@ -273,6 +276,7 @@ export default function WorkflowTeam() {
     { key: "members",      label: "Mitglieder"       },
     { key: "roles",        label: "Rollen"           },
     { key: "invites",      label: "Einladungen"      },
+    { key: "lohn",         label: "Lohnbuchhaltung"  },
     { key: "mitarbeiter",  label: "Mitarbeiter"      },
     { key: "abrechnung",   label: "Lohnabrechnung"   },
     { key: "urlaub",       label: "Urlaub"           },
@@ -645,6 +649,12 @@ export default function WorkflowTeam() {
                 )}
               </div>
             )}
+          {/* ── Lohnbuchhaltung Übersicht Tab ─────────────── */}
+          {activeTab === "lohn" && (
+            <div style={{ padding: "1.25rem 0" }}>
+              <LohnbuchhaltungContent onNavigate={setActiveTab} />
+            </div>
+          )}
           {/* ── Mitarbeiter Tab ───────────────────────────── */}
           {activeTab === "mitarbeiter" && (
             <div style={{ padding: "1.25rem 0" }}>
