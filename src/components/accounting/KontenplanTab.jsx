@@ -66,7 +66,6 @@ export default function KontenplanTab() {
           value={filter} onChange={e => setFilter(e.target.value)} />
         <span style={{ color:"var(--ink2)", fontSize:".85rem" }}>{konten.length} Konten</span>
         <div style={{ flex:1 }} />
-        <button className="ac-btn ac-btn-primary" onClick={() => setShowModal(true)}>+ Konto</button>
       </div>
       {Object.keys(grouped).sort().map(cls => (
         <div key={cls} className="ac-card" style={{ marginBottom:12, padding:0 }}>
@@ -87,7 +86,7 @@ export default function KontenplanTab() {
                     <td className="ac-mono" style={{ textAlign:"right", color:"var(--ink2)" }}>
                       {k.saldo !== undefined ? `${Number(k.saldo).toLocaleString("de-DE",{minimumFractionDigits:2})} EUR` : "--"}
                     </td>
-                    <td style={{ fontSize:".75rem", color:"var(--ink2)" }}>{k.ust_schluessel || "--"}</td>
+                    <td style={{ fontSize:".75rem", color:"var(--ink2)" }}>{k.ust_kennzeichen || "--"}</td>
                   </tr>
                 ))}
               </tbody>

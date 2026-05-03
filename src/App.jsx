@@ -41,8 +41,13 @@ import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
 import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
+import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
 import CallsModule from "./pages/CallsModule.jsx";
+import LohnbuchhaltungLanding from "./pages/LohnbuchhaltungLanding.jsx";
+import MitarbeiterVerwaltung from "./pages/MitarbeiterVerwaltung.jsx";
+import LohnAbrechnung from "./pages/LohnAbrechnung.jsx";
+import UrlaubsVerwaltung from "./pages/UrlaubsVerwaltung.jsx";
  
 function App() {
   return (
@@ -135,6 +140,24 @@ function App() {
                     <AdminGuard><WorkflowDeliveryNotes /></AdminGuard>
                   </ProtectedRoute>
                 }/>
+                <Route path="/dashboard/workflow/hr-documents" element={
+                  <ProtectedRoute><HrDocuments /></ProtectedRoute>
+                }/>
+
+		{/* Lohnbuchhaltung */}
+		<Route path="/dashboard/lohn" element={
+                  <ProtectedRoute><LohnbuchhaltungLanding /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/lohn/mitarbeiter" element={
+                  <ProtectedRoute><MitarbeiterVerwaltung /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/lohn/abrechnung" element={
+                  <ProtectedRoute><LohnAbrechnung /></ProtectedRoute>
+                }/>
+                <Route path="/dashboard/lohn/urlaub" element={
+                  <ProtectedRoute><UrlaubsVerwaltung /></ProtectedRoute>
+                }/>
+
 		<Route path="/redeem-coupon" element={
 		  <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
 		}/>

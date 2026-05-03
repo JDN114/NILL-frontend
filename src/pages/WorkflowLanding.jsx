@@ -41,6 +41,20 @@ const MODULES = [
     ),
   },
   {
+    title: "HR Dokumente",
+    description: "Lohnsteuerbescheinigungen & Mitarbeiterdokumente",
+    to: "/dashboard/workflow/hr-documents",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+        <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/>
+        <line x1="8" y1="13" x2="16" y2="13"/>
+        <line x1="8" y1="17" x2="13" y2="17"/>
+      </svg>
+    ),
+  },
+  {
     title: "Lieferscheine",
     description: "Dokumente & Inventur-Belege",
     to: "/dashboard/workflow/delivery-notes",

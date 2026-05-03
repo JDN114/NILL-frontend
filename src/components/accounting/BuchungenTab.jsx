@@ -46,6 +46,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
     try {
       await api.post("/api/v1/buchhaltung/buchungen", {
         ...form,
+        brutto_betrag: sollSumme,
         periode_id: form.periode_id || null,
         zeilen: zeilen.map(z => ({
           konto_id: z.konto_id,
@@ -182,7 +183,10 @@ export default function BuchungenTab() {
   const storno = async (id) => {
     if (!window.confirm("Buchungssatz stornieren?")) return;
     try {
-      await api.post(`/api/v1/buchhaltung/buchungen/${id}/storno`);
+      await api.post(`/api/v1/buchhaltung/buchungen/${id}/storno`, {
+        storno_datum: new Date().toISOString().slice(0, 10),
+        storno_grund: "Manuelle Stornierung",
+      });
       setMsg({ type: "ok", text: "Storno-Buchung erstellt." });
       load();
     } catch (e) {
@@ -228,7 +232,7 @@ export default function BuchungenTab() {
                     <span className="ac-badge ac-badge-gray">{b.buchungstyp}</span>
                     {b.ist_storno && <span className="ac-badge ac-badge-pink" style={{marginLeft:4}}>STORNO</span>}
                   </td>
-                  <td className="ac-mono" style={{ textAlign:"right" }}>{fmtEur(b.betrag)}</td>
+                  <td className="ac-mono" style={{ textAlign:"right" }}>{fmtEur(b.brutto_betrag)}</td>
                   <td>
                     {b.festgeschrieben
                       ? <span className="ac-badge ac-badge-green">Fest</span>
@@ -249,7 +253,7 @@ export default function BuchungenTab() {
                         <tbody>
                           {b.zeilen.map(z => (
                             <tr key={z.id}>
-                              <td className="ac-mono">{z.konto_id}</td>
+                              <td className="ac-mono">{z.konto_nummer ? `${z.konto_nummer} – ${z.konto_name}` : z.konto_id}</td>
                               <td className="ac-mono" style={{ textAlign:"right", color: z.soll > 0 ? "var(--accent)" : "var(--ink2)" }}>
                                 {z.soll > 0 ? fmtEur(z.soll) : "--"}
                               </td>

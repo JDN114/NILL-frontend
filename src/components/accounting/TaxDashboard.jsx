@@ -18,7 +18,7 @@ function LegalFormModal({ onClose }) {
   const [loading, setLoading] = useState(false);
   const save = async () => {
     setLoading(true);
-    try { await api.post("/tax/business-profile", form); onClose(); }
+    try { await api.post("/tax/business-profile/legal-form", { legal_form: form.rechtsform }); onClose(); }
     catch(e) { alert(e.response?.data?.detail || "Fehler"); }
     finally { setLoading(false); }
   };
@@ -84,11 +84,11 @@ export default function TaxDashboard() {
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Steuerdaten...</div>;
 
-  const einnahmen = summary?.total_income   ?? 0;
-  const ausgaben  = summary?.total_expenses ?? 0;
-  const gewinn    = einnahmen - ausgaben;
-  const est       = summary?.estimated_tax  ?? 0;
-  const mwst      = summary?.vat_amount     ?? 0;
+  const einnahmen = summary?.income    ?? 0;
+  const ausgaben  = summary?.expenses  ?? 0;
+  const gewinn    = summary?.profit    ?? (einnahmen - ausgaben);
+  const est       = summary?.tax_total ?? 0;
+  const mwst      = summary?.vat?.kz_65_zahllast ?? 0;
 
   return (
     <div>

@@ -27,11 +27,11 @@ function PeriodStatus({ perioden }) {
           {perioden.length === 0 && <tr><td colSpan={5} className="ac-empty">Noch keine USt-Perioden.</td></tr>}
           {perioden.map(p => (
             <tr key={p.id}>
-              <td className="ac-mono">{p.bezeichnung || `${p.monat}/${p.jahr}`}</td>
-              <td><span className="ac-badge ac-badge-gray">{p.typ || "monatlich"}</span></td>
-              <td>{p.eingereicht ? <span className="ac-badge ac-badge-green">Eingereicht</span> : <span className="ac-badge ac-badge-gray">Offen</span>}</td>
-              <td className="ac-mono" style={{ textAlign:"right", color: (p.zahllast || 0) >= 0 ? "var(--a3)" : "var(--accent)" }}>{fmtEur(p.zahllast)}</td>
-              <td className="ac-mono">{p.faelligkeitsdatum || "--"}</td>
+              <td className="ac-mono">{`${p.periode_von} – ${p.periode_bis}`}</td>
+              <td><span className="ac-badge ac-badge-gray">{p.art || "monatlich"}</span></td>
+              <td>{p.status === "eingereicht" ? <span className="ac-badge ac-badge-green">Eingereicht</span> : <span className="ac-badge ac-badge-gray">Offen</span>}</td>
+              <td className="ac-mono" style={{ textAlign:"right", color: (p.kz_65_zahllast || 0) >= 0 ? "var(--a3)" : "var(--accent)" }}>{fmtEur(p.kz_65_zahllast)}</td>
+              <td className="ac-mono">--</td>
             </tr>
           ))}
         </tbody>

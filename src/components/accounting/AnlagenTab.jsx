@@ -5,20 +5,26 @@ import api from "../../services/api";
 const fmt    = (n) => Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtEur = (n) => `${fmt(n)} EUR`;
 
-const NUTZUNGSDAUER_VORGABEN = [
-  { label: "GWG (Sofortabschreibung bis 800 EUR)", value: 1  },
-  { label: "PC / Notebook (3 Jahre)",              value: 3  },
-  { label: "PKW (6 Jahre)",                        value: 6  },
-  { label: "Buroausstattung (13 Jahre)",            value: 13 },
-  { label: "Maschinen (10 Jahre)",                 value: 10 },
-  { label: "Gebaude (50 Jahre)",                   value: 50 },
+const ANLAGEN_ARTEN = [
+  "IT-Hardware", "Software", "PKW / Fahrzeug", "Maschinen", "Buroausstattung",
+  "Gebaude", "GWG (bis 800 EUR)", "Sonstiges",
+];
+
+const ND_VORGABEN = [
+  { label: "GWG Sofortabschreibung (1 Monat)", months: 1 },
+  { label: "PC / Notebook (36 Monate)",        months: 36 },
+  { label: "PKW (72 Monate)",                  months: 72 },
+  { label: "Buroausstattung (156 Monate)",     months: 156 },
+  { label: "Maschinen (120 Monate)",           months: 120 },
+  { label: "Gebaude (600 Monate)",             months: 600 },
 ];
 
 function NeuAnlageModal({ onClose, onSaved }) {
+  const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState({
-    bezeichnung: "", anschaffungsdatum: new Date().toISOString().slice(0,10),
-    anschaffungskosten: "", nutzungsdauer_jahre: 3,
-    abschreibungsmethode: "linear", kategorie: "", seriennummer: "",
+    anlagen_nummer: "", bezeichnung: "", anlagen_art: "IT-Hardware",
+    kaufdatum: today, anschaffungskosten: "",
+    nutzungsdauer_monate: 36, afa_methode: "linear", afa_beginn: today,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
@@ -26,15 +32,20 @@ function NeuAnlageModal({ onClose, onSaved }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const save = async () => {
-    if (!form.bezeichnung || !form.anschaffungskosten) {
-      setError("Bezeichnung und Anschaffungskosten sind Pflichtfelder."); return;
+    if (!form.anlagen_nummer || !form.bezeichnung || !form.anschaffungskosten) {
+      setError("Anlagennummer, Bezeichnung und Anschaffungskosten sind Pflichtfelder."); return;
     }
     setLoading(true);
     try {
       await api.post("/api/v1/buchhaltung/anlagen", {
-        ...form,
-        anschaffungskosten: parseFloat(form.anschaffungskosten),
-        nutzungsdauer_jahre: parseInt(form.nutzungsdauer_jahre),
+        anlagen_nummer:       form.anlagen_nummer,
+        bezeichnung:          form.bezeichnung,
+        anlagen_art:          form.anlagen_art,
+        kaufdatum:            form.kaufdatum,
+        anschaffungskosten:   parseFloat(form.anschaffungskosten),
+        nutzungsdauer_monate: parseInt(form.nutzungsdauer_monate),
+        afa_methode:          form.afa_methode,
+        afa_beginn:           form.afa_beginn,
       });
       onSaved(); onClose();
     } catch(e) {
@@ -47,16 +58,25 @@ function NeuAnlageModal({ onClose, onSaved }) {
       <div className="ac-modal">
         <div className="ac-modal-title">Neue Anlage erfassen</div>
         {error && <div className="ac-alert ac-alert-err">{error}</div>}
-        <div className="ac-form-col" style={{ marginBottom:12 }}>
-          <label className="ac-label">Bezeichnung *</label>
-          <input className="ac-input" value={form.bezeichnung} placeholder="z.B. MacBook Pro M3"
-            onChange={e => set("bezeichnung", e.target.value)} />
+        <div className="ac-form-row">
+          <div className="ac-form-col" style={{ maxWidth: 140 }}>
+            <label className="ac-label">Anlagennummer *</label>
+            <input className="ac-input ac-mono" value={form.anlagen_nummer} placeholder="A-001"
+              onChange={e => set("anlagen_nummer", e.target.value)} />
+          </div>
+          <div className="ac-form-col" style={{ flex: 2 }}>
+            <label className="ac-label">Bezeichnung *</label>
+            <input className="ac-input" value={form.bezeichnung} placeholder="z.B. MacBook Pro M3"
+              onChange={e => set("bezeichnung", e.target.value)} />
+          </div>
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col">
-            <label className="ac-label">Anschaffungsdatum</label>
-            <input className="ac-input" type="date" value={form.anschaffungsdatum}
-              onChange={e => set("anschaffungsdatum", e.target.value)} />
+            <label className="ac-label">Anlagenart</label>
+            <select className="ac-select" value={form.anlagen_art}
+              onChange={e => set("anlagen_art", e.target.value)}>
+              {ANLAGEN_ARTEN.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
           </div>
           <div className="ac-form-col">
             <label className="ac-label">Anschaffungskosten (EUR) *</label>
@@ -66,33 +86,32 @@ function NeuAnlageModal({ onClose, onSaved }) {
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col">
-            <label className="ac-label">Nutzungsdauer (Jahre)</label>
-            <select className="ac-select" value={form.nutzungsdauer_jahre}
-              onChange={e => set("nutzungsdauer_jahre", e.target.value)}>
-              {NUTZUNGSDAUER_VORGABEN.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
-              {[2,4,5,7,8,9,15,20,25,30,40].map(y => <option key={y} value={y}>{y} Jahre (individuell)</option>)}
-            </select>
+            <label className="ac-label">Kaufdatum</label>
+            <input className="ac-input" type="date" value={form.kaufdatum}
+              onChange={e => { set("kaufdatum", e.target.value); set("afa_beginn", e.target.value); }} />
           </div>
           <div className="ac-form-col">
-            <label className="ac-label">Methode</label>
-            <select className="ac-select" value={form.abschreibungsmethode}
-              onChange={e => set("abschreibungsmethode", e.target.value)}>
-              <option value="linear">Linear (gleichmassig)</option>
-              <option value="degressiv">Degressiv</option>
-              <option value="sofort">Sofortabschreibung (GWG)</option>
-            </select>
+            <label className="ac-label">AfA-Beginn</label>
+            <input className="ac-input" type="date" value={form.afa_beginn}
+              onChange={e => set("afa_beginn", e.target.value)} />
           </div>
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col">
-            <label className="ac-label">Kategorie</label>
-            <input className="ac-input" value={form.kategorie} placeholder="z.B. IT-Hardware"
-              onChange={e => set("kategorie", e.target.value)} />
+            <label className="ac-label">Nutzungsdauer</label>
+            <select className="ac-select" value={form.nutzungsdauer_monate}
+              onChange={e => set("nutzungsdauer_monate", e.target.value)}>
+              {ND_VORGABEN.map(v => <option key={v.months} value={v.months}>{v.label}</option>)}
+            </select>
           </div>
           <div className="ac-form-col">
-            <label className="ac-label">Seriennummer</label>
-            <input className="ac-input" value={form.seriennummer}
-              onChange={e => set("seriennummer", e.target.value)} />
+            <label className="ac-label">Methode</label>
+            <select className="ac-select" value={form.afa_methode}
+              onChange={e => set("afa_methode", e.target.value)}>
+              <option value="linear">Linear (gleichmassig)</option>
+              <option value="degressiv">Degressiv</option>
+              <option value="sofort">Sofortabschreibung (GWG)</option>
+            </select>
           </div>
         </div>
         <div className="ac-modal-footer">
@@ -110,6 +129,7 @@ function AfaVorschau({ anlage }) {
   const [vorschau, setVorschau]   = useState(null);
   const [loading, setLoading]     = useState(false);
   const [buchungJahr, setBuchungJahr] = useState(new Date().getFullYear());
+  const [buchungMonat, setBuchungMonat] = useState(new Date().getMonth() + 1);
   const [buchungMsg, setBuchungMsg]   = useState(null);
 
   useEffect(() => {
@@ -118,12 +138,12 @@ function AfaVorschau({ anlage }) {
       .then(r => setVorschau(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, [anlage.id, buchungJahr]);
 
-  const buchen = async (monat) => {
+  const buchen = async () => {
     try {
       await api.post(`/api/v1/buchhaltung/anlagen/${anlage.id}/afa-buchen`, null, {
-        params: { geschaeftsjahr: buchungJahr, monat }
+        params: { geschaeftsjahr: buchungJahr, monat: buchungMonat }
       });
-      setBuchungMsg({ type:"ok", text:`AfA ${monat}/${buchungJahr} gebucht.` });
+      setBuchungMsg({ type:"ok", text:`AfA ${buchungMonat}/${buchungJahr} gebucht.` });
     } catch(e) {
       setBuchungMsg({ type:"err", text: e.response?.data?.detail || "Fehler" });
     }
@@ -131,8 +151,8 @@ function AfaVorschau({ anlage }) {
 
   return (
     <div style={{ padding:"16px 0" }}>
-      <div className="ac-form-row" style={{ marginBottom:8 }}>
-        <label className="ac-label" style={{ alignSelf:"center" }}>Vorschau fur Jahr:</label>
+      <div className="ac-form-row" style={{ marginBottom:12 }}>
+        <label className="ac-label" style={{ alignSelf:"center" }}>Jahr:</label>
         <select className="ac-select" value={buchungJahr} onChange={e => setBuchungJahr(Number(e.target.value))}>
           {[2023,2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
         </select>
@@ -141,20 +161,35 @@ function AfaVorschau({ anlage }) {
         <div className={`ac-alert ${buchungMsg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
           style={{cursor:"pointer"}} onClick={() => setBuchungMsg(null)}>{buchungMsg.text}</div>
       )}
-      {loading ? <div className="ac-loading"><span className="ac-spinner"/>Lade...</div> : (
-        <table className="ac-table" style={{ fontSize:".82rem" }}>
-          <thead><tr><th>Monat</th><th style={{textAlign:"right"}}>AfA-Betrag</th><th style={{textAlign:"right"}}>Restwert nach AfA</th><th></th></tr></thead>
-          <tbody>
-            {(vorschau?.monate || []).map(m => (
-              <tr key={m.monat}>
-                <td className="ac-mono">{m.monat}/{buchungJahr}</td>
-                <td className="ac-mono" style={{textAlign:"right", color:"var(--a3)"}}>{fmtEur(m.afa_betrag)}</td>
-                <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(m.restwert)}</td>
-                <td><button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => buchen(m.monat)}>Buchen</button></td>
-              </tr>
+      {loading ? <div className="ac-loading"><span className="ac-spinner"/>Lade...</div> : vorschau && (
+        <div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:10, marginBottom:16 }}>
+            {[
+              { label:"AfA dieses Jahr", value: vorschau.afa_dieses_jahr, color:"var(--a3)" },
+              { label:"Buchwert Anfang", value: vorschau.buchwert_anfang },
+              { label:"Buchwert Ende",   value: vorschau.buchwert_ende, color:"var(--accent)" },
+              { label:"Bereits abgeschrieben", value: vorschau.bereits_abgeschrieben, color:"var(--ink2)" },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{ background:"var(--surface2)", borderRadius:8, padding:"10px 12px" }}>
+                <div style={{ fontSize:".72rem", color:"var(--ink2)", textTransform:"uppercase", letterSpacing:".04em", marginBottom:4 }}>{label}</div>
+                <div className="ac-mono" style={{ fontWeight:700, color: color || "var(--ink)" }}>{fmtEur(value)}</div>
+              </div>
             ))}
-          </tbody>
-        </table>
+            <div style={{ background:"var(--surface2)", borderRadius:8, padding:"10px 12px" }}>
+              <div style={{ fontSize:".72rem", color:"var(--ink2)", textTransform:"uppercase", letterSpacing:".04em", marginBottom:4 }}>Restlaufzeit</div>
+              <div className="ac-mono" style={{ fontWeight:700 }}>{vorschau.restlaufzeit_monate} Mon.</div>
+            </div>
+          </div>
+          <div className="ac-form-row" style={{ alignItems:"flex-end", gap:8 }}>
+            <div className="ac-form-col" style={{ maxWidth:140 }}>
+              <label className="ac-label">Monat buchen</label>
+              <select className="ac-select" value={buchungMonat} onChange={e => setBuchungMonat(Number(e.target.value))}>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={buchen}>AfA buchen</button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -175,7 +210,7 @@ export default function AnlagenTab() {
   useEffect(() => { load(); }, [load]);
 
   const totalAHK  = anlagen.reduce((s,a) => s + Number(a.anschaffungskosten || 0), 0);
-  const totalRest = anlagen.reduce((s,a) => s + Number(a.restwert || 0), 0);
+  const totalRest = anlagen.reduce((s,a) => s + Number(a.buchwert_aktuell || 0), 0);
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Anlagebuch...</div>;
 
@@ -198,12 +233,12 @@ export default function AnlagenTab() {
               <React.Fragment key={a.id}>
                 <tr style={{ cursor:"pointer" }} onClick={() => setExpanded(e => ({...e, [a.id]: !e[a.id]}))}>
                   <td>{a.bezeichnung}</td>
-                  <td className="ac-mono">{a.anschaffungsdatum}</td>
-                  <td><span className="ac-badge ac-badge-gray">{a.kategorie || "--"}</span></td>
+                  <td className="ac-mono">{a.kaufdatum}</td>
+                  <td><span className="ac-badge ac-badge-gray">{a.anlagen_art || "--"}</span></td>
                   <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(a.anschaffungskosten)}</td>
-                  <td className="ac-mono" style={{textAlign:"right", color:"var(--accent)"}}>{fmtEur(a.restwert)}</td>
-                  <td className="ac-mono">{a.nutzungsdauer_jahre} J</td>
-                  <td><span className="ac-badge ac-badge-purple">{a.abschreibungsmethode}</span></td>
+                  <td className="ac-mono" style={{textAlign:"right", color:"var(--accent)"}}>{fmtEur(a.buchwert_aktuell)}</td>
+                  <td className="ac-mono">{Math.round((a.nutzungsdauer_monate || 0) / 12)} J</td>
+                  <td><span className="ac-badge ac-badge-purple">{a.afa_methode}</span></td>
                   <td style={{ color:"var(--ink2)", fontSize:".8rem" }}>{expanded[a.id] ? "A" : "V"}</td>
                 </tr>
                 {expanded[a.id] && (

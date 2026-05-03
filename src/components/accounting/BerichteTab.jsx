@@ -21,15 +21,18 @@ function Saldenliste({ von, bis }) {
       <table className="ac-table" style={{ fontSize:".82rem" }}>
         <thead><tr><th>Kontonr.</th><th>Bezeichnung</th><th style={{textAlign:"right"}}>Soll</th><th style={{textAlign:"right"}}>Haben</th><th style={{textAlign:"right"}}>Saldo</th></tr></thead>
         <tbody>
-          {(data.konten || []).map(k => (
+          {(data.positionen || []).map(k => {
+            const saldo = (k.saldo_soll || 0) - (k.saldo_haben || 0);
+            return (
             <tr key={k.kontonummer}>
               <td className="ac-mono" style={{color:"var(--accent)"}}>{k.kontonummer}</td>
               <td>{k.bezeichnung}</td>
-              <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(k.soll)}</td>
-              <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(k.haben)}</td>
-              <td className="ac-mono" style={{textAlign:"right", color: (k.saldo||0) < 0 ? "var(--a3)" : "var(--accent)"}}>{fmtEur(k.saldo)}</td>
+              <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(k.soll_summe)}</td>
+              <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(k.haben_summe)}</td>
+              <td className="ac-mono" style={{textAlign:"right", color: saldo < 0 ? "var(--a3)" : "var(--accent)"}}>{fmtEur(saldo)}</td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
         <tfoot>
           <tr style={{ borderTop:"1px solid rgba(239,237,231,.15)" }}>
@@ -72,21 +75,18 @@ function Bilanz({ stichtag }) {
     <div className="ac-grid-2">
       <div className="ac-card">
         <div className="ac-section-title">Aktiva (§266 Abs. 2 HGB)</div>
-        {renderSection("A. Anlagevermogen", data.aktiva?.anlage, "var(--accent)")}
-        {renderSection("B. Umlaufvermogen", data.aktiva?.umlauf, "var(--accent)")}
+        {(data.aktiva || []).map((abschnitt, i) => renderSection(abschnitt.titel, abschnitt.positionen, "var(--accent)"))}
         <div style={{ borderTop:"2px solid var(--accent)", paddingTop:12, display:"flex", justifyContent:"space-between" }}>
           <span style={{ fontFamily:"Fraunces,serif", fontWeight:700 }}>Bilanzsumme Aktiva</span>
-          <span className="ac-mono" style={{ color:"var(--accent)", fontWeight:700, fontSize:"1.1rem" }}>{fmtEur(data.aktiva?.summe)}</span>
+          <span className="ac-mono" style={{ color:"var(--accent)", fontWeight:700, fontSize:"1.1rem" }}>{fmtEur(data.summe_aktiva)}</span>
         </div>
       </div>
       <div className="ac-card">
         <div className="ac-section-title">Passiva (§266 Abs. 3 HGB)</div>
-        {renderSection("A. Eigenkapital", data.passiva?.eigenkapital, "var(--a2)")}
-        {renderSection("B. Ruckstellungen", data.passiva?.rueckstellungen, "var(--a2)")}
-        {renderSection("C. Verbindlichkeiten", data.passiva?.verbindlichkeiten, "var(--a2)")}
+        {(data.passiva || []).map((abschnitt, i) => renderSection(abschnitt.titel, abschnitt.positionen, "var(--a2)"))}
         <div style={{ borderTop:"2px solid var(--a2)", paddingTop:12, display:"flex", justifyContent:"space-between" }}>
           <span style={{ fontFamily:"Fraunces,serif", fontWeight:700 }}>Bilanzsumme Passiva</span>
-          <span className="ac-mono" style={{ color:"var(--a2)", fontWeight:700, fontSize:"1.1rem" }}>{fmtEur(data.passiva?.summe)}</span>
+          <span className="ac-mono" style={{ color:"var(--a2)", fontWeight:700, fontSize:"1.1rem" }}>{fmtEur(data.summe_passiva)}</span>
         </div>
       </div>
     </div>
@@ -103,14 +103,15 @@ function GuV({ von, bis }) {
   };
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade GuV...</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>GuV laden</button></div></div>;
-  const gewinn = (data.gesamtleistung || 0) - (data.gesamtkosten || 0);
+  const gesamtkosten = (data.materialaufwand || 0) + (data.personalaufwand || 0) + (data.abschreibungen || 0) + (data.sonstige_aufwendungen || 0);
+  const gewinn = data.jahresueberschuss ?? ((data.gesamtleistung || 0) - gesamtkosten);
   return (
     <div className="ac-card">
       <div className="ac-section-title">GuV {von} - {bis} (§275 HGB Gesamtkostenverfahren)</div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
         <div>
           <div style={{ color:"var(--ink2)", fontSize:".75rem", marginBottom:8, textTransform:"uppercase", letterSpacing:".04em" }}>Ertrage</div>
-          {[["1. Umsatzerlose", data.umsatzerloese],["2. Bestandsveranderungen", data.bestandsveraenderungen],["3. Sonstige betr. Ertrage", data.sonstige_ertraege],["Gesamtleistung", data.gesamtleistung, true]].map(([label, val, bold], i) => (
+          {[["1. Umsatzerlose", data.umsatzerloese],["2. Sonstige betr. Ertrage", data.sonstige_ertraege],["Gesamtleistung", data.gesamtleistung, true]].map(([label, val, bold], i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderTop: bold ? "1px solid var(--border)" : "none" }}>
               <span style={{ fontSize:".85rem", color: bold ? "var(--ink)" : "var(--ink2)" }}>{label}</span>
               <span className="ac-mono" style={{ color:"var(--accent)", fontWeight: bold ? 700 : 400, fontSize:".85rem" }}>{fmtEur(val)}</span>
@@ -119,7 +120,7 @@ function GuV({ von, bis }) {
         </div>
         <div>
           <div style={{ color:"var(--ink2)", fontSize:".75rem", marginBottom:8, textTransform:"uppercase", letterSpacing:".04em" }}>Aufwendungen</div>
-          {[["4. Materialaufwand", data.materialaufwand],["6. Personalaufwand", data.personalaufwand],["7. Abschreibungen", data.abschreibungen],["8. Sonstige betr. Aufwendungen", data.sonstige_aufwendungen],["Gesamtkosten", data.gesamtkosten, true]].map(([label, val, bold], i) => (
+          {[["4. Materialaufwand", data.materialaufwand],["6. Personalaufwand", data.personalaufwand],["7. Abschreibungen", data.abschreibungen],["8. Sonstige betr. Aufwendungen", data.sonstige_aufwendungen],["Gesamtkosten", gesamtkosten, true]].map(([label, val, bold], i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderTop: bold ? "1px solid var(--border)" : "none" }}>
               <span style={{ fontSize:".85rem", color: bold ? "var(--ink)" : "var(--ink2)" }}>{label}</span>
               <span className="ac-mono" style={{ color:"var(--a3)", fontWeight: bold ? 700 : 400, fontSize:".85rem" }}>{fmtEur(val)}</span>
@@ -152,7 +153,7 @@ function EueR({ jahr }) {
       <div className="ac-grid-2">
         <div>
           <div className="ac-label" style={{ marginBottom:12 }}>Betriebseinnahmen</div>
-          {(data.einnahmen_positionen || []).map((p, i) => (
+          {(data.einnahmen || []).map((p, i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0" }}>
               <span style={{ fontSize:".85rem", color:"var(--ink2)" }}>{p.bezeichnung}</span>
               <span className="ac-mono" style={{ color:"var(--accent)", fontSize:".85rem" }}>{fmtEur(p.betrag)}</span>
@@ -165,7 +166,7 @@ function EueR({ jahr }) {
         </div>
         <div>
           <div className="ac-label" style={{ marginBottom:12 }}>Betriebsausgaben</div>
-          {(data.ausgaben_positionen || []).map((p, i) => (
+          {(data.ausgaben || []).map((p, i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0" }}>
               <span style={{ fontSize:".85rem", color:"var(--ink2)" }}>{p.bezeichnung}</span>
               <span className="ac-mono" style={{ color:"var(--a3)", fontSize:".85rem" }}>{fmtEur(p.betrag)}</span>

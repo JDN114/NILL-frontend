@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { label: "Emails",         path: "/dashboard/emails" },
   { label: "Kalender",       path: "/dashboard/calendar" },
   { label: "Buchhaltung",    path: "/dashboard/accounting" },
+  { label: "Lohnbuchhaltung", path: "/dashboard/lohn" },
   { label: "NILL",           path: "/dashboard/nill-secretary",     gold: true },
   { label: "Einstellungen",  path: "/dashboard/settings" },
 ];
