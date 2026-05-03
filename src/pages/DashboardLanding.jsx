@@ -66,6 +66,11 @@ const S = `
   .nd-card-locked:hover { opacity:.65; transform:none; }
   .nd-lock-icon { color:var(--ink-faint); }
 
+  /* Coming soon card */
+  .nd-card-soon { opacity:.55; cursor:default; pointer-events:none; }
+  .nd-card-soon:hover { transform:none; }
+  .nd-soon-badge { font-family:var(--mono); font-size:9px; color:var(--ink-dim); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:99px; padding:2px 9px; letter-spacing:.12em; text-transform:uppercase; align-self:flex-start; }
+
   @media(max-width:600px) {
     .nd-welcome { padding:24px 20px; }
     .nd-grid { grid-template-columns:1fr 1fr; }
@@ -103,7 +108,9 @@ export default function DashboardLanding() {
       if (r.data.is_subscription_active && !r.data.has_seen_onboarding) setShowWelcome(true);
     }).catch(() => {});
     api.get("/me/notifications").then(r => setNotifications(r.data || [])).catch(() => {});
-    api.get("/nill/notifications/dashboard").then(r => setNillNotifications(r.data || [])).catch(() => {});
+    if (hasModule("nill")) {
+      api.get("/nill/notifications/dashboard").then(r => setNillNotifications(r.data || [])).catch(() => {});
+    }
   }, []);
 
   const handleWelcomeClose = async () => {
@@ -113,7 +120,7 @@ export default function DashboardLanding() {
   };
 
   const cards = [
-    { key: "nill",        title: "NILL",          desc: "KI-Sekretärin",                    link: "/dashboard/nill-secretary", feature: "nill",       module: "nill",       isNill: true },
+    { key: "nill",        title: "NILL",          desc: "KI-Sekretärin",                    link: "/dashboard/NILL-Secretary", feature: null,         module: null,         isNill: true, comingSoon: true },
     { key: "emails",      title: "E-Mails",        desc: "Postfach, Filter & Kategorien",    link: "/dashboard/emails",         feature: "email",      module: "emails"      },
     { key: "accounting",  title: "Buchhaltung",    desc: "Rechnungen, Einnahmen & Ausgaben", link: "/dashboard/accounting",     feature: "accounting", module: "accounting"  },
     { key: "calendar",    title: "Kalender",       desc: "Termine, Planung & Events",        link: "/dashboard/calendar",       feature: "calendar",   module: "calendar"    },
@@ -151,18 +158,18 @@ export default function DashboardLanding() {
               }
             </h1>
             <p className="nd-welcome-sub">
-              {actionCount > 0
+              {hasModule("nill") && actionCount > 0
                 ? `NILL hat ${actionCount} Aufgabe${actionCount !== 1 ? "n" : ""} für dich vorbereitet.`
                 : "Alles im grünen Bereich — keine offenen Aufgaben."}
             </p>
 
             {/* Notifications */}
-            {(notifications.length > 0 || nillNotifications.length > 0) && (
+            {(notifications.length > 0 || (hasModule("nill") && nillNotifications.length > 0)) && (
               <div className="nd-notifs">
                 {notifications.slice(0, 2).map((n, i) => (
                   <div key={i} className="nd-notif">{n.message}</div>
                 ))}
-                {nillNotifications.slice(0, 3).map((n, i) => (
+                {hasModule("nill") && nillNotifications.slice(0, 3).map((n, i) => (
                   <div
                     key={i}
                     className="nd-notif nd-notif-nill"
@@ -189,6 +196,25 @@ export default function DashboardLanding() {
             {cards.map((card, idx) => {
               const unlocked = (!card.module || hasModule(card.module)) &&
                                (!card.feature || hasFeature(card.feature));
+
+              if (card.comingSoon) {
+                return (
+                  <motion.div
+                    key={card.key}
+                    className="nd-card nd-card-soon"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * .05 }}
+                  >
+                    <div className="nd-card-icon">{ICONS[card.key] || "◎"}</div>
+                    <div>
+                      <div className="nd-card-title">{card.title}</div>
+                      <span className="nd-soon-badge">Coming Soon</span>
+                      <p className="nd-card-desc" style={{ marginTop: 6 }}>{card.desc}</p>
+                    </div>
+                  </motion.div>
+                );
+              }
 
               if (!unlocked) {
                 return (

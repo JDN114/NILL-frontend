@@ -40,6 +40,8 @@ import VerificationFailed from "./pages/VerificationFailed";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
+import AGB from "./pages/AGB";
+import Footer from "./components/Footer";
 import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
 import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
@@ -70,6 +72,7 @@ function App() {
  		<Route path="/verification-failed" element={<VerificationFailed />} />
 		<Route path="/Impressum" element={<Impressum />} />
 		<Route path="/Datenschutz" element={<Datenschutz />} />
+		<Route path="/agb" element={<AGB />} />
 		<Route path="/about-nill" element={<AboutNillPage />} />
 		<Route path="/about-us" element={<AboutUsPage />} />
 		<Route path="/founder" element={<Founder />} />
@@ -178,6 +181,7 @@ function App() {
                   <ProtectedRoute><CallsModule /></ProtectedRoute>
                 }/>
 	      </Routes>
+              <Footer />
             </Router>
           </MailProvider>
           </ImapProvider>

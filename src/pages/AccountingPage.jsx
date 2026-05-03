@@ -42,6 +42,8 @@ const S = `
   .ac-tab{padding:7px 14px;border-radius:8px;border:none;background:transparent;color:var(--ink2);font-size:.82rem;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;transition:all .15s;}
   .ac-tab:hover{color:var(--ink);background:var(--surface2);}
   .ac-tab.active{background:var(--accent);color:#000;font-weight:600;}
+  .ac-tab-soon{opacity:.5;}
+  .ac-tab-soon:hover{opacity:.7;}
 
   .ac-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
   .ac-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
@@ -623,6 +625,17 @@ const HELP_MODULES = [
   },
 ];
 
+function ComingSoonTab({ title = "Dieses Feature", desc = "Demnächst verfügbar." }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:320, gap:16, opacity:.7 }}>
+      <div style={{ fontSize:36 }}>🚧</div>
+      <div style={{ fontFamily:"var(--mono,monospace)", fontSize:11, letterSpacing:".15em", textTransform:"uppercase", color:"var(--ink-dim,rgba(255,255,255,.4))" }}>Work in Progress</div>
+      <div style={{ fontFamily:"var(--serif,serif)", fontSize:22, color:"var(--ink,#efede7)" }}>{title}</div>
+      <p style={{ fontSize:13, color:"var(--ink-dim,rgba(255,255,255,.5))", textAlign:"center", maxWidth:340 }}>{desc}</p>
+    </div>
+  );
+}
+
 function HilfeTab({ onNavigate }) {
   const [selected, setSelected] = useState(null);
 
@@ -717,7 +730,7 @@ const TABS = [
   {id:"ustva",      label:"UStVA"},
   {id:"berichte",   label:"Berichte"},
   {id:"partner",    label:"Geschäftspartner"},
-  {id:"bank",       label:"Bank"},
+  {id:"bank",       label:"Bank", comingSoon: true},
   {id:"steuern",    label:"Steuern"},
   {id:"export",     label:"Export"},
   {id:"hilfe",      label:"❓ Hilfe"},
@@ -748,7 +761,7 @@ export default function AccountingPage() {
   const goTo = (tabId) => setTab(tabId);
 
   const goToDashboard = () => {
-    window.location.href = "/";
+    window.location.href = "/dashboard";
   };
 
   const renderTab = () => {
@@ -767,7 +780,8 @@ export default function AccountingPage() {
       case "ustva":      return <UstVaTab key={refreshKey}/>;
       case "berichte":   return <BerichteTab key={refreshKey}/>;
       case "partner":    return <GeschaeftspartnerTab key={refreshKey}/>;
-      case "bank":       return <BankInsights key={refreshKey}/>;
+      case "bank":       return <ComingSoonTab title="Banksynchronisation" desc="Automatischer Bankabgleich mit deinen Buchungen — in Kürze verfügbar." />;
+      case "bank_insights_disabled": return <BankInsights key={refreshKey}/>;
       case "steuern":    return <TaxDashboard key={refreshKey}/>;
       case "export":     return <ExportTab/>;
       case "hilfe":      return <HilfeTab onNavigate={goTo}/>;
@@ -798,10 +812,12 @@ export default function AccountingPage() {
           {TABS.map(t => (
             <button
               key={t.id}
-              className={`ac-tab${tab===t.id?" active":""}`}
+              className={`ac-tab${tab===t.id?" active":""}${t.comingSoon?" ac-tab-soon":""}`}
               onClick={()=>setTab(t.id)}
+              title={t.comingSoon ? "Demnächst verfügbar" : undefined}
             >
               {t.label}
+              {t.comingSoon && <span style={{marginLeft:5,fontSize:"9px",opacity:.6,fontFamily:"monospace",verticalAlign:"middle"}}>soon</span>}
             </button>
           ))}
         </div>

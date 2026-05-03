@@ -1,47 +1,38 @@
-// src/components/Footer.jsx
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="py-10 text-gray-300" role="contentinfo">
-      <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-6">
-        <div>
-          <h4 className="text-white font-semibold">NILL</h4>
-          <p className="text-sm text-gray-400">© {currentYear} NILL</p>
-        </div>
-
-        <div>
-          <a
-            href="/impressum"
-            className="block text-gray-300 hover:text-white"
-            rel="noopener noreferrer"
-          >
-            Impressum
-          </a>
-          <a
-            href="/datenschutz"
-            className="block text-gray-300 hover:text-white"
-            rel="noopener noreferrer"
-          >
-            Datenschutz
-          </a>
-        </div>
-
-        <div>
-          <p className="text-gray-300">
-            Kontakt:{" "}
-            <a
-              href="mailto:hello@nill.ai"
-              className="text-white hover:underline"
-              rel="noopener noreferrer"
-            >
-              hello@nill.ai
-            </a>
-          </p>
-        </div>
-      </div>
+    <footer style={{
+      borderTop: "1px solid rgba(255,255,255,0.07)",
+      padding: "14px 24px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: "8px",
+      fontSize: "12px",
+      color: "rgba(255,255,255,0.35)",
+      background: "transparent",
+    }}>
+      <span>© {new Date().getFullYear()} NILL</span>
+      <nav style={{ display: "flex", gap: "20px" }}>
+        <Link to="/Impressum" style={{ color: "inherit", textDecoration: "none" }}
+          onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
+          onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
+          Impressum
+        </Link>
+        <Link to="/Datenschutz" style={{ color: "inherit", textDecoration: "none" }}
+          onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
+          onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
+          Datenschutz
+        </Link>
+        <Link to="/agb" style={{ color: "inherit", textDecoration: "none" }}
+          onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
+          onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
+          AGBs
+        </Link>
+      </nav>
     </footer>
   );
 }
