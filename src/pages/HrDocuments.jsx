@@ -323,7 +323,8 @@ export function HrDocsContent({ defaultFilterType = "" }) {
       if (filterUser) params.assigned_to   = filterUser;
       const endpoint = isAdmin ? "/hr/documents" : "/hr/documents/my";
       const res = await api.get(endpoint, { params });
-      setDocs(res.data?.items ?? res.data ?? []);
+      const raw = res.data?.items ?? res.data ?? [];
+      setDocs(Array.isArray(raw) ? raw : []);
     } catch {
       setDocs([]);
     } finally {
