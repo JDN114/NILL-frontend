@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import { HrDocsContent } from "./HrDocuments";
 
 const ALL_PERMISSIONS = [
   { key: "calendar",   label: "Kalender" },
@@ -266,9 +267,10 @@ export default function WorkflowTeam() {
   const myRole = user?.org_role ?? null;
 
   const TABS = [
-    { key: "members",  label: "Mitglieder" },
-    { key: "roles",    label: "Rollen" },
-    { key: "invites",  label: "Einladungen" },
+    { key: "members",   label: "Mitglieder"  },
+    { key: "roles",     label: "Rollen"      },
+    { key: "invites",   label: "Einladungen" },
+    { key: "dokumente", label: "Dokumente"   },
   ];
 
   if (loading) return (
@@ -637,7 +639,13 @@ export default function WorkflowTeam() {
                 )}
               </div>
             )}
-          </>
+          {/* ── Dokumente Tab ─────────────────────────────── */}
+          {activeTab === "dokumente" && (
+            <div style={{ padding: "1.25rem 0" }}>
+              <HrDocsContent />
+            </div>
+          )}
+        </>
         )}
       </div>
 

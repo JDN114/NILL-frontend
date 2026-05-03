@@ -17,6 +17,7 @@ import InvoiceList          from "../components/accounting/InvoiceList";
 import BankInsights         from "../components/accounting/BankInsights";
 import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
 import AusgangsrechnungTab  from "../components/accounting/AusgangsrechnungTab";
+import { HrDocsContent }    from "./HrDocuments";
 
 // ── design system ─────────────────────────────────────────────────────────────
 const S = `
@@ -722,18 +723,19 @@ function HilfeTab({ onNavigate }) {
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const TABS = [
-  {id:"overview",   label:"Übersicht"},
-  {id:"rechnungen", label:"Rechnungen"},
-  {id:"buchungen",  label:"Journal"},
-  {id:"kontenplan", label:"Kontenplan"},
-  {id:"anlagen",    label:"Anlagenbuch"},
-  {id:"ustva",      label:"UStVA"},
-  {id:"berichte",   label:"Berichte"},
-  {id:"partner",    label:"Geschäftspartner"},
-  {id:"bank",       label:"Bank", comingSoon: true},
-  {id:"steuern",    label:"Steuern"},
-  {id:"export",     label:"Export"},
-  {id:"hilfe",      label:"❓ Hilfe"},
+  {id:"overview",    label:"Übersicht"},
+  {id:"rechnungen",  label:"Rechnungen"},
+  {id:"buchungen",   label:"Journal"},
+  {id:"kontenplan",  label:"Kontenplan"},
+  {id:"anlagen",     label:"Anlagenbuch"},
+  {id:"ustva",       label:"UStVA"},
+  {id:"berichte",    label:"Berichte"},
+  {id:"partner",     label:"Geschäftspartner"},
+  {id:"bank",        label:"Bank", comingSoon: true},
+  {id:"steuern",     label:"Steuern"},
+  {id:"lohnsteuer",  label:"Lohnsteuer"},
+  {id:"export",      label:"Export"},
+  {id:"hilfe",       label:"❓ Hilfe"},
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -783,6 +785,7 @@ export default function AccountingPage() {
       case "bank":       return <ComingSoonTab title="Banksynchronisation" desc="Automatischer Bankabgleich mit deinen Buchungen — in Kürze verfügbar." />;
       case "bank_insights_disabled": return <BankInsights key={refreshKey}/>;
       case "steuern":    return <TaxDashboard key={refreshKey}/>;
+      case "lohnsteuer": return <HrDocsContent key={refreshKey} defaultFilterType="Lohnsteuerbescheinigung" />;
       case "export":     return <ExportTab/>;
       case "hilfe":      return <HilfeTab onNavigate={goTo}/>;
       default:           return null;

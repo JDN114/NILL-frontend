@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const DOC_TYPES = [
@@ -305,23 +305,22 @@ function btnStyle(bg, color = "var(--nill-text-dim)") {
   };
 }
 
-// ─── Main page ──────────────────────────────────────────────────────────────
-export default function HrDocuments() {
+// ─── Embeddable content (used as tab inside other pages) ────────────────────
+export function HrDocsContent({ defaultFilterType = "" }) {
   const { isCompanyAdmin } = useAuth();
   const isAdmin = Boolean(isCompanyAdmin);
 
-  const [docs, setDocs] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState("");
+  const [docs,       setDocs]       = useState([]);
+  const [users,      setUsers]      = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [filterType, setFilterType] = useState(defaultFilterType);
   const [filterUser, setFilterUser] = useState("");
 
   async function fetchDocs() {
     try {
       const params = {};
       if (filterType) params.document_type = filterType;
-      if (filterUser) params.assigned_to = filterUser;
-
+      if (filterUser) params.assigned_to   = filterUser;
       const endpoint = isAdmin ? "/hr/documents" : "/hr/documents/my";
       const res = await api.get(endpoint, { params });
       setDocs(res.data?.items ?? res.data ?? []);
@@ -343,124 +342,90 @@ export default function HrDocuments() {
   useEffect(() => { fetchUsers(); }, [isAdmin]);
   useEffect(() => { setLoading(true); fetchDocs(); }, [filterType, filterUser, isAdmin]);
 
-  function handleDelete(id) {
-    setDocs(prev => prev.filter(d => d.id !== id));
-  }
-
-  function handleRead(id) {
-    setDocs(prev => prev.map(d => d.id === id ? { ...d, is_read: true } : d));
-  }
+  const handleDelete = (id) => setDocs(prev => prev.filter(d => d.id !== id));
+  const handleRead   = (id) => setDocs(prev => prev.map(d => d.id === id ? { ...d, is_read: true } : d));
 
   const unreadCount = docs.filter(d => !d.is_read).length;
+  const lockType    = Boolean(defaultFilterType); // wenn Typ von außen vorgegeben → kein Filter-Select
 
   return (
-    <PageLayout>
-      {/* Header */}
-      <div style={{ marginBottom: "1.75rem" }}>
-        <span style={{
-          fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-          textTransform: "uppercase", color: "var(--nill-text-dim)",
-        }}>
-          Dashboard / Betrieb / HR Dokumente
-        </span>
-        <h1 style={{
-          fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0.3rem",
-          color: "var(--nill-text)", letterSpacing: "-0.01em", lineHeight: 1.15,
-        }}>
-          HR Dokumente
-          {!isAdmin && unreadCount > 0 && (
-            <span style={{
-              marginLeft: 12, fontSize: "0.8rem", fontWeight: 700,
-              padding: "2px 10px", borderRadius: 99,
-              background: "rgba(197,165,114,0.15)",
-              border: "1px solid rgba(197,165,114,0.3)",
-              color: "var(--nill-gold)",
-              verticalAlign: "middle",
-            }}>
-              {unreadCount} neu
-            </span>
-          )}
-        </h1>
-        <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
-          {isAdmin
-            ? "Mitarbeiterdokumente hochladen & verwalten"
-            : "Deine Dokumente & Bescheinigungen"}
-        </p>
-      </div>
-
-      {/* Admin upload form */}
+    <div>
       {isAdmin && <UploadForm users={users} onUploaded={fetchDocs} />}
 
-      {/* Filter bar */}
-      <div style={{
-        display: "flex", gap: "0.75rem", marginBottom: "1rem",
-        flexWrap: "wrap", alignItems: "center",
-      }}>
-        <select
-          value={filterType}
-          onChange={e => setFilterType(e.target.value)}
-          style={{
-            padding: "0.45rem 0.75rem",
-            background: "var(--nill-surface)",
-            border: "1px solid var(--nill-border)",
-            borderRadius: 8, color: "var(--nill-text)",
-            fontSize: "0.8rem", cursor: "pointer",
-          }}
-        >
-          <option value="">Alle Typen</option>
-          {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
-        </select>
+      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+        {!lockType && (
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} style={selStyle}>
+            <option value="">Alle Typen</option>
+            {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
+          </select>
+        )}
 
         {isAdmin && (
-          <select
-            value={filterUser}
-            onChange={e => setFilterUser(e.target.value)}
-            style={{
-              padding: "0.45rem 0.75rem",
-              background: "var(--nill-surface)",
-              border: "1px solid var(--nill-border)",
-              borderRadius: 8, color: "var(--nill-text)",
-              fontSize: "0.8rem", cursor: "pointer",
-            }}
-          >
+          <select value={filterUser} onChange={e => setFilterUser(e.target.value)} style={selStyle}>
             <option value="">Alle Mitarbeiter</option>
-            {users.map(u => (
-              <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
-            ))}
+            {users.map(u => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
           </select>
         )}
 
         <span style={{ fontSize: "0.78rem", color: "var(--nill-text-dim)", marginLeft: "auto" }}>
+          {!isAdmin && unreadCount > 0 && (
+            <span style={{ marginRight: 10, padding: "2px 8px", borderRadius: 99,
+              background: "rgba(197,165,114,0.15)", border: "1px solid rgba(197,165,114,0.3)",
+              color: "var(--nill-gold)", fontWeight: 700 }}>
+              {unreadCount} neu
+            </span>
+          )}
           {docs.length} Dokument{docs.length !== 1 ? "e" : ""}
         </span>
       </div>
 
-      {/* Document list */}
       {loading ? (
-        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0" }}>
-          Lädt…
-        </div>
+        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0" }}>Lädt…</div>
       ) : docs.length === 0 ? (
-        <div style={{
-          padding: "3rem 0", textAlign: "center",
-          color: "var(--nill-text-mute)", fontSize: "0.85rem",
-        }}>
+        <div style={{ padding: "3rem 0", textAlign: "center", color: "var(--nill-text-mute)", fontSize: "0.85rem" }}>
           {isAdmin ? "Noch keine Dokumente hochgeladen." : "Du hast noch keine Dokumente erhalten."}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {docs.map(doc => (
-            <DocRow
-              key={doc.id}
-              doc={doc}
-              isAdmin={isAdmin}
-              users={users}
-              onDelete={handleDelete}
-              onRead={handleRead}
-            />
+            <DocRow key={doc.id} doc={doc} isAdmin={isAdmin} users={users}
+              onDelete={handleDelete} onRead={handleRead} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+const selStyle = {
+  padding: "0.45rem 0.75rem",
+  background: "var(--nill-surface)",
+  border: "1px solid var(--nill-border)",
+  borderRadius: 8, color: "var(--nill-text)",
+  fontSize: "0.8rem", cursor: "pointer",
+};
+
+// ─── Standalone page (behält eigene Route) ──────────────────────────────────
+export default function HrDocuments() {
+  const { isCompanyAdmin } = useAuth();
+  const isAdmin = Boolean(isCompanyAdmin);
+
+  return (
+    <PageLayout>
+      <div style={{ marginBottom: "1.75rem" }}>
+        <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
+          textTransform: "uppercase", color: "var(--nill-text-dim)" }}>
+          Dashboard / Betrieb / HR Dokumente
+        </span>
+        <h1 style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0.3rem",
+          color: "var(--nill-text)", letterSpacing: "-0.01em", lineHeight: 1.15 }}>
+          HR Dokumente
+        </h1>
+        <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
+          {isAdmin ? "Mitarbeiterdokumente hochladen & verwalten" : "Deine Dokumente & Bescheinigungen"}
+        </p>
+      </div>
+      <HrDocsContent />
     </PageLayout>
   );
 }
