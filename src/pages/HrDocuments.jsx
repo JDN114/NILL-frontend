@@ -336,7 +336,8 @@ export function HrDocsContent({ defaultFilterType = "" }) {
     if (!isAdmin) return;
     try {
       const res = await api.get("/hr/users");
-      setUsers(res.data?.items ?? res.data ?? []);
+      const raw = res.data?.items ?? res.data ?? [];
+      setUsers(Array.isArray(raw) ? raw : []);
     } catch {}
   }
 
