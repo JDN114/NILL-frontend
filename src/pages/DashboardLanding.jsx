@@ -84,7 +84,6 @@ const ICONS = {
   calendar:      "▦",
   team:          "⌘",
   settings:      "◉",
-  payroll:       "₪",
 };
 
 const NILL_ICONS = {
@@ -125,7 +124,6 @@ export default function DashboardLanding() {
     { key: "accounting",  title: "Buchhaltung",    desc: "Rechnungen, Einnahmen & Ausgaben", link: "/dashboard/accounting",     feature: "accounting", module: "accounting"  },
     { key: "calendar",    title: "Kalender",       desc: "Termine, Planung & Events",        link: "/dashboard/calendar",       feature: "calendar",   module: "calendar"    },
     { key: "team",        title: "Team",           desc: "Tasks, Prozesse & Rollen",         link: "/dashboard/workflow",       feature: null,         module: null          },
-    { key: "payroll",     title: "Lohnbuchhaltung", desc: "Abrechnung, Urlaub & Mitarbeiter", link: "/dashboard/lohn",           feature: null,         module: null          },
     { key: "settings",    title: "Einstellungen",  desc: "Account & Verbindungen",            link: "/dashboard/settings",       feature: null,         module: null,         adminOnly: true },
   ].filter(c => !c.adminOnly || isCompanyAdmin());
 

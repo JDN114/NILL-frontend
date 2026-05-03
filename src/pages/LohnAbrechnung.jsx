@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const MONTHS = [
@@ -252,7 +252,7 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
   );
 }
 
-export default function LohnAbrechnung() {
+export function LohnAbrechnungContent() {
   const { isCompanyAdmin } = useAuth();
   const isAdmin = Boolean(isCompanyAdmin());
   const now = new Date();
@@ -291,33 +291,24 @@ export default function LohnAbrechnung() {
 
   if (!isAdmin) {
     return (
-      <PageLayout>
-        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.9rem", marginTop: "3rem", textAlign: "center" }}>
-          Nur Administratoren können Lohnabrechnungen erstellen.
-        </div>
-      </PageLayout>
+      <div style={{ color: "var(--nill-text-mute)", fontSize: "0.9rem", marginTop: "3rem", textAlign: "center" }}>
+        Nur Administratoren können Lohnabrechnungen erstellen.
+      </div>
     );
   }
 
   if (selectedRun) {
-    return (
-      <PageLayout>
-        <RunDetail run={selectedRun} allRuns={runs} onBack={() => setSelectedRun(null)} onRefresh={loadRuns} />
-      </PageLayout>
-    );
+    return <RunDetail run={selectedRun} allRuns={runs} onBack={() => setSelectedRun(null)} onRefresh={loadRuns} />;
   }
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
 
   return (
-    <PageLayout>
+    <>
       <div style={{ marginBottom: "1.5rem" }}>
-        <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--nill-text-dim)" }}>
-          Lohnbuchhaltung / Abrechnung
-        </span>
-        <h1 style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0.3rem", color: "var(--nill-text)", letterSpacing: "-0.01em" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: "0 0 0.3rem", color: "var(--nill-text)", letterSpacing: "-0.01em" }}>
           Lohnabrechnung
-        </h1>
+        </h2>
         <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
           Monatliche Abrechnungen generieren, prüfen & als PDF exportieren
         </p>
@@ -378,6 +369,10 @@ export default function LohnAbrechnung() {
           ))}
         </div>
       )}
-    </PageLayout>
+    </>
   );
+}
+
+export default function LohnAbrechnung() {
+  return <PageLayout><LohnAbrechnungContent /></PageLayout>;
 }

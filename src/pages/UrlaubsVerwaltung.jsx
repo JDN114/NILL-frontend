@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const ABSENCE_TYPES = ["Urlaub", "Krankheit", "Sonderurlaub", "Elternzeit", "Überstundenabbau", "Sonstiges"];
@@ -176,7 +176,7 @@ function AbsenceRow({ absence, isAdmin, onApprove, onReject, onDelete }) {
   );
 }
 
-export default function UrlaubsVerwaltung() {
+export function UrlaubsContent() {
   const { isCompanyAdmin, user } = useAuth();
   const isAdmin = Boolean(isCompanyAdmin());
 
@@ -226,14 +226,11 @@ export default function UrlaubsVerwaltung() {
   const pendingCount = absences.filter(a => a.status === "pending").length;
 
   return (
-    <PageLayout>
+    <>
       <div style={{ marginBottom: "1.5rem" }}>
-        <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--nill-text-dim)" }}>
-          Lohnbuchhaltung / Urlaub
-        </span>
-        <h1 style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0.3rem", color: "var(--nill-text)", letterSpacing: "-0.01em" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: "0 0 0.3rem", color: "var(--nill-text)", letterSpacing: "-0.01em" }}>
           Urlaubsverwaltung
-        </h1>
+        </h2>
         <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
           Abwesenheiten beantragen, verwalten & Resturlaub tracken ({currentYear})
         </p>
@@ -317,6 +314,10 @@ export default function UrlaubsVerwaltung() {
           onClose={() => setShowNew(false)}
         />
       )}
-    </PageLayout>
+    </>
   );
+}
+
+export default function UrlaubsVerwaltung() {
+  return <PageLayout><UrlaubsContent /></PageLayout>;
 }

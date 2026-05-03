@@ -4,6 +4,9 @@ import PageLayout from "../components/layout/PageLayout";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { HrDocsContent } from "./HrDocuments";
+import { MitarbeiterContent } from "./MitarbeiterVerwaltung";
+import { LohnAbrechnungContent } from "./LohnAbrechnung";
+import { UrlaubsContent } from "./UrlaubsVerwaltung";
 
 const ALL_PERMISSIONS = [
   { key: "calendar",   label: "Kalender" },
@@ -267,10 +270,13 @@ export default function WorkflowTeam() {
   const myRole = user?.org_role ?? null;
 
   const TABS = [
-    { key: "members",   label: "Mitglieder"  },
-    { key: "roles",     label: "Rollen"      },
-    { key: "invites",   label: "Einladungen" },
-    { key: "dokumente", label: "Dokumente"   },
+    { key: "members",      label: "Mitglieder"       },
+    { key: "roles",        label: "Rollen"           },
+    { key: "invites",      label: "Einladungen"      },
+    { key: "mitarbeiter",  label: "Mitarbeiter"      },
+    { key: "abrechnung",   label: "Lohnabrechnung"   },
+    { key: "urlaub",       label: "Urlaub"           },
+    { key: "dokumente",    label: "Dokumente"        },
   ];
 
   if (loading) return (
@@ -639,6 +645,24 @@ export default function WorkflowTeam() {
                 )}
               </div>
             )}
+          {/* ── Mitarbeiter Tab ───────────────────────────── */}
+          {activeTab === "mitarbeiter" && (
+            <div style={{ padding: "1.25rem 0" }}>
+              <MitarbeiterContent />
+            </div>
+          )}
+          {/* ── Lohnabrechnung Tab ────────────────────────── */}
+          {activeTab === "abrechnung" && (
+            <div style={{ padding: "1.25rem 0" }}>
+              <LohnAbrechnungContent />
+            </div>
+          )}
+          {/* ── Urlaub Tab ────────────────────────────────── */}
+          {activeTab === "urlaub" && (
+            <div style={{ padding: "1.25rem 0" }}>
+              <UrlaubsContent />
+            </div>
+          )}
           {/* ── Dokumente Tab ─────────────────────────────── */}
           {activeTab === "dokumente" && (
             <div style={{ padding: "1.25rem 0" }}>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const CONTRACT_TYPES = ["Vollzeit", "Teilzeit", "Minijob", "Werkstudent", "Praktikant", "Freiberuflich"];
@@ -261,7 +261,7 @@ function EmployeeRow({ employee, onEdit }) {
   );
 }
 
-export default function MitarbeiterVerwaltung() {
+export function MitarbeiterContent() {
   const { isCompanyAdmin } = useAuth();
   const isAdmin = Boolean(isCompanyAdmin());
 
@@ -294,21 +294,15 @@ export default function MitarbeiterVerwaltung() {
   const withProfile = employees.filter(e => e.profile).length;
 
   return (
-    <PageLayout>
+    <>
       {/* Header */}
       <div style={{ marginBottom: "1.5rem" }}>
-        <span style={{
-          fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-          textTransform: "uppercase", color: "var(--nill-text-dim)",
-        }}>
-          Lohnbuchhaltung / Mitarbeiterverwaltung
-        </span>
-        <h1 style={{
-          fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0.3rem",
+        <h2 style={{
+          fontSize: "1.25rem", fontWeight: 800, margin: "0 0 0.3rem",
           color: "var(--nill-text)", letterSpacing: "-0.01em",
         }}>
           Mitarbeiterverwaltung
-        </h1>
+        </h2>
         <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
           Stammdaten, Vertragsart, Eintrittsdatum, Steuerklasse & Lohngruppe
         </p>
@@ -382,6 +376,10 @@ export default function MitarbeiterVerwaltung() {
           onClose={() => setEditing(null)}
         />
       )}
-    </PageLayout>
+    </>
   );
+}
+
+export default function MitarbeiterVerwaltung() {
+  return <PageLayout><MitarbeiterContent /></PageLayout>;
 }
