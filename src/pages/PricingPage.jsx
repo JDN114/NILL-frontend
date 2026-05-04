@@ -302,7 +302,7 @@ export default function PricingPage() {
     try {
       const res = await axios.post(
         `${API_URL}/billing/create-checkout-session`,
-        { plan: planId, billing_cycle: cycle },
+        { plan: planId, billing_cycle: "monthly" }, // yearly not yet in Stripe — always monthly
         { withCredentials: true }
       );
       if (res?.data?.checkout_url) {
@@ -310,8 +310,9 @@ export default function PricingPage() {
       } else {
         setError("Checkout konnte nicht gestartet werden.");
       }
-    } catch {
-      setError("Zahlungsvorgang derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.");
+    } catch (e) {
+      const detail = e.response?.data?.error || e.response?.data?.detail;
+      setError(detail || "Zahlungsvorgang derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.");
     } finally {
       setLoadingPlan(null);
     }
@@ -413,13 +414,13 @@ export default function PricingPage() {
           </p>
 
           {/* Billing toggle */}
-          <div style={{
-            display: "inline-flex",
-            background: "rgba(255,255,255,0.04)",
-            border: `1px solid ${line}`,
-            borderRadius: 99, padding: 4, gap: 4,
-            marginBottom: 72,
-          }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 72 }}>
+            <div style={{
+              display: "inline-flex",
+              background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${line}`,
+              borderRadius: 99, padding: 4, gap: 4,
+            }}>
             {["monthly", "yearly"].map(c => (
               <button
                 key={c}
@@ -448,6 +449,12 @@ export default function PricingPage() {
                 )}
               </button>
             ))}
+            </div>
+            {cycle === "yearly" && (
+              <p style={{ fontFamily: mono, fontSize: 11, color: inkDim, letterSpacing: "0.1em", margin: 0 }}>
+                Jährliche Abrechnung — Abrechnung erfolgt derzeit monatlich · jährliche Zahlung auf Anfrage
+              </p>
+            )}
           </div>
 
           {error && (
