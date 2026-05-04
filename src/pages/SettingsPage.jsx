@@ -1,84 +1,379 @@
 // src/pages/SettingsPage.jsx
-//
-// Drop-in Replacement — fügt IMAP/Custom-Domain als dritten Provider neben
-// Gmail/Outlook hinzu. Integrationen-Tab listet alle verbundenen Konten,
-// Provider-Picker bietet drei Optionen, IMAP-Accounts können einzeln getrennt
-// und bei needs_reauth-Status erneut verbunden werden.
-//
-// Bestehende Funktionalität (Konto, Unternehmen, Abonnement, Team,
-// E-Mail-Vorlagen, Modals) ist unverändert.
 
 import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
-import Card from "../components/ui/Card";
-import { GmailContext } from "../context/GmailContext";
+import { GmailContext }   from "../context/GmailContext";
 import { OutlookContext } from "../context/OutlookContext";
-import { ImapContext } from "../context/ImapContext";
-import { useAuth } from "../context/AuthContext";
+import { ImapContext }    from "../context/ImapContext";
+import { useAuth }        from "../context/AuthContext";
 import api, { logoutUser } from "../services/api";
 import ChangePasswordModal from "../components/ChangePasswordModal";
-import DeleteAccountModal from "../components/DeleteAccountModal";
-import EmailVorlagenTab from "../components/EmailVorlagenTab";
-import ImapConnectModal from "../components/ImapConnectModal";
+import DeleteAccountModal  from "../components/DeleteAccountModal";
+import EmailVorlagenTab    from "../components/EmailVorlagenTab";
+import ImapConnectModal    from "../components/ImapConnectModal";
+
+// ─── Design Tokens ──────────────────────────────────────────────────────────
+const surface  = "rgba(255,255,255,0.03)";
+const border   = "rgba(239,237,231,0.07)";
+const borderHi = "rgba(197,165,114,0.28)";
+const text     = "var(--nill-text,#efede7)";
+const dim      = "var(--nill-text-dim,rgba(239,237,231,.5))";
+const mute     = "var(--nill-text-mute,rgba(239,237,231,.28))";
+const gold     = "var(--nill-gold,#c5a572)";
+const goldDim  = "rgba(197,165,114,0.1)";
+const red      = "#f87171";
+const green    = "#34d399";
+const amber    = "#fbbf24";
+
+// ─── Shared primitives ──────────────────────────────────────────────────────
+const panelStyle = {
+  background: surface,
+  border: `1px solid ${border}`,
+  borderRadius: 14,
+  overflow: "hidden",
+};
+
+const sectionHeadStyle = {
+  padding: "0.85rem 1.25rem",
+  borderBottom: `1px solid ${border}`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+};
+
+const rowStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0.85rem 1.25rem",
+  borderBottom: `1px solid ${border}`,
+  gap: "1rem",
+};
+
+const inputStyle = {
+  width: "100%", padding: "0.55rem 0.85rem",
+  background: "rgba(255,255,255,0.04)",
+  border: `1px solid ${border}`,
+  borderRadius: 9, color: text,
+  fontSize: "0.83rem", outline: "none",
+  transition: "border-color 0.15s", boxSizing: "border-box",
+};
+
+const btnPrimary = {
+  padding: "0.5rem 1.3rem",
+  background: gold, color: "#000",
+  border: "none", borderRadius: 8,
+  fontWeight: 700, fontSize: "0.82rem",
+  cursor: "pointer", transition: "opacity 0.15s",
+};
+
+const btnGhost = {
+  padding: "0.5rem 1.1rem",
+  background: "transparent",
+  border: `1px solid ${border}`,
+  borderRadius: 8, color: dim,
+  fontSize: "0.82rem", cursor: "pointer",
+  transition: "border-color 0.15s, color 0.15s",
+};
+
+const btnDanger = {
+  padding: "0.5rem 1.1rem",
+  background: "rgba(248,113,113,0.08)",
+  border: "1px solid rgba(248,113,113,0.25)",
+  borderRadius: 8, color: red,
+  fontSize: "0.82rem", cursor: "pointer",
+};
+
+// ─── Label + Input helper ──────────────────────────────────────────────────
+function Field({ label, children, hint }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: dim,
+        textTransform: "uppercase", letterSpacing: "0.07em" }}>
+        {label}
+      </label>
+      {children}
+      {hint && <span style={{ fontSize: "0.71rem", color: mute }}>{hint}</span>}
+    </div>
+  );
+}
+
+// ─── Toggle switch ──────────────────────────────────────────────────────────
+function Toggle({ on, onChange, label, description }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0.85rem 1.25rem", borderBottom: `1px solid ${border}`, gap: "1rem" }}>
+      <div>
+        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>{label}</div>
+        {description && <div style={{ fontSize: "0.75rem", color: dim, marginTop: 2 }}>{description}</div>}
+      </div>
+      <button
+        onClick={() => onChange(!on)}
+        style={{
+          width: 44, height: 24, borderRadius: 99, border: "none",
+          background: on ? gold : "rgba(255,255,255,0.1)",
+          cursor: "pointer", position: "relative", flexShrink: 0,
+          transition: "background 0.2s",
+        }}
+      >
+        <span style={{
+          position: "absolute", top: 3, left: on ? 23 : 3,
+          width: 18, height: 18, borderRadius: "50%",
+          background: on ? "#000" : "rgba(255,255,255,0.5)",
+          transition: "left 0.2s",
+        }} />
+      </button>
+    </div>
+  );
+}
+
+// ─── Badge ──────────────────────────────────────────────────────────────────
+function Badge({ label, color = gold }) {
+  return (
+    <span style={{
+      fontSize: "0.68rem", fontWeight: 700, padding: "2px 9px",
+      borderRadius: 99, whiteSpace: "nowrap",
+      background: color === green  ? "rgba(52,211,153,0.1)"  :
+                  color === red    ? "rgba(248,113,113,0.1)" :
+                  color === amber  ? "rgba(251,191,36,0.1)"  : goldDim,
+      border: `1px solid ${color === green  ? "rgba(52,211,153,0.25)"  :
+                            color === red    ? "rgba(248,113,113,0.25)" :
+                            color === amber  ? "rgba(251,191,36,0.25)"  :
+                            "rgba(197,165,114,0.25)"}`,
+      color,
+    }}>
+      {label}
+    </span>
+  );
+}
+
+// ─── Section Header ─────────────────────────────────────────────────────────
+function SectionHead({ title, action }) {
+  return (
+    <div style={sectionHeadStyle}>
+      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
+        textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        {title}
+      </span>
+      {action}
+    </div>
+  );
+}
+
+// ─── Coming Soon Overlay ────────────────────────────────────────────────────
+function ComingSoon({ label = "Demnächst" }) {
+  return (
+    <Badge label={label} color={amber} />
+  );
+}
 
 const INDUSTRIES = [
   "Handwerk", "Reinigung", "Werkstatt", "Gastronomie",
-  "Beratung", "Gesundheit", "IT & Software",
-  "Handel", "Transport", "Sonstiges",
+  "Beratung", "Gesundheit", "IT & Software", "Handel",
+  "Transport", "Immobilien", "Recht & Steuer", "Marketing & Agentur",
+  "Bildung", "Sonstiges",
 ];
+
 const PERMISSION_LABELS = {
   calendar: "Kalender", email: "E-Mail", accounting: "Buchhaltung",
   schedules: "Dienstplan", documents: "Dokumente", inventory: "Inventar",
   wages: "Lohn",
 };
 
-// ── Icons ──────────────────────────────────────────────────────────────────
-const IconUser = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-  </svg>
-);
-const IconBuilding = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-  </svg>
-);
-const IconPlug = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-  </svg>
-);
-const IconCreditCard = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-  </svg>
-);
-const IconMail = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-  </svg>
-);
-const IconTeam = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-  </svg>
-);
+const HELP_MODULES = [
+  {
+    icon: "◎",
+    title: "Buchhaltung",
+    color: "#c6ff3c",
+    features: [
+      "Eingangs- & Ausgangsrechnungen erstellen, hochladen und verwalten",
+      "Doppelte Buchführung mit SKR03-Kontenrahmen",
+      "Automatische USt-Voranmeldung (UStVA) berechnen",
+      "GUV, Bilanz und EÜR als Berichte abrufen",
+      "Anlagenbuch für Wirtschaftsgüter führen",
+      "Steuerübersicht mit Vorauszahlungsberechnung",
+      "Lohnsteuerbescheinigungen verwalten",
+      "DATEV-Export für Steuerberater",
+    ],
+  },
+  {
+    icon: "✉",
+    title: "E-Mails",
+    color: "#7a5cff",
+    features: [
+      "Gmail, Outlook & IMAP/Custom-Domain verbinden",
+      "Mehrere Postfächer parallel verwalten",
+      "E-Mails kategorisieren und filtern",
+      "E-Mail-Vorlagen erstellen und verwenden",
+      "Anhänge direkt in Buchhaltung übernehmen",
+    ],
+  },
+  {
+    icon: "▦",
+    title: "Kalender",
+    color: "#38f5d0",
+    features: [
+      "Termine und Meetings planen",
+      "Aufgaben mit Fälligkeitsdaten verknüpfen",
+      "Teamweite Kalenderansicht für Admins",
+      "Wiederholende Ereignisse verwalten",
+    ],
+  },
+  {
+    icon: "⌘",
+    title: "Team & Workflows",
+    color: "#c5a572",
+    features: [
+      "Aufgaben erstellen, zuweisen & verfolgen",
+      "Zeiterfassung pro Mitarbeiter",
+      "Rollen mit granularen Berechtigungen definieren",
+      "Teammitglieder per E-Mail einladen",
+      "Mitarbeiterverwaltung mit Vertragsdaten & Steuerklassen",
+      "Lohnabrechnung monatlich generieren & als PDF exportieren",
+      "Urlaubsanträge stellen, genehmigen & Resturlaub tracken",
+      "HR-Dokumente (Arbeitsverträge, Zeugnisse) hochladen & verwalten",
+    ],
+  },
+  {
+    icon: "◈",
+    title: "NILL KI-Sekretärin",
+    color: "#7a5cff",
+    comingSoon: true,
+    features: [
+      "KI-gestützte Bearbeitung eingehender E-Mails",
+      "Automatische Kategorisierung & Weiterleitung",
+      "Bewerbermanagement & Kandidatenfilterung",
+      "Reisekostenabrechnungen automatisch erfassen",
+      "Meeting-Vorbereitung & Protokoll-Erstellung",
+    ],
+  },
+  {
+    icon: "◉",
+    title: "Einstellungen",
+    color: dim,
+    features: [
+      "Unternehmensprofil (Name, Branche, USt-ID, Adresse) pflegen",
+      "E-Mail-Konten verbinden & verwalten",
+      "Abonnement & Rechnungen einsehen",
+      "Teammitglieder verwalten & Rollen zuweisen",
+      "Benachrichtigungen konfigurieren",
+      "Sicherheitseinstellungen & aktive Sitzungen",
+      "E-Mail-Vorlagen personalisieren",
+    ],
+  },
+];
 
-function SidebarTab({ id, label, icon, active, onClick }) {
+// ─── Kontakt Modal ───────────────────────────────────────────────────────────
+function KontaktModal({ onClose }) {
+  const { user } = useAuth();
+  const [subject,  setSubject]  = useState("");
+  const [message,  setMessage]  = useState("");
+  const [sending,  setSending]  = useState(false);
+  const [sent,     setSent]     = useState(false);
+  const [error,    setError]    = useState("");
+
+  const SUBJECTS = [
+    "Technisches Problem",
+    "Frage zu meinem Abonnement",
+    "Feature-Anfrage",
+    "Buchhaltung & Steuern",
+    "Datenschutz & DSGVO",
+    "Sonstiges",
+  ];
+
+  async function handleSend() {
+    if (!subject) { setError("Bitte ein Thema wählen."); return; }
+    if (!message.trim()) { setError("Bitte eine Nachricht eingeben."); return; }
+    setSending(true); setError("");
+    try {
+      await api.post("/contact", { subject, message, email: user?.email });
+      setSent(true);
+    } catch {
+      // Fallback: mailto
+      const body = `Von: ${user?.email ?? ""}\n\n${message}`;
+      window.open(`mailto:info@nillai.de?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
+      setSent(true);
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
-    <button
-      onClick={() => onClick(id)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
-        active ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-      }`}
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 100,
+      background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem",
+    }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <span className={active ? "text-white" : "text-gray-500"}>{icon}</span>
-      {label}
-    </button>
+      <div style={{
+        background: "#0a0a12", border: `1px solid ${border}`,
+        borderRadius: 18, padding: "1.75rem",
+        width: "100%", maxWidth: 480,
+        display: "flex", flexDirection: "column", gap: "1.25rem",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: text }}>Support kontaktieren</div>
+            <div style={{ fontSize: "0.78rem", color: dim, marginTop: 3 }}>
+              Wir antworten auf <span style={{ color: gold }}>info@nillai.de</span> innerhalb von 24 h.
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none",
+            cursor: "pointer", color: dim, fontSize: "1.3rem", lineHeight: 1 }}>
+            ×
+          </button>
+        </div>
+
+        {sent ? (
+          <div style={{
+            padding: "1.5rem", textAlign: "center",
+            background: "rgba(52,211,153,0.06)",
+            border: "1px solid rgba(52,211,153,0.2)",
+            borderRadius: 12,
+          }}>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✓</div>
+            <div style={{ fontWeight: 700, color: green, marginBottom: 4 }}>Nachricht gesendet</div>
+            <div style={{ fontSize: "0.78rem", color: dim }}>Wir melden uns so bald wie möglich.</div>
+            <button onClick={onClose} style={{ ...btnPrimary, marginTop: "1rem" }}>Schließen</button>
+          </div>
+        ) : (
+          <>
+            <Field label="Thema">
+              <select style={inputStyle} value={subject} onChange={e => setSubject(e.target.value)}>
+                <option value="">Thema wählen…</option>
+                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+
+            <Field label="Nachricht">
+              <textarea
+                style={{ ...inputStyle, minHeight: 120, resize: "vertical" }}
+                placeholder="Beschreibe dein Anliegen so detailliert wie möglich…"
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+              />
+            </Field>
+
+            {error && <div style={{ fontSize: "0.78rem", color: red }}>{error}</div>}
+
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+              <button style={btnGhost} onClick={onClose}>Abbrechen</button>
+              <button style={{ ...btnPrimary, opacity: sending ? 0.6 : 1 }}
+                onClick={handleSend} disabled={sending}>
+                {sending ? "Senden…" : "Absenden"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,74 +381,91 @@ export default function SettingsPage() {
   const showTeamTab = !isSolo() && org?.plan != null;
   const isAdmin = isCompanyAdmin();
 
-  const TABS = [
-    { id: "konto",         label: "Konto",         icon: <IconUser /> },
-    ...(isAdmin ? [{ id: "unternehmen",   label: "Unternehmen",   icon: <IconBuilding /> }] : []),
-    ...(isAdmin ? [{ id: "integrationen", label: "Integrationen", icon: <IconPlug /> }] : []),
-    ...(isAdmin ? [{ id: "abonnement",    label: "Abonnement",    icon: <IconCreditCard /> }] : []),
-    ...(showTeamTab ? [{ id: "team", label: "Mein Team", icon: <IconTeam /> }] : []),
-    ...(isAdmin ? [{ id: "email_vorlagen", label: "E-Mail Vorlagen", icon: <IconMail /> }] : []),
-  ];
-
-  const [activeTab, setActiveTab] = useState("konto");
-
-  // ── Provider Contexts ──────────────────────────────────────────────────
-  const { connected: gmailConnected, connectGmail, disconnectGmail, fetchStatus: fetchGmailStatus } = useContext(GmailContext);
-  const { connected: outlookConnected, connectOutlook, disconnectOutlook, fetchStatus: fetchOutlookStatus } = useContext(OutlookContext);
+  // ── Provider Contexts ───────────────────────────────────────────────────
+  const { connected: gmailConn, connectGmail, disconnectGmail, fetchStatus: fetchGmailStatus } = useContext(GmailContext);
+  const { connected: outlookConn, connectOutlook, disconnectOutlook, fetchStatus: fetchOutlookStatus } = useContext(OutlookContext);
   const imap = useContext(ImapContext);
   const imapAccounts = imap?.accounts ?? [];
 
-  const [loadingStatus,     setLoadingStatus]    = useState(false);
+  // ── UI state ────────────────────────────────────────────────────────────
+  const [activeTab,        setActiveTab]        = useState("konto");
   const [showProviderModal, setShowProviderModal] = useState(false);
-  const [showImapModal,     setShowImapModal]    = useState(false);
-  const [reauthAccount,     setReauthAccount]    = useState(null);
+  const [showImapModal,    setShowImapModal]     = useState(false);
+  const [reauthAccount,    setReauthAccount]     = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showDeleteModal,   setShowDeleteModal]   = useState(false);
-  const [subscription,      setSubscription]      = useState(null);
-  const [loadingSub,        setLoadingSub]        = useState(true);
+  const [showDeleteModal,  setShowDeleteModal]   = useState(false);
+  const [showKontakt,      setShowKontakt]       = useState(false);
+  const [loadingStatus,    setLoadingStatus]     = useState(false);
 
-  const [orgName,     setOrgName]     = useState(org?.name ?? "");
+  // ── Subscription ────────────────────────────────────────────────────────
+  const [subscription, setSubscription] = useState(null);
+  const [loadingSub,   setLoadingSub]   = useState(true);
+
+  // ── Company form ────────────────────────────────────────────────────────
+  const [orgName,    setOrgName]    = useState(org?.name     ?? "");
   const [orgIndustry, setOrgIndustry] = useState(org?.industry ?? "");
-  const [orgSaving,   setOrgSaving]   = useState(false);
-  const [orgSuccess,  setOrgSuccess]  = useState(false);
-  const [orgError,    setOrgError]    = useState("");
+  const [orgVatId,   setOrgVatId]   = useState(org?.vat_id   ?? "");
+  const [orgStreet,  setOrgStreet]  = useState(org?.street   ?? "");
+  const [orgCity,    setOrgCity]    = useState(org?.city     ?? "");
+  const [orgZip,     setOrgZip]     = useState(org?.zip      ?? "");
+  const [orgPhone,   setOrgPhone]   = useState(org?.phone    ?? "");
+  const [orgWebsite, setOrgWebsite] = useState(org?.website  ?? "");
+  const [orgSaving,  setOrgSaving]  = useState(false);
+  const [orgSuccess, setOrgSuccess] = useState(false);
+  const [orgError,   setOrgError]   = useState("");
 
-  // ── Status laden (alle drei Provider) ─────────────────────────────────
+  // ── Notification prefs (localStorage + backend) ─────────────────────────
+  const [notifs, setNotifs] = useState({
+    invoices:  true, tasks:  true,
+    team:      true, system: true,
+    marketing: false,
+  });
+
+  // ── Sessions ────────────────────────────────────────────────────────────
+  const [sessions,        setSessions]        = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+
+  // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       setLoadingStatus(true);
       try {
-        if (typeof fetchGmailStatus === "function") await fetchGmailStatus();
+        if (typeof fetchGmailStatus   === "function") await fetchGmailStatus();
         if (typeof fetchOutlookStatus === "function") await fetchOutlookStatus();
-        if (typeof imap?.fetchStatus === "function") await imap.fetchStatus();
-      } catch (err) {
-        console.error("[Settings] Status load error:", err);
-      } finally {
-        if (mounted) setLoadingStatus(false);
-      }
+        if (typeof imap?.fetchStatus  === "function") await imap.fetchStatus();
+      } catch {}
+      finally { if (mounted) setLoadingStatus(false); }
     };
     load();
     return () => { mounted = false; };
   }, [fetchGmailStatus, fetchOutlookStatus, imap?.fetchStatus, location.key]);
 
-  // ── Subscription ──────────────────────────────────────────────────────
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/me/subscription");
-        setSubscription(res.data);
-      } catch (err) {
-        console.error("[Settings] Subscription load error:", err);
-      } finally {
-        setLoadingSub(false);
-      }
-    };
-    load();
+    api.get("/me/subscription")
+      .then(r => setSubscription(r.data))
+      .catch(() => {})
+      .finally(() => setLoadingSub(false));
   }, []);
 
+  useEffect(() => {
+    const saved = localStorage.getItem("nill_notif_prefs");
+    if (saved) { try { setNotifs(JSON.parse(saved)); } catch {} }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "sicherheit") {
+      setLoadingSessions(true);
+      api.get("/me/sessions")
+        .then(r => setSessions(r.data?.sessions ?? []))
+        .catch(() => setSessions([]))
+        .finally(() => setLoadingSessions(false));
+    }
+  }, [activeTab]);
+
+  // ── Handlers ────────────────────────────────────────────────────────────
   const handleLogout = async () => {
-    try { await logoutUser(); } catch (_) {}
+    try { await logoutUser(); } catch {}
     navigate("/login");
   };
 
@@ -162,8 +474,10 @@ export default function SettingsPage() {
     setOrgError(""); setOrgSaving(true); setOrgSuccess(false);
     try {
       const res = await api.patch("/auth/onboarding", {
-        name: orgName.trim(),
-        industry: orgIndustry || null,
+        name: orgName.trim(), industry: orgIndustry || null,
+        vat_id: orgVatId || null, street: orgStreet || null,
+        city: orgCity || null, zip: orgZip || null,
+        phone: orgPhone || null, website: orgWebsite || null,
       }, { withCredentials: true });
       updateOrg({ name: res.data.name, industry: res.data.industry });
       setOrgSuccess(true);
@@ -175,386 +489,744 @@ export default function SettingsPage() {
     }
   };
 
+  const toggleNotif = (key) => {
+    const updated = { ...notifs, [key]: !notifs[key] };
+    setNotifs(updated);
+    localStorage.setItem("nill_notif_prefs", JSON.stringify(updated));
+    api.patch("/me/notification-preferences", updated).catch(() => {});
+  };
+
+  const handleRevokeSession = async (id) => {
+    try {
+      await api.delete(`/me/sessions/${id}`);
+      setSessions(s => s.filter(x => x.id !== id));
+    } catch {}
+  };
+
+  const handleRevokeAll = async () => {
+    if (!window.confirm("Alle anderen Sitzungen beenden?")) return;
+    try { await api.delete("/me/sessions"); } catch {}
+    navigate("/login");
+  };
+
   const handleProviderSelect = (provider) => {
     setShowProviderModal(false);
     if (provider === "gmail")   return connectGmail();
     if (provider === "outlook") return connectOutlook();
-    if (provider === "imap") {
-      setReauthAccount(null);
-      setShowImapModal(true);
-    }
+    if (provider === "imap") { setReauthAccount(null); setShowImapModal(true); }
   };
 
-  const handleReauth = (account) => {
-    setReauthAccount(account);
-    setShowImapModal(true);
-  };
+  const handleReauth = (account) => { setReauthAccount(account); setShowImapModal(true); };
 
-  const handleDisconnectImap = async (accountId) => {
+  const handleDisconnectImap = async (id) => {
     if (!window.confirm("Postfach wirklich trennen?")) return;
     setLoadingStatus(true);
-    try {
-      await imap.removeAccount(accountId);
-    } finally {
-      setLoadingStatus(false);
-    }
+    try { await imap.removeAccount(id); } finally { setLoadingStatus(false); }
   };
 
-  const handleDisconnectGmail   = async () => { setLoadingStatus(true); try { await disconnectGmail(); } finally { setLoadingStatus(false); } };
+  const handleDisconnectGmail   = async () => { setLoadingStatus(true); try { await disconnectGmail();   } finally { setLoadingStatus(false); } };
   const handleDisconnectOutlook = async () => { setLoadingStatus(true); try { await disconnectOutlook(); } finally { setLoadingStatus(false); } };
 
-  const gmailIsConnected   = gmailConnected === true || gmailConnected?.connected === true;
-  const outlookIsConnected = outlookConnected === true || outlookConnected?.connected === true;
+  const gmailIsConnected   = gmailConn   === true || gmailConn?.connected   === true;
+  const outlookIsConnected = outlookConn === true || outlookConn?.connected === true;
 
-  const planStatusClass = org?.plan_status === "active"
-    ? "text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-400"
-    : "text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/10 text-red-400";
+  // ── Tab definitions ─────────────────────────────────────────────────────
+  const TABS = [
+    { id: "konto",           label: "Konto",             icon: svgUser },
+    ...(isAdmin ? [
+      { id: "unternehmen",   label: "Unternehmen",        icon: svgBuilding },
+      { id: "integrationen", label: "Integrationen",      icon: svgPlug },
+      { id: "abonnement",    label: "Abonnement",         icon: svgCard },
+    ] : []),
+    ...(showTeamTab ? [
+      { id: "team",          label: "Mein Team",          icon: svgTeam },
+    ] : []),
+    { id: "benachrichtigungen", label: "Benachrichtigungen", icon: svgBell },
+    { id: "sicherheit",     label: "Sicherheit",          icon: svgShield },
+    ...(isAdmin ? [
+      { id: "email_vorlagen", label: "E-Mail Vorlagen",   icon: svgMail },
+    ] : []),
+    { id: "hilfe",           label: "Hilfe",              icon: svgHelp },
+  ];
 
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <PageLayout>
-      <div className="max-w-5xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-1">Einstellungen</h1>
-          <p className="text-gray-400 text-sm">Verwalte dein Konto, dein Unternehmen und deine Integrationen.</p>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+
+        {/* Page Header */}
+        <div style={{ marginBottom: "2rem" }}>
+          <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.12em",
+            textTransform: "uppercase", color: dim }}>
+            Dashboard / Einstellungen
+          </span>
+          <h1 style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.2rem 0 0.3rem",
+            color: text, letterSpacing: "-0.02em" }}>
+            Einstellungen
+          </h1>
+          <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+            Konto, Unternehmen, Integrationen & mehr
+          </p>
         </div>
 
-        <div className="flex gap-8 items-start">
-          {/* Sidebar */}
-          <nav className="w-48 shrink-0 sticky top-6 space-y-1">
-            {TABS.map(tab => (
-              <SidebarTab
-                key={tab.id} id={tab.id}
-                label={tab.label} icon={tab.icon}
-                active={activeTab === tab.id} onClick={setActiveTab}
-              />
-            ))}
+        <div style={{ display: "flex", gap: "1.75rem", alignItems: "flex-start" }}>
+
+          {/* ── Sidebar ────────────────────────────────────────────────── */}
+          <nav style={{
+            width: 188, flexShrink: 0,
+            position: "sticky", top: "5rem",
+            display: "flex", flexDirection: "column", gap: 2,
+          }}>
+            {TABS.map(tab => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10,
+                    padding: "0.55rem 0.85rem", borderRadius: 9,
+                    border: "none", cursor: "pointer", textAlign: "left",
+                    background: active ? goldDim  : "transparent",
+                    color:      active ? gold     : dim,
+                    fontWeight: active ? 700      : 500,
+                    fontSize: "0.83rem",
+                    transition: "background 0.12s, color 0.12s",
+                    borderLeft: active ? `2px solid ${gold}` : "2px solid transparent",
+                  }}
+                  onMouseOver={e => { if (!active) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = text; } }}
+                  onMouseOut={e =>  { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = dim; } }}
+                >
+                  <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0 }}>{tab.icon}</span>
+                  {tab.label}
+                </button>
+              );
+            })}
+
+            {/* Divider */}
+            <div style={{ height: 1, background: border, margin: "0.5rem 0" }} />
+
+            {/* Kontakt Button */}
+            <button
+              onClick={() => setShowKontakt(true)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "0.55rem 0.85rem", borderRadius: 9,
+                border: "none", cursor: "pointer", textAlign: "left",
+                background: "transparent", color: dim,
+                fontSize: "0.83rem", fontWeight: 500,
+                transition: "background 0.12s, color 0.12s",
+                borderLeft: "2px solid transparent",
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = text; }}
+              onMouseOut={e  => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = dim; }}
+            >
+              <span style={{ opacity: 0.7, flexShrink: 0 }}>{svgContact}</span>
+              Kontakt
+            </button>
           </nav>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0 space-y-6">
-            {/* ══ KONTO ══ */}
+          {/* ── Content ──────────────────────────────────────────────────── */}
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
+            {/* ══ KONTO ══════════════════════════════════════════════════ */}
             {activeTab === "konto" && (
               <>
-                <Card title="Account" className="rounded-2xl shadow-md">
-                  <div className="space-y-4">
-                    <div className="bg-gray-800/50 rounded-xl p-4 flex items-center gap-3">
-                      <span className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {/* Account Info */}
+                <div style={panelStyle}>
+                  <SectionHead title="Account" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {/* Avatar row */}
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "1rem",
+                      padding: "1rem 1.1rem",
+                      background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${border}`, borderRadius: 10,
+                    }}>
+                      <div style={{
+                        width: 44, height: 44, borderRadius: "50%",
+                        background: goldDim, border: `1px solid ${borderHi}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "1.1rem", fontWeight: 800, color: gold, flexShrink: 0,
+                      }}>
                         {user?.email?.[0]?.toUpperCase() ?? "?"}
-                      </span>
-                      <div>
-                        <p className="text-white font-medium text-sm">{user?.email}</p>
-                        <p className="text-xs text-gray-400 capitalize mt-0.5">{user?.role || "—"}</p>
                       </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem", color: text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {user?.email}
+                        </div>
+                        <div style={{ fontSize: "0.73rem", color: dim, marginTop: 2, textTransform: "capitalize" }}>
+                          {user?.role === "admin" ? "Company Admin" : user?.org_role?.name ?? user?.role ?? "—"}
+                        </div>
+                      </div>
+                      {user?.role === "admin" && (
+                        <Badge label="Admin" color={gold} />
+                      )}
                     </div>
-                    <button onClick={() => setShowPasswordModal(true)}
-                      className="w-full py-2.5 rounded-xl font-medium bg-gray-700 hover:bg-gray-600 text-white transition text-sm">
+
+                    <button style={btnGhost} onClick={() => setShowPasswordModal(true)}>
                       Passwort ändern
                     </button>
-                    <button onClick={handleLogout}
-                      className="w-full py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition text-sm">
+                    <button style={btnGhost} onClick={handleLogout}>
                       Ausloggen
                     </button>
                   </div>
-                </Card>
+                </div>
 
-                <Card title="Gefahrenbereich" className="rounded-2xl shadow-md border border-red-900/30">
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-400">
-                      Das Löschen deines Accounts ist dauerhaft und kann nicht rückgängig gemacht werden.
+                {/* Danger Zone */}
+                <div style={{ ...panelStyle, borderColor: "rgba(248,113,113,0.18)" }}>
+                  <SectionHead title="⚠ Gefahrenbereich" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Das Löschen deines Accounts ist permanent und kann nicht rückgängig gemacht werden.
+                      Alle deine Daten, Rechnungen und Einstellungen werden dauerhaft entfernt.
                     </p>
-                    <button onClick={() => setShowDeleteModal(true)}
-                      className="w-full py-2.5 rounded-xl font-medium bg-red-700 hover:bg-red-600 text-white transition text-sm">
+                    <button style={btnDanger} onClick={() => setShowDeleteModal(true)}>
                       Account dauerhaft löschen
                     </button>
                   </div>
-                </Card>
+                </div>
               </>
             )}
 
-            {/* ══ UNTERNEHMEN ══ */}
-            {activeTab === "unternehmen" && (
-              <Card title="Unternehmen" className="rounded-2xl shadow-md">
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-3 bg-gray-800/50 rounded-xl p-4">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Name</p>
-                      <p className="text-white font-medium text-sm">{org?.name || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Branche</p>
-                      <p className="text-white font-medium text-sm">{org?.industry || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Plan</p>
-                      <p className="text-white font-medium text-sm capitalize">{org?.plan || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Status</p>
-                      <span className={planStatusClass}>{org?.plan_status || "—"}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-gray-300 text-sm mb-1 block">Unternehmensname</label>
-                    <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)}
-                      placeholder="z.B. Müller Handwerk GmbH"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-gray-300 text-sm mb-1 block">
-                      Branche <span className="text-gray-500">(optional)</span>
-                    </label>
-                    <select value={orgIndustry} onChange={e => setOrgIndustry(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-gray-500 text-sm">
-                      <option value="">Bitte wählen…</option>
-                      {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-                    </select>
-                  </div>
-                  {orgError   && <p className="text-red-400 text-sm">{orgError}</p>}
-                  {orgSuccess && <p className="text-green-400 text-sm">Änderungen gespeichert.</p>}
-                  <button onClick={handleSaveOrg} disabled={orgSaving}
-                    className="px-6 py-2.5 rounded-xl font-medium bg-white text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 text-sm">
-                    {orgSaving ? "Wird gespeichert…" : "Speichern"}
-                  </button>
-                </div>
-              </Card>
-            )}
-
-            {/* ══ INTEGRATIONEN ══ */}
-            {activeTab === "integrationen" && (
-              <Card title="E-Mail Konten" className="rounded-2xl shadow-md">
-                <div className="space-y-3">
-                  {/* Gmail */}
-                  {gmailIsConnected && (
-                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
-                      <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Google Gmail</p>
-                        <p className="font-semibold text-white text-sm">Verbunden</p>
-                      </div>
-                      <button onClick={handleDisconnectGmail} disabled={loadingStatus}
-                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm">
-                        Trennen
-                      </button>
-                    </div>
-                  )}
-                  {/* Outlook */}
-                  {outlookIsConnected && (
-                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
-                      <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Microsoft Outlook</p>
-                        <p className="font-semibold text-white text-sm">Verbunden</p>
-                      </div>
-                      <button onClick={handleDisconnectOutlook} disabled={loadingStatus}
-                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm">
-                        Trennen
-                      </button>
-                    </div>
-                  )}
-                  {/* IMAP-Accounts */}
-                  {imapAccounts.map(a => (
-                    <div key={a.id} className="flex items-center justify-between bg-gray-800 p-4 rounded-xl">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 mb-0.5">
-                          IMAP / Custom Domain
-                          {a.imap_host && <span className="text-gray-500"> · {a.imap_host}</span>}
-                        </p>
-                        <p className="font-semibold text-white text-sm truncate">
-                          {a.email}
-                        </p>
-                        {a.status === "needs_reauth" && (
-                          <p className="text-xs text-amber-400 mt-1">
-                            Verbindung unterbrochen — bitte erneut verbinden.
-                          </p>
-                        )}
-                        {a.status === "active" && a.connected_at && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            verbunden seit {new Date(a.connected_at).toLocaleDateString("de-DE")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {a.status === "needs_reauth" && (
-                          <button onClick={() => handleReauth(a)}
-                            className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white transition text-sm">
-                            Erneuern
-                          </button>
-                        )}
-                        <button onClick={() => handleDisconnectImap(a.id)} disabled={loadingStatus}
-                          className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 text-sm">
-                          Trennen
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Verbinden-Button */}
-                  <button onClick={() => setShowProviderModal(true)}
-                    className="w-full py-3 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition text-sm">
-                    + E-Mail Konto verbinden
-                  </button>
-                  <p className="text-xs text-gray-500">
-                    Du kannst beliebig viele Postfächer parallel anbinden.
-                  </p>
-                </div>
-              </Card>
-            )}
-
-            {/* ══ ABONNEMENT ══ */}
-            {activeTab === "abonnement" && (
-              <Card title="Abonnement" className="rounded-2xl shadow-md">
-                {loadingSub ? (
-                  <p className="text-gray-400 text-sm">Lade Abonnement…</p>
-                ) : subscription ? (
-                  <div className="space-y-5">
-                    <div className="bg-gray-800/50 rounded-xl p-4 space-y-3">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Account E-Mail</p>
-                        <p className="text-white font-medium text-sm">{subscription.email}</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Aktueller Plan</p>
-                          <p className="text-white font-medium text-sm capitalize">{subscription.plan}</p>
+            {/* ══ UNTERNEHMEN ════════════════════════════════════════════ */}
+            {activeTab === "unternehmen" && isAdmin && (
+              <div style={panelStyle}>
+                <SectionHead title="Unternehmensprofil" />
+                <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {/* Info grid */}
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.65rem",
+                    padding: "1rem 1.1rem",
+                    background: "rgba(255,255,255,0.03)",
+                    border: `1px solid ${border}`, borderRadius: 10,
+                  }}>
+                    {[
+                      { label: "Name",    value: org?.name      },
+                      { label: "Branche", value: org?.industry  },
+                      { label: "Plan",    value: org?.plan      },
+                      { label: "Status",  value: org?.plan_status,
+                        badge: org?.plan_status === "active" ? green : red },
+                    ].map(({ label, value, badge }) => (
+                      <div key={label}>
+                        <div style={{ fontSize: "0.67rem", color: mute, textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>{label}</div>
+                        <div style={{ marginTop: 3 }}>
+                          {badge ? <Badge label={value ?? "—"} color={badge} /> :
+                            <span style={{ fontSize: "0.83rem", fontWeight: 600, color: text }}>{value || "—"}</span>}
                         </div>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                          subscription.is_subscription_active
-                            ? "bg-green-500/10 text-green-400"
-                            : "bg-red-500/10 text-red-400"
-                        }`}>
-                          {subscription.is_subscription_active ? "Aktiv" : "Inaktiv"}
-                        </span>
                       </div>
-                      {subscription.next_billing_date && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Nächste Abbuchung</p>
-                          <p className="text-white font-medium text-sm">
-                            {new Date(subscription.next_billing_date).toLocaleDateString("de-DE")}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <Link to="/redeem-coupon"
-                      className="inline-block px-5 py-2.5 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition text-sm">
-                      Coupon einlösen
-                    </Link>
+                    ))}
                   </div>
-                ) : (
-                  <p className="text-red-400 text-sm">Abonnement-Daten konnten nicht geladen werden.</p>
-                )}
-              </Card>
+
+                  {/* Editable fields */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
+                    <Field label="Unternehmensname *">
+                      <input style={inputStyle} value={orgName} onChange={e => setOrgName(e.target.value)}
+                        placeholder="Müller Handwerk GmbH" />
+                    </Field>
+                    <Field label="Branche">
+                      <select style={inputStyle} value={orgIndustry} onChange={e => setOrgIndustry(e.target.value)}>
+                        <option value="">Bitte wählen…</option>
+                        {INDUSTRIES.map(i => <option key={i}>{i}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="USt-ID / Steuernummer">
+                      <input style={inputStyle} value={orgVatId} onChange={e => setOrgVatId(e.target.value)}
+                        placeholder="DE123456789" />
+                    </Field>
+                    <Field label="Telefon">
+                      <input style={inputStyle} value={orgPhone} onChange={e => setOrgPhone(e.target.value)}
+                        placeholder="+49 30 12345678" />
+                    </Field>
+                    <Field label="Straße & Hausnummer">
+                      <input style={inputStyle} value={orgStreet} onChange={e => setOrgStreet(e.target.value)}
+                        placeholder="Musterstraße 42" />
+                    </Field>
+                    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "0.65rem" }}>
+                      <Field label="PLZ">
+                        <input style={inputStyle} value={orgZip} onChange={e => setOrgZip(e.target.value)}
+                          placeholder="10115" />
+                      </Field>
+                      <Field label="Stadt">
+                        <input style={inputStyle} value={orgCity} onChange={e => setOrgCity(e.target.value)}
+                          placeholder="Berlin" />
+                      </Field>
+                    </div>
+                    <Field label="Website" hint="Ohne https://">
+                      <input style={inputStyle} value={orgWebsite} onChange={e => setOrgWebsite(e.target.value)}
+                        placeholder="www.meinunternehmen.de" />
+                    </Field>
+                  </div>
+
+                  {orgError   && <div style={{ fontSize: "0.78rem", color: red }}>{orgError}</div>}
+                  {orgSuccess && <div style={{ fontSize: "0.78rem", color: green }}>✓ Änderungen gespeichert.</div>}
+
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button style={{ ...btnPrimary, opacity: orgSaving ? 0.6 : 1 }}
+                      onClick={handleSaveOrg} disabled={orgSaving}>
+                      {orgSaving ? "Wird gespeichert…" : "Speichern"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
-            {/* ══ MEIN TEAM ══ */}
+            {/* ══ INTEGRATIONEN ══════════════════════════════════════════ */}
+            {activeTab === "integrationen" && isAdmin && (
+              <>
+                <div style={panelStyle}>
+                  <SectionHead
+                    title="E-Mail Konten"
+                    action={
+                      <button style={{ ...btnPrimary, padding: "0.35rem 0.85rem", fontSize: "0.75rem" }}
+                        onClick={() => setShowProviderModal(true)}>
+                        + Verbinden
+                      </button>
+                    }
+                  />
+                  <div style={{ padding: "0.5rem 0" }}>
+                    {!gmailIsConnected && !outlookIsConnected && imapAccounts.length === 0 && (
+                      <div style={{ padding: "1.5rem 1.25rem", color: mute, fontSize: "0.82rem", textAlign: "center" }}>
+                        Noch kein E-Mail-Konto verbunden.
+                      </div>
+                    )}
+
+                    {gmailIsConnected && (
+                      <div style={rowStyle}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(234,67,53,0.12)",
+                            border: "1px solid rgba(234,67,53,0.2)", display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "0.85rem", flexShrink: 0 }}>G</div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: "0.85rem", color: text }}>Google Gmail</div>
+                            <div style={{ fontSize: "0.72rem", color: dim, marginTop: 1 }}>OAuth verbunden</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <Badge label="Aktiv" color={green} />
+                          <button style={btnDanger} onClick={handleDisconnectGmail} disabled={loadingStatus}>Trennen</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {outlookIsConnected && (
+                      <div style={rowStyle}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(0,114,239,0.12)",
+                            border: "1px solid rgba(0,114,239,0.2)", display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "0.85rem", flexShrink: 0 }}>M</div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: "0.85rem", color: text }}>Microsoft Outlook</div>
+                            <div style={{ fontSize: "0.72rem", color: dim, marginTop: 1 }}>OAuth verbunden</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <Badge label="Aktiv" color={green} />
+                          <button style={btnDanger} onClick={handleDisconnectOutlook} disabled={loadingStatus}>Trennen</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {imapAccounts.map(a => (
+                      <div key={a.id} style={rowStyle}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 0, flex: 1 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(197,165,114,0.1)",
+                            border: `1px solid ${borderHi}`, display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "0.75rem", flexShrink: 0, color: gold, fontWeight: 700 }}>@</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: "0.85rem", color: text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email}</div>
+                            <div style={{ fontSize: "0.72rem", color: dim, marginTop: 1 }}>
+                              IMAP {a.imap_host && `· ${a.imap_host}`}
+                              {a.status === "needs_reauth" && <span style={{ color: amber }}> · Erneuerung erforderlich</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                          <Badge label={a.status === "active" ? "Aktiv" : "Fehler"} color={a.status === "active" ? green : amber} />
+                          {a.status === "needs_reauth" && (
+                            <button style={{ ...btnGhost, color: amber, borderColor: "rgba(251,191,36,0.3)" }}
+                              onClick={() => handleReauth(a)}>Erneuern</button>
+                          )}
+                          <button style={btnDanger} onClick={() => handleDisconnectImap(a.id)} disabled={loadingStatus}>Trennen</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* API & Webhooks placeholder */}
+                <div style={panelStyle}>
+                  <SectionHead title="API & Webhooks" action={<ComingSoon />} />
+                  <div style={{ padding: "1.25rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      API-Schlüssel generieren und Webhooks konfigurieren, um NILL mit externen Systemen zu verbinden.
+                      Unterstützt werden REST-Hooks für Rechnungen, Aufgaben und HR-Ereignisse.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Calendar integrations placeholder */}
+                <div style={panelStyle}>
+                  <SectionHead title="Kalender-Integration" action={<ComingSoon />} />
+                  <div style={{ padding: "1.25rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Google Calendar, Outlook Calendar & CalDAV-Provider werden demnächst unterstützt.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ══ ABONNEMENT ═════════════════════════════════════════════ */}
+            {activeTab === "abonnement" && isAdmin && (
+              <>
+                <div style={panelStyle}>
+                  <SectionHead title="Aktueller Plan" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {loadingSub ? (
+                      <div style={{ color: mute, fontSize: "0.82rem" }}>Lade Abonnement…</div>
+                    ) : subscription ? (
+                      <>
+                        <div style={{
+                          display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
+                          padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
+                          border: `1px solid ${border}`, borderRadius: 10,
+                        }}>
+                          {[
+                            { label: "Plan",     value: subscription.plan },
+                            { label: "Status",   value: subscription.is_subscription_active ? "Aktiv" : "Inaktiv",
+                              color: subscription.is_subscription_active ? green : red },
+                            { label: "E-Mail",   value: subscription.email },
+                            ...(subscription.next_billing_date ? [{
+                              label: "Nächste Abbuchung",
+                              value: new Date(subscription.next_billing_date).toLocaleDateString("de-DE"),
+                            }] : []),
+                          ].map(({ label, value, color }) => (
+                            <div key={label}>
+                              <div style={{ fontSize: "0.67rem", color: mute, textTransform: "uppercase",
+                                letterSpacing: "0.07em", fontWeight: 700, marginBottom: 4 }}>{label}</div>
+                              {color ? <Badge label={value ?? "—"} color={color} /> :
+                                <span style={{ fontSize: "0.83rem", fontWeight: 600, color: text, textTransform: "capitalize" }}>{value ?? "—"}</span>}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "0.65rem" }}>
+                          <Link to="/redeem-coupon" style={{ ...btnPrimary, display: "inline-block", textDecoration: "none" }}>
+                            Coupon einlösen
+                          </Link>
+                          <Link to="/pricing" style={{ ...btnGhost, display: "inline-block", textDecoration: "none" }}>
+                            Plan ändern
+                          </Link>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ fontSize: "0.82rem", color: red }}>
+                        Abonnement-Daten konnten nicht geladen werden.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={panelStyle}>
+                  <SectionHead title="Rechnungshistorie" action={<ComingSoon />} />
+                  <div style={{ padding: "1.25rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Vergangene Rechnungen als PDF herunterladen — demnächst verfügbar.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ══ MEIN TEAM ══════════════════════════════════════════════ */}
             {activeTab === "team" && showTeamTab && (
               <>
-                <Card title="Unternehmen" className="rounded-2xl shadow-md">
-                  <div className="bg-gray-800/50 rounded-xl p-4 grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Name</p>
-                      <p className="text-white font-medium text-sm">{org?.name || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Branche</p>
-                      <p className="text-white font-medium text-sm">{org?.industry || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Plan</p>
-                      <p className="text-white font-medium text-sm capitalize">{org?.plan || "—"}</p>
+                <div style={panelStyle}>
+                  <SectionHead title="Organisation" />
+                  <div style={{ padding: "1.25rem" }}>
+                    <div style={{
+                      display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
+                      padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${border}`, borderRadius: 10,
+                    }}>
+                      {[
+                        { label: "Name",    value: org?.name     },
+                        { label: "Branche", value: org?.industry },
+                        { label: "Plan",    value: org?.plan     },
+                      ].map(({ label, value }) => (
+                        <div key={label}>
+                          <div style={{ fontSize: "0.67rem", color: mute, textTransform: "uppercase",
+                            letterSpacing: "0.07em", fontWeight: 700, marginBottom: 4 }}>{label}</div>
+                          <span style={{ fontSize: "0.83rem", fontWeight: 600, color: text }}>{value || "—"}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </Card>
-                <Card title="Meine Rolle" className="rounded-2xl shadow-md">
-                  {user?.role === "admin" ? (
-                    <div className="bg-gray-800/50 rounded-xl p-4 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                          {user?.email?.[0]?.toUpperCase() ?? "?"}
-                        </span>
-                        <div>
-                          <p className="text-white font-medium text-sm">{user?.email}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Company Admin</p>
+                </div>
+
+                <div style={panelStyle}>
+                  <SectionHead title="Meine Rolle & Berechtigungen" />
+                  <div style={{ padding: "1.25rem" }}>
+                    {user?.role === "admin" ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: goldDim,
+                          border: `1px solid ${borderHi}`, display: "flex", alignItems: "center",
+                          justifyContent: "center", fontWeight: 800, color: gold, flexShrink: 0 }}>
+                          {user?.email?.[0]?.toUpperCase()}
                         </div>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Als Company Admin hast du Zugriff auf alle Module und Funktionen deiner Organisation.
-                      </p>
-                    </div>
-                  ) : user?.org_role ? (
-                    <div className="bg-gray-800/50 rounded-xl p-4 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                          {user?.email?.[0]?.toUpperCase() ?? "?"}
-                        </span>
                         <div>
-                          <p className="text-white font-medium text-sm">{user?.email}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{user.org_role.name}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-2">Freigeschaltete Bereiche</p>
-                        {user.org_role.permissions?.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {user.org_role.permissions.map(p => (
-                              <span key={p} className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-white">
-                                {PERMISSION_LABELS[p] ?? p}
-                              </span>
-                            ))}
+                          <div style={{ fontWeight: 700, fontSize: "0.85rem", color: text }}>{user?.email}</div>
+                          <div style={{ fontSize: "0.72rem", color: dim, marginTop: 2 }}>
+                            Company Admin · Zugriff auf alle Module
                           </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">Keine Berechtigungen zugewiesen.</p>
-                        )}
+                        </div>
+                        <Badge label="Admin" color={gold} />
                       </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-800/50 rounded-xl p-4">
-                      <p className="text-sm text-gray-400">
+                    ) : user?.org_role ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+                          <div style={{ width: 40, height: 40, borderRadius: "50%", background: surface,
+                            border: `1px solid ${border}`, display: "flex", alignItems: "center",
+                            justifyContent: "center", fontWeight: 800, color: text, flexShrink: 0 }}>
+                            {user?.email?.[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: "0.85rem", color: text }}>{user?.email}</div>
+                            <div style={{ fontSize: "0.72rem", color: dim, marginTop: 2 }}>{user.org_role.name}</div>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: "0.72rem", color: mute, textTransform: "uppercase",
+                            letterSpacing: "0.07em", fontWeight: 700, marginBottom: "0.55rem" }}>
+                            Freigeschaltete Bereiche
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                            {user.org_role.permissions?.length > 0
+                              ? user.org_role.permissions.map(p => (
+                                  <Badge key={p} label={PERMISSION_LABELS[p] ?? p} color={dim} />
+                                ))
+                              : <span style={{ fontSize: "0.78rem", color: mute }}>Keine Berechtigungen</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
                         Dir wurde noch keine Rolle zugewiesen. Wende dich an deinen Administrator.
                       </p>
-                    </div>
-                  )}
-                </Card>
+                    )}
+                  </div>
+                </div>
               </>
             )}
+
+            {/* ══ BENACHRICHTIGUNGEN ═════════════════════════════════════ */}
+            {activeTab === "benachrichtigungen" && (
+              <div style={panelStyle}>
+                <SectionHead title="Benachrichtigungseinstellungen" />
+                <Toggle on={notifs.invoices}  onChange={v => toggleNotif("invoices")}
+                  label="Rechnungen & Zahlungen"
+                  description="Benachrichtigungen bei neuen Rechnungen, Zahlungsein- und -ausgängen" />
+                <Toggle on={notifs.tasks}     onChange={v => toggleNotif("tasks")}
+                  label="Aufgaben & Fristen"
+                  description="Erinnerungen bei fälligen Aufgaben und ablaufenden Fristen" />
+                <Toggle on={notifs.team}      onChange={v => toggleNotif("team")}
+                  label="Team & HR"
+                  description="Benachrichtigungen bei Urlaubsanträgen, neuen Mitgliedern und Rollenänderungen" />
+                <Toggle on={notifs.system}    onChange={v => toggleNotif("system")}
+                  label="System & Sicherheit"
+                  description="Wichtige Systemereignisse, Login-Aktivitäten und Sicherheitshinweise" />
+                <Toggle on={notifs.marketing} onChange={v => toggleNotif("marketing")}
+                  label="Produktneuigkeiten"
+                  description="Updates zu neuen Features, Verbesserungen und NILL-Neuigkeiten" />
+              </div>
+            )}
+
+            {/* ══ SICHERHEIT ═════════════════════════════════════════════ */}
+            {activeTab === "sicherheit" && (
+              <>
+                <div style={panelStyle}>
+                  <SectionHead title="Passwort & Anmeldung" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Verwende ein starkes, einzigartiges Passwort. Mindestens 12 Zeichen empfohlen.
+                    </p>
+                    <button style={btnGhost} onClick={() => setShowPasswordModal(true)}>
+                      Passwort ändern
+                    </button>
+                  </div>
+                </div>
+
+                <div style={panelStyle}>
+                  <SectionHead title="Zwei-Faktor-Authentifizierung" action={<ComingSoon />} />
+                  <div style={{ padding: "1.25rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Schütze deinen Account zusätzlich mit einem zweiten Faktor (TOTP-App oder SMS).
+                      Dieser Bereich wird demnächst freigeschaltet.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={panelStyle}>
+                  <SectionHead
+                    title="Aktive Sitzungen"
+                    action={
+                      sessions.length > 1 && (
+                        <button style={{ ...btnDanger, padding: "0.3rem 0.75rem", fontSize: "0.73rem" }}
+                          onClick={handleRevokeAll}>
+                          Alle anderen beenden
+                        </button>
+                      )
+                    }
+                  />
+                  <div style={{ padding: "0.5rem 0" }}>
+                    {loadingSessions ? (
+                      <div style={{ padding: "1.25rem", color: mute, fontSize: "0.82rem" }}>Lade Sitzungen…</div>
+                    ) : sessions.length === 0 ? (
+                      <div style={{ padding: "1.25rem", color: mute, fontSize: "0.82rem", textAlign: "center" }}>
+                        Keine aktiven Sitzungen gefunden.
+                      </div>
+                    ) : (
+                      sessions.map((s, i) => (
+                        <div key={s.id ?? i} style={rowStyle}>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: "0.83rem", color: text }}>
+                              {s.device ?? s.user_agent ?? "Unbekanntes Gerät"}
+                              {i === 0 && <Badge label="Diese Sitzung" color={green} />}
+                            </div>
+                            <div style={{ fontSize: "0.72rem", color: dim, marginTop: 2 }}>
+                              {s.ip ?? ""} {s.last_active ? `· Zuletzt aktiv: ${new Date(s.last_active).toLocaleString("de-DE")}` : ""}
+                            </div>
+                          </div>
+                          {i > 0 && (
+                            <button style={btnDanger} onClick={() => handleRevokeSession(s.id)}>Beenden</button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ══ E-MAIL VORLAGEN ════════════════════════════════════════ */}
+            {activeTab === "email_vorlagen" && isAdmin && (
+              <EmailVorlagenTab />
+            )}
+
+            {/* ══ HILFE ══════════════════════════════════════════════════ */}
+            {activeTab === "hilfe" && (
+              <>
+                <div style={{ ...panelStyle, padding: "1.5rem" }}>
+                  <div style={{ fontSize: "1rem", fontWeight: 800, color: text, marginBottom: "0.35rem" }}>
+                    NILL — Funktionsübersicht
+                  </div>
+                  <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                    Hier findest du eine Übersicht aller verfügbaren Module und ihrer Kernfunktionen.
+                    Fragen? Nutze den{" "}
+                    <button onClick={() => setShowKontakt(true)}
+                      style={{ background: "none", border: "none", color: gold, cursor: "pointer",
+                        fontSize: "0.82rem", padding: 0, textDecoration: "underline" }}>
+                      Support-Chat
+                    </button>.
+                  </p>
+                </div>
+
+                {HELP_MODULES.map(mod => (
+                  <div key={mod.title} style={panelStyle}>
+                    <div style={{ padding: "0.85rem 1.25rem", borderBottom: `1px solid ${border}`,
+                      display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <span style={{ fontSize: "1.2rem", color: mod.color }}>{mod.icon}</span>
+                      <span style={{ fontWeight: 700, fontSize: "0.9rem", color: text }}>{mod.title}</span>
+                      {mod.comingSoon && <ComingSoon />}
+                    </div>
+                    <div style={{ padding: "1rem 1.25rem" }}>
+                      <ul style={{ margin: 0, padding: 0, listStyle: "none",
+                        display: "flex", flexDirection: "column", gap: "0.45rem" }}>
+                        {mod.features.map(f => (
+                          <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem",
+                            fontSize: "0.82rem", color: dim }}>
+                            <span style={{ color: mod.color, flexShrink: 0, marginTop: 1 }}>›</span>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ ...panelStyle, padding: "1.25rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.9rem", fontWeight: 700, color: text, marginBottom: "0.5rem" }}>
+                    Noch Fragen?
+                  </div>
+                  <p style={{ fontSize: "0.82rem", color: dim, margin: "0 0 1rem" }}>
+                    Unser Support-Team hilft dir gerne weiter — innerhalb von 24 Stunden.
+                  </p>
+                  <button style={btnPrimary} onClick={() => setShowKontakt(true)}>
+                    Support kontaktieren
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       </div>
 
-      {/* ══ Provider-Picker-Modal (jetzt mit IMAP) ══ */}
+      {/* ══ Provider-Picker-Modal ══════════════════════════════════════════ */}
       {showProviderModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 p-7 rounded-2xl w-full max-w-md space-y-5 shadow-2xl">
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)",
+          backdropFilter: "blur(4px)", display: "flex", alignItems: "center",
+          justifyContent: "center", zIndex: 50, padding: "1rem",
+        }}
+          onClick={e => { if (e.target === e.currentTarget) setShowProviderModal(false); }}
+        >
+          <div style={{
+            background: "#0a0a12", border: `1px solid ${border}`,
+            borderRadius: 18, padding: "1.75rem",
+            width: "100%", maxWidth: 420,
+            display: "flex", flexDirection: "column", gap: "1.1rem",
+            boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
+          }}>
             <div>
-              <h2 className="text-xl font-bold text-white">E-Mail Anbieter auswählen</h2>
-              <p className="text-sm text-gray-400 mt-1">Du kannst mehrere Konten parallel verbinden.</p>
+              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: text }}>E-Mail Anbieter auswählen</div>
+              <div style={{ fontSize: "0.78rem", color: dim, marginTop: 3 }}>Mehrere Konten können parallel verbunden werden.</div>
             </div>
-            <div className="space-y-2">
-              <button onClick={() => handleProviderSelect("gmail")}
-                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm text-left px-4">
-                <div className="font-medium">Google (Gmail)</div>
-                <div className="text-xs text-gray-400 mt-0.5">OAuth — sichere Anmeldung über Google</div>
+            {[
+              { key: "gmail",   label: "Google Gmail",       sub: "OAuth — sichere Anmeldung über Google",
+                bg: "rgba(234,67,53,0.08)", bc: "rgba(234,67,53,0.2)" },
+              { key: "outlook", label: "Microsoft Outlook",  sub: "OAuth — sichere Anmeldung über Microsoft",
+                bg: "rgba(0,114,239,0.08)", bc: "rgba(0,114,239,0.2)" },
+              { key: "imap",    label: "Custom Domain (IMAP)", sub: "Mailbox.org, Posteo, IONOS, Strato & alle anderen IMAP-Provider",
+                bg: goldDim, bc: borderHi },
+            ].map(p => (
+              <button key={p.key} onClick={() => handleProviderSelect(p.key)}
+                style={{
+                  width: "100%", padding: "0.85rem 1rem", borderRadius: 10,
+                  background: p.bg, border: `1px solid ${p.bc}`,
+                  cursor: "pointer", textAlign: "left",
+                  transition: "opacity 0.15s",
+                }}
+                onMouseOver={e => e.currentTarget.style.opacity = "0.8"}
+                onMouseOut={e => e.currentTarget.style.opacity = "1"}
+              >
+                <div style={{ fontWeight: 700, fontSize: "0.87rem", color: text }}>{p.label}</div>
+                <div style={{ fontSize: "0.73rem", color: dim, marginTop: 3 }}>{p.sub}</div>
               </button>
-              <button onClick={() => handleProviderSelect("outlook")}
-                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm text-left px-4">
-                <div className="font-medium">Microsoft Outlook</div>
-                <div className="text-xs text-gray-400 mt-0.5">OAuth — sichere Anmeldung über Microsoft</div>
-              </button>
-              <button onClick={() => handleProviderSelect("imap")}
-                className="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white transition text-sm text-left px-4">
-                <div className="font-medium">Custom Domain (IMAP)</div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  Eigene Domain — Mailbox.org, Posteo, IONOS, Strato und alle anderen IMAP-Provider
-                </div>
-              </button>
-            </div>
+            ))}
             <button onClick={() => setShowProviderModal(false)}
-              className="text-sm text-gray-400 hover:text-white transition">
+              style={{ background: "none", border: "none", color: dim, cursor: "pointer",
+                fontSize: "0.82rem", textAlign: "center" }}>
               Abbrechen
             </button>
           </div>
         </div>
       )}
 
-      {/* ══ E-MAIL VORLAGEN ══ */}
-      {activeTab === "email_vorlagen" && isAdmin && <EmailVorlagenTab />}
+      {/* ══ Modals ══════════════════════════════════════════════════════════ */}
+      {showKontakt && <KontaktModal onClose={() => setShowKontakt(false)} />}
 
       <ChangePasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
       <DeleteAccountModal  isOpen={showDeleteModal}   onClose={() => setShowDeleteModal(false)} />
@@ -567,3 +1239,69 @@ export default function SettingsPage() {
     </PageLayout>
   );
 }
+
+// ─── SVG Icons ───────────────────────────────────────────────────────────────
+const iconProps = { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none",
+  stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
+
+const svgUser = (
+  <svg {...iconProps}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+const svgBuilding = (
+  <svg {...iconProps}>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+);
+const svgPlug = (
+  <svg {...iconProps}>
+    <path d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757"/>
+    <path d="M7.19 14.688a4.5 4.5 0 01-1.242-7.244l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757"/>
+  </svg>
+);
+const svgCard = (
+  <svg {...iconProps}>
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+    <line x1="1" y1="10" x2="23" y2="10"/>
+  </svg>
+);
+const svgTeam = (
+  <svg {...iconProps}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+const svgBell = (
+  <svg {...iconProps}>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const svgShield = (
+  <svg {...iconProps}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+const svgMail = (
+  <svg {...iconProps}>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+    <polyline points="22,6 12,13 2,6"/>
+  </svg>
+);
+const svgHelp = (
+  <svg {...iconProps}>
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+const svgContact = (
+  <svg {...iconProps}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+);
