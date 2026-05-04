@@ -1095,14 +1095,14 @@ function Pricing({ onCTA }) {
     <section id="preise">
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Eins. Zwei. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Drei.</em></h2></div>
-          <p className="lead">Alle Pakete beinhalten alle sechs Module. Kündbar monatlich.</p>
+          <div><span className="eyebrow">Preise — transparent & fair</span><h2>Solo. Team.<br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Business.</em></h2></div>
+          <p className="lead">Monatlich kündbar, keine versteckten Kosten. Bei größerem Bedarf kontaktieren Sie uns gerne direkt.</p>
         </div>
         <div className="pricing-grid reveal in">
           {[
-            {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],cta:'Paket wählen',intent:'Paket'},
-            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Dedizierter Steuerberater-Zugang'],cta:'Demo vereinbaren',intent:'Demo',pop:true},
-            {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],cta:'Gespräch anfragen',intent:'Gespräch'},
+            {tier:'Solo',sub:'1–2 Personen · Einzelunternehmer & kleine Büros',price:'25',per:'€ / Monat',items:['NILL KI-Sekretärin (unbegrenzt)','E-Mail: Gmail, Outlook & IMAP','Intelligenter Kalender & Aufgaben','Buchhaltung mit OCR-Belegerfassung','Rechnungserstellung & PDF-Export'],cta:'Jetzt starten',intent:'Paket'},
+            {tier:'Team',sub:'3–10 Personen · Wachsende Teams & KMUs',price:'50',per:'€ / Monat',items:['Alles aus Solo — bis 10 Nutzer','Lohnbuchhaltung & Mitarbeiterverwaltung','Arbeitszeiterfassung & Stempeluhr','Urlaubs- & Abwesenheitsverwaltung','HR-Dokumente & Lohnabrechnungen'],cta:'Jetzt starten',intent:'Demo',pop:true},
+            {tier:'Business',sub:'10+ Personen · Größere Unternehmen & Agenturen',price:'90',per:'€ / Monat',items:['Alles aus Team — unbegrenzte Nutzer','API-Zugang & Webhooks','Erweiterte KI-Automatisierungen','Priorisierter Support mit SLA','Persönliches Onboarding'],cta:'Jetzt starten',intent:'Gespräch'},
           ].map(({tier,sub,price,per,items,cta,intent,pop})=>{
             const ref2 = useRef(null); useTilt(ref2);
             return (
