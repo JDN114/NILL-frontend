@@ -11,6 +11,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 2FA state
+  const [step, setStep] = useState("credentials"); // "credentials" | "2fa"
+  const [tempToken, setTempToken] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   async function handleSubmit(e) {
@@ -26,7 +31,13 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password });
+      if (res.data?.["2fa_required"]) {
+        setTempToken(res.data.temp_token);
+        setStep("2fa");
+        setLoading(false);
+        return;
+      }
       const me = await api.get("/auth/me", { withCredentials: true });
       setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
       setOrg(me.data.org ?? null);
@@ -34,6 +45,29 @@ export default function Login() {
     } catch (err) {
       console.error("Login Fehler:", err);
       setError("E-Mail oder Passwort ungültig.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handle2faSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    if (!totpCode.trim()) {
+      setError("Bitte den Code aus deiner Authenticator-App eingeben.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.post("/auth/2fa/verify-login", { temp_token: tempToken, code: totpCode.trim() });
+      const me = await api.get("/auth/me", { withCredentials: true });
+      setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
+      setOrg(me.data.org ?? null);
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      console.error("2FA Fehler:", err);
+      setError("Ungültiger Code. Bitte erneut versuchen.");
+      setTotpCode("");
     } finally {
       setLoading(false);
     }
@@ -224,51 +258,92 @@ export default function Login() {
             <span className="nill-auth-brand-name">NILL</span>
           </div>
 
-          <h1 className="nill-auth-heading">Willkommen <em>zurück.</em></h1>
-          <p className="nill-auth-sub">Meld dich an und lass die KI weiterarbeiten.</p>
+          {step === "credentials" ? (
+            <>
+              <h1 className="nill-auth-heading">Willkommen <em>zurück.</em></h1>
+              <p className="nill-auth-sub">Meld dich an und lass die KI weiterarbeiten.</p>
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="nill-field">
-              <label className="nill-label">E-Mail</label>
-              <input
-                className="nill-input"
-                type="email"
-                placeholder="du@firma.de"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </div>
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="nill-field">
+                  <label className="nill-label">E-Mail</label>
+                  <input
+                    className="nill-input"
+                    type="email"
+                    placeholder="du@firma.de"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
 
-            <div className="nill-field">
-              <label className="nill-label">Passwort</label>
-              <input
-                className="nill-input"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-            </div>
+                <div className="nill-field">
+                  <label className="nill-label">Passwort</label>
+                  <input
+                    className="nill-input"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                  />
+                </div>
 
-            {error && <div className="nill-error">{error}</div>}
+                {error && <div className="nill-error">{error}</div>}
 
-            <button className="nill-btn-primary" type="submit" disabled={loading}>
-              {loading ? "Anmelden…" : "Anmelden →"}
-            </button>
-          </form>
+                <button className="nill-btn-primary" type="submit" disabled={loading}>
+                  {loading ? "Anmelden…" : "Anmelden →"}
+                </button>
+              </form>
 
-          <div className="nill-divider" />
+              <div className="nill-divider" />
 
-          <p className="nill-auth-footer">
-            Noch kein Konto?{" "}
-            <span className="link" onClick={() => navigate("/register")}>
-              Registrieren
-            </span>
-          </p>
+              <p className="nill-auth-footer">
+                Noch kein Konto?{" "}
+                <span className="link" onClick={() => navigate("/register")}>
+                  Registrieren
+                </span>
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="nill-auth-heading">Zwei-Faktor-<em>Code.</em></h1>
+              <p className="nill-auth-sub">Gib den 6-stelligen Code aus deiner Authenticator-App ein.</p>
+
+              <form onSubmit={handle2faSubmit} noValidate>
+                <div className="nill-field">
+                  <label className="nill-label">Authenticator-Code</label>
+                  <input
+                    className="nill-input"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="000000"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    autoComplete="one-time-code"
+                    autoFocus
+                    required
+                  />
+                </div>
+
+                {error && <div className="nill-error">{error}</div>}
+
+                <button className="nill-btn-primary" type="submit" disabled={loading}>
+                  {loading ? "Prüfen…" : "Bestätigen →"}
+                </button>
+              </form>
+
+              <div className="nill-divider" />
+
+              <p className="nill-auth-footer">
+                <span className="link" onClick={() => { setStep("credentials"); setError(null); setTotpCode(""); }}>
+                  ← Zurück zur Anmeldung
+                </span>
+              </p>
+            </>
+          )}
 
         </div>
       </div>

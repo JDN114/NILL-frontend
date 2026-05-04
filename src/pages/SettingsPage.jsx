@@ -2,6 +2,7 @@
 
 import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import PageLayout from "../components/layout/PageLayout";
 import { GmailContext }   from "../context/GmailContext";
 import { OutlookContext } from "../context/OutlookContext";
@@ -398,8 +399,10 @@ export default function SettingsPage() {
   const [loadingStatus,    setLoadingStatus]     = useState(false);
 
   // ── Subscription ────────────────────────────────────────────────────────
-  const [subscription, setSubscription] = useState(null);
-  const [loadingSub,   setLoadingSub]   = useState(true);
+  const [subscription,     setSubscription]     = useState(null);
+  const [loadingSub,       setLoadingSub]       = useState(true);
+  const [billingInvoices,  setBillingInvoices]  = useState(null);
+  const [loadingInvoices,  setLoadingInvoices]  = useState(false);
 
   // ── Company form ────────────────────────────────────────────────────────
   const [orgName,    setOrgName]    = useState(org?.name     ?? "");
@@ -425,6 +428,17 @@ export default function SettingsPage() {
   const [sessions,        setSessions]        = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
 
+  // ── 2FA ─────────────────────────────────────────────────────────────────
+  const [twofa,           setTwofa]           = useState(null); // null | {enabled:bool}
+  const [twofaStep,       setTwofaStep]       = useState(null); // null|'setup'|'confirm'|'disable'
+  const [twofaSecret,     setTwofaSecret]     = useState("");
+  const [twofaUri,        setTwofaUri]        = useState("");
+  const [twofaCode,       setTwofaCode]       = useState("");
+  const [twofaPassword,   setTwofaPassword]   = useState("");
+  const [twofaDisableCode,setTwofaDisableCode]= useState("");
+  const [twofaLoading,    setTwofaLoading]    = useState(false);
+  const [twofaError,      setTwofaError]      = useState("");
+
   // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
@@ -449,6 +463,16 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
+    if (activeTab === "abonnement" && billingInvoices === null) {
+      setLoadingInvoices(true);
+      api.get("/me/billing-invoices")
+        .then(r => setBillingInvoices(r.data?.invoices ?? []))
+        .catch(() => setBillingInvoices([]))
+        .finally(() => setLoadingInvoices(false));
+    }
+  }, [activeTab, billingInvoices]);
+
+  useEffect(() => {
     const saved = localStorage.getItem("nill_notif_prefs");
     if (saved) { try { setNotifs(JSON.parse(saved)); } catch {} }
   }, []);
@@ -460,6 +484,9 @@ export default function SettingsPage() {
         .then(r => setSessions(r.data?.sessions ?? []))
         .catch(() => setSessions([]))
         .finally(() => setLoadingSessions(false));
+      api.get("/auth/2fa/status")
+        .then(r => setTwofa(r.data))
+        .catch(() => setTwofa({ enabled: false }));
     }
   }, [activeTab]);
 
@@ -526,6 +553,43 @@ export default function SettingsPage() {
 
   const handleDisconnectGmail   = async () => { setLoadingStatus(true); try { await disconnectGmail();   } finally { setLoadingStatus(false); } };
   const handleDisconnectOutlook = async () => { setLoadingStatus(true); try { await disconnectOutlook(); } finally { setLoadingStatus(false); } };
+
+  const handle2faSetup = async () => {
+    setTwofaLoading(true); setTwofaError("");
+    try {
+      const r = await api.post("/auth/2fa/setup");
+      setTwofaSecret(r.data.secret);
+      setTwofaUri(r.data.uri);
+      setTwofaStep("confirm");
+    } catch (e) {
+      setTwofaError(e.response?.data?.detail ?? "Fehler beim Setup.");
+    } finally { setTwofaLoading(false); }
+  };
+
+  const handle2faEnable = async () => {
+    setTwofaLoading(true); setTwofaError("");
+    try {
+      await api.post("/auth/2fa/enable", { code: twofaCode.trim() });
+      setTwofa({ enabled: true });
+      setTwofaStep(null);
+      setTwofaCode(""); setTwofaSecret(""); setTwofaUri("");
+    } catch (e) {
+      setTwofaError(e.response?.data?.detail ?? "Ungültiger Code.");
+      setTwofaCode("");
+    } finally { setTwofaLoading(false); }
+  };
+
+  const handle2faDisable = async () => {
+    setTwofaLoading(true); setTwofaError("");
+    try {
+      await api.post("/auth/2fa/disable", { password: twofaPassword, code: twofaDisableCode.trim() });
+      setTwofa({ enabled: false });
+      setTwofaStep(null);
+      setTwofaPassword(""); setTwofaDisableCode("");
+    } catch (e) {
+      setTwofaError(e.response?.data?.detail ?? "Fehler beim Deaktivieren.");
+    } finally { setTwofaLoading(false); }
+  };
 
   const gmailIsConnected   = gmailConn   === true || gmailConn?.connected   === true;
   const outlookIsConnected = outlookConn === true || outlookConn?.connected === true;
@@ -929,12 +993,89 @@ export default function SettingsPage() {
                 </div>
 
                 <div style={panelStyle}>
-                  <SectionHead title="Rechnungshistorie" action={<ComingSoon />} />
-                  <div style={{ padding: "1.25rem" }}>
-                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
-                      Vergangene Rechnungen als PDF herunterladen — demnächst verfügbar.
-                    </p>
-                  </div>
+                  <SectionHead title="Rechnungshistorie" />
+                  {loadingInvoices ? (
+                    <div style={{ padding: "1.25rem", color: mute, fontSize: "0.82rem" }}>
+                      Lade Rechnungen…
+                    </div>
+                  ) : billingInvoices && billingInvoices.length > 0 ? (
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${border}` }}>
+                          {["Nr.", "Zeitraum", "Betrag", "Status", ""].map(h => (
+                            <th key={h} style={{
+                              padding: "0.6rem 1.25rem", textAlign: h === "Betrag" ? "right" : "left",
+                              color: mute, fontWeight: 700, fontSize: "0.7rem",
+                              textTransform: "uppercase", letterSpacing: "0.06em",
+                            }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {billingInvoices.map((inv, i) => {
+                          const isLast = i === billingInvoices.length - 1;
+                          const fmtDate = ts => ts
+                            ? new Date(ts * 1000).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
+                            : "—";
+                          const fmtAmount = (cents, cur) =>
+                            new Intl.NumberFormat("de-DE", { style: "currency", currency: cur || "EUR" })
+                              .format((cents || 0) / 100);
+                          const statusMeta = {
+                            paid:  { label: "Bezahlt",    color: green },
+                            open:  { label: "Offen",      color: amber },
+                            void:  { label: "Storniert",  color: mute  },
+                            draft: { label: "Entwurf",    color: mute  },
+                          }[inv.status] || { label: inv.status, color: mute };
+
+                          return (
+                            <tr key={inv.id} style={{ borderBottom: isLast ? "none" : `1px solid ${border}` }}>
+                              <td style={{ padding: "0.75rem 1.25rem", color: dim, fontFamily: "monospace" }}>
+                                {inv.number || inv.id?.slice(-8) || "—"}
+                              </td>
+                              <td style={{ padding: "0.75rem 1.25rem", color: dim }}>
+                                {inv.period_start
+                                  ? `${fmtDate(inv.period_start)} – ${fmtDate(inv.period_end)}`
+                                  : fmtDate(inv.created)}
+                              </td>
+                              <td style={{ padding: "0.75rem 1.25rem", color: text, fontWeight: 600, textAlign: "right" }}>
+                                {fmtAmount(inv.amount_paid, inv.currency)}
+                              </td>
+                              <td style={{ padding: "0.75rem 1.25rem" }}>
+                                <Badge label={statusMeta.label} color={statusMeta.color} />
+                              </td>
+                              <td style={{ padding: "0.75rem 1.25rem", textAlign: "right" }}>
+                                {inv.invoice_pdf && (
+                                  <a
+                                    href={inv.invoice_pdf}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      display: "inline-flex", alignItems: "center", gap: 5,
+                                      padding: "0.3rem 0.7rem", borderRadius: 6,
+                                      border: `1px solid ${border}`, color: dim,
+                                      fontSize: "0.75rem", fontWeight: 600,
+                                      textDecoration: "none",
+                                      transition: "border-color 0.15s, color 0.15s",
+                                    }}
+                                    onMouseOver={e => { e.currentTarget.style.borderColor = gold; e.currentTarget.style.color = gold; }}
+                                    onMouseOut={e => { e.currentTarget.style.borderColor = border; e.currentTarget.style.color = dim; }}
+                                  >
+                                    {svgDownload} PDF
+                                  </a>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div style={{ padding: "1.25rem", color: mute, fontSize: "0.82rem" }}>
+                      {billingInvoices === null
+                        ? "Rechnungen konnten nicht geladen werden."
+                        : "Noch keine Rechnungen vorhanden."}
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -1059,12 +1200,133 @@ export default function SettingsPage() {
                 </div>
 
                 <div style={panelStyle}>
-                  <SectionHead title="Zwei-Faktor-Authentifizierung" action={<ComingSoon />} />
-                  <div style={{ padding: "1.25rem" }}>
-                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
-                      Schütze deinen Account zusätzlich mit einem zweiten Faktor (TOTP-App oder SMS).
-                      Dieser Bereich wird demnächst freigeschaltet.
-                    </p>
+                  <SectionHead
+                    title="Zwei-Faktor-Authentifizierung"
+                    action={
+                      twofa === null ? null :
+                      twofa.enabled
+                        ? <Badge label="Aktiv" color={green} />
+                        : <Badge label="Inaktiv" color={amber} />
+                    }
+                  />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {twofa === null ? (
+                      <p style={{ fontSize: "0.82rem", color: mute, margin: 0 }}>Lade…</p>
+                    ) : twofaStep === null ? (
+                      <>
+                        <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                          {twofa.enabled
+                            ? "2FA ist aktiv. Dein Account ist durch einen TOTP-Code geschützt."
+                            : "Schütze deinen Account mit einem zweiten Faktor via TOTP-App (z.B. Google Authenticator, Authy)."}
+                        </p>
+                        {twofaError && <div style={{ fontSize: "0.78rem", color: red }}>{twofaError}</div>}
+                        {twofa.enabled ? (
+                          <button style={{ ...btnDanger, alignSelf: "flex-start" }}
+                            onClick={() => { setTwofaStep("disable"); setTwofaError(""); }}>
+                            2FA deaktivieren
+                          </button>
+                        ) : (
+                          <button style={{ ...btnGhost, alignSelf: "flex-start" }}
+                            disabled={twofaLoading}
+                            onClick={handle2faSetup}>
+                            {twofaLoading ? "Bitte warten…" : "2FA aktivieren"}
+                          </button>
+                        )}
+                      </>
+                    ) : twofaStep === "confirm" ? (
+                      <>
+                        <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                          Scanne den QR-Code mit deiner Authenticator-App und gib anschließend den angezeigten Code ein.
+                        </p>
+                        <div style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+                          <div style={{ background: "#fff", padding: 12, borderRadius: 10, flexShrink: 0 }}>
+                            <QRCodeSVG value={twofaUri} size={148} />
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, minWidth: 180 }}>
+                            <span style={{ fontSize: "0.72rem", color: mute, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                              Manueller Key
+                            </span>
+                            <code style={{ fontSize: "0.78rem", color: text, background: "rgba(255,255,255,0.05)",
+                              padding: "0.4rem 0.6rem", borderRadius: 6, wordBreak: "break-all", letterSpacing: "0.12em" }}>
+                              {twofaSecret}
+                            </code>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.72rem", color: dim, fontWeight: 700,
+                            textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                            Bestätigungscode
+                          </label>
+                          <input
+                            style={{ ...inputStyle, maxWidth: 200, textAlign: "center",
+                              letterSpacing: "0.25em", fontSize: "1.1rem" }}
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="000000"
+                            maxLength={6}
+                            value={twofaCode}
+                            onChange={e => setTwofaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            autoFocus
+                          />
+                        </div>
+                        {twofaError && <div style={{ fontSize: "0.78rem", color: red }}>{twofaError}</div>}
+                        <div style={{ display: "flex", gap: "0.75rem" }}>
+                          <button style={btnGhost}
+                            onClick={() => { setTwofaStep(null); setTwofaCode(""); setTwofaError(""); }}>
+                            Abbrechen
+                          </button>
+                          <button style={{ ...btnPrimary, opacity: twofaLoading ? 0.6 : 1 }}
+                            disabled={twofaLoading || twofaCode.length !== 6}
+                            onClick={handle2faEnable}>
+                            {twofaLoading ? "Prüfen…" : "2FA aktivieren"}
+                          </button>
+                        </div>
+                      </>
+                    ) : twofaStep === "disable" ? (
+                      <>
+                        <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                          Gib dein Passwort und den aktuellen TOTP-Code ein um 2FA zu deaktivieren.
+                        </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxWidth: 320 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                            <label style={{ fontSize: "0.72rem", color: dim, fontWeight: 700,
+                              textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                              Passwort
+                            </label>
+                            <input style={inputStyle} type="password" placeholder="••••••••"
+                              value={twofaPassword}
+                              onChange={e => setTwofaPassword(e.target.value)} />
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                            <label style={{ fontSize: "0.72rem", color: dim, fontWeight: 700,
+                              textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                              Authenticator-Code
+                            </label>
+                            <input
+                              style={{ ...inputStyle, letterSpacing: "0.2em", textAlign: "center" }}
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="000000"
+                              maxLength={6}
+                              value={twofaDisableCode}
+                              onChange={e => setTwofaDisableCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            />
+                          </div>
+                        </div>
+                        {twofaError && <div style={{ fontSize: "0.78rem", color: red }}>{twofaError}</div>}
+                        <div style={{ display: "flex", gap: "0.75rem" }}>
+                          <button style={btnGhost}
+                            onClick={() => { setTwofaStep(null); setTwofaPassword(""); setTwofaDisableCode(""); setTwofaError(""); }}>
+                            Abbrechen
+                          </button>
+                          <button style={{ ...btnDanger, opacity: twofaLoading ? 0.6 : 1 }}
+                            disabled={twofaLoading || !twofaPassword || twofaDisableCode.length !== 6}
+                            onClick={handle2faDisable}>
+                            {twofaLoading ? "Bitte warten…" : "2FA deaktivieren"}
+                          </button>
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1303,5 +1565,12 @@ const svgHelp = (
 const svgContact = (
   <svg {...iconProps}>
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+const svgDownload = (
+  <svg {...iconProps}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
   </svg>
 );
