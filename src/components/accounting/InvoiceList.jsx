@@ -32,8 +32,12 @@ export default function InvoiceList() {
   const load = useCallback(() => {
     setLoading(true);
     api.get("/accounting/invoices")
-      .then(r => setInvoices((r.data || []).map(norm)))
-      .catch(() => {})
+      .then(r => {
+        const raw = r.data;
+        const list = Array.isArray(raw) ? raw : [];
+        setInvoices(list.map(norm));
+      })
+      .catch(() => setInvoices([]))
       .finally(() => setLoading(false));
   }, []);
 
