@@ -10,6 +10,10 @@
       }
     },
     {
+      "src": "/(.*\\.(?:json|js|css|html|ico|png|svg|woff2?|webp|txt|map))",
+      "dest": "/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
