@@ -12,10 +12,12 @@ export default defineConfig({
       // Service Worker nur im Production-Build aktiv
       devOptions: {
         enabled: false,
+        suppressWarnings: true,
       },
 
       // Automatisches Update: neuer SW übernimmt sofort beim nächsten Seitenaufruf
       registerType: 'autoUpdate',
+      injectRegister: null,
 
       // Statische Assets precachen (JS, CSS, Fonts, Icons)
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png', 'robots.txt', 'offline.html'],
