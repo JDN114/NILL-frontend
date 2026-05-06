@@ -227,6 +227,13 @@ export function UrlaubsContent() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 640px) {
+          .uv-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .uv-table-inner  { min-width: 520px; }
+          .uv-form-grid    { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{ marginBottom: "1.5rem" }}>
         <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: "0 0 0.3rem", color: "var(--nill-text)", letterSpacing: "-0.01em" }}>
           Urlaubsverwaltung
@@ -277,36 +284,43 @@ export function UrlaubsContent() {
 
       {error && <div style={{ marginBottom: "0.75rem", fontSize: "0.8rem", color: "#f87171" }}>{error}</div>}
 
-      {/* Column headers */}
-      <div style={{ display: "grid", gridTemplateColumns: isAdmin ? "2fr 1fr 1.5fr 1fr 1fr auto" : "1.5fr 1fr 1.5fr 1fr auto", gap: "0.75rem", padding: "0.45rem 1.1rem", marginBottom: "0.3rem" }}>
-        {(isAdmin
-          ? ["Mitarbeiter", "Art", "Zeitraum", "Dauer", "Status", ""]
-          : ["Art", "Zeitraum", "Dauer", "Status", ""]
-        ).map(h => (
-          <span key={h} style={{ fontSize: "0.63rem", fontWeight: 700, color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{h}</span>
-        ))}
-      </div>
+      {/* Table (scroll on mobile) */}
+      <div className="uv-table-scroll">
+        <div className="uv-table-inner">
 
-      {loading ? (
-        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0" }}>Lädt…</div>
-      ) : filtered.length === 0 ? (
-        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0", textAlign: "center" }}>
-          Keine Einträge gefunden.
+          {/* Column headers */}
+          <div style={{ display: "grid", gridTemplateColumns: isAdmin ? "2fr 1fr 1.5fr 1fr 1fr auto" : "1.5fr 1fr 1.5fr 1fr auto", gap: "0.75rem", padding: "0.45rem 1.1rem", marginBottom: "0.3rem" }}>
+            {(isAdmin
+              ? ["Mitarbeiter", "Art", "Zeitraum", "Dauer", "Status", ""]
+              : ["Art", "Zeitraum", "Dauer", "Status", ""]
+            ).map(h => (
+              <span key={h} style={{ fontSize: "0.63rem", fontWeight: 700, color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{h}</span>
+            ))}
+          </div>
+
+          {loading ? (
+            <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0" }}>Lädt…</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0", textAlign: "center" }}>
+              Keine Einträge gefunden.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              {filtered.map(a => (
+                <AbsenceRow
+                  key={a.id}
+                  absence={a}
+                  isAdmin={isAdmin}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+
         </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          {filtered.map(a => (
-            <AbsenceRow
-              key={a.id}
-              absence={a}
-              isAdmin={isAdmin}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+      </div>
 
       {showNew && (
         <NewAbsenceModal

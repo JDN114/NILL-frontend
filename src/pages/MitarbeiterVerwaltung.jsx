@@ -295,6 +295,15 @@ export function MitarbeiterContent() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 640px) {
+          .mv-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .mv-table-inner  { min-width: 560px; }
+          .mv-form-grid-2  { grid-template-columns: 1fr !important; }
+          .mv-modal        { padding: 1.25rem !important; }
+        }
+      `}</style>
+
       {/* Header */}
       <div style={{ marginBottom: "1.5rem" }}>
         <h2 style={{
@@ -337,36 +346,43 @@ export function MitarbeiterContent() {
         />
       </div>
 
-      {/* Table header */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr auto",
-        gap: "1rem",
-        padding: "0.5rem 1.1rem",
-        marginBottom: "0.35rem",
-      }}>
-        {["Mitarbeiter", "Vertragsart", "Eintrittsdatum", "Lohngruppe", "Bruttogehalt", ""].map(h => (
-          <span key={h} style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--nill-text-dim)",
-            textTransform: "uppercase", letterSpacing: "0.07em" }}>
-            {h}
-          </span>
-        ))}
-      </div>
+      {/* Table (scrollable on mobile) */}
+      <div className="mv-table-scroll">
+        <div className="mv-table-inner">
 
-      {/* Rows */}
-      {loading ? (
-        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0" }}>Lädt…</div>
-      ) : filtered.length === 0 ? (
-        <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0", textAlign: "center" }}>
-          Keine Mitarbeiter gefunden.
+          {/* Table header */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr auto",
+            gap: "1rem",
+            padding: "0.5rem 1.1rem",
+            marginBottom: "0.35rem",
+          }}>
+            {["Mitarbeiter", "Vertragsart", "Eintrittsdatum", "Lohngruppe", "Bruttogehalt", ""].map(h => (
+              <span key={h} style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--nill-text-dim)",
+                textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                {h}
+              </span>
+            ))}
+          </div>
+
+          {/* Rows */}
+          {loading ? (
+            <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0" }}>Lädt…</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ color: "var(--nill-text-mute)", fontSize: "0.85rem", padding: "2rem 0", textAlign: "center" }}>
+              Keine Mitarbeiter gefunden.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              {filtered.map(e => (
+                <EmployeeRow key={e.id} employee={e} onEdit={setEditing} />
+              ))}
+            </div>
+          )}
+
         </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-          {filtered.map(e => (
-            <EmployeeRow key={e.id} employee={e} onEdit={setEditing} />
-          ))}
-        </div>
-      )}
+      </div>
 
       {/* Edit modal */}
       {editing && (

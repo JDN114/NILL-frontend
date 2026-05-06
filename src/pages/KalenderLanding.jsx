@@ -158,6 +158,14 @@ export default function CalendarPage() {
 
   return (
     <PageLayout>
+      <style>{`
+        @media (max-width: 860px) {
+          .kal-grid { grid-template-columns: 1fr !important; grid-template-rows: auto !important; }
+          .kal-cal  { grid-column: auto !important; grid-row: auto !important; }
+          .kal-panel{ grid-column: auto !important; grid-row: auto !important; }
+          .kal-h1   { font-size: 1.4rem !important; }
+        }
+      `}</style>
 
       {/* ── HEADER ──────────────────────────────────────── */}
       <div style={{
@@ -174,7 +182,7 @@ export default function CalendarPage() {
             Dashboard / Kalender
           </span>
 
-          <h1 style={{
+          <h1 className="kal-h1" style={{
             fontSize: "1.85rem", fontWeight: 800, margin: 0, lineHeight: 1.15,
             color: "var(--nill-text)",
             letterSpacing: "-0.01em",
@@ -273,6 +281,7 @@ export default function CalendarPage() {
       {/* ── CONTENT GRID ────────────────────────────────── */}
       {!loading && !error && (
         <motion.div
+          className="kal-grid"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
@@ -285,7 +294,7 @@ export default function CalendarPage() {
         >
 
           {/* CALENDAR — spans 2 cols, 2 rows */}
-          <Panel style={{ gridColumn: "1 / 3", gridRow: "1 / 3" }}>
+          <Panel className="kal-cal" style={{ gridColumn: "1 / 3", gridRow: "1 / 3" }}>
             <PanelHeader title="Monatsansicht" />
             <div style={{ padding: "1.1rem" }}>
               <CalendarWrapper
@@ -297,7 +306,7 @@ export default function CalendarPage() {
           </Panel>
 
           {/* NEXT 7 DAYS */}
-          <Panel style={{ gridColumn: "3 / 4", gridRow: "1 / 2", display: "flex", flexDirection: "column" }}>
+          <Panel className="kal-panel" style={{ gridColumn: "3 / 4", gridRow: "1 / 2", display: "flex", flexDirection: "column" }}>
             <PanelHeader title="Nächste 7 Tage" badge={eventsNext7Days.length} />
             <div style={{ padding: "0.85rem 1.1rem", flex: 1, overflowY: "auto" }}>
               {eventsNext7Days.length === 0 ? (
@@ -315,7 +324,7 @@ export default function CalendarPage() {
           </Panel>
 
           {/* DAY VIEW */}
-          <Panel style={{ gridColumn: "3 / 4", gridRow: "2 / 3", display: "flex", flexDirection: "column" }}>
+          <Panel className="kal-panel" style={{ gridColumn: "3 / 4", gridRow: "2 / 3", display: "flex", flexDirection: "column" }}>
             <PanelHeader
               title={selectedLabel}
               badge={eventsForDay.length > 0 ? eventsForDay.length : undefined}

@@ -899,3 +899,33 @@ body {
   background: var(--nill-border);
   margin: 6px 4px;
 }
+
+/* ==========================================================
+   GLOBAL MOBILE UTILITIES
+   ========================================================== */
+
+html, body { overflow-x: hidden; }
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  button, select { min-height: 40px; }
+  /* Exclude visual-only small elements */
+  .em-badge, .em-dot, .em-category, .em-priority,
+  .em-sentiment, .nill-hamburger-bar { min-height: unset; }
+}
+
+/* Table horizontal scroll utility */
+.nill-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.nill-table-scroll table {
+  min-width: 480px;
+}
+
+/* Responsive heading utility */
+@media (max-width: 640px) {
+  .nill-page-h1 {
+    font-size: clamp(1.3rem, 5vw, 1.85rem) !important;
+  }
+}

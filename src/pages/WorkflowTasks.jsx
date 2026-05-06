@@ -185,6 +185,16 @@ export default function WorkflowTasksPage() {
 
   return (
     <PageLayout>
+      <style>{`
+        @media (max-width: 640px) {
+          .wt-form-grid-2 { grid-template-columns: 1fr !important; }
+          .wt-form-grid-3 { grid-template-columns: 1fr !important; }
+          .wt-task-row    { flex-direction: column; align-items: flex-start !important; gap: 0.5rem !important; }
+          .wt-task-actions { margin-left: 0 !important; }
+          .wt-h1 { font-size: 1.4rem !important; }
+        }
+      `}</style>
+
       {/* ── Header ──────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between",
         marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
@@ -193,7 +203,7 @@ export default function WorkflowTasksPage() {
             textTransform: "uppercase", color: "var(--nill-text-dim)" }}>
             Betrieb / Aufgaben
           </span>
-          <h1 style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0",
+          <h1 className="wt-h1" style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.25rem 0 0",
             color: "var(--nill-text)", letterSpacing: "-0.01em", lineHeight: 1.15 }}>
             Aufgaben
           </h1>
@@ -283,7 +293,7 @@ export default function WorkflowTasksPage() {
             />
 
             {/* Zeile 2: Mitarbeiter ODER Rolle */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem" }}>
+            <div className="wt-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem" }}>
               <div>
                 <label style={{ fontSize: "0.7rem", color: "var(--nill-text-mute)", marginBottom: 4, display: "block" }}>
                   Mitarbeiter zuweisen
@@ -307,7 +317,7 @@ export default function WorkflowTasksPage() {
             </div>
 
             {/* Zeile 3: Deadline + Wiederholung */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.65rem" }}>
+            <div className="wt-form-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.65rem" }}>
               <div>
                 <label style={{ fontSize: "0.7rem", color: "var(--nill-text-mute)", marginBottom: 4, display: "block" }}>
                   Deadline

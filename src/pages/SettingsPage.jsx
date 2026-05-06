@@ -616,15 +616,61 @@ export default function SettingsPage() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <PageLayout>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <style>{`
+        .sp-layout { max-width: 1100px; margin: 0 auto; }
+        .sp-header { margin-bottom: 2rem; }
+        .sp-body { display: flex; gap: 1.75rem; align-items: flex-start; }
+        .sp-sidebar {
+          width: 188px; flex-shrink: 0;
+          position: sticky; top: 5rem;
+          display: flex; flex-direction: column; gap: 2px;
+        }
+        .sp-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.25rem; }
+
+        /* Mobile: sidebar becomes horizontal scrollable tab strip */
+        @media (max-width: 700px) {
+          .sp-header { margin-bottom: 1rem; }
+          .sp-body { flex-direction: column; gap: 0; }
+          .sp-sidebar {
+            width: 100%; position: static;
+            flex-direction: row; overflow-x: auto; overflow-y: hidden;
+            padding-bottom: 0.5rem; margin-bottom: 1rem;
+            scrollbar-width: none; gap: 4px;
+          }
+          .sp-sidebar::-webkit-scrollbar { display: none; }
+          .sp-sidebar-btn {
+            flex-shrink: 0 !important;
+            border-left: none !important;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+          }
+          .sp-sidebar-btn.active {
+            border-left: none !important;
+            border-bottom: 2px solid var(--nill-gold) !important;
+          }
+          .sp-sidebar-divider { display: none; }
+          .sp-content { gap: 1rem; }
+        }
+
+        /* Responsive grids inside settings panels */
+        @media (max-width: 640px) {
+          .sp-grid-2 { grid-template-columns: 1fr !important; }
+          .sp-grid-3 { grid-template-columns: 1fr !important; }
+          .sp-grid-zip { grid-template-columns: 1fr !important; }
+          .sp-row-flex { flex-direction: column !important; align-items: flex-start !important; }
+          .sp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
+      `}</style>
+
+      <div className="sp-layout">
 
         {/* Page Header */}
-        <div style={{ marginBottom: "2rem" }}>
+        <div className="sp-header">
           <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.12em",
             textTransform: "uppercase", color: dim }}>
             Dashboard / Einstellungen
           </span>
-          <h1 style={{ fontSize: "1.85rem", fontWeight: 800, margin: "0.2rem 0 0.3rem",
+          <h1 style={{ fontSize: "clamp(1.4rem, 5vw, 1.85rem)", fontWeight: 800, margin: "0.2rem 0 0.3rem",
             color: text, letterSpacing: "-0.02em" }}>
             Einstellungen
           </h1>
@@ -633,19 +679,16 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "1.75rem", alignItems: "flex-start" }}>
+        <div className="sp-body">
 
-          {/* ── Sidebar ────────────────────────────────────────────────── */}
-          <nav style={{
-            width: 188, flexShrink: 0,
-            position: "sticky", top: "5rem",
-            display: "flex", flexDirection: "column", gap: 2,
-          }}>
+          {/* ── Sidebar / Tab Strip ─────────────────────────────────────── */}
+          <nav className="sp-sidebar">
             {TABS.map(tab => {
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
+                  className={`sp-sidebar-btn${active ? " active" : ""}`}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 10,
@@ -668,10 +711,11 @@ export default function SettingsPage() {
             })}
 
             {/* Divider */}
-            <div style={{ height: 1, background: border, margin: "0.5rem 0" }} />
+            <div className="sp-sidebar-divider" style={{ height: 1, background: border, margin: "0.5rem 0" }} />
 
             {/* Kontakt Button */}
             <button
+              className="sp-sidebar-btn"
               onClick={() => setShowKontakt(true)}
               style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
@@ -691,7 +735,7 @@ export default function SettingsPage() {
           </nav>
 
           {/* ── Content ──────────────────────────────────────────────────── */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div className="sp-content">
 
             {/* ══ KONTO ══════════════════════════════════════════════════ */}
             {activeTab === "konto" && (
@@ -759,7 +803,7 @@ export default function SettingsPage() {
                 <SectionHead title="Unternehmensprofil" />
                 <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {/* Info grid */}
-                  <div style={{
+                  <div className="sp-grid-3" style={{
                     display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.65rem",
                     padding: "1rem 1.1rem",
                     background: "rgba(255,255,255,0.03)",
@@ -783,7 +827,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Editable fields */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
+                  <div className="sp-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
                     <Field label="Unternehmensname *">
                       <input style={inputStyle} value={orgName} onChange={e => setOrgName(e.target.value)}
                         placeholder="Müller Handwerk GmbH" />
@@ -806,7 +850,7 @@ export default function SettingsPage() {
                       <input style={inputStyle} value={orgStreet} onChange={e => setOrgStreet(e.target.value)}
                         placeholder="Musterstraße 42" />
                     </Field>
-                    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "0.65rem" }}>
+                    <div className="sp-grid-zip" style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "0.65rem" }}>
                       <Field label="PLZ">
                         <input style={inputStyle} value={orgZip} onChange={e => setOrgZip(e.target.value)}
                           placeholder="10115" />
@@ -951,7 +995,7 @@ export default function SettingsPage() {
                       <div style={{ color: mute, fontSize: "0.82rem" }}>Lade Abonnement…</div>
                     ) : subscription ? (
                       <>
-                        <div style={{
+                        <div className="sp-grid-3" style={{
                           display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
                           padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
                           border: `1px solid ${border}`, borderRadius: 10,
@@ -999,7 +1043,7 @@ export default function SettingsPage() {
                       Lade Rechnungen…
                     </div>
                   ) : billingInvoices && billingInvoices.length > 0 ? (
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                    <div className="sp-table-wrap"><table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: 480 }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${border}` }}>
                           {["Nr.", "Zeitraum", "Betrag", "Status", ""].map(h => (
@@ -1068,7 +1112,7 @@ export default function SettingsPage() {
                           );
                         })}
                       </tbody>
-                    </table>
+                    </table></div>
                   ) : (
                     <div style={{ padding: "1.25rem", color: mute, fontSize: "0.82rem" }}>
                       {billingInvoices === null
@@ -1086,7 +1130,7 @@ export default function SettingsPage() {
                 <div style={panelStyle}>
                   <SectionHead title="Organisation" />
                   <div style={{ padding: "1.25rem" }}>
-                    <div style={{
+                    <div className="sp-grid-3" style={{
                       display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
                       padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
                       border: `1px solid ${border}`, borderRadius: 10,

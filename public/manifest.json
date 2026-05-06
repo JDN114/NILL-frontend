@@ -1,6 +1,15 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "name": "NILL – KI-Assistent für Unternehmen",
+  "short_name": "NILL",
+  "description": "KI-gestützte Unternehmensplattform für E-Mails, Buchhaltung, Kalender & Team",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#040407",
+  "background_color": "#040407",
+  "lang": "de",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +19,14 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  ]
 }

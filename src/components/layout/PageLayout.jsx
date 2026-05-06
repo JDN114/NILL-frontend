@@ -15,7 +15,7 @@ export default function PageLayout({ children }) {
           {children}
         </div>
       ) : (
-        <main className="p-6 max-w-7xl mx-auto">
+        <main className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
           {children}
         </main>
       )}

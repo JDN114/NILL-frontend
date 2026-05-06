@@ -297,6 +297,13 @@ export default function WorkflowTeam() {
 
   return (
     <PageLayout>
+      <style>{`
+        @media (max-width: 640px) {
+          .wteam-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .wteam-table-scroll table { min-width: 480px; }
+          .wteam-grid-2 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: 900, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
         {/* ── Header ──────────────────────────────────────── */}
@@ -394,7 +401,7 @@ export default function WorkflowTeam() {
                     Noch keine Mitglieder. Lade jemanden ein.
                   </div>
                 ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                  <div className="wteam-table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: 400 }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--nill-border)" }}>
                         {["E-Mail", "Rolle", ""].map((h, i) => (
@@ -482,7 +489,7 @@ export default function WorkflowTeam() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             )}
@@ -580,8 +587,8 @@ export default function WorkflowTeam() {
                     Keine offenen Einladungen.
                   </div>
                 ) : (
-                  <div style={panelStyle}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                  <div className="wteam-table-scroll" style={panelStyle}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", minWidth: 480 }}>
                       <thead>
                         <tr style={{ borderBottom: "1px solid var(--nill-border)" }}>
                           {["E-Mail", "Rolle", "Status", "Läuft ab", ""].map((h, i) => (
