@@ -2990,5 +2990,151 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════
+     NILL Cookie Banner (vanilla JS, space theme)
+═══════════════════════════════════════════════════════════ -->
+<style>
+  @keyframes cb-rise{from{transform:translateY(110%);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes cb-tw{0%,100%{opacity:var(--so)}50%{opacity:calc(var(--so)*0.22)}}
+  #cb-root{
+    position:fixed;bottom:0;left:0;right:0;z-index:9999;
+    border-top:1px solid rgba(197,165,114,.15);
+    background:
+      radial-gradient(ellipse 40% 130% at 8% 50%,rgba(122,92,255,.055) 0%,transparent 70%),
+      radial-gradient(ellipse 30% 110% at 92% 50%,rgba(56,245,208,.04) 0%,transparent 70%),
+      rgba(4,4,7,.97);
+    backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    box-shadow:0 -24px 64px rgba(0,0,0,.55);
+    overflow:hidden;
+    animation:cb-rise .5s cubic-bezier(.16,1,.3,1) both;
+    font-family:"Inter",system-ui,sans-serif;
+  }
+  #cb-root svg.cb-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .cb-star{animation:cb-tw var(--sd) ease-in-out var(--sdel) infinite}
+  #cb-inner{max-width:1200px;margin:0 auto;padding:1.2rem 1.5rem;position:relative}
+  #cb-main{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;flex-wrap:wrap}
+  #cb-left{flex:1;min-width:260px}
+  #cb-title-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem}
+  #cb-mark{width:20px;height:20px;border-radius:5px;background:conic-gradient(from 210deg,#c6ff3c,#38f5d0,#7a5cff,#ff4d8d,#c6ff3c);position:relative;overflow:hidden;flex-shrink:0}
+  #cb-mark-inner{position:absolute;inset:3px;border-radius:3px;background:#040407}
+  #cb-title{font-size:.88rem;font-weight:700;color:#efede7;letter-spacing:.01em}
+  #cb-text{font-size:.8rem;color:rgba(239,237,231,.52);line-height:1.6;max-width:600px}
+  #cb-details-btn{background:none;border:none;padding:0;color:rgba(197,165,114,.75);font-size:.82rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:inherit}
+  #cb-details-btn:hover{color:#C5A572}
+  #cb-actions{display:flex;align-items:center;gap:.55rem;flex-shrink:0;flex-wrap:wrap;padding-top:.1rem}
+  .cb-btn-ghost{padding:.5rem 1rem;border-radius:8px;border:1px solid rgba(239,237,231,.13);background:transparent;color:rgba(239,237,231,.5);font-size:.8rem;cursor:pointer;transition:border-color .15s,color .15s;font-family:inherit}
+  .cb-btn-ghost:hover{border-color:rgba(239,237,231,.28);color:rgba(239,237,231,.85)}
+  .cb-btn-gold{padding:.5rem 1.1rem;border-radius:8px;background:#C5A572;border:1px solid rgba(197,165,114,.55);color:#030406;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:inherit}
+  .cb-btn-gold:hover{background:#d4b882}
+  #cb-expanded{margin-top:.9rem;padding-top:.9rem;border-top:1px solid rgba(239,237,231,.06);display:none}
+  #cb-expanded.open{display:block}
+  .cb-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0}
+  .cb-row+.cb-row{border-top:1px solid rgba(239,237,231,.05)}
+  .cb-row-label{font-size:.82rem;font-weight:600;color:#efede7}
+  .cb-row-sub{font-size:.73rem;color:rgba(239,237,231,.38);margin-top:2px}
+  .cb-always{font-size:.7rem;padding:3px 10px;border-radius:99px;background:rgba(197,165,114,.08);border:1px solid rgba(197,165,114,.18);color:rgba(197,165,114,.65)}
+  .cb-toggle{position:relative;width:40px;height:22px;border-radius:99px;cursor:pointer;border:none;transition:background .2s;flex-shrink:0}
+  .cb-thumb{position:absolute;top:2px;width:18px;height:18px;border-radius:50%;transition:left .2s}
+  #cb-save-row{margin-top:.9rem;display:flex;justify-content:flex-end}
+  .cb-save-btn{padding:.42rem .95rem;border-radius:8px;background:rgba(197,165,114,.1);border:1px solid rgba(197,165,114,.22);color:#C5A572;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s;font-family:inherit}
+  .cb-save-btn:hover{background:rgba(197,165,114,.18)}
+</style>
+<div id="cb-root" style="display:none">
+  <svg class="cb-bg" aria-hidden="true">
+    <defs>
+      <radialGradient id="cbl" cx="8%" cy="50%" r="25%"><stop offset="0%" stop-color="#7a5cff" stop-opacity=".06"/><stop offset="100%" stop-color="#7a5cff" stop-opacity="0"/></radialGradient>
+      <radialGradient id="cbr" cx="92%" cy="50%" r="20%"><stop offset="0%" stop-color="#38f5d0" stop-opacity=".045"/><stop offset="100%" stop-color="#38f5d0" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#cbl)"/>
+    <rect width="100%" height="100%" fill="url(#cbr)"/>
+    <line x1="0" y1="0" x2="100%" y2="0" stroke="rgba(197,165,114,.18)" stroke-width="1"/>
+  </svg>
+  <div id="cb-inner">
+    <div id="cb-main">
+      <div id="cb-left">
+        <div id="cb-title-row">
+          <div id="cb-mark"><div id="cb-mark-inner"></div></div>
+          <span id="cb-title">Cookies &amp; Datenschutz</span>
+        </div>
+        <p id="cb-text">
+          Wir verwenden Cookies für anonyme Nutzungsanalysen — Seitenaufrufe, Verweildauer, Länder und Interaktionen.
+          Du entscheidest, was du erlaubst.&nbsp;
+          <button id="cb-details-btn">Details ▼</button>
+        </p>
+      </div>
+      <div id="cb-actions">
+        <button class="cb-btn-ghost" id="cb-reject">Nur notwendige</button>
+        <button class="cb-btn-gold" id="cb-accept">Alle akzeptieren ✓</button>
+      </div>
+    </div>
+    <div id="cb-expanded">
+      <div class="cb-row">
+        <div><div class="cb-row-label">Notwendige Cookies</div><div class="cb-row-sub">Session · Authentifizierung · Sicherheit — immer aktiv</div></div>
+        <span class="cb-always">immer aktiv</span>
+      </div>
+      <div class="cb-row">
+        <div><div class="cb-row-label">Analyse-Cookies</div><div class="cb-row-sub">Anonyme Statistiken — Seiten, Verweildauer, Länder, Gerät, Interaktionen</div></div>
+        <button class="cb-toggle" id="cb-toggle" role="switch" aria-checked="true" style="background:#C5A572">
+          <span class="cb-thumb" id="cb-thumb" style="left:20px;background:#030406"></span>
+        </button>
+      </div>
+      <div id="cb-save-row"><button class="cb-save-btn" id="cb-save">Auswahl speichern</button></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='nill_cookie_v1';
+  var GA_ID=''; // filled at build time if available
 
+  function loadGA(){
+    if(!GA_ID||window._cbGALoaded)return;
+    window._cbGALoaded=true;
+    window.dataLayer=window.dataLayer||[];
+    function gtag(){window.dataLayer.push(arguments);}
+    window.gtag=gtag;
+    gtag('consent','default',{analytics_storage:'granted',ad_storage:'denied'});
+    gtag('js',new Date());
+    gtag('config',GA_ID,{anonymize_ip:true});
+    var s=document.createElement('script');
+    s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;
+    document.head.appendChild(s);
+  }
+
+  var saved=localStorage.getItem(KEY);
+  if(saved){try{var c=JSON.parse(saved);if(c.analytics)loadGA();}catch(e){}return;}
+
+  var root=document.getElementById('cb-root');
+  var detailsBtn=document.getElementById('cb-details-btn');
+  var expanded=document.getElementById('cb-expanded');
+  var toggle=document.getElementById('cb-toggle');
+  var thumb=document.getElementById('cb-thumb');
+  var analyticsOn=true;
+
+  setTimeout(function(){root.style.display='';},600);
+
+  function save(withAnalytics){
+    localStorage.setItem(KEY,JSON.stringify({analytics:withAnalytics,ts:new Date().toISOString()}));
+    if(withAnalytics)loadGA();
+    root.style.display='none';
+  }
+
+  document.getElementById('cb-accept').onclick=function(){save(true);};
+  document.getElementById('cb-reject').onclick=function(){save(false);};
+  document.getElementById('cb-save').onclick=function(){save(analyticsOn);};
+
+  detailsBtn.onclick=function(){
+    var open=expanded.classList.toggle('open');
+    detailsBtn.textContent=open?'Weniger ▲':'Details ▼';
+  };
+
+  toggle.onclick=function(){
+    analyticsOn=!analyticsOn;
+    toggle.style.background=analyticsOn?'#C5A572':'rgba(239,237,231,.1)';
+    toggle.setAttribute('aria-checked',String(analyticsOn));
+    thumb.style.left=analyticsOn?'20px':'2px';
+    thumb.style.background=analyticsOn?'#030406':'rgba(239,237,231,.38)';
+  };
+})();
+</script>
 </body></html>
