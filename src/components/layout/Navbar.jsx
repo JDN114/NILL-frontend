@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { label: "Dashboard",      path: "/dashboard",                    exact: true },
+  { label: "Dashboard",      path: "/dashboard",               exact: true },
   { label: "Emails",         path: "/dashboard/emails" },
   { label: "Kalender",       path: "/dashboard/calendar" },
   { label: "Buchhaltung",    path: "/dashboard/accounting" },
-  { label: "NILL",           path: "/dashboard/nill-secretary",     gold: true },
+  { label: "NILL",           disabled: true,                   gold: true },
   { label: "Einstellungen",  path: "/dashboard/settings" },
 ];
 
@@ -153,10 +153,37 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <nav className="nill-navbar-nav">
             {NAV_ITEMS.map((item) => {
-              const active = isActive(item);
+              const active = !item.disabled && isActive(item);
 
               if (item.gold) {
-                return (
+                return item.disabled ? (
+                  <span
+                    key="nill-disabled"
+                    title="Kommt bald"
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.35rem",
+                      padding: "0.35rem 0.85rem",
+                      borderRadius: 22,
+                      fontSize: "0.82rem", fontWeight: 700,
+                      letterSpacing: "0.02em",
+                      background: "var(--nill-gold-dim)",
+                      border: "1px solid rgba(197,165,114,0.12)",
+                      color: "rgba(197,165,114,0.35)",
+                      cursor: "not-allowed",
+                      userSelect: "none",
+                      position: "relative",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(197,165,114,0.3)", flexShrink: 0 }} />
+                    {item.label}
+                    <span style={{
+                      fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
+                      textTransform: "uppercase", background: "rgba(197,165,114,0.12)",
+                      border: "1px solid rgba(197,165,114,0.2)", borderRadius: 99,
+                      padding: "1px 6px", color: "rgba(197,165,114,0.5)",
+                    }}>bald</span>
+                  </span>
+                ) : (
                   <Link
                     key={item.path}
                     to={item.path}
@@ -174,12 +201,7 @@ export default function Navbar() {
                       boxShadow: active ? "0 0 12px rgba(197,165,114,0.15)" : "none",
                     }}
                   >
-                    <span style={{
-                      width: 6, height: 6, borderRadius: "50%",
-                      background: "var(--nill-gold)",
-                      boxShadow: "0 0 6px rgba(197,165,114,0.7)",
-                      flexShrink: 0,
-                    }} />
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--nill-gold)", boxShadow: "0 0 6px rgba(197,165,114,0.7)", flexShrink: 0 }} />
                     {item.label}
                   </Link>
                 );
@@ -197,9 +219,7 @@ export default function Navbar() {
                     transition: "background 0.12s, color 0.12s",
                     background: active ? "rgba(255,255,255,0.05)" : "transparent",
                     color: active ? "var(--nill-text)" : "var(--nill-text-sub)",
-                    borderBottom: active
-                      ? "1px solid rgba(197,165,114,0.35)"
-                      : "1px solid transparent",
+                    borderBottom: active ? "1px solid rgba(197,165,114,0.35)" : "1px solid transparent",
                   }}
                 >
                   {item.label}
@@ -225,6 +245,16 @@ export default function Navbar() {
       {/* Mobile Menu */}
       <div className={`nill-mobile-menu${menuOpen ? " open" : ""}`}>
         {NAV_ITEMS.map((item) => {
+          if (item.disabled) {
+            return (
+              <span key="nill-mobile-disabled"
+                className={`nill-mobile-nav-link${item.gold ? " gold" : ""}`}
+                style={{ opacity: 0.35, cursor: "not-allowed" }}>
+                {item.label}
+                <span style={{ marginLeft: "0.4rem", fontSize: "0.65rem", opacity: 0.7 }}>— bald</span>
+              </span>
+            );
+          }
           const active = isActive(item);
           return (
             <Link

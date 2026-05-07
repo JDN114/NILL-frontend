@@ -1420,8 +1420,8 @@ export default function LandingPage() {
       </ul>
     </nav>
     <div class="nav-auth">
-      <a href="https://app.nillai.de/login" class="btn-auth" rel="noopener">Login</a>
-      <a href="https://app.nillai.de/register" class="btn-auth primary" rel="noopener">Registrieren</a>
+      <a href="https://nillai.de/login" class="btn-auth" rel="noopener">Login</a>
+      <a href="https://nillai.de/register" class="btn-auth primary" rel="noopener">Registrieren</a>
     </div>
   </div>
 </header>
@@ -1442,11 +1442,11 @@ export default function LandingPage() {
       NILL verbindet <strong style="color:var(--ink);font-weight:500">Postfach, Buchhaltung, Inventur, Zeiterfassung</strong> und <strong style="color:var(--ink);font-weight:500">Teamverwaltung</strong> zu einem einzigen System — gesteuert von einer KI, die Arbeit erkennt, entscheidet und erledigt. Für kleine Handwerksbetriebe bis zum Mittelstand.
     </p>
     <div class="hero-cta">
-      <a href="https://app.nillai.de/register" class="btn btn-primary magnetic" data-magnetic rel="noopener">
+      <a href="https://nillai.de/register" class="btn btn-primary magnetic" data-magnetic rel="noopener">
         <span>Kostenlos registrieren</span>
         <span class="arrow">→</span>
       </a>
-      <a href="https://app.nillai.de/login" class="btn btn-ghost magnetic" data-magnetic rel="noopener">
+      <a href="https://nillai.de/login" class="btn btn-ghost magnetic" data-magnetic rel="noopener">
         <span>Login</span>
         <span class="arrow">→</span>
       </a>

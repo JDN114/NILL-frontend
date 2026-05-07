@@ -2,7 +2,7 @@
   "name": "NILL – KI-Assistent für Unternehmen",
   "short_name": "NILL",
   "description": "KI-gestützte Unternehmensplattform für E-Mails, Buchhaltung, Kalender & Team",
-  "start_url": "/",
+  "start_url": "/login",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
