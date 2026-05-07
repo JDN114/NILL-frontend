@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
 
   build: {
-    outDir: 'dist',
+    outDir: 'build',
     assetsDir: 'assets',
   },
 }))
