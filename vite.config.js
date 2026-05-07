@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    mode !== 'development' && VitePWA({
+    false && VitePWA({
       // Eigene manifest.json in /public wird genutzt — kein doppeltes Generieren
       manifest: false,
 

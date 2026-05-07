@@ -18,17 +18,20 @@ export function openCookieSettings() {
 }
 
 export default function CookieBanner() {
+  console.error("[CookieBanner] render");
   const [show,     setShow]     = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [analytics, setAnalytics] = useState(true);
 
   useEffect(() => {
-    const reopen = () => setShow(true);
+    console.log("[CookieBanner] mounted, saved:", localStorage.getItem(KEY));
+    const reopen = () => { console.log("[CookieBanner] reopen event fired"); setShow(true); };
     window.addEventListener("nill:cookie-settings", reopen);
 
     const saved = localStorage.getItem(KEY);
     if (!saved) {
-      const t = setTimeout(() => setShow(true), 700);
+      console.log("[CookieBanner] no saved prefs, scheduling show in 700ms");
+      const t = setTimeout(() => { console.log("[CookieBanner] timeout fired, setting show=true"); setShow(true); }, 700);
       return () => { clearTimeout(t); window.removeEventListener("nill:cookie-settings", reopen); };
     }
     try {
