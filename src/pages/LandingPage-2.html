@@ -7270,15 +7270,43 @@ function SpaceStationStory() {
       }
       scrollT += (p - scrollT) * .06;
 
-      // Rotate station continuously + scroll-driven dolly
-      station.rotation.y = t * .12 + scrollT * Math.PI * 1.8;
-      station.rotation.x = Math.sin(t * .25) * .12 + scrollT * .35;
-      station.rotation.z = Math.cos(t * .18) * .06;
-      // Camera dollies in slightly + drifts based on scroll progress
-      camera.position.z = 14 - scrollT * 4.5;
-      camera.position.x = Math.sin(scrollT * Math.PI) * 2.5;
-      camera.position.y = -scrollT * 1.5 + Math.sin(t * .3) * .15;
-      camera.lookAt(0, scrollT * .3, 0);
+      
+// scroll progress
+const thrustStart = 0.55;
+const thrustT = Math.max(
+  0,
+  (scrollT - thrustStart) / (1 - thrustStart)
+);
+
+// base rotation
+station.rotation.y = t * 0.12 + scrollT * Math.PI;
+station.rotation.x = Math.sin(t * 0.25) * 0.12;
+station.rotation.z = Math.cos(t * 0.18) * 0.06;
+
+// ship movement
+const shipY = thrustT * -35;
+const shipZ = thrustT * -80;
+
+// apply directly (NO +=)
+station.position.set(
+  Math.sin(t * 18) * 0.03 * thrustT,
+  shipY,
+  shipZ * 0.3
+);
+
+// camera movement
+camera.position.set(
+  Math.sin(scrollT * Math.PI) * 1.2,
+  scrollT * -1.2 + thrustT * -8,
+  14 + shipZ
+);
+
+camera.lookAt(
+  0,
+  shipY * 0.9,
+  shipZ * 0.2
+);
+
 
       // Planet slow rotation
       planet.rotation.y = t * .04;
