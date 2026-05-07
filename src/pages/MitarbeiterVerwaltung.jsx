@@ -35,7 +35,9 @@ function ContractBadge({ type }) {
 
 function ProfileForm({ employee, onSave, onClose }) {
   const p = employee.profile || {};
+  const [userInfo, setUserInfo] = useState({ full_name: employee.full_name || "" });
   const [form, setForm] = useState({
+    birthday: p.birthday || "",
     contract_type: p.contract_type || "Vollzeit",
     start_date: p.start_date || "",
     end_date: p.end_date || "",
@@ -56,15 +58,21 @@ function ProfileForm({ employee, onSave, onClose }) {
   async function handleSave() {
     setSaving(true); setError("");
     try {
-      const method = employee.profile ? "patch" : "post";
-      await api[method](`/hr/employees/${employee.id}/profile`, {
-        ...form,
-        salary_monthly: form.salary_monthly ? parseFloat(form.salary_monthly) : null,
-        tax_class: parseInt(form.tax_class),
-        annual_vacation_days: parseInt(form.annual_vacation_days),
-        start_date: form.start_date || null,
-        end_date: form.end_date || null,
-      });
+      await Promise.all([
+        api.patch(`/hr/employees/${employee.id}/user-info`, { full_name: userInfo.full_name || null }),
+        (async () => {
+          const method = employee.profile ? "patch" : "post";
+          await api[method](`/hr/employees/${employee.id}/profile`, {
+            ...form,
+            salary_monthly: form.salary_monthly ? parseFloat(form.salary_monthly) : null,
+            tax_class: parseInt(form.tax_class),
+            annual_vacation_days: parseInt(form.annual_vacation_days),
+            birthday: form.birthday || null,
+            start_date: form.start_date || null,
+            end_date: form.end_date || null,
+          });
+        })(),
+      ]);
       onSave();
     } catch (err) {
       setError(err?.response?.data?.detail || "Speichern fehlgeschlagen.");
@@ -107,6 +115,20 @@ function ProfileForm({ employee, onSave, onClose }) {
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer",
             color: "var(--nill-text-dim)", fontSize: "1.2rem" }}>✕</button>
         </div>
+
+        {row(
+          <>
+            {field("Vollständiger Name",
+              <input style={inputStyle} value={userInfo.full_name}
+                onChange={e => setUserInfo(f => ({ ...f, full_name: e.target.value }))}
+                placeholder="Max Mustermann" />
+            )}
+            {field("Geburtstag",
+              <input style={inputStyle} type="date" value={form.birthday}
+                onChange={e => set("birthday", e.target.value)} />
+            )}
+          </>
+        )}
 
         {row(
           <>
@@ -195,7 +217,7 @@ function ProfileForm({ employee, onSave, onClose }) {
   );
 }
 
-function EmployeeRow({ employee, onEdit }) {
+function EmployeeRow({ employee, onEdit, onDelete }) {
   const p = employee.profile;
   const fmt = (n) => n != null
     ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n)
@@ -226,6 +248,11 @@ function EmployeeRow({ employee, onEdit }) {
         {p?.department && (
           <div style={{ fontSize: "0.72rem", color: "var(--nill-text-dim)", marginTop: 1 }}>{p.department}</div>
         )}
+        {p?.birthday && (
+          <div style={{ fontSize: "0.7rem", color: "var(--nill-text-dim)", marginTop: 1 }}>
+            🎂 {new Date(p.birthday).toLocaleDateString("de-DE")}
+          </div>
+        )}
       </div>
 
       <div>
@@ -244,19 +271,34 @@ function EmployeeRow({ employee, onEdit }) {
         {fmt(p?.salary_monthly)}
       </div>
 
-      <button onClick={() => onEdit(employee)} style={{
-        padding: "0.4rem 0.85rem",
-        background: "var(--nill-surface)",
-        border: "1px solid var(--nill-border)",
-        borderRadius: 7, color: "var(--nill-text-dim)",
-        cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
-        transition: "border-color 0.12s, color 0.12s",
-      }}
-        onMouseOver={e => { e.currentTarget.style.borderColor = "rgba(197,165,114,0.4)"; e.currentTarget.style.color = "var(--nill-gold)"; }}
-        onMouseOut={e => { e.currentTarget.style.borderColor = "var(--nill-border)"; e.currentTarget.style.color = "var(--nill-text-dim)"; }}
-      >
-        Bearbeiten
-      </button>
+      <div style={{ display: "flex", gap: "0.4rem" }}>
+        <button onClick={() => onEdit(employee)} style={{
+          padding: "0.4rem 0.85rem",
+          background: "var(--nill-surface)",
+          border: "1px solid var(--nill-border)",
+          borderRadius: 7, color: "var(--nill-text-dim)",
+          cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
+          transition: "border-color 0.12s, color 0.12s",
+        }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = "rgba(197,165,114,0.4)"; e.currentTarget.style.color = "var(--nill-gold)"; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = "var(--nill-border)"; e.currentTarget.style.color = "var(--nill-text-dim)"; }}
+        >
+          Bearbeiten
+        </button>
+        <button onClick={() => onDelete(employee)} style={{
+          padding: "0.4rem 0.7rem",
+          background: "transparent",
+          border: "1px solid rgba(239,68,68,0.25)",
+          borderRadius: 7, color: "rgba(239,68,68,0.6)",
+          cursor: "pointer", fontSize: "0.78rem", fontWeight: 600,
+          transition: "border-color 0.12s, color 0.12s, background 0.12s",
+        }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.5)"; e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.background = "rgba(239,68,68,0.06)"; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.25)"; e.currentTarget.style.color = "rgba(239,68,68,0.6)"; e.currentTarget.style.background = "transparent"; }}
+        >
+          Entfernen
+        </button>
+      </div>
     </div>
   );
 }
@@ -268,6 +310,7 @@ export function MitarbeiterContent() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [deletingEmployee, setDeletingEmployee] = useState(null);
   const [search, setSearch] = useState("");
 
   async function load() {
@@ -279,6 +322,21 @@ export function MitarbeiterContent() {
       setEmployees([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDelete(employee) {
+    setDeletingEmployee(employee);
+  }
+
+  async function confirmDelete() {
+    if (!deletingEmployee) return;
+    try {
+      await api.delete(`/hr/employees/${deletingEmployee.id}`);
+      setDeletingEmployee(null);
+      load();
+    } catch (err) {
+      alert(err?.response?.data?.detail || "Fehler beim Entfernen.");
     }
   }
 
@@ -376,7 +434,7 @@ export function MitarbeiterContent() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               {filtered.map(e => (
-                <EmployeeRow key={e.id} employee={e} onEdit={setEditing} />
+                <EmployeeRow key={e.id} employee={e} onEdit={setEditing} onDelete={handleDelete} />
               ))}
             </div>
           )}
@@ -391,6 +449,39 @@ export function MitarbeiterContent() {
           onSave={() => { setEditing(null); load(); }}
           onClose={() => setEditing(null)}
         />
+      )}
+
+      {/* Delete confirm modal */}
+      {deletingEmployee && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem",
+        }}>
+          <div style={{
+            background: "var(--nill-bg)", border: "1px solid rgba(239,68,68,0.3)",
+            borderRadius: 14, padding: "1.75rem", width: "100%", maxWidth: 400,
+            display: "flex", flexDirection: "column", gap: "1rem",
+          }}>
+            <div style={{ fontWeight: 800, fontSize: "1rem", color: "#ef4444" }}>Mitarbeiter entfernen</div>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--nill-text-mute)", lineHeight: 1.5 }}>
+              Soll <strong style={{ color: "var(--nill-text)" }}>{deletingEmployee.full_name || deletingEmployee.email}</strong> wirklich aus der Organisation entfernt werden?
+              Das Konto bleibt bestehen, verliert aber den Zugang zur Organisation.
+            </p>
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+              <button onClick={() => setDeletingEmployee(null)} style={{
+                padding: "0.55rem 1.2rem", background: "transparent",
+                border: "1px solid var(--nill-border)", borderRadius: 8,
+                color: "var(--nill-text-dim)", cursor: "pointer", fontSize: "0.82rem",
+              }}>Abbrechen</button>
+              <button onClick={confirmDelete} style={{
+                padding: "0.55rem 1.4rem", background: "#ef4444",
+                border: "none", borderRadius: 8, color: "#fff",
+                fontWeight: 700, fontSize: "0.82rem", cursor: "pointer",
+              }}>Entfernen</button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

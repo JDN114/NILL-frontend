@@ -567,6 +567,12 @@ export default function DeliveryNotesPage() {
     catch(e) { console.error(e); }
   }
 
+  async function handleDelete(noteId) {
+    if (!window.confirm("Lieferschein wirklich löschen?")) return;
+    try { await api.delete(`/inventory/delivery-notes/${noteId}`); fetchNotes(); }
+    catch(e) { console.error(e); }
+  }
+
   const pendingCount = notes.filter(n=>n.status==="pending").length;
 
   const TABS = [
@@ -667,6 +673,10 @@ export default function DeliveryNotesPage() {
                             Prüfen
                           </button>
                         )}
+                        <button onClick={()=>handleDelete(note.id)}
+                          className="px-2.5 py-1.5 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-all">
+                          Löschen
+                        </button>
                       </div>
                     </div>
                   </div>

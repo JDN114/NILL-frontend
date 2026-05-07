@@ -211,12 +211,14 @@ export function LohnbuchhaltungContent({ onNavigate }) {
     Promise.all([
       api.get("/hr/employees").catch(() => null),
       api.get("/hr/absences?status=pending").catch(() => null),
-    ]).then(([empRes, absRes]) => {
+      api.get("/team/members").catch(() => null),
+    ]).then(([empRes, absRes, membersRes]) => {
       const employees = empRes?.data?.employees ?? [];
       const absences = absRes?.data?.items ?? [];
+      const teamMembers = Array.isArray(membersRes?.data) ? membersRes.data : [];
       const totalGross = employees.reduce((s, e) => s + parseFloat(e.profile?.salary_monthly || 0), 0);
       setStats({
-        employeeCount: employees.length,
+        employeeCount: teamMembers.length || employees.length,
         pendingAbsences: absences.length,
         totalGross,
       });

@@ -8,7 +8,7 @@ import { HrDocsContent } from "./HrDocuments";
 import { MitarbeiterContent } from "./MitarbeiterVerwaltung";
 import { LohnAbrechnungContent } from "./LohnAbrechnung";
 import { UrlaubsContent } from "./UrlaubsVerwaltung";
-import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
+import { SchichtplanContent } from "./Schichtplan";
 
 const ALL_PERMISSIONS = [
   { key: "calendar",   label: "Kalender" },
@@ -276,7 +276,7 @@ export default function WorkflowTeam() {
     { key: "members",      label: "Mitglieder"       },
     { key: "roles",        label: "Rollen"           },
     { key: "invites",      label: "Einladungen"      },
-    { key: "lohn",         label: "Lohnbuchhaltung"  },
+    { key: "schichtplan",  label: "Schichtplan"      },
     { key: "mitarbeiter",  label: "Mitarbeiter"      },
     { key: "abrechnung",   label: "Lohnabrechnung"   },
     { key: "urlaub",       label: "Urlaub"           },
@@ -656,10 +656,10 @@ export default function WorkflowTeam() {
                 )}
               </div>
             )}
-          {/* ── Lohnbuchhaltung Übersicht Tab ─────────────── */}
-          {activeTab === "lohn" && (
+          {/* ── Schichtplan Tab ───────────────────────────── */}
+          {activeTab === "schichtplan" && (
             <div style={{ padding: "1.25rem 0" }}>
-              <LohnbuchhaltungContent onNavigate={setActiveTab} />
+              <SchichtplanContent />
             </div>
           )}
           {/* ── Mitarbeiter Tab ───────────────────────────── */}
