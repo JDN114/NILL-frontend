@@ -10,6 +10,8 @@ import { ImapProvider } from "./context/ImapContext";
 
 import ProtectedRoute from "./ProtectedRoute";
 import AdminGuard from "./components/AdminGuard";
+import CookieBanner from "./components/CookieBanner";
+import RouteTracker from "./components/RouteTracker";
 
 import LandingPage from "./pages/LandingPage.jsx";
 import Login from "./pages/Login";
@@ -55,6 +57,8 @@ function App() {
           <ImapProvider>
           <MailProvider>
             <Router>
+              <RouteTracker />
+              <CookieBanner />
               <Routes>
 
               {/* Public */}
