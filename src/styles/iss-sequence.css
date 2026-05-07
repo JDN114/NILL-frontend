@@ -1,0 +1,45 @@
+
+.iss-sequence{
+  position:relative;
+  height:100vh;
+  overflow:hidden;
+  background:#000;
+}
+
+.iss-sequence canvas{
+  position:fixed;
+  inset:0;
+}
+
+.modules-layer{
+  position:absolute;
+  inset:0;
+  z-index:20;
+  pointer-events:none;
+}
+
+.module{
+  position:absolute;
+  left:8vw;
+  max-width:420px;
+
+  opacity:0;
+  transform:translateY(80px);
+
+  color:white;
+}
+
+.module h2{
+  font-size:clamp(2rem,4vw,4rem);
+  margin-bottom:1rem;
+}
+
+.module p{
+  font-size:1.1rem;
+  line-height:1.7;
+  opacity:.8;
+}
+
+.module-1{top:22%}
+.module-2{top:46%}
+.module-3{top:70%}
