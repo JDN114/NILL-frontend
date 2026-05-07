@@ -553,11 +553,14 @@ textarea{min-height:92px;resize:vertical}
 
 
 
+
 .station-section{
   position:relative;
-  height:240vh;
+  height:135vh;
   overflow:hidden;
+  margin-bottom:-12vh;
 }
+
 
 
 
@@ -579,9 +582,11 @@ textarea{min-height:92px;resize:vertical}
 
 
 
+
 .station-spacer{
-  height:140vh;
+  height:20vh;
 }
+
 
 
 
@@ -7281,7 +7286,7 @@ function SpaceStationStory() {
 
       
 // scroll progress
-const thrustStart = 0.90;
+const thrustStart = 0.78;
 const thrustT = Math.max(
   0,
   (scrollT - thrustStart) / (1 - thrustStart)
@@ -7294,7 +7299,7 @@ station.rotation.z = Math.cos(t * 0.18) * 0.06;
 
 // ship movement
 const shipY = thrustT * -35;
-const shipZ = thrustT * -90;
+const shipZ = thrustT * -60;
 
 // apply directly (NO +=)
 station.position.set(
@@ -7307,7 +7312,7 @@ station.position.set(
 camera.position.set(
   Math.sin(scrollT * Math.PI) * 1.2,
   scrollT * -1.2 + thrustT * -8,
-  14 + shipZ
+  14 + shipZ * 0.65
 );
 
 camera.lookAt(
