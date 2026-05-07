@@ -1,6 +1,6 @@
 // src/App.jsx
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
@@ -58,7 +58,11 @@ function App() {
               <Routes>
 
               {/* Public */}
-      	        <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={
+                  window.matchMedia("(display-mode: standalone)").matches
+                    ? <Navigate to="/login" replace />
+                    : <LandingPage />
+                } />
   	        <Route path="/login" element={<Login />} />
 	        <Route path="/register" element={<Register />} />
   	        <Route path="/onboarding" element={<OnboardingPage />} />
