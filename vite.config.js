@@ -51,7 +51,8 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
 
   build: {
-    outDir: 'build',
+    outDir: '/var/www/nill-app',
     assetsDir: 'assets',
+    emptyOutDir: true,
   },
 }))
