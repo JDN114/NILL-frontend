@@ -187,15 +187,6 @@ export default function DashboardLanding() {
             )}
           </motion.div>
 
-          {/* ── WIP Banner ── */}
-          <div className="nd-wip">
-            <span className="nd-wip-icon">🚧</span>
-            <span className="nd-wip-text">
-              Diese Seite befindet sich noch in aktiver Entwicklung. Einige Module und Funktionen sind noch nicht verfügbar.
-            </span>
-            <span className="nd-wip-badge">Work in Progress</span>
-          </div>
-
           {/* ── Module ── */}
           <div className="nd-section-label">Module</div>
 
