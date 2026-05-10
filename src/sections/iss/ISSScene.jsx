@@ -58,25 +58,22 @@ function StationAnimator({ stationProxy, issRef, thrusterProxy, activeModule }) 
   return null
 }
 
-export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, activeModule }) {
-  const issRef = useRef()
-
+export default function ISSScene() {
   return (
-
-    <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
-
+    <Canvas
+      style={{
+        width: '100%',
+        height: '500px',
+        background: 'blue',
+      }}
+      camera={{ position: [0, 0, 5], fov: 60 }}
+    >
       <ambientLight intensity={5} />
 
       <mesh>
-
         <boxGeometry args={[1, 1, 1]} />
-
         <meshStandardMaterial color="red" />
-
       </mesh>
-
     </Canvas>
-
   )
-
 }
