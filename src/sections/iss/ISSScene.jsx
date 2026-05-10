@@ -62,7 +62,7 @@ export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, 
   const issRef = useRef()
 
   return (
-#    <Canvas
+    <Canvas
 #      camera={{ fov: 42, near: 0.1, far: 1000 }}
 #      gl={{ antialias: true, alpha: false }}
 #      style={{ position: 'absolute', inset: 0 }}
