@@ -1,4 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
+import ISSSection from '../sections/iss/ISSSection'
+import '../styles/landing.css'
 
 const __css = `
 :root{
@@ -1325,7 +1327,10 @@ export default function LandingPage() {
       <Sustainability onCTA={openModal}/>
       <FAQ/>
       <BigCTA onCTA={openModal}/>
-      <Footer/>
+      
+      <ISSSection />
+
+<Footer/>
       <Modal intent={modalIntent} onClose={closeModal}/>
     </>
   );

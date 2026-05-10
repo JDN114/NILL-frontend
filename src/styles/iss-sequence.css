@@ -43,3 +43,107 @@
 .module-1{top:22%}
 .module-2{top:46%}
 .module-3{top:70%}
+
+
+/* =====================================================
+   GSAP PIN STABILITY
+===================================================== */
+
+.iss-section {
+  contain: layout paint style;
+  isolation: isolate;
+}
+
+.iss-overlay {
+  pointer-events: none;
+}
+
+.iss-overlay * {
+  pointer-events: auto;
+}
+
+
+
+/* =====================================================
+   MOBILE VIEWPORT FIX
+===================================================== */
+
+.iss-section {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+
+
+/* =====================================================
+   LOAD FADE
+===================================================== */
+
+.iss-section {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.iss-section.iss-loaded {
+  opacity: 1;
+}
+
+
+
+/* =====================================================
+   CINEMATIC SPACE BACKGROUND
+===================================================== */
+
+.iss-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  background:
+    radial-gradient(circle at 20% 20%, rgba(80,120,255,0.12), transparent 30%),
+    radial-gradient(circle at 80% 30%, rgba(255,255,255,0.08), transparent 20%),
+    radial-gradient(circle at 50% 80%, rgba(120,180,255,0.08), transparent 25%),
+    #000;
+
+  pointer-events: none;
+}
+
+.iss-overlay,
+.iss-progress,
+canvas {
+  position: relative;
+  z-index: 2;
+}
+
+
+
+/* =====================================================
+   CARD ANIMATION
+===================================================== */
+
+.iss-overlay > div {
+  opacity: 0;
+  transform: translateY(40px);
+  animation: issCardFade 1s ease forwards;
+}
+
+.iss-overlay > div:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.iss-overlay > div:nth-child(2) {
+  animation-delay: 0.45s;
+}
+
+.iss-overlay > div:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+@keyframes issCardFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
