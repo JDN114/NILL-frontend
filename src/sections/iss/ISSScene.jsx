@@ -62,17 +62,21 @@ export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, 
   const issRef = useRef()
 
   return (
-    <Canvas
-      <>
-        <ambientLight intensity={5} />
-    
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="red" />
-        </mesh>
-      </>
-    )
+
+    <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
+
+      <ambientLight intensity={5} />
+
+      <mesh>
+
+        <boxGeometry args={[1, 1, 1]} />
+
+        <meshStandardMaterial color="red" />
+
+      </mesh>
 
     </Canvas>
+
   )
+
 }
