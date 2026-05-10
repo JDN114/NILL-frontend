@@ -1,6 +1,6 @@
 import { Suspense, useRef, useState } from 'react'
 
-import ISSScene from './ISSScene'
+import { ISSScene } from './ISSScene'
 import ModuleCard from './ModuleCard'
 import { useISSTimeline } from './useISSTimeline'
 
