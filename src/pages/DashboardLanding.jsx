@@ -61,27 +61,6 @@ const S = `
   .nd-nill-module-label { font-family:var(--mono); font-size:9px; letter-spacing:.1em; color:rgba(122,92,255,.8); margin-top:3px; text-transform:uppercase; }
   .nd-action-dot { position:absolute; top:16px; right:16px; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px rgba(198,255,60,.6); }
 
-  /* WIP banner */
-  .nd-wip {
-    display:flex; align-items:center; gap:12px;
-    padding:12px 20px; margin-bottom:24px;
-    border-radius:12px;
-    background:repeating-linear-gradient(
-      -45deg,
-      rgba(255,200,0,0.04) 0px, rgba(255,200,0,0.04) 10px,
-      transparent 10px, transparent 20px
-    );
-    border:1px solid rgba(255,200,0,0.18);
-  }
-  .nd-wip-icon { font-size:18px; flex-shrink:0; }
-  .nd-wip-text { font-size:13px; color:rgba(255,200,0,0.75); line-height:1.4; }
-  .nd-wip-badge {
-    margin-left:auto; flex-shrink:0;
-    font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase;
-    background:rgba(255,200,0,0.1); border:1px solid rgba(255,200,0,0.25);
-    color:rgba(255,200,0,0.65); border-radius:99px; padding:3px 10px;
-  }
-
   /* Locked card */
   .nd-card-locked { opacity:.45; cursor:pointer; }
   .nd-card-locked:hover { opacity:.65; transform:none; }
