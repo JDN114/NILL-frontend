@@ -1,3 +1,4 @@
+console.log("ISSScene mounted")
 import { useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
