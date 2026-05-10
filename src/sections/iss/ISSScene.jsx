@@ -58,7 +58,9 @@ function StationAnimator({ stationProxy, issRef, thrusterProxy, activeModule }) 
   return null
 }
 
-export default function ISSScene() {
+export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, activeModule }) {
+  const issRef = useRef()
+
   return (
     <Canvas
       style={{
