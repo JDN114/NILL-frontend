@@ -63,63 +63,15 @@ export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, 
 
   return (
     <Canvas
-#      camera={{ fov: 42, near: 0.1, far: 1000 }}
-#      gl={{ antialias: true, alpha: false }}
-#      style={{ position: 'absolute', inset: 0 }}
-#    >
-#      <color attach="background" args={['#040407']} />
-
-#      {/* Stars — distant cosmic backdrop */}
-#      <Stars
-#        radius={350}
-#        depth={90}
-#        count={12000}
-#        factor={4}
-#        saturation={0.1}
-#        fade
-#        speed={0.25}
-#      />
-
-#      {/* Sunlight from upper-left — key light */}
-#      <directionalLight
-#        position={[12, 8, 6]}
-#        intensity={2.8}
-#        color="#fff8f0"
-#      />
-
-#      {/* Earthshine fill — soft blue-green from below */}
-#      <directionalLight
-#        position={[-4, -6, 4]}
-#        intensity={0.55}
-#        color="#3a7fd5"
-#      />
-
-#      {/* Ambient — barely-there space glow */}
-#      <ambientLight intensity={0.18} color="#101828" />
-
-#      <ISSModel
-#        ref={issRef}
-#        thrusterIntensity={thrusterProxy?.intensity ?? 0}
-#        activeModule={activeModule ?? -1}
-#      />
-
-#      <StationAnimator
-#        stationProxy={stationProxy}
-#        issRef={issRef}
-#        thrusterProxy={thrusterProxy}
-#        activeModule={activeModule}
-#      />
-
-#      <CameraRig cameraProxy={cameraProxy} lookProxy={lookProxy} />
-    <>
-      <ambientLight intensity={5} />
+      <>
+        <ambientLight intensity={5} />
     
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="red" />
-      </mesh>
-    </>
-  )
+        <mesh>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="red" />
+        </mesh>
+      </>
+    )
 
     </Canvas>
   )
