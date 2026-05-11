@@ -929,3 +929,64 @@ html, body { overflow-x: hidden; }
     font-size: clamp(1.3rem, 5vw, 1.85rem) !important;
   }
 }
+
+
+/* =========================================
+   LEGAL PAGES
+========================================= */
+
+.legal-content {
+  color: rgba(255,255,255,0.88);
+  line-height: 1.8;
+  font-size: 16px;
+}
+
+.legal-content h1,
+.legal-content h2,
+.legal-content h3,
+.legal-content h4 {
+  color: white !important;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.legal-content h1 {
+  font-size: 2.2rem;
+}
+
+.legal-content h2 {
+  font-size: 1.6rem;
+}
+
+.legal-content h3 {
+  font-size: 1.2rem;
+}
+
+.legal-content p,
+.legal-content li {
+  color: rgba(255,255,255,0.78) !important;
+}
+
+.legal-content a {
+  color: #67e8f9 !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.legal-content a:hover {
+  color: white !important;
+}
+
+.legal-content iframe {
+  width: 100%;
+  min-height: 1200px;
+  border: none;
+  border-radius: 20px;
+  background: transparent;
+}
+
+.itrk-legaltext {
+  width: 100%;
+}

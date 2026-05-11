@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import LegalLayout from "../components/LegalLayout";
 
 export default function AGB() {
   useEffect(() => {
@@ -14,15 +15,11 @@ export default function AGB() {
   }, []);
 
   return (
-    <section className="max-w-4xl mx-auto px-6 py-20 text-white">
-      <h1 className="text-3xl font-bold mb-6">
-        Allgemeine Geschäftsbedingungen (AGB)
-      </h1>
-
+    <LegalLayout title="Allgemeine Geschäftsbedingungen">
       <div
         className="itrk-legaltext"
         data-itrk-legaltext-url="https://itrk.legal/1yEr.4V.17NW-iframe.html"
       ></div>
-    </section>
+    </LegalLayout>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import LegalLayout from "../components/LegalLayout";
 
 export default function Datenschutz() {
   useEffect(() => {
@@ -14,15 +15,11 @@ export default function Datenschutz() {
   }, []);
 
   return (
-    <section className="max-w-4xl mx-auto px-6 py-20 text-white">
-      <h1 className="text-3xl font-bold mb-6">
-        Datenschutzerklärung
-      </h1>
-
+    <LegalLayout title="Datenschutzerklärung">
       <div
         className="itrk-legaltext"
         data-itrk-legaltext-url="https://itrk.legal/1yEr.bg.17NW-iframe.html"
       ></div>
-    </section>
+    </LegalLayout>
   );
 }
