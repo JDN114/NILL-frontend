@@ -48,6 +48,7 @@ import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
 import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
 import CallsModule from "./pages/CallsModule.jsx";
+import Widerruf from "./pages/Widerruf.jsx";
  
 function App() {
   return (
@@ -82,6 +83,7 @@ function App() {
 		<Route path="/founder" element={<Founder />} />
 		<Route path="/roadmap" element={<Roadmap />} />
 		<Route path="/invite/:token" element={<InviteAcceptPage />} />
+                <Route path="/Widerruf" element={<Widerruf />} />
 
 		{/* Upgrade / Access Denied */}
 		<Route path="/upgrade" element={
