@@ -7,7 +7,7 @@
   --radius:18px;--radius-lg:28px;--ease:cubic-bezier(.2,.7,.2,1);--ease-out:cubic-bezier(.16,1,.3,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:clip}
 html{scroll-behavior:smooth}
 img,svg,canvas{display:block;max-width:100%}
 a{color:inherit;text-decoration:none;cursor:pointer}
@@ -620,6 +620,6 @@ textarea{min-height:92px;resize:vertical}
 html,
 body,
 #root {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 

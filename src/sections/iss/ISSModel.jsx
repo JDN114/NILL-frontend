@@ -325,7 +325,7 @@ function buildISSIntoGroup(rootGroup) {
 }
 
 /* ─── ISSModel — R3F component ─────────────────────────────────── */
-export const ISSModel = forwardRef(function ISSModel({ thrusterIntensity = 0, activeFocus = -1 }, ref) {
+export const ISSModel = forwardRef(function ISSModel({ thrusterProxy, focusProxy }, ref) {
   const groupRef = useRef()
   const internalsRef = useRef(null)
 
@@ -341,12 +341,14 @@ export const ISSModel = forwardRef(function ISSModel({ thrusterIntensity = 0, ac
   useFrame(({ clock }) => {
     if (!internalsRef.current) return
     const t = clock.elapsedTime
+    const intensity = thrusterProxy?.intensity ?? 0
+    const activeFocus = focusProxy?.value ?? -1
     const { thrusterGlows, navLights, focusHalos } = internalsRef.current
 
     thrusterGlows.forEach(({ outer, inner }, i) => {
       const pulse = Math.sin(t * 9.0 + i * 0.8) * 0.5 + 0.5
-      outer.material.opacity = thrusterIntensity * (0.18 + pulse * 0.07)
-      inner.material.opacity = thrusterIntensity * (0.45 + pulse * 0.12)
+      outer.material.opacity = intensity * (0.18 + pulse * 0.07)
+      inner.material.opacity = intensity * (0.45 + pulse * 0.12)
     })
 
     navLights.forEach(({ mesh }, i) => {
