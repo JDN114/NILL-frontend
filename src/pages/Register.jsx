@@ -10,6 +10,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const MIN_PASSWORD_LENGTH = 6;
@@ -53,6 +54,10 @@ export default function Register() {
     }
     if (password !== repeatPassword) {
       setError("Passwörter stimmen nicht überein.");
+      return;
+    }
+    if (!privacyAccepted) {
+      setError("Bitte akzeptiere die Datenschutzerklärung.");
       return;
     }
     setLoading(true);
@@ -244,6 +249,64 @@ export default function Register() {
       margin-bottom: 24px;
       font-size: 20px;
     }
+    .nill-privacy-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(239,237,231,.07);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .nill-privacy-box:has(input:checked) {
+      border-color: rgba(198,255,60,.3);
+      background: rgba(198,255,60,.04);
+    }
+    .nill-privacy-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      border: 1.5px solid rgba(239,237,231,.25);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      margin-top: 1px;
+      position: relative;
+      transition: border-color .2s, background .2s;
+    }
+    .nill-privacy-checkbox:checked {
+      background: #c6ff3c;
+      border-color: #c6ff3c;
+    }
+    .nill-privacy-checkbox:checked::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #050505;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+    .nill-privacy-label {
+      font-size: 13px;
+      color: rgba(239,237,231,.55);
+      line-height: 1.5;
+      user-select: none;
+    }
+    .nill-privacy-label a {
+      color: #c6ff3c;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: opacity .2s;
+    }
+    .nill-privacy-label a:hover { opacity: .7; }
   `;
 
   // ✅ "bereits registriert"-Fehler bekommt einen Login-Link direkt in der Fehlermeldung
@@ -333,6 +396,27 @@ export default function Register() {
                 required
               />
             </div>
+
+            <label className="nill-privacy-box">
+              <input
+                className="nill-privacy-checkbox"
+                type="checkbox"
+                checked={privacyAccepted}
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              />
+              <span className="nill-privacy-label">
+                Ich habe die{" "}
+                <a
+                  href="https://nillai.de/Datenschutz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Datenschutzerklärung
+                </a>{" "}
+                gelesen und akzeptiere sie.
+              </span>
+            </label>
 
             {error && <div className="nill-error">{errorContent}</div>}
 
