@@ -4023,7 +4023,7 @@ No matching component was found for:
     return 42.*dot(m*m,vec4(dot(P0,x0),dot(P1,x1),dot(P2,x2),dot(P3,x3)));
   }
   float fbm(vec3 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*snoise(p); p*=2.07; a*=.5; } return v; }
-`;function bhe(){const t=useRef(),{surfaceMat:e,atmoMat:n}=_.useMemo(()=>{const r=new oe(Math.cos(-53*Math.PI/180)*Math.cos(135*Math.PI/180),Math.sin(-53*Math.PI/180),Math.cos(-53*Math.PI/180)*Math.sin(135*Math.PI/180)).normalize(),i=new go({uniforms:{uTime:{value:0},uSunDir:{value:r.clone()},uSeaLevel:{value:-.02},uCloudOpacity:{value:.45},uCloudSpeed:{value:.65},uCityLights:{value:1},uAtmoStrength:{value:0}},vertexShader:`
+`;function bhe(){const t=_.useRef(),{surfaceMat:e,atmoMat:n}=_.useMemo(()=>{const r=new oe(Math.cos(-53*Math.PI/180)*Math.cos(135*Math.PI/180),Math.sin(-53*Math.PI/180),Math.cos(-53*Math.PI/180)*Math.sin(135*Math.PI/180)).normalize(),i=new go({uniforms:{uTime:{value:0},uSunDir:{value:r.clone()},uSeaLevel:{value:-.02},uCloudOpacity:{value:.45},uCloudSpeed:{value:.65},uCityLights:{value:1},uAtmoStrength:{value:0}},vertexShader:`
         varying vec3 vLP; varying vec3 vWP; varying vec3 vWN;
         void main(){
           vLP = position;
