@@ -347,7 +347,7 @@ export const ISSModel = forwardRef(function ISSModel({ thrusterProxy, focusProxy
       g.position.y = Math.sin(t * 0.23) * 0.055
       g.position.z = Math.sin(t * 0.17) * 0.03
       g.rotation.x = (stationProxy?.rotX ?? 0) + Math.sin(t * 0.07) * 0.005
-      g.rotation.y = t * 0.10 + (stationProxy?.rotY ?? 0) + Math.sin(t * 0.09) * 0.008
+      g.rotation.y = (stationProxy?.rotY ?? 0) + Math.sin(t * 0.09) * 0.008
       g.rotation.z = (stationProxy?.rotZ ?? 0) + Math.sin(t * 0.11) * 0.004
     }
 
