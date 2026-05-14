@@ -1,264 +1,117 @@
 import { useEffect } from 'react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-gsap.registerPlugin(ScrollTrigger)
+const lerp = (a, b, t) => a + (b - a) * t
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v
+const smoothstep5 = t => {
+  const x = clamp(t, 0, 1)
+  return x * x * x * (x * (x * 6 - 15) + 10)
+}
 
-/**
- * 26-unit cinematic timeline mapped to 9000px scroll
- *
- * Labels:
- *   idle      0    — orbital float, camera at rest
- *   alignment 2    — deliberate mechanical reorientation
- *   ignition  5    — thrusters glow, vibration
- *   reveal1   7.5  — card 1 enters
- *   reveal2   11.5 — card 2 enters
- *   reveal3   15.5 — card 3 enters
- *   pullback  20   — deep-space zoom out
- *   handoff   24   — transition to next section
- */
+export const WAYPOINTS = [
+  // 0 — DEEP APPROACH
+  { p: 0.00, cam: { x: 0,    y: 1.6,  z: 28 },  look: { x: 0,    y: 0,     z: 0    }, rotX: 0.05, rotY: 0.20,  rotZ: 0.00,  fov: 36, thruster: 0,    focus: -1, card: -1, phase: 'approach' },
+  // 1 — ALIGNMENT
+  { p: 0.10, cam: { x: 0,    y: 0.7,  z: 13.5 },look: { x: 0,    y: 0.1,   z: 0    }, rotX: 0.18, rotY: 0.85,  rotZ: 0.04,  fov: 40, thruster: 0.25, focus: -1, card: -1, phase: 'active' },
+  // 2 — CUPOLA close-up
+  { p: 0.26, cam: { x: -1.9, y: 1.8,  z: 6.4 }, look: { x: 0,    y: 0.6,   z: 0.2  }, rotX:-0.06, rotY: 1.55,  rotZ:-0.04,  fov: 38, thruster: 0,    focus: 0,  card: 0,  phase: 'reveal' },
+  // 3 — SOLAR ARRAYS
+  { p: 0.46, cam: { x: 3.6,  y: -0.1, z: 8.0 }, look: { x: -0.4, y: 1.4,   z: 0    }, rotX: 0.08, rotY: 2.55,  rotZ: 0.08,  fov: 44, thruster: 0,    focus: 1,  card: 1,  phase: 'reveal' },
+  // 4 — COMMS DISH
+  { p: 0.66, cam: { x: -2.3, y: -0.6, z: 6.6 }, look: { x: 0.4,  y: -0.05, z: 0.9  }, rotX: 0.18, rotY: 3.45,  rotZ:-0.05,  fov: 36, thruster: 0,    focus: 2,  card: 2,  phase: 'reveal' },
+  // 5 — EPIC PULLBACK
+  { p: 0.86, cam: { x: 0,    y: 2.9,  z: 19.5 },look: { x: 0,    y: -0.8,  z: -1.8 }, rotX: 0.28, rotY: 4.25,  rotZ:-0.05,  fov: 46, thruster: 0.55, focus: -1, card: -1, phase: 'outro' },
+  // 6 — DRIFT-OUT
+  { p: 1.00, cam: { x: 0,    y: 3.4,  z: 23 },  look: { x: 0,    y: -1.1,  z: -2.4 }, rotX: 0.30, rotY: 4.45,  rotZ:-0.06,  fov: 48, thruster: 0.25, focus: -1, card: -1, phase: 'outro' },
+]
+
+function sampleWaypoints(p) {
+  let i = 0
+  while (i < WAYPOINTS.length - 2 && p > WAYPOINTS[i + 1].p) i++
+  const a = WAYPOINTS[i]
+  const b = WAYPOINTS[Math.min(i + 1, WAYPOINTS.length - 1)]
+  const span = b.p - a.p
+  const local = span > 1e-5 ? smoothstep5((p - a.p) / span) : 0
+
+  return {
+    cam:   { x: lerp(a.cam.x,  b.cam.x,  local), y: lerp(a.cam.y,  b.cam.y,  local), z: lerp(a.cam.z,  b.cam.z,  local) },
+    look:  { x: lerp(a.look.x, b.look.x, local), y: lerp(a.look.y, b.look.y, local), z: lerp(a.look.z, b.look.z, local) },
+    rotX:  lerp(a.rotX, b.rotX, local),
+    rotY:  lerp(a.rotY, b.rotY, local),
+    rotZ:  lerp(a.rotZ, b.rotZ, local),
+    fov:   lerp(a.fov,  b.fov,  local),
+    thruster: lerp(a.thruster, b.thruster, local),
+    focus: local > 0.55 ? b.focus : a.focus,
+    card:  local > 0.55 ? b.card  : a.card,
+    phase: local > 0.55 ? b.phase : a.phase,
+  }
+}
+
 export function useISSTimeline({
   sectionRef,
   stationProxy,
   cameraProxy,
   lookProxy,
   thrusterProxy,
-  card1Ref,
-  card2Ref,
-  card3Ref,
+  fovProxy,
+  focusProxy,
   onPhaseChange,
-}) {
+  onCardChange,
+  damping = 0.07,
+} = {}) {
   useEffect(() => {
-    const section = sectionRef.current
-    const card1 = card1Ref.current
-    const card2 = card2Ref.current
-    const card3 = card3Ref.current
-    if (!section || !card1 || !card2 || !card3) return
+    if (!sectionRef?.current) return
 
-    // Initialize cards hidden with blur
-    gsap.set([card1, card2, card3], {
-      opacity: 0,
-      y: 40,
-      scale: 0.93,
-      filter: 'blur(10px)',
-    })
+    let raf = 0
+    let rawP = 0
+    let smoothP = 0
+    let lastCard = -2
+    let lastPhase = ''
+    let mounted = true
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: section,
-        start: 'top top',
-        end: '+=9000',
-        scrub: 1.8,
-        pin: true,
-        pinSpacing: true,
-        anticipatePin: 1,
-        onUpdate(self) {
-          const p = self.progress
-          if (onPhaseChange) {
-            if      (p < 0.077)  onPhaseChange('idle',      self.progress)
-            else if (p < 0.192)  onPhaseChange('alignment', self.progress)
-            else if (p < 0.288)  onPhaseChange('ignition',  self.progress)
-            else if (p < 0.442)  onPhaseChange('reveal1',   self.progress)
-            else if (p < 0.596)  onPhaseChange('reveal2',   self.progress)
-            else if (p < 0.769)  onPhaseChange('reveal3',   self.progress)
-            else if (p < 0.923)  onPhaseChange('pullback',  self.progress)
-            else                 onPhaseChange('handoff',   self.progress)
-          }
-        },
-      },
-    })
+    const recomputeRaw = () => {
+      const el = sectionRef.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      const total = el.offsetHeight - window.innerHeight
+      if (total <= 0) { rawP = 0; return }
+      rawP = clamp(-r.top / total, 0, 1)
+    }
 
-    // ── PHASE 1: ORBITAL IDLE (0–2) ──────────────────────────────────
-    tl.addLabel('idle', 0)
-    // Camera gently closes in while station drifts
-    tl.fromTo(cameraProxy, { z: 16 }, { z: 13, duration: 2, ease: 'power1.inOut' }, 'idle')
-    tl.fromTo(stationProxy, { y: 0 }, { y: 0.15, duration: 2, ease: 'sine.inOut' }, 'idle')
+    const tick = () => {
+      if (!mounted) return
+      raf = requestAnimationFrame(tick)
+      smoothP = lerp(smoothP, rawP, damping)
+      if (Math.abs(smoothP - rawP) < 1e-4) smoothP = rawP
 
-    // ── PHASE 2: ALIGNMENT (2–5) ─────────────────────────────────────
-    tl.addLabel('alignment', 2)
-    // Deliberate rotation — mechanical, not fast
-    tl.to(stationProxy, {
-      rotY: Math.PI * 0.55,
-      rotX: 0.08,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'alignment')
-    // Camera arcs slightly to the right to reveal the truss spine
-    tl.to(cameraProxy, {
-      x: 1.2,
-      z: 12,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'alignment')
-    tl.to(lookProxy, {
-      x: 0.4,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'alignment')
+      const s = sampleWaypoints(smoothP)
 
-    // ── PHASE 3: THRUST IGNITION (5–7.5) ─────────────────────────────
-    tl.addLabel('ignition', 5)
-    // Thruster intensity up
-    tl.to(thrusterProxy, {
-      intensity: 1,
-      duration: 1.2,
-      ease: 'power3.in',
-    }, 'ignition')
-    // Station pushes forward slightly (acceleration feel)
-    tl.to(stationProxy, {
-      z: -1.2,
-      rotX: 0.15,
-      duration: 2.5,
-      ease: 'power2.inOut',
-    }, 'ignition')
-    // Camera follows the thrust vector
-    tl.to(cameraProxy, {
-      x: 0.6,
-      y: 0.8,
-      z: 11,
-      duration: 2.5,
-      ease: 'power2.inOut',
-    }, 'ignition')
+      if (cameraProxy)   { cameraProxy.x   = s.cam.x;  cameraProxy.y   = s.cam.y;  cameraProxy.z = s.cam.z }
+      if (lookProxy)     { lookProxy.x     = s.look.x; lookProxy.y     = s.look.y; lookProxy.z   = s.look.z }
+      if (stationProxy)  { stationProxy.rotX = s.rotX; stationProxy.rotY = s.rotY; stationProxy.rotZ = s.rotZ }
+      if (thrusterProxy) { thrusterProxy.intensity = s.thruster }
+      if (fovProxy)      { fovProxy.value = s.fov }
+      if (focusProxy)    { focusProxy.value = s.focus }
 
-    // ── PHASE 4: MODULE REVEAL 1 (7.5–11.5) ──────────────────────────
-    tl.addLabel('reveal1', 7.5)
-    // Thrusters fade — we're coasting
-    tl.to(thrusterProxy, {
-      intensity: 0.25,
-      duration: 2,
-      ease: 'power2.out',
-    }, 'reveal1')
-    // Station settles into a profile view
-    tl.to(stationProxy, {
-      rotY: Math.PI * 0.8,
-      rotX: 0.05,
-      z: -0.5,
-      y: -0.3,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'reveal1')
-    tl.to(cameraProxy, {
-      x: -0.5,
-      y: 0.3,
-      z: 11.5,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'reveal1')
-    // Card 1 enters
-    tl.fromTo(card1,
-      { opacity: 0, y: 40, scale: 0.93, filter: 'blur(10px)' },
-      { opacity: 1, y: 0,  scale: 1,    filter: 'blur(0px)', duration: 2, ease: 'power2.out' },
-      'reveal1+=0.6'
-    )
-    // Card 1 exits before card 2
-    tl.to(card1, {
-      opacity: 0,
-      y: -30,
-      scale: 0.96,
-      filter: 'blur(6px)',
-      duration: 1.2,
-      ease: 'power2.in',
-    }, 'reveal1+=3.2')
+      if (s.card !== lastCard) {
+        lastCard = s.card
+        onCardChange && onCardChange(s.card)
+      }
+      if (s.phase !== lastPhase) {
+        lastPhase = s.phase
+        onPhaseChange && onPhaseChange(s.phase)
+      }
+    }
 
-    // ── PHASE 5: MODULE REVEAL 2 (11.5–15.5) ─────────────────────────
-    tl.addLabel('reveal2', 11.5)
-    tl.to(stationProxy, {
-      rotY: Math.PI * 1.1,
-      rotX: -0.06,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'reveal2')
-    tl.to(cameraProxy, {
-      x: 0.8,
-      y: -0.2,
-      z: 12,
-      duration: 3,
-      ease: 'power2.inOut',
-    }, 'reveal2')
-    tl.fromTo(card2,
-      { opacity: 0, y: 40, scale: 0.93, filter: 'blur(10px)' },
-      { opacity: 1, y: 0,  scale: 1,    filter: 'blur(0px)', duration: 2, ease: 'power2.out' },
-      'reveal2+=0.6'
-    )
-    tl.to(card2, {
-      opacity: 0,
-      y: -30,
-      scale: 0.96,
-      filter: 'blur(6px)',
-      duration: 1.2,
-      ease: 'power2.in',
-    }, 'reveal2+=3.2')
-
-    // ── PHASE 6: MODULE REVEAL 3 (15.5–20) ───────────────────────────
-    tl.addLabel('reveal3', 15.5)
-    tl.to(stationProxy, {
-      rotY: Math.PI * 1.45,
-      rotX: 0.1,
-      duration: 3.5,
-      ease: 'power2.inOut',
-    }, 'reveal3')
-    tl.to(cameraProxy, {
-      x: -0.4,
-      y: 0.6,
-      z: 12.5,
-      duration: 3.5,
-      ease: 'power2.inOut',
-    }, 'reveal3')
-    tl.fromTo(card3,
-      { opacity: 0, y: 40, scale: 0.93, filter: 'blur(10px)' },
-      { opacity: 1, y: 0,  scale: 1,    filter: 'blur(0px)', duration: 2, ease: 'power2.out' },
-      'reveal3+=0.6'
-    )
-    tl.to(card3, {
-      opacity: 0,
-      y: -30,
-      scale: 0.96,
-      filter: 'blur(6px)',
-      duration: 1.2,
-      ease: 'power2.in',
-    }, 'reveal3+=3.4')
-
-    // ── PHASE 7: DEEP-SPACE PULLBACK (20–24) ─────────────────────────
-    tl.addLabel('pullback', 20)
-    // Thrusters off entirely
-    tl.to(thrusterProxy, {
-      intensity: 0,
-      duration: 1.5,
-      ease: 'power2.out',
-    }, 'pullback')
-    // Camera pulls far back — ISS becomes a speck
-    tl.to(cameraProxy, {
-      x: 0,
-      y: 2,
-      z: 90,
-      duration: 4,
-      ease: 'power3.inOut',
-    }, 'pullback')
-    // Station scales down and levels out to full-profile
-    tl.to(stationProxy, {
-      scaleX: 0.12,
-      scaleY: 0.12,
-      scaleZ: 0.12,
-      rotY: Math.PI * 1.8,
-      rotX: 0,
-      y: 0,
-      z: 0,
-      duration: 4,
-      ease: 'power3.inOut',
-    }, 'pullback')
-
-    // ── PHASE 8: HANDOFF (24–26) ──────────────────────────────────────
-    tl.addLabel('handoff', 24)
-    // Section fades to black — seamless cut to next section
-    tl.to(section, {
-      opacity: 0,
-      duration: 2,
-      ease: 'power2.inOut',
-    }, 'handoff')
+    recomputeRaw()
+    raf = requestAnimationFrame(tick)
+    window.addEventListener('scroll', recomputeRaw, { passive: true })
+    window.addEventListener('resize', recomputeRaw)
 
     return () => {
-      tl.kill()
-      ScrollTrigger.getAll().forEach(t => t.kill())
+      mounted = false
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', recomputeRaw)
+      window.removeEventListener('resize', recomputeRaw)
     }
-  }, []) // refs are stable after mount
+  }, [sectionRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onPhaseChange, onCardChange, damping])
 }

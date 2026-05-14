@@ -1318,6 +1318,7 @@ export default function LandingPage() {
       <div className="vignette" aria-hidden="true"/>
       <Nav onDemo={openModal}/>
       <Hero onCTA={openModal}/>
+      <ISSSection />
       <Ticker/>
       <Products onCTA={openModal}/>
       <FeatureWalkthrough/>
@@ -1327,8 +1328,6 @@ export default function LandingPage() {
       <Sustainability onCTA={openModal}/>
       <FAQ/>
       <BigCTA onCTA={openModal}/>
-      
-      <ISSSection />
 
 <Footer/>
       <Modal intent={modalIntent} onClose={closeModal}/>

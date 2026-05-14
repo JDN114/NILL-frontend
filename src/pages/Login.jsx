@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,6 +17,9 @@ export default function Login() {
   const [totpCode, setTotpCode]   = useState("");
   const [tfaMethod, setTfaMethod] = useState("totp"); // "totp" | "email" | "webauthn"
   const [emailSent, setEmailSent] = useState(false);
+
+  const [searchParams] = useSearchParams();
+  const inactivityLogout = searchParams.get("reason") === "inactivity";
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -318,6 +321,35 @@ export default function Login() {
           background: rgba(239,237,231,.07);
           margin: 28px 0;
         }
+
+        .nill-inactivity-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 14px 16px;
+          margin-bottom: 28px;
+          background: rgba(197,165,114,0.08);
+          border: 1px solid rgba(197,165,114,0.28);
+          border-radius: 12px;
+        }
+        .nill-inactivity-icon {
+          font-size: 16px;
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
+        .nill-inactivity-title {
+          font-family: "JetBrains Mono", monospace;
+          font-size: 10px;
+          letter-spacing: .14em;
+          text-transform: uppercase;
+          color: rgba(197,165,114,0.9);
+          margin-bottom: 3px;
+        }
+        .nill-inactivity-body {
+          font-size: 12.5px;
+          color: rgba(239,237,231,0.5);
+          line-height: 1.5;
+        }
       `}</style>
 
       <div className="nill-auth-root">
@@ -327,6 +359,18 @@ export default function Login() {
             <span className="nill-auth-brand-mark" />
             <span className="nill-auth-brand-name">NILL</span>
           </div>
+
+          {inactivityLogout && (
+            <div className="nill-inactivity-banner">
+              <span className="nill-inactivity-icon">⏱</span>
+              <div>
+                <div className="nill-inactivity-title">Sitzung abgelaufen</div>
+                <div className="nill-inactivity-body">
+                  Du wurdest nach 60 Minuten Inaktivität automatisch abgemeldet. Bitte melde dich erneut an.
+                </div>
+              </div>
+            </div>
+          )}
 
           {step === "credentials" ? (
             <>

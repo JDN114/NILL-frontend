@@ -1,21 +1,36 @@
 import { forwardRef } from 'react'
 
-export const ModuleCard = forwardRef(function ModuleCard({ tag, title, desc, stats }, ref) {
+export const ModuleCard = forwardRef(function ModuleCard(
+  { index = 0, total = 3, tag, title, description, stats, position = 'tr', state = 'future' },
+  ref,
+) {
+  const cls = [
+    'iss-card',
+    `pos-${position}`,
+    state === 'active' ? 'is-active' : '',
+    state === 'past' ? 'is-past' : '',
+  ].filter(Boolean).join(' ')
+
   return (
-    <div ref={ref} className="iss-module-card">
-      <div className="iss-module-tag">{tag}</div>
-      <h3 className="iss-module-title">{title}</h3>
-      <p className="iss-module-desc">{desc}</p>
-      {stats && (
-        <div className="iss-module-stats">
-          {stats.map((s, i) => (
-            <div key={i} className="iss-module-stat-item">
-              <span className="iss-module-stat-num">{s.n}</span>
-              <span className="iss-module-stat-lbl">{s.l}</span>
+    <article ref={ref} className={cls} aria-hidden={state !== 'active'}>
+      <div className="iss-card-index">
+        <em>{String(index + 1).padStart(2, '0')}</em>
+        <span>/</span>
+        <span>{String(total).padStart(2, '0')}</span>
+      </div>
+      {tag && <div className="iss-card-tag">{tag}</div>}
+      {title && <h3 dangerouslySetInnerHTML={{ __html: title }} />}
+      {description && <p>{description}</p>}
+      {stats && stats.length > 0 && (
+        <div className="iss-card-stats">
+          {stats.map(([n, l], i) => (
+            <div key={i} className="iss-card-stat">
+              <span className="iss-card-stat-num">{n}</span>
+              <span className="iss-card-stat-lbl">{l}</span>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </article>
   )
 })
