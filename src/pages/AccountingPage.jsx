@@ -733,20 +733,20 @@ function HilfeTab({ onNavigate }) {
 }
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
-const TABS = [
-  {id:"overview",    label:"Übersicht"},
-  {id:"rechnungen",  label:"Rechnungen"},
-  {id:"buchungen",   label:"Journal"},
-  {id:"kontenplan",  label:"Kontenplan"},
-  {id:"anlagen",     label:"Anlagenbuch"},
-  {id:"ustva",       label:"UStVA"},
-  {id:"berichte",    label:"Berichte"},
-  {id:"partner",     label:"Geschäftspartner"},
-  {id:"bank",        label:"Bank", comingSoon: true},
-  {id:"steuern",     label:"Steuern"},
-  {id:"lohnsteuer",  label:"Lohnsteuer"},
-  {id:"export",      label:"Export"},
-  {id:"hilfe",       label:"❓ Hilfe"},
+const ALL_TABS = [
+  {id:"overview",    label:"Übersicht",        modes:["einfach","doppelt"]},
+  {id:"rechnungen",  label:"Rechnungen",       modes:["einfach","doppelt"]},
+  {id:"buchungen",   label:"Journal",          modes:["doppelt"]},
+  {id:"kontenplan",  label:"Kontenplan",       modes:["doppelt"]},
+  {id:"anlagen",     label:"Anlagenbuch",      modes:["doppelt"]},
+  {id:"ustva",       label:"UStVA",            modes:["doppelt"]},
+  {id:"berichte",    label:"Berichte",         modes:["einfach","doppelt"]},
+  {id:"partner",     label:"Geschäftspartner", modes:["einfach","doppelt"]},
+  {id:"bank",        label:"Bank",             modes:["doppelt"], comingSoon: true},
+  {id:"steuern",     label:"Steuern",          modes:["doppelt"]},
+  {id:"lohnsteuer",  label:"Lohnsteuer",       modes:["doppelt"]},
+  {id:"export",      label:"Export",           modes:["einfach","doppelt"]},
+  {id:"hilfe",       label:"❓ Hilfe",         modes:["einfach","doppelt"]},
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -756,6 +756,11 @@ export default function AccountingPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sessionReady, setSessionReady] = useState(false);
+  const accountingMode = localStorage.getItem("nill_accounting_mode") || "doppelt";
+  const TABS = useMemo(
+    () => ALL_TABS.filter(t => t.modes.includes(accountingMode)),
+    [accountingMode]
+  );
 
   useEffect(() => {
     api.post("/api/v1/buchhaltung/kontenrahmen/init").catch(() => {});

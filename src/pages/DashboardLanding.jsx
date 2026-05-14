@@ -71,6 +71,13 @@ const S = `
   .nd-card-soon:hover { transform:none; }
   .nd-soon-badge { font-family:var(--mono); font-size:9px; color:var(--ink-dim); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:99px; padding:2px 9px; letter-spacing:.12em; text-transform:uppercase; align-self:flex-start; }
 
+  .nd-mode-toggle { display:inline-flex; align-items:center; gap:5px; margin-top:8px; padding:3px 3px 3px 10px; border-radius:99px; border:1px solid var(--line); background:rgba(255,255,255,.04); cursor:pointer; transition:border-color .2s,background .2s; user-select:none; }
+  .nd-mode-toggle:hover { border-color:var(--ink-faint); background:rgba(255,255,255,.07); }
+  .nd-mode-toggle-label { font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-dim); }
+  .nd-mode-pill { font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; border-radius:99px; padding:2px 9px; font-weight:600; transition:background .2s,color .2s; }
+  .nd-mode-pill-doppelt { background:rgba(198,255,60,.15); color:var(--accent); }
+  .nd-mode-pill-einfach { background:rgba(122,92,255,.15); color:var(--a2); }
+
   @media(max-width:600px) {
     .nd-welcome { padding:24px 20px; }
     .nd-grid { grid-template-columns:1fr 1fr; }
@@ -98,8 +105,19 @@ export default function DashboardLanding() {
   const [userName, setUserName]       = useState(null);
   const [notifications, setNotifications]         = useState([]);
   const [nillNotifications, setNillNotifications] = useState([]);
+  const [accountingMode, setAccountingMode] = useState(
+    () => localStorage.getItem("nill_accounting_mode") || "doppelt"
+  );
   const { hasFeature, hasModule, isCompanyAdmin, org } = useAuth();
   const navigate = useNavigate();
+
+  const toggleAccountingMode = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = accountingMode === "doppelt" ? "einfach" : "doppelt";
+    localStorage.setItem("nill_accounting_mode", next);
+    setAccountingMode(next);
+  };
 
   useEffect(() => {
     api.get("/me/profile").then(r => setUserName(r.data.name || null)).catch(() => {});
@@ -288,6 +306,14 @@ export default function DashboardLanding() {
                     <div>
                       <div className="nd-card-title">{card.title}</div>
                       <p className="nd-card-desc">{card.desc}</p>
+                      {card.key === "accounting" && (
+                        <span className="nd-mode-toggle" onClick={toggleAccountingMode} title="Buchhaltungsart umschalten">
+                          <span className="nd-mode-toggle-label">Modus</span>
+                          <span className={`nd-mode-pill nd-mode-pill-${accountingMode}`}>
+                            {accountingMode === "doppelt" ? "Doppelt" : "Einfach"}
+                          </span>
+                        </span>
+                      )}
                     </div>
                     <div className="nd-card-arrow">Öffnen <span>→</span></div>
                   </Link>
