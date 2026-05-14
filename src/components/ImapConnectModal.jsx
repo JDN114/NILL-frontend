@@ -92,7 +92,59 @@ function fromAccount(a) {
   };
 }
 
-const inp = "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm";
+// ── Design tokens (matching SettingsPage) ──────────────────────────────────
+
+const T = {
+  text:     "#efede7",
+  dim:      "rgba(239,237,231,.5)",
+  mute:     "rgba(239,237,231,.28)",
+  gold:     "#c5a572",
+  border:   "rgba(239,237,231,0.07)",
+  borderHi: "rgba(197,165,114,0.28)",
+  surface:  "rgba(255,255,255,0.03)",
+  red:      "#f87171",
+  green:    "#34d399",
+  amber:    "#fbbf24",
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "0.55rem 0.85rem",
+  background: "rgba(255,255,255,0.04)",
+  border: `1px solid ${T.border}`,
+  borderRadius: 9,
+  color: T.text,
+  fontSize: "0.83rem",
+  outline: "none",
+  boxSizing: "border-box",
+  transition: "border-color 0.15s",
+};
+
+const inputSmStyle = {
+  ...inputStyle,
+  padding: "0.4rem 0.65rem",
+  fontSize: "0.78rem",
+  borderRadius: 8,
+};
+
+const labelStyle = {
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  color: T.dim,
+  textTransform: "uppercase",
+  letterSpacing: "0.07em",
+  display: "block",
+  marginBottom: 5,
+};
+
+const subHeadStyle = {
+  fontSize: "0.68rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.1em",
+  color: T.mute,
+  marginBottom: 8,
+};
 
 export default function ImapConnectModal({ open, onClose, onConnected, account }) {
   const imap    = useContext(ImapContext);
@@ -102,7 +154,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
   const [submitting,   setSubmitting]   = useState(false);
   const [error,        setError]        = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [savedHint,    setSavedHint]    = useState(false); // true when pre-filled from localStorage
+  const [savedHint,    setSavedHint]    = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -120,7 +172,6 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
   const detected = useMemo(() => presetFor(form.email), [form.email]);
 
-  // When email changes: try saved config first, fall back to provider preset
   useEffect(() => {
     if (isReauth || !form.email.includes("@")) return;
     const saved = getImapSavedByEmail(form.email);
@@ -156,7 +207,6 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
       setShowAdvanced(false);
       return;
     }
-    // Unknown provider — open advanced automatically
     const dom = form.email.split("@")[1];
     if (dom && dom.length > 2) {
       setSavedHint(false);
@@ -190,7 +240,6 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
         ? await imap.reauthAccount(account.id, payload)
         : await imap.connectImap(payload);
 
-      // Save config to localStorage (no password) for future reconnects
       saveImapConfig({ ...form, imap_host: payload.imap_host });
       onConnected?.(result);
       onClose?.();
@@ -207,25 +256,43 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
   const needsAppPassword = detected?.name && ["Mailbox.org","Posteo","Fastmail","Yandex Mail"].includes(detected.name);
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <div style={{
+      position: "fixed", inset: 0,
+      background: "rgba(0,0,0,0.72)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 50, padding: "1rem",
+    }}>
+      <div style={{
+        background: "#0d0c0b",
+        border: `1px solid ${T.border}`,
+        borderRadius: 14,
+        width: "100%", maxWidth: 480,
+        maxHeight: "90vh", overflowY: "auto",
+        boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+      }}>
+        <form onSubmit={handleSubmit} style={{
+          padding: "1.5rem",
+          display: "flex", flexDirection: "column", gap: "1.25rem",
+        }}>
 
           {/* Header */}
-          <div className="flex items-start justify-between">
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: T.text }}>
                 {isReauth ? "Verbindung erneuern" : "Postfach verbinden"}
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: T.dim }}>
                 {isReauth
                   ? "Gib dein aktuelles Passwort ein."
                   : "Verbinde dein Business-Postfach (z.B. info@deine-firma.de)."}
               </p>
             </div>
-            <button type="button" onClick={onClose}
-              className="text-gray-500 hover:text-white transition mt-0.5 flex-shrink-0 ml-4">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <button type="button" onClick={onClose} style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: T.mute, padding: 4, flexShrink: 0, marginLeft: 12,
+              display: "flex", alignItems: "center", lineHeight: 1,
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
@@ -233,41 +300,40 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
           {/* E-Mail */}
           <div>
-            <label className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
-              E-Mail Adresse
-            </label>
+            <label style={labelStyle}>E-Mail Adresse</label>
             <input
               type="email" autoComplete="username"
               value={form.email}
               onChange={e => { update("email", e.target.value); setSavedHint(false); }}
               placeholder="info@dein-business.de"
               disabled={isReauth}
-              className={`${inp} ${isReauth ? "opacity-60" : ""}`}
+              style={{ ...inputStyle, opacity: isReauth ? 0.55 : 1 }}
               required
             />
-            {/* Status pill beneath the email field */}
             {savedHint && !isReauth && (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#C5A572] flex-shrink-0">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={T.gold} strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
                 </svg>
-                <span className="text-xs text-[#C5A572]">
+                <span style={{ fontSize: "0.75rem", color: T.gold }}>
                   Gespeicherte Einstellungen geladen — nur Passwort eingeben.
                 </span>
               </div>
             )}
             {!savedHint && detected && !isReauth && (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"/>
-                <span className="text-xs text-emerald-400">
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.green, flexShrink: 0 }}/>
+                <span style={{ fontSize: "0.75rem", color: T.green }}>
                   {detected.name} erkannt — Servereinstellungen automatisch konfiguriert.
                 </span>
               </div>
             )}
             {!savedHint && !detected && form.email.includes("@") && (form.email.split("@")[1]?.length ?? 0) > 2 && (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"/>
-                <span className="text-xs text-amber-400">
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.amber, flexShrink: 0 }}/>
+                <span style={{ fontSize: "0.75rem", color: T.amber }}>
                   Provider unbekannt — Servereinstellungen unten ausfüllen.
                 </span>
               </div>
@@ -276,143 +342,183 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
           {/* Passwort */}
           <div>
-            <label className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
-              Passwort
-            </label>
+            <label style={labelStyle}>Passwort</label>
             <input
               type="password" autoComplete="current-password"
               value={form.password}
               onChange={e => update("password", e.target.value)}
               placeholder="••••••••"
-              className={inp}
+              style={inputStyle}
               required
             />
             {needsAppPassword && (
-              <p className="text-xs text-amber-400/80 mt-1.5 leading-relaxed">
-                <strong className="text-amber-300">Hinweis:</strong> {detected.name} erfordert bei 2FA ein{" "}
+              <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: T.amber, lineHeight: 1.5 }}>
+                <strong style={{ color: T.amber }}>Hinweis:</strong> {detected.name} erfordert bei 2FA ein{" "}
                 <strong>App-Passwort</strong> — in den Sicherheitseinstellungen des Kontos erstellen.
               </p>
             )}
-            <p className="text-[11px] text-gray-600 mt-1">Wird verschlüsselt gespeichert. Passwort wird nie lokal gespeichert.</p>
+            <p style={{ margin: "5px 0 0", fontSize: "0.72rem", color: T.mute }}>
+              Wird verschlüsselt gespeichert. Passwort wird nie lokal gespeichert.
+            </p>
           </div>
 
           {/* Anzeigename */}
           <div>
-            <label className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
-              Anzeigename <span className="text-gray-600 font-normal normal-case">(optional)</span>
+            <label style={labelStyle}>
+              Anzeigename{" "}
+              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: T.mute }}>
+                (optional)
+              </span>
             </label>
             <input
               type="text"
               value={form.display_name}
               onChange={e => update("display_name", e.target.value)}
               placeholder="z.B. Müller GmbH Service"
-              className={inp}
+              style={inputStyle}
             />
           </div>
 
           {/* Advanced toggle */}
-          <button type="button" onClick={() => setShowAdvanced(s => !s)}
-            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-              style={{ transform: showAdvanced ? "rotate(90deg)" : "none", transition: "transform .15s" }}>
+          <button type="button" onClick={() => setShowAdvanced(s => !s)} style={{
+            background: "none", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 6,
+            fontSize: "0.78rem", color: T.mute, padding: 0,
+            transition: "color 0.15s",
+          }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+              style={{ transform: showAdvanced ? "rotate(90deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>
               <polyline points="9 18 15 12 9 6"/>
             </svg>
             Servereinstellungen {(detected || savedHint) && !showAdvanced ? "(automatisch)" : ""}
           </button>
 
           {showAdvanced && (
-            <div className="space-y-4 border border-gray-800 rounded-xl p-4 bg-black/20">
-
+            <div style={{
+              border: `1px solid ${T.border}`,
+              borderRadius: 10,
+              padding: "1rem",
+              background: "rgba(255,255,255,0.02)",
+              display: "flex", flexDirection: "column", gap: "1rem",
+            }}>
               {/* IMAP */}
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-2">
-                  Eingang (IMAP)
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <label className="text-gray-500 text-[11px] mb-1 block">Host</label>
+                <p style={subHeadStyle}>Eingang (IMAP)</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ ...labelStyle, textTransform: "none", fontSize: "0.72rem", letterSpacing: 0 }}>Host</label>
                     <input type="text" value={form.imap_host}
                       onChange={e => update("imap_host", e.target.value)}
                       placeholder="imap.dein-provider.de"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
+                      style={inputSmStyle} />
                   </div>
                   <div>
-                    <label className="text-gray-500 text-[11px] mb-1 block">Port</label>
+                    <label style={{ ...labelStyle, textTransform: "none", fontSize: "0.72rem", letterSpacing: 0 }}>Port</label>
                     <input type="number" value={form.imap_port}
                       onChange={e => update("imap_port", e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
+                      style={inputSmStyle} />
                   </div>
                 </div>
-                <div className="flex gap-5 mt-2.5">
-                  <label className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="accent-amber-500" checked={form.imap_use_ssl}
+                <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
+                  <label style={{ fontSize: "0.78rem", color: T.dim, display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+                    <input type="checkbox" style={{ accentColor: T.gold }} checked={form.imap_use_ssl}
                       onChange={e => update("imap_use_ssl", e.target.checked)} />
-                    SSL/TLS <span className="text-gray-600">(Port 993)</span>
+                    SSL/TLS <span style={{ color: T.mute }}>(Port 993)</span>
                   </label>
-                  <label className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="accent-amber-500" checked={form.imap_starttls}
+                  <label style={{ fontSize: "0.78rem", color: T.dim, display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+                    <input type="checkbox" style={{ accentColor: T.gold }} checked={form.imap_starttls}
                       onChange={e => update("imap_starttls", e.target.checked)} />
-                    STARTTLS <span className="text-gray-600">(Port 143)</span>
+                    STARTTLS <span style={{ color: T.mute }}>(Port 143)</span>
                   </label>
                 </div>
               </div>
 
               {/* SMTP */}
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-2">
-                  Ausgang (SMTP) <span className="font-normal normal-case text-gray-600">— optional</span>
+                <p style={subHeadStyle}>
+                  Ausgang (SMTP){" "}
+                  <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>— optional</span>
                 </p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <label className="text-gray-500 text-[11px] mb-1 block">Host</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ ...labelStyle, textTransform: "none", fontSize: "0.72rem", letterSpacing: 0 }}>Host</label>
                     <input type="text" value={form.smtp_host}
                       onChange={e => update("smtp_host", e.target.value)}
                       placeholder="smtp.dein-provider.de"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
+                      style={inputSmStyle} />
                   </div>
                   <div>
-                    <label className="text-gray-500 text-[11px] mb-1 block">Port</label>
+                    <label style={{ ...labelStyle, textTransform: "none", fontSize: "0.72rem", letterSpacing: 0 }}>Port</label>
                     <input type="number" value={form.smtp_port}
                       onChange={e => update("smtp_port", e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
+                      style={inputSmStyle} />
                   </div>
                 </div>
-                <label className="text-xs text-gray-400 flex items-center gap-2 mt-2.5 cursor-pointer">
-                  <input type="checkbox" className="accent-amber-500" checked={!!form.smtp_use_ssl}
+                <label style={{ fontSize: "0.78rem", color: T.dim, display: "flex", alignItems: "center", gap: 7, marginTop: 10, cursor: "pointer" }}>
+                  <input type="checkbox" style={{ accentColor: T.gold }} checked={!!form.smtp_use_ssl}
                     onChange={e => update("smtp_use_ssl", e.target.checked)} />
-                  SSL auf Port 465 <span className="text-gray-600">(sonst STARTTLS auf 587)</span>
+                  SSL auf Port 465 <span style={{ color: T.mute }}>(sonst STARTTLS auf 587)</span>
                 </label>
               </div>
 
               {/* Username override */}
               <div>
-                <label className="text-gray-500 text-[11px] mb-1 block">
-                  Login-Benutzername <span className="text-gray-600">(nur wenn abweichend von der E-Mail)</span>
+                <label style={{ ...labelStyle, textTransform: "none", fontSize: "0.72rem", letterSpacing: 0 }}>
+                  Login-Benutzername{" "}
+                  <span style={{ color: T.mute }}>(nur wenn abweichend von der E-Mail)</span>
                 </label>
                 <input type="text" value={form.username}
                   onChange={e => update("username", e.target.value)}
                   placeholder={form.email || "In 95% der Fälle leer lassen"}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
+                  style={inputSmStyle} />
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-300 leading-relaxed">
+            <div style={{
+              background: "rgba(248,113,113,0.08)",
+              border: "1px solid rgba(248,113,113,0.25)",
+              borderRadius: 10, padding: "0.75rem",
+              fontSize: "0.83rem", color: T.red, lineHeight: 1.5,
+            }}>
               {error}
             </div>
           )}
 
-          <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose} disabled={submitting}
-              className="px-4 py-2.5 rounded-xl text-sm text-gray-400 border border-gray-700 hover:bg-white/5 transition disabled:opacity-40">
+          <div style={{ display: "flex", gap: "0.75rem", paddingTop: "0.25rem" }}>
+            <button type="button" onClick={onClose} disabled={submitting} style={{
+              padding: "0.5rem 1.1rem",
+              background: "transparent",
+              border: `1px solid ${T.border}`,
+              borderRadius: 8,
+              color: T.dim,
+              fontSize: "0.83rem",
+              cursor: "pointer",
+              opacity: submitting ? 0.4 : 1,
+            }}>
               Abbrechen
             </button>
-            <button type="submit" disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={submitting} style={{
+              flex: 1, padding: "0.55rem 1rem",
+              background: T.gold,
+              border: "none", borderRadius: 8,
+              color: "#000", fontWeight: 700,
+              fontSize: "0.83rem", cursor: "pointer",
+              opacity: submitting ? 0.7 : 1,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              transition: "opacity 0.15s",
+            }}>
               {submitting ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                  <span style={{
+                    width: 14, height: 14,
+                    border: "2px solid rgba(0,0,0,0.3)",
+                    borderTopColor: "#000",
+                    borderRadius: "50%",
+                    display: "inline-block",
+                    animation: "spin 0.7s linear infinite",
+                  }}/>
                   Verbinde…
                 </>
               ) : isReauth ? "Erneut verbinden" : "Postfach verbinden"}
