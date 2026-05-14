@@ -440,11 +440,12 @@ export default function SettingsPage() {
 
   // ── 2FA ─────────────────────────────────────────────────────────────────
   const [twofa,           setTwofa]           = useState(null); // null | {enabled:bool}
-  const [twofaStep,       setTwofaStep]       = useState(null); // null|'setup'|'confirm'|'disable'
+  const [twofaStep,       setTwofaStep]       = useState(null); // null|'confirm'|'backup_codes'|'disable'
   const [twofaSecret,     setTwofaSecret]     = useState("");
   const [twofaUri,        setTwofaUri]        = useState("");
   const [twofaCode,       setTwofaCode]       = useState("");
   const [twofaPassword,   setTwofaPassword]   = useState("");
+  const [twofaBackupCodes, setTwofaBackupCodes] = useState([]);
   const [twofaDisableCode,setTwofaDisableCode]= useState("");
   const [twofaLoading,    setTwofaLoading]    = useState(false);
   const [twofaError,      setTwofaError]      = useState("");
@@ -588,10 +589,15 @@ export default function SettingsPage() {
   const handle2faEnable = async () => {
     setTwofaLoading(true); setTwofaError("");
     try {
-      await api.post("/auth/2fa/enable", { code: twofaCode.trim() });
+      const r = await api.post("/auth/2fa/enable", { code: twofaCode.trim() });
       setTwofa({ enabled: true });
-      setTwofaStep(null);
       setTwofaCode(""); setTwofaSecret(""); setTwofaUri("");
+      if (r.data?.backup_codes?.length) {
+        setTwofaBackupCodes(r.data.backup_codes);
+        setTwofaStep("backup_codes");
+      } else {
+        setTwofaStep(null);
+      }
     } catch (e) {
       setTwofaError(e.response?.data?.detail ?? "Ungültiger Code.");
       setTwofaCode("");
@@ -1577,6 +1583,40 @@ export default function SettingsPage() {
                             {twofaLoading ? "Prüfen…" : "2FA aktivieren"}
                           </button>
                         </div>
+                      </>
+                    ) : twofaStep === "backup_codes" ? (
+                      <>
+                        <div style={{ padding: "0.85rem 1rem", background: "rgba(197,165,114,0.08)",
+                          border: `1px solid ${borderHi}`, borderRadius: 10 }}>
+                          <p style={{ margin: "0 0 0.75rem", fontSize: "0.82rem", color: gold, fontWeight: 600 }}>
+                            ⚠ Backup-Codes sichern
+                          </p>
+                          <p style={{ margin: "0 0 1rem", fontSize: "0.78rem", color: dim, lineHeight: 1.6 }}>
+                            Bewahre diese Codes sicher auf. Jeder Code kann nur <strong>einmal</strong> verwendet werden
+                            um dich anzumelden falls du dein Authenticator-Gerät verlierst.
+                          </p>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem 1rem" }}>
+                            {twofaBackupCodes.map((c, i) => (
+                              <code key={i} style={{ fontSize: "0.85rem", color: text, letterSpacing: "0.1em",
+                                background: "rgba(255,255,255,0.05)", padding: "0.3rem 0.5rem", borderRadius: 5 }}>
+                                {c}
+                              </code>
+                            ))}
+                          </div>
+                          <button
+                            style={{ marginTop: "0.85rem", fontSize: "0.75rem", color: dim, background: "none",
+                              border: `1px solid ${border}`, borderRadius: 6, padding: "0.3rem 0.75rem", cursor: "pointer" }}
+                            onClick={() => {
+                              const text = twofaBackupCodes.join("\n");
+                              navigator.clipboard?.writeText(text);
+                            }}>
+                            In Zwischenablage kopieren
+                          </button>
+                        </div>
+                        <button style={{ ...btnPrimary, alignSelf: "flex-start" }}
+                          onClick={() => { setTwofaStep(null); setTwofaBackupCodes([]); }}>
+                          Gespeichert — weiter
+                        </button>
                       </>
                     ) : twofaStep === "disable" ? (
                       <>

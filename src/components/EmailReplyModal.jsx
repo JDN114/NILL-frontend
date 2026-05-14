@@ -63,9 +63,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
     if (!emailId || aiLoading) return;
     try {
       setAiLoading(true); setError(null);
-      const res = await api.post(`/gmail/emails/${emailId}/ai-reply`, null, {
-        headers: { "X-CSRF-Token": localStorage.getItem("csrf_token") || "" },
-      });
+      const res = await api.post(`/gmail/emails/${emailId}/ai-reply`, null);
       setBody(sanitizeReply(res.data?.reply || ""));
       setAiGenerated(true);
     } catch {
@@ -88,10 +86,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
       if (templateId) fd.append("template_id", templateId);
       files.forEach(f => fd.append("files", f));
       await api.post(`/gmail/emails/${emailId}/reply`, fd, {
-        headers: {
-          "Content-Type": files.length ? "multipart/form-data" : "application/json",
-          "X-CSRF-Token": localStorage.getItem("csrf_token") || "",
-        },
+        headers: { "Content-Type": files.length ? "multipart/form-data" : "application/json" },
       });
       onSent?.(safeBody); setBody(""); onClose();
     } catch {

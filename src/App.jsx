@@ -49,7 +49,15 @@ import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
 import CallsModule from "./pages/CallsModule.jsx";
 import Widerruf from "./pages/Widerruf.jsx";
- 
+import useInactivityLogout from "./hooks/useInactivityLogout";
+import { useAuth } from "./context/AuthContext";
+
+function InactivityGuard() {
+  const { user } = useAuth();
+  useInactivityLogout(!!user);
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -58,6 +66,7 @@ function App() {
           <ImapProvider>
           <MailProvider>
             <Router>
+              <InactivityGuard />
               <RouteTracker />
               <CookieBanner />
               <Routes>
