@@ -1,4 +1,4 @@
-import { Suspense, useRef, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { ISSModel } from './ISSModel'
@@ -279,27 +279,8 @@ function CameraRig({ cameraProxy, lookProxy, fovProxy }) {
   return null
 }
 
-/* ─── Station drift + scripted rotation ─────────────────────────── */
-function StationAnimator({ stationProxy, issRef }) {
-  useFrame(({ clock }) => {
-    const g = issRef.current
-    if (!g) return
-    const t = clock.elapsedTime
-
-    g.position.x = Math.sin(t * 0.31) * 0.04
-    g.position.y = Math.sin(t * 0.23) * 0.055
-    g.position.z = Math.sin(t * 0.17) * 0.03
-    g.rotation.x = (stationProxy?.rotX ?? 0) + Math.sin(t * 0.07) * 0.005
-    g.rotation.y = (stationProxy?.rotY ?? 0) + Math.sin(t * 0.09) * 0.008
-    g.rotation.z = (stationProxy?.rotZ ?? 0) + Math.sin(t * 0.11) * 0.004
-  })
-  return null
-}
-
 /* ─── Scene — flat hierarchy, no nested function components ─────── */
 function SceneContent({ stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onReady }) {
-  const issRef = useRef()
-
   useEffect(() => { onReady?.() }, [onReady])
 
   return (
@@ -314,14 +295,13 @@ function SceneContent({ stationProxy, cameraProxy, lookProxy, thrusterProxy, fov
 
       <Suspense fallback={null}>
         <ISSModel
-          ref={issRef}
           thrusterProxy={thrusterProxy}
           focusProxy={focusProxy}
+          stationProxy={stationProxy}
         />
       </Suspense>
 
       <CameraRig cameraProxy={cameraProxy} lookProxy={lookProxy} fovProxy={fovProxy} />
-      <StationAnimator stationProxy={stationProxy} issRef={issRef} />
     </>
   )
 }
