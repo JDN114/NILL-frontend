@@ -4,12 +4,21 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const DOC_TYPES = [
+  // Mitarbeiter-Dokumente
   "Lohnsteuerbescheinigung",
   "Gehaltsabrechnung",
   "Arbeitsvertrag",
   "Zeugnis",
   "Krankmeldung",
   "Urlaubsantrag",
+  // Firmen-Dokumente
+  "AV-Vertrag",
+  "NDA / Geheimhaltungsvereinbarung",
+  "Lieferantenvertrag",
+  "Kundenvertrag",
+  "Gesellschaftsvertrag",
+  "Datenschutzerklärung",
+  "Versicherungspolice",
   "Sonstiges",
 ];
 
@@ -58,8 +67,8 @@ function UploadForm({ users, onUploaded }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!file || !assignedTo) {
-      setError("Bitte Datei und Mitarbeiter auswählen.");
+    if (!file) {
+      setError("Bitte eine Datei auswählen.");
       return;
     }
     setUploading(true);
@@ -71,7 +80,7 @@ function UploadForm({ users, onUploaded }) {
       fd.append("document_type", docType);
       if (description) fd.append("description", description);
       if (year) fd.append("year", year);
-      fd.append("assigned_to", assignedTo);
+      if (assignedTo) fd.append("assigned_to", assignedTo);
       await api.post("/hr/documents", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -123,9 +132,9 @@ function UploadForm({ users, onUploaded }) {
           </select>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <label style={{ fontSize: "0.72rem", color: "var(--nill-text-dim)" }}>Mitarbeiter</label>
-          <select style={inputStyle} value={assignedTo} onChange={e => setAssignedTo(e.target.value)} required>
-            <option value="">-- auswählen --</option>
+          <label style={{ fontSize: "0.72rem", color: "var(--nill-text-dim)" }}>Mitarbeiter (optional)</label>
+          <select style={inputStyle} value={assignedTo} onChange={e => setAssignedTo(e.target.value)}>
+            <option value="">-- Firmenweit (kein Mitarbeiter) --</option>
             {users.map(u => (
               <option key={u.id} value={u.id}>
                 {u.full_name || u.email}
@@ -248,8 +257,12 @@ function DocRow({ doc, isAdmin, users, onDelete, onRead }) {
           )}
         </div>
         <div style={{ fontSize: "0.72rem", color: "var(--nill-text-mute)", marginTop: 2 }}>
-          {isAdmin && assignee && (
-            <span style={{ marginRight: 8 }}>→ {assignee.full_name || assignee.email}</span>
+          {isAdmin && (
+            assignee
+              ? <span style={{ marginRight: 8 }}>→ {assignee.full_name || assignee.email}</span>
+              : <span style={{ marginRight: 8, padding: "1px 6px", borderRadius: 99,
+                  background: "rgba(148,163,184,0.12)", border: "1px solid rgba(148,163,184,0.25)",
+                  color: "#94a3b8", fontSize: "0.68rem", fontWeight: 700 }}>Firmenweit</span>
           )}
           {doc.description && <span>{doc.description}</span>}
         </div>

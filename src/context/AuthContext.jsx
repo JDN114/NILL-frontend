@@ -13,7 +13,6 @@ export function AuthProvider({ children }) {
     async function loadUser() {
       try {
         const res = await api.get("/auth/me", { withCredentials: true });
-        console.log("auth/me response:", JSON.stringify(res.data, null, 2));
         if (mounted) {
           setUser({
             id:       res.data.id,
@@ -42,7 +41,6 @@ export function AuthProvider({ children }) {
     try {
       await api.post("/auth/logout", {}, { withCredentials: true });
     } catch (_) {}
-    localStorage.removeItem("access_token");
     setUser(null);
     setOrg(null);
   };

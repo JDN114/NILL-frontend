@@ -403,6 +403,13 @@ export default function SettingsPage() {
   const [loadingSub,       setLoadingSub]       = useState(true);
   const [billingInvoices,  setBillingInvoices]  = useState(null);
   const [loadingInvoices,  setLoadingInvoices]  = useState(false);
+  const [refundEligibility, setRefundEligibility] = useState(null);
+  const [refundLoading,     setRefundLoading]     = useState(false);
+  const [refundDone,        setRefundDone]        = useState(null);
+  const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+
+  // ── DSGVO Export ────────────────────────────────────────────────────────
+  const [gdprExporting, setGdprExporting] = useState(false);
 
   // ── Company form ────────────────────────────────────────────────────────
   const [orgName,    setOrgName]    = useState(org?.name     ?? "");
@@ -439,6 +446,12 @@ export default function SettingsPage() {
   const [twofaLoading,    setTwofaLoading]    = useState(false);
   const [twofaError,      setTwofaError]      = useState("");
 
+  // ── WebAuthn (Biometrie) ─────────────────────────────────────────────
+  const [webauthnCreds,      setWebauthnCreds]      = useState([]);
+  const [webauthnLoading,    setWebauthnLoading]    = useState(false);
+  const [webauthnDeviceName, setWebauthnDeviceName] = useState("Mein Gerät");
+  const [webauthnError,      setWebauthnError]      = useState("");
+
   // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
@@ -460,6 +473,9 @@ export default function SettingsPage() {
       .then(r => setSubscription(r.data))
       .catch(() => {})
       .finally(() => setLoadingSub(false));
+    api.get("/me/refund-eligibility")
+      .then(r => setRefundEligibility(r.data))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -485,7 +501,7 @@ export default function SettingsPage() {
         .catch(() => setSessions([]))
         .finally(() => setLoadingSessions(false));
       api.get("/auth/2fa/status")
-        .then(r => setTwofa(r.data))
+        .then(r => { setTwofa(r.data); setWebauthnCreds(r.data?.webauthn_credentials ?? []); })
         .catch(() => setTwofa({ enabled: false }));
     }
   }, [activeTab]);
@@ -589,6 +605,105 @@ export default function SettingsPage() {
     } catch (e) {
       setTwofaError(e.response?.data?.detail ?? "Fehler beim Deaktivieren.");
     } finally { setTwofaLoading(false); }
+  };
+
+  const handleWebAuthnRegister = async () => {
+    setWebauthnLoading(true); setWebauthnError("");
+    try {
+      const optRes = await api.post("/auth/2fa/webauthn/register-options");
+      const options = optRes.data;
+
+      const b64toArr = s => {
+        const b = atob(s.replace(/-/g,"+").replace(/_/g,"/"));
+        return Uint8Array.from(b, c => c.charCodeAt(0)).buffer;
+      };
+      const arrToB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
+        .replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");
+
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge: b64toArr(options.challenge),
+          rp: { id: options.rp.id, name: options.rp.name },
+          user: {
+            id: b64toArr(options.user.id),
+            name: options.user.name,
+            displayName: options.user.displayName,
+          },
+          pubKeyCredParams: options.pubKeyCredParams,
+          timeout: options.timeout,
+          attestation: options.attestation || "none",
+          authenticatorSelection: options.authenticatorSelection,
+        },
+      });
+
+      const credPayload = {
+        id: credential.id,
+        rawId: arrToB64(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: arrToB64(credential.response.clientDataJSON),
+          attestationObject: arrToB64(credential.response.attestationObject),
+        },
+      };
+
+      await api.post("/auth/2fa/webauthn/register-verify", {
+        credential: credPayload,
+        device_name: webauthnDeviceName || "Mein Gerät",
+      });
+
+      const r = await api.get("/auth/2fa/status");
+      setWebauthnCreds(r.data?.webauthn_credentials ?? []);
+      setWebauthnDeviceName("Mein Gerät");
+    } catch (err) {
+      if (err?.name === "NotAllowedError") {
+        setWebauthnError("Registrierung abgebrochen.");
+      } else {
+        setWebauthnError(err?.response?.data?.detail || "Biometrische Registrierung fehlgeschlagen.");
+      }
+    } finally {
+      setWebauthnLoading(false);
+    }
+  };
+
+  const handleWebAuthnDelete = async (credId) => {
+    try {
+      await api.delete(`/auth/2fa/webauthn/credentials/${credId}`);
+      setWebauthnCreds(prev => prev.filter(c => c.id !== credId));
+    } catch (e) {
+      setWebauthnError(e.response?.data?.detail ?? "Fehler beim Löschen.");
+    }
+  };
+
+  const handleRefund = async () => {
+    setRefundLoading(true);
+    try {
+      const r = await api.post("/me/request-refund");
+      setRefundDone(r.data);
+      setRefundEligibility(e => ({ ...e, eligible: false, reason: "already_refunded" }));
+      setShowRefundConfirm(false);
+    } catch (e) {
+      alert(e?.response?.data?.detail || "Rückerstattung fehlgeschlagen.");
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
+  const handleGdprExport = async () => {
+    setGdprExporting(true);
+    try {
+      const r = await api.get("/me/gdpr/export");
+      const blob = new Blob([JSON.stringify(r.data, null, 2)], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `nill-daten-export-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Export fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setGdprExporting(false);
+    }
   };
 
   const gmailIsConnected   = gmailConn   === true || gmailConn?.connected   === true;
@@ -777,6 +892,23 @@ export default function SettingsPage() {
                     </button>
                     <button style={btnGhost} onClick={handleLogout}>
                       Ausloggen
+                    </button>
+                  </div>
+                </div>
+
+                {/* DSGVO / Datenschutz */}
+                <div style={panelStyle}>
+                  <SectionHead title="Datenschutz & DSGVO" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Gemäß Art. 20 DSGVO kannst du alle deine gespeicherten Daten als JSON-Datei exportieren.
+                    </p>
+                    <button
+                      style={{ ...btnGhost, opacity: gdprExporting ? 0.6 : 1 }}
+                      disabled={gdprExporting}
+                      onClick={handleGdprExport}
+                    >
+                      {gdprExporting ? "Wird exportiert…" : "Meine Daten herunterladen"}
                     </button>
                   </div>
                 </div>
@@ -1035,6 +1167,100 @@ export default function SettingsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* ── 14-Tage-Geld-zurück ─────────────────────────────────── */}
+                {refundDone && (
+                  <div style={{ ...panelStyle, borderColor: green }}>
+                    <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "1.2rem" }}>✅</span>
+                      <p style={{ fontSize: "0.85rem", color: text, fontWeight: 700, margin: 0 }}>
+                        Rückerstattung erfolgreich beantragt
+                      </p>
+                      <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                        {refundDone.message}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {refundEligibility?.eligible && !refundDone && (
+                  <div style={{ ...panelStyle, borderColor: "rgba(251,191,36,0.35)" }}>
+                    <SectionHead
+                      title="14-Tage-Geld-zurück-Garantie"
+                      action={
+                        <Badge
+                          label={`Noch ${refundEligibility.days_left} Tag${refundEligibility.days_left !== 1 ? "e" : ""}`}
+                          color={amber}
+                        />
+                      }
+                    />
+                    <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                      <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                        Du bist innerhalb der 14-Tage-Frist. Du kannst eine vollständige Rückerstattung beantragen —
+                        dein Account wird sofort auf Free zurückgesetzt.
+                        Der Betrag erscheint in 3–5 Werktagen auf deiner Karte.
+                      </p>
+
+                      {/* Countdown bar */}
+                      {(() => {
+                        const total = 14;
+                        const used  = total - (refundEligibility.days_left || 0);
+                        const pct   = Math.min(100, (used / total) * 100);
+                        return (
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between",
+                              fontSize: "0.72rem", color: mute, marginBottom: 4 }}>
+                              <span>Tag {used} von 14</span>
+                              <span>Frist: {new Date(refundEligibility.deadline).toLocaleDateString("de-DE")}</span>
+                            </div>
+                            <div style={{ height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)" }}>
+                              <div style={{
+                                height: "100%", borderRadius: 99,
+                                width: `${pct}%`,
+                                background: pct > 80 ? red : amber,
+                                transition: "width 0.4s",
+                              }}/>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {!showRefundConfirm ? (
+                        <button
+                          onClick={() => setShowRefundConfirm(true)}
+                          style={{ ...btnDanger, alignSelf: "flex-start" }}>
+                          Rückerstattung beantragen
+                        </button>
+                      ) : (
+                        <div style={{
+                          padding: "1rem", borderRadius: 10,
+                          background: "rgba(239,68,68,0.06)",
+                          border: "1px solid rgba(239,68,68,0.25)",
+                          display: "flex", flexDirection: "column", gap: "0.75rem",
+                        }}>
+                          <p style={{ fontSize: "0.83rem", color: text, fontWeight: 700, margin: 0 }}>
+                            Bist du sicher?
+                          </p>
+                          <p style={{ fontSize: "0.8rem", color: dim, margin: 0 }}>
+                            Dein Abonnement wird sofort gekündigt und dein Account auf Free zurückgesetzt.
+                            Du verlierst den Zugang zu allen Pro-Funktionen.
+                          </p>
+                          <div style={{ display: "flex", gap: "0.65rem" }}>
+                            <button onClick={() => setShowRefundConfirm(false)} style={btnGhost}>
+                              Abbrechen
+                            </button>
+                            <button
+                              onClick={handleRefund}
+                              disabled={refundLoading}
+                              style={{ ...btnDanger, opacity: refundLoading ? 0.6 : 1 }}>
+                              {refundLoading ? "Wird bearbeitet…" : "Ja, Geld zurück"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div style={panelStyle}>
                   <SectionHead title="Rechnungshistorie" />
@@ -1371,6 +1597,73 @@ export default function SettingsPage() {
                         </div>
                       </>
                     ) : null}
+                  </div>
+                </div>
+
+                {/* ── WebAuthn / Biometrisches Login ── */}
+                <div style={panelStyle}>
+                  <SectionHead
+                    title="Biometrisches Login (Passkey)"
+                    action={<Badge label={webauthnCreds.length > 0 ? `${webauthnCreds.length} Gerät${webauthnCreds.length !== 1 ? "e" : ""}` : "Keine"} color={webauthnCreds.length > 0 ? green : amber} />}
+                  />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                      Melde dich per Fingerabdruck, Face ID oder Windows Hello an — ohne Code einzugeben.
+                      Registriere dazu dieses Gerät als Passkey.
+                    </p>
+
+                    {/* Registered devices */}
+                    {webauthnCreds.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        {webauthnCreds.map(c => (
+                          <div key={c.id} style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "0.55rem 0.85rem",
+                            background: "rgba(255,255,255,0.03)",
+                            border: "1px solid var(--nill-border)",
+                            borderRadius: 8,
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: "1rem" }}>🪪</span>
+                              <div>
+                                <div style={{ fontSize: "0.82rem", color: text, fontWeight: 600 }}>{c.device_name}</div>
+                                <div style={{ fontSize: "0.7rem", color: mute }}>
+                                  {c.created_at ? new Date(c.created_at).toLocaleDateString("de-DE") : ""}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleWebAuthnDelete(c.id)}
+                              style={{ ...btnDanger, padding: "0.3rem 0.65rem", fontSize: "0.72rem" }}>
+                              Entfernen
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Register new device */}
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                      <input
+                        style={{ ...inputStyle, flex: 1, minWidth: 140 }}
+                        placeholder="Gerätename (z.B. MacBook)"
+                        value={webauthnDeviceName}
+                        onChange={e => setWebauthnDeviceName(e.target.value)}
+                      />
+                      <button
+                        style={{ ...btnGhost, whiteSpace: "nowrap", opacity: webauthnLoading ? 0.6 : 1 }}
+                        disabled={webauthnLoading || !("credentials" in navigator)}
+                        onClick={handleWebAuthnRegister}>
+                        {webauthnLoading ? "Bitte warten…" : "🪪 Gerät registrieren"}
+                      </button>
+                    </div>
+
+                    {!("credentials" in navigator) && (
+                      <p style={{ fontSize: "0.78rem", color: amber, margin: 0 }}>
+                        Dein Browser unterstützt keine Passkeys.
+                      </p>
+                    )}
+                    {webauthnError && <div style={{ fontSize: "0.78rem", color: red }}>{webauthnError}</div>}
                   </div>
                 </div>
 

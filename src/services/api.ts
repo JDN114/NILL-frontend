@@ -1,11 +1,8 @@
 import axios from "axios";
 
-const token = localStorage.getItem("token"); // aus Login
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.nillai.de",
-  headers: {
-    Authorization: token ? `Bearer ${token}` : undefined,
-  },
+  withCredentials: true,
 });
 
 // src/services/api.ts (weiter unten hinzufügen)

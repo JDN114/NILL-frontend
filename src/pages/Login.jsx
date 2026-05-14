@@ -12,9 +12,11 @@ export default function Login() {
   const [error, setError] = useState(null);
 
   // 2FA state
-  const [step, setStep] = useState("credentials"); // "credentials" | "2fa"
+  const [step, setStep]           = useState("credentials"); // "credentials" | "2fa"
   const [tempToken, setTempToken] = useState("");
-  const [totpCode, setTotpCode] = useState("");
+  const [totpCode, setTotpCode]   = useState("");
+  const [tfaMethod, setTfaMethod] = useState("totp"); // "totp" | "email" | "webauthn"
+  const [emailSent, setEmailSent] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -53,21 +55,89 @@ export default function Login() {
   async function handle2faSubmit(e) {
     e.preventDefault();
     setError(null);
-    if (!totpCode.trim()) {
-      setError("Bitte den Code aus deiner Authenticator-App eingeben.");
-      return;
-    }
     setLoading(true);
     try {
-      await api.post("/auth/2fa/verify-login", { temp_token: tempToken, code: totpCode.trim() });
+      const endpoint = tfaMethod === "email"
+        ? "/auth/2fa/verify-email-otp"
+        : "/auth/2fa/verify-login";
+      await api.post(endpoint, { temp_token: tempToken, code: totpCode.trim() });
       const me = await api.get("/auth/me", { withCredentials: true });
       setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
       setOrg(me.data.org ?? null);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("2FA Fehler:", err);
-      setError("Ungültiger Code. Bitte erneut versuchen.");
+      setError(err?.response?.data?.detail || "Ungültiger Code. Bitte erneut versuchen.");
       setTotpCode("");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSendEmailOtp() {
+    setError(null);
+    setLoading(true);
+    try {
+      await api.post("/auth/2fa/send-email-otp", { temp_token: tempToken });
+      setEmailSent(true);
+    } catch (err) {
+      setError(err?.response?.data?.detail || "E-Mail konnte nicht gesendet werden.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleWebAuthn() {
+    setError(null);
+    setLoading(true);
+    try {
+      const optRes = await api.post("/auth/2fa/webauthn/auth-options", { temp_token: tempToken });
+      const options = optRes.data;
+
+      // Convert base64url to ArrayBuffer
+      const b64toArr = s => {
+        const b = atob(s.replace(/-/g,"+").replace(/_/g,"/"));
+        return Uint8Array.from(b, c => c.charCodeAt(0)).buffer;
+      };
+      const arrToB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
+        .replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");
+
+      const credential = await navigator.credentials.get({
+        publicKey: {
+          challenge: b64toArr(options.challenge),
+          rpId: options.rpId,
+          timeout: options.timeout,
+          userVerification: options.userVerification,
+          allowCredentials: (options.allowCredentials || []).map(c => ({
+            type: c.type,
+            id: b64toArr(c.id),
+          })),
+        },
+      });
+
+      const credPayload = {
+        id: credential.id,
+        rawId: arrToB64(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: arrToB64(credential.response.clientDataJSON),
+          authenticatorData: arrToB64(credential.response.authenticatorData),
+          signature: arrToB64(credential.response.signature),
+          userHandle: credential.response.userHandle ? arrToB64(credential.response.userHandle) : null,
+        },
+      };
+
+      await api.post("/auth/2fa/webauthn/auth-verify", { temp_token: tempToken, credential: credPayload });
+      const me = await api.get("/auth/me", { withCredentials: true });
+      setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
+      setOrg(me.data.org ?? null);
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      if (err?.name === "NotAllowedError") {
+        setError("Biometrische Authentifizierung abgebrochen.");
+      } else {
+        setError(err?.response?.data?.detail || "Biometrische Authentifizierung fehlgeschlagen.");
+      }
     } finally {
       setLoading(false);
     }
@@ -308,37 +378,105 @@ export default function Login() {
             </>
           ) : (
             <>
-              <h1 className="nill-auth-heading">Zwei-Faktor-<em>Code.</em></h1>
-              <p className="nill-auth-sub">Gib den 6-stelligen Code aus deiner Authenticator-App ein.</p>
+              <h1 className="nill-auth-heading">Zwei-Faktor-<em>Verify.</em></h1>
+              <p className="nill-auth-sub">Wähle eine Methode zur Verifizierung.</p>
 
-              <form onSubmit={handle2faSubmit} noValidate>
-                <div className="nill-field">
-                  <label className="nill-label">Authenticator-Code</label>
-                  <input
-                    className="nill-input"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder="000000"
-                    value={totpCode}
-                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    autoComplete="one-time-code"
-                    autoFocus
-                    required
-                  />
+              {/* Method selector */}
+              <div style={{ display:"flex", gap:"0.5rem", marginBottom:"1.25rem", flexWrap:"wrap" }}>
+                {[
+                  { key:"totp",     label:"🔐 Authenticator", desc:"TOTP-App Code" },
+                  { key:"email",    label:"📧 E-Mail Code",    desc:"Code per E-Mail" },
+                  { key:"webauthn", label:"🪪 Biometrie",      desc:"Touch / Face ID" },
+                ].map(m => (
+                  <button key={m.key} type="button"
+                    onClick={() => { setTfaMethod(m.key); setError(null); setTotpCode(""); setEmailSent(false); }}
+                    style={{
+                      flex: 1, padding:"0.6rem 0.5rem",
+                      borderRadius: 10,
+                      border: tfaMethod===m.key ? "1.5px solid rgba(197,165,114,0.7)" : "1.5px solid rgba(255,255,255,0.1)",
+                      background: tfaMethod===m.key ? "rgba(197,165,114,0.12)" : "rgba(255,255,255,0.04)",
+                      color: tfaMethod===m.key ? "#C5A572" : "rgba(255,255,255,0.5)",
+                      fontSize:"0.72rem", fontWeight:600, cursor:"pointer",
+                      transition:"all 0.15s",
+                    }}>
+                    <div>{m.label}</div>
+                    <div style={{ fontWeight:400, opacity:0.7, marginTop:2 }}>{m.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* TOTP */}
+              {tfaMethod === "totp" && (
+                <form onSubmit={handle2faSubmit} noValidate>
+                  <div className="nill-field">
+                    <label className="nill-label">Code aus Authenticator-App</label>
+                    <input className="nill-input" type="text" inputMode="numeric" pattern="[0-9]*"
+                      placeholder="000000" value={totpCode}
+                      onChange={e => setTotpCode(e.target.value.replace(/\D/g,"").slice(0,6))}
+                      autoComplete="one-time-code" autoFocus required/>
+                  </div>
+                  {error && <div className="nill-error">{error}</div>}
+                  <button className="nill-btn-primary" type="submit" disabled={loading || totpCode.length < 6}>
+                    {loading ? "Prüfen…" : "Bestätigen →"}
+                  </button>
+                </form>
+              )}
+
+              {/* Email OTP */}
+              {tfaMethod === "email" && (
+                <div>
+                  {!emailSent ? (
+                    <>
+                      <p style={{ fontSize:"0.82rem", color:"rgba(255,255,255,0.5)", marginBottom:"1rem" }}>
+                        Wir senden dir einen 6-stelligen Code an deine E-Mail-Adresse.
+                      </p>
+                      {error && <div className="nill-error">{error}</div>}
+                      <button className="nill-btn-primary" type="button" onClick={handleSendEmailOtp} disabled={loading}>
+                        {loading ? "Sende…" : "Code per E-Mail senden"}
+                      </button>
+                    </>
+                  ) : (
+                    <form onSubmit={handle2faSubmit} noValidate>
+                      <p style={{ fontSize:"0.82rem", color:"rgba(197,165,114,0.9)", marginBottom:"1rem" }}>
+                        Code gesendet. Bitte prüfe deine E-Mails.
+                      </p>
+                      <div className="nill-field">
+                        <label className="nill-label">E-Mail Code</label>
+                        <input className="nill-input" type="text" inputMode="numeric" pattern="[0-9]*"
+                          placeholder="000000" value={totpCode}
+                          onChange={e => setTotpCode(e.target.value.replace(/\D/g,"").slice(0,6))}
+                          autoComplete="one-time-code" autoFocus required/>
+                      </div>
+                      {error && <div className="nill-error">{error}</div>}
+                      <button className="nill-btn-primary" type="submit" disabled={loading || totpCode.length < 6}>
+                        {loading ? "Prüfen…" : "Bestätigen →"}
+                      </button>
+                      <button type="button" onClick={handleSendEmailOtp} disabled={loading}
+                        style={{ width:"100%", marginTop:"0.5rem", background:"none", border:"none",
+                          color:"rgba(255,255,255,0.4)", fontSize:"0.78rem", cursor:"pointer" }}>
+                        Code erneut senden
+                      </button>
+                    </form>
+                  )}
                 </div>
+              )}
 
-                {error && <div className="nill-error">{error}</div>}
-
-                <button className="nill-btn-primary" type="submit" disabled={loading}>
-                  {loading ? "Prüfen…" : "Bestätigen →"}
-                </button>
-              </form>
+              {/* WebAuthn */}
+              {tfaMethod === "webauthn" && (
+                <div>
+                  <p style={{ fontSize:"0.82rem", color:"rgba(255,255,255,0.5)", marginBottom:"1rem" }}>
+                    Verwende den Fingerabdruckscanner, Face ID oder einen Sicherheitsschlüssel deines Geräts.
+                  </p>
+                  {error && <div className="nill-error">{error}</div>}
+                  <button className="nill-btn-primary" type="button" onClick={handleWebAuthn} disabled={loading}>
+                    {loading ? "Warte auf Biometrie…" : "🪪 Biometrisch bestätigen"}
+                  </button>
+                </div>
+              )}
 
               <div className="nill-divider" />
-
               <p className="nill-auth-footer">
-                <span className="link" onClick={() => { setStep("credentials"); setError(null); setTotpCode(""); }}>
+                <span className="link" onClick={() => { setStep("credentials"); setError(null); setTotpCode(""); setEmailSent(false); }}>
                   ← Zurück zur Anmeldung
                 </span>
               </p>

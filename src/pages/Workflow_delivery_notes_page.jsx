@@ -327,14 +327,16 @@ function InventoryTab() {
 
 // ── Dokumenten-Tab (Messwerte etc.) ───────────────────────────────────
 function DocListsTab() {
-  const [lists, setLists]         = useState([]);
+  const [lists, setLists]           = useState([]);
   const [activeList, setActiveList] = useState(null);
-  const [entries, setEntries]     = useState([]);
-  const [listModal, setListModal] = useState(null);
+  const [entries, setEntries]       = useState([]);
+  const [listModal, setListModal]   = useState(null);
   const [entryModal, setEntryModal] = useState(false);
-  const [listForm, setListForm]   = useState({ name:"", description:"", icon:"📝", color:"#3b82f6", columns:[] });
-  const [entryData, setEntryData] = useState({});
-  const [newCol, setNewCol]       = useState({ name:"", type:"text" });
+  const [listForm, setListForm]     = useState({ name:"", description:"", icon:"📝", color:"#3b82f6", columns:[] });
+  const [entryData, setEntryData]   = useState({});
+  const [entryFiles, setEntryFiles] = useState({});
+  const [saving, setSaving]         = useState(false);
+  const [newCol, setNewCol]         = useState({ name:"", type:"text" });
 
   useEffect(() => { fetchLists(); }, []);
   useEffect(() => { if (activeList) fetchEntries(activeList.id); }, [activeList]);
@@ -344,8 +346,14 @@ function DocListsTab() {
     catch(e) { console.error(e); }
   }
   async function fetchEntries(lid) {
-    try { const r = await api.get(`/inventory/doc-lists/${lid}/entries`); setEntries(r.data?.entries||[]); }
-    catch(e) { console.error(e); }
+    try {
+      const r = await api.get(`/inventory/doc-lists/${lid}/entries`);
+      const raw = r.data?.entries || [];
+      setEntries(raw.map(e => ({
+        ...e,
+        data: typeof e.data === "string" ? JSON.parse(e.data) : (e.data || {}),
+      })));
+    } catch(e) { console.error(e); }
   }
 
   async function saveList() {
@@ -355,11 +363,40 @@ function DocListsTab() {
     await fetchLists(); setListModal(null);
   }
 
+  const columns = activeList?.columns || [];
+  const fileColumns = columns.filter(c => c.type === "file");
+  const hasFileCol  = fileColumns.length > 0;
+
   async function saveEntry() {
     if (!activeList) return;
-    await api.post(`/inventory/doc-lists/${activeList.id}/entries`, { data: entryData });
-    setEntryData({}); setEntryModal(false);
-    await fetchEntries(activeList.id);
+    setSaving(true);
+    try {
+      if (hasFileCol && Object.keys(entryFiles).length > 0) {
+        // Für jede Datei-Spalte einen Upload-Request senden; der erste trägt alle Text-Daten
+        let firstFile = true;
+        for (const [colName, file] of Object.entries(entryFiles)) {
+          if (!file) continue;
+          const fd = new FormData();
+          fd.append("file", file);
+          fd.append("col_name", colName);
+          fd.append("entry_data", firstFile ? JSON.stringify(entryData) : "{}");
+          firstFile = false;
+          await api.post(`/inventory/doc-lists/${activeList.id}/entries/upload`, fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        }
+        // Falls es Text-Felder ohne Datei-Upload gibt, normalen Eintrag anlegen
+        if (firstFile) {
+          await api.post(`/inventory/doc-lists/${activeList.id}/entries`, { data: entryData });
+        }
+      } else {
+        await api.post(`/inventory/doc-lists/${activeList.id}/entries`, { data: entryData });
+      }
+      setEntryData({}); setEntryFiles({}); setEntryModal(false);
+      await fetchEntries(activeList.id);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function deleteEntry(id) {
@@ -367,7 +404,26 @@ function DocListsTab() {
     await fetchEntries(activeList.id);
   }
 
-  const columns = activeList?.columns || [];
+  function downloadFile(entryId, colName) {
+    window.open(`/api/inventory/doc-lists/${activeList.id}/entries/${entryId}/file/${encodeURIComponent(colName)}`, "_blank");
+  }
+
+  function renderCellValue(entry, col) {
+    const val = entry.data?.[col.name];
+    if (col.type === "file") {
+      if (!val || typeof val !== "object") return <span className="text-slate-600 text-xs">—</span>;
+      return (
+        <button onClick={() => downloadFile(entry.id, col.name)}
+          className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 text-xs transition-colors group">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span className="truncate max-w-[120px]">{val.file_name}</span>
+        </button>
+      );
+    }
+    return <span>{val ?? ""}</span>;
+  }
 
   return (
     <div className="flex gap-4">
@@ -408,7 +464,7 @@ function DocListsTab() {
                 <span className="text-2xl">{activeList.icon}</span>
                 <h3 className="text-white font-bold">{activeList.name}</h3>
               </div>
-              <button onClick={()=>{ setEntryData({}); setEntryModal(true); }}
+              <button onClick={()=>{ setEntryData({}); setEntryFiles({}); setEntryModal(true); }}
                 disabled={columns.length===0}
                 className="px-3 py-1.5 text-sm font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-lg">
                 + Eintrag
@@ -428,7 +484,12 @@ function DocListsTab() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[rgba(255,255,255,0.07)]">
-                      {columns.map(col => <th key={col.name} className="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">{col.name}</th>)}
+                      {columns.map(col => (
+                        <th key={col.name} className="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                          {col.name}
+                          {col.type==="file" && <span className="ml-1 text-blue-500">📎</span>}
+                        </th>
+                      ))}
                       <th className="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Von</th>
                       <th className="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Datum</th>
                       <th/>
@@ -437,7 +498,11 @@ function DocListsTab() {
                   <tbody>
                     {entries.map(entry => (
                       <tr key={entry.id} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.03)]">
-                        {columns.map(col => <td key={col.name} className="px-3 py-2.5 text-slate-300">{entry.data?.[col.name]??""}</td>)}
+                        {columns.map(col => (
+                          <td key={col.name} className="px-3 py-2.5 text-slate-300">
+                            {renderCellValue(entry, col)}
+                          </td>
+                        ))}
                         <td className="px-3 py-2.5 text-slate-600 text-xs">{fmtUser(entry.created_by_email)}</td>
                         <td className="px-3 py-2.5 text-slate-600 text-xs">{fmtDate(entry.created_at)}</td>
                         <td className="px-3 py-2.5"><button onClick={()=>deleteEntry(entry.id)} className="text-slate-600 hover:text-red-400 text-xs">✕</button></td>
@@ -454,7 +519,7 @@ function DocListsTab() {
       {/* Listen-Modal */}
       <Modal open={!!listModal} onClose={()=>setListModal(null)} title={listModal?.id?"Liste bearbeiten":"Neue Dokumentliste"} maxWidth="max-w-lg">
         <div className="space-y-4">
-          <div><label className={labelCls}>Name *</label><input value={listForm.name} onChange={e=>setListForm(f=>({...f,name:e.target.value}))} placeholder="z.B. Messwerte, Protokoll..." className={inputCls}/></div>
+          <div><label className={labelCls}>Name *</label><input value={listForm.name} onChange={e=>setListForm(f=>({...f,name:e.target.value}))} placeholder="z.B. AV-Verträge, Protokolle..." className={inputCls}/></div>
           <div><label className={labelCls}>Beschreibung</label><input value={listForm.description} onChange={e=>setListForm(f=>({...f,description:e.target.value}))} className={inputCls}/></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>Farbe</label><input type="color" value={listForm.color} onChange={e=>setListForm(f=>({...f,color:e.target.value}))} className="w-full h-9 rounded cursor-pointer"/></div>
@@ -468,18 +533,19 @@ function DocListsTab() {
               {(listForm.columns||[]).map((col,i) => (
                 <div key={i} className="flex items-center gap-2 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-2">
                   <span className="text-slate-300 text-sm flex-1">{col.name}</span>
-                  <span className="text-slate-600 text-xs">{col.type}</span>
+                  <span className="text-slate-600 text-xs">{col.type==="file"?"📎 Datei":col.type}</span>
                   <button onClick={()=>setListForm(f=>({...f,columns:f.columns.filter((_,j)=>j!==i)}))} className="text-slate-600 hover:text-red-400 text-xs">✕</button>
                 </div>
               ))}
             </div>
             <div className="flex gap-2">
               <input value={newCol.name} onChange={e=>setNewCol(f=>({...f,name:e.target.value}))}
-                placeholder="Spaltenname z.B. Temperatur" className={`${inputCls} flex-1`}/>
+                placeholder="Spaltenname z.B. Vertrag, Datum..." className={`${inputCls} flex-1`}/>
               <select value={newCol.type} onChange={e=>setNewCol(f=>({...f,type:e.target.value}))} className="px-2 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-300 text-sm focus:outline-none">
                 <option value="text">Text</option>
                 <option value="number">Zahl</option>
                 <option value="date">Datum</option>
+                <option value="file">📎 Datei</option>
               </select>
               <button onClick={()=>{ if(!newCol.name.trim()) return; setListForm(f=>({...f,columns:[...f.columns,{...newCol}]})); setNewCol({name:"",type:"text"}); }}
                 className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">+</button>
@@ -498,15 +564,34 @@ function DocListsTab() {
         <div className="space-y-3">
           {columns.map(col => (
             <div key={col.name}>
-              <label className={labelCls}>{col.name}</label>
-              <input type={col.type==="number"?"number":col.type==="date"?"date":"text"}
-                value={entryData[col.name]||""} onChange={e=>setEntryData(d=>({...d,[col.name]:e.target.value}))}
-                className={inputCls}/>
+              <label className={labelCls}>
+                {col.name}{col.type==="file" && <span className="ml-1 text-blue-400">📎</span>}
+              </label>
+              {col.type === "file" ? (
+                <div>
+                  <input type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt,.csv"
+                    onChange={e => setEntryFiles(f => ({...f, [col.name]: e.target.files[0]||null}))}
+                    className="w-full text-slate-300 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-xs file:font-semibold file:cursor-pointer hover:file:bg-blue-700"/>
+                  {entryFiles[col.name] && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      {entryFiles[col.name].name} ({(entryFiles[col.name].size/1024).toFixed(0)} KB)
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <input type={col.type==="number"?"number":col.type==="date"?"date":"text"}
+                  value={entryData[col.name]||""}
+                  onChange={e=>setEntryData(d=>({...d,[col.name]:e.target.value}))}
+                  className={inputCls}/>
+              )}
             </div>
           ))}
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={()=>setEntryModal(false)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
-            <button onClick={saveEntry} className="px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Speichern</button>
+            <button onClick={saveEntry} disabled={saving} className="px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg">
+              {saving ? "Speichert…" : "Speichern"}
+            </button>
           </div>
         </div>
       </Modal>

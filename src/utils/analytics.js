@@ -9,7 +9,7 @@ export function initAnalytics() {
   function gtag() { window.dataLayer.push(arguments); }
   window.gtag = gtag;
 
-  gtag("consent", "default", { analytics_storage: "granted", ad_storage: "denied" });
+  gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied" });
   gtag("js", new Date());
   gtag("config", GA_ID, { anonymize_ip: true, send_page_view: false });
 
@@ -21,10 +21,11 @@ export function initAnalytics() {
 
 export function trackPage(path, title) {
   if (!window.gtag || !GA_ID) return;
+  const cleanPath = path.split("?")[0].split("#")[0];
   window.gtag("event", "page_view", {
-    page_path: path,
+    page_path: cleanPath,
     page_title: title || document.title,
-    page_location: window.location.origin + path,
+    page_location: window.location.origin + cleanPath,
   });
 }
 
