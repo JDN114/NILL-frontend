@@ -122,7 +122,8 @@ export default function ReceiptUploadModal({ onClose }) {
                 borderRadius: 8, fontSize: ".84rem", color: "var(--ink2)",
               }}>
                 <span className="ac-spinner" />
-                KI analysiert den Beleg… (kann bis zu 30 Sek. dauern)
+                <span>◈ KI analysiert den Beleg…</span>
+                <span style={{fontSize:".75rem", opacity:.6}}>(bis zu 30 Sek.)</span>
               </div>
             )}
 
@@ -137,8 +138,15 @@ export default function ReceiptUploadModal({ onClose }) {
           </>
         ) : (
           <>
-            <div className="ac-alert ac-alert-ok" style={{ marginBottom: 16 }}>
-              Beleg erfolgreich erkannt und gespeichert.
+            <div className="ac-alert ac-alert-ok" style={{ marginBottom: 16, display:"flex", alignItems:"center", gap:10 }}>
+              <span>Beleg erfolgreich erkannt und gespeichert.</span>
+              <span style={{
+                display:"inline-flex", alignItems:"center", gap:3,
+                padding:"2px 8px", borderRadius:99, marginLeft:"auto",
+                fontSize:10, fontFamily:"JetBrains Mono,monospace", letterSpacing:"0.1em",
+                background:"rgba(122,92,255,0.15)", border:"1px solid rgba(122,92,255,0.3)",
+                color:"rgba(122,92,255,0.9)", userSelect:"none", flexShrink:0,
+              }}>◈ KI-Erkennung</span>
             </div>
 
             {/* Extracted data grid */}

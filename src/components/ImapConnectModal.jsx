@@ -1,64 +1,58 @@
 // src/components/ImapConnectModal.jsx
-//
-// Connect-/Reauth-Form für Custom-Domain-Postfächer.
-//
-// Features:
-//   - Auto-Detection der Server-Settings basierend auf Email-Domain
-//     (Mailbox.org, Posteo, IONOS, Strato, GMX, Web.de, T-Online, Fastmail, …).
-//   - Manuelle Override-Eingaben (host/port/SSL/STARTTLS) wenn Provider unbekannt.
-//   - Test-Button: probt die Verbindung end-to-end via /imap/connect
-//     (Backend testet vor dem Speichern).
-//   - Reauth-Modus: wenn `account` prop gesetzt ist, sind alle Felder vorbefüllt
-//     und das Modal heißt „Verbindung erneuern".
-//   - Inline InfoHints neben jedem Server-Feld — User wissen ohne Provider-Doku
-//     was rein muss.
-//
-// Props:
-//   open       : bool
-//   onClose    : () => void
-//   onConnected: (account) => void  — nach erfolgreichem Connect
-//   account    : optional, Reauth-Modus
-
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { ImapContext } from "../context/ImapContext";
-import InfoHint from "./InfoHint";
 
-// ── Provider-Presets (Top-DACH-Provider + ein paar internationale) ──────
+// Top DACH + international providers with friendly display names
 const PRESETS = {
-  "mailbox.org":   { imap: "imap.mailbox.org",       imapPort: 993, ssl: true,  smtp: "smtp.mailbox.org",       smtpPort: 465, smtpSsl: true  },
-  "posteo.de":     { imap: "posteo.de",              imapPort: 993, ssl: true,  smtp: "posteo.de",              smtpPort: 465, smtpSsl: true  },
-  "posteo.net":    { imap: "posteo.de",              imapPort: 993, ssl: true,  smtp: "posteo.de",              smtpPort: 465, smtpSsl: true  },
-  "ionos.de":      { imap: "imap.ionos.de",          imapPort: 993, ssl: true,  smtp: "smtp.ionos.de",          smtpPort: 465, smtpSsl: true  },
-  "1und1.de":      { imap: "imap.1und1.de",          imapPort: 993, ssl: true,  smtp: "smtp.1und1.de",          smtpPort: 465, smtpSsl: true  },
-  "strato.de":     { imap: "imap.strato.de",         imapPort: 993, ssl: true,  smtp: "smtp.strato.de",         smtpPort: 465, smtpSsl: true  },
-  "gmx.de":        { imap: "imap.gmx.net",           imapPort: 993, ssl: true,  smtp: "mail.gmx.net",           smtpPort: 465, smtpSsl: true  },
-  "gmx.net":       { imap: "imap.gmx.net",           imapPort: 993, ssl: true,  smtp: "mail.gmx.net",           smtpPort: 465, smtpSsl: true  },
-  "web.de":        { imap: "imap.web.de",            imapPort: 993, ssl: true,  smtp: "smtp.web.de",            smtpPort: 587, smtpSsl: false },
-  "t-online.de":   { imap: "secureimap.t-online.de", imapPort: 993, ssl: true,  smtp: "securesmtp.t-online.de", smtpPort: 465, smtpSsl: true  },
-  "fastmail.com":  { imap: "imap.fastmail.com",      imapPort: 993, ssl: true,  smtp: "smtp.fastmail.com",      smtpPort: 465, smtpSsl: true  },
-  "yandex.com":    { imap: "imap.yandex.com",        imapPort: 993, ssl: true,  smtp: "smtp.yandex.com",        smtpPort: 465, smtpSsl: true  },
+  "mailbox.org":   { name: "Mailbox.org",   imap: "imap.mailbox.org",       imapPort: 993, ssl: true,  smtp: "smtp.mailbox.org",       smtpPort: 465, smtpSsl: true  },
+  "posteo.de":     { name: "Posteo",         imap: "posteo.de",              imapPort: 993, ssl: true,  smtp: "posteo.de",              smtpPort: 465, smtpSsl: true  },
+  "posteo.net":    { name: "Posteo",         imap: "posteo.de",              imapPort: 993, ssl: true,  smtp: "posteo.de",              smtpPort: 465, smtpSsl: true  },
+  "ionos.de":      { name: "IONOS",          imap: "imap.ionos.de",          imapPort: 993, ssl: true,  smtp: "smtp.ionos.de",          smtpPort: 465, smtpSsl: true  },
+  "1und1.de":      { name: "1&1",            imap: "imap.1und1.de",          imapPort: 993, ssl: true,  smtp: "smtp.1und1.de",          smtpPort: 465, smtpSsl: true  },
+  "strato.de":     { name: "Strato",         imap: "imap.strato.de",         imapPort: 993, ssl: true,  smtp: "smtp.strato.de",         smtpPort: 465, smtpSsl: true  },
+  "gmx.de":        { name: "GMX",            imap: "imap.gmx.net",           imapPort: 993, ssl: true,  smtp: "mail.gmx.net",           smtpPort: 465, smtpSsl: true  },
+  "gmx.net":       { name: "GMX",            imap: "imap.gmx.net",           imapPort: 993, ssl: true,  smtp: "mail.gmx.net",           smtpPort: 465, smtpSsl: true  },
+  "web.de":        { name: "Web.de",         imap: "imap.web.de",            imapPort: 993, ssl: true,  smtp: "smtp.web.de",            smtpPort: 587, smtpSsl: false },
+  "t-online.de":   { name: "T-Online",       imap: "secureimap.t-online.de", imapPort: 993, ssl: true,  smtp: "securesmtp.t-online.de", smtpPort: 465, smtpSsl: true  },
+  "fastmail.com":  { name: "Fastmail",       imap: "imap.fastmail.com",      imapPort: 993, ssl: true,  smtp: "smtp.fastmail.com",      smtpPort: 465, smtpSsl: true  },
+  "yandex.com":    { name: "Yandex Mail",    imap: "imap.yandex.com",        imapPort: 993, ssl: true,  smtp: "smtp.yandex.com",        smtpPort: 465, smtpSsl: true  },
 };
 
 function presetFor(email) {
   if (!email) return null;
   const dom = email.split("@")[1]?.toLowerCase();
   if (!dom) return null;
-  if (PRESETS[dom]) return { domain: dom, ...PRESETS[dom] };
-  return null;
+  return PRESETS[dom] ? { domain: dom, ...PRESETS[dom] } : null;
+}
+
+function friendlyError(err) {
+  const raw = err?.response?.data?.detail;
+  const msg = (typeof raw === "object" ? raw?.error : raw) || "";
+  const low = msg.toLowerCase();
+  if (low.includes("auth") || low.includes("password") || low.includes("credentials") || low.includes("login"))
+    return "Benutzername oder Passwort falsch. Falls 2FA aktiv ist, bitte ein App-Passwort aus den Sicherheitseinstellungen deines Providers verwenden.";
+  if (low.includes("timeout") || low.includes("timed out"))
+    return "Verbindung abgebrochen. Bitte versuche es erneut.";
+  if (low.includes("connect") || low.includes("host") || low.includes("resolve") || low.includes("network"))
+    return "Server nicht erreichbar. IMAP-Host und Port prüfen.";
+  if (low.includes("ssl") || low.includes("tls") || low.includes("certificate"))
+    return "SSL-Fehler. Versuche SSL zu deaktivieren oder STARTTLS zu aktivieren.";
+  if (msg) return msg;
+  return "Verbindung fehlgeschlagen. E-Mail, Passwort und Server-Einstellungen prüfen.";
 }
 
 const initialFromAccount = (account) => account ? ({
-  email:        account.email ?? "",
-  display_name: account.display_name ?? "",
-  imap_host:    account.imap_host ?? "",
-  imap_port:    account.imap_port ?? 993,
-  imap_use_ssl: account.imap_use_ssl ?? true,
+  email:         account.email ?? "",
+  display_name:  account.display_name ?? "",
+  imap_host:     account.imap_host ?? "",
+  imap_port:     account.imap_port ?? 993,
+  imap_use_ssl:  account.imap_use_ssl ?? true,
   imap_starttls: account.imap_starttls ?? false,
-  smtp_host:    account.smtp_host ?? "",
-  smtp_port:    account.smtp_port ?? 465,
-  smtp_use_ssl: account.smtp_use_ssl ?? true,
-  username:     account.username ?? account.email ?? "",
-  password:     "",
+  smtp_host:     account.smtp_host ?? "",
+  smtp_port:     account.smtp_port ?? 465,
+  smtp_use_ssl:  account.smtp_use_ssl ?? true,
+  username:      account.username ?? account.email ?? "",
+  password:      "",
 }) : ({
   email: "", display_name: "",
   imap_host: "", imap_port: 993, imap_use_ssl: true, imap_starttls: false,
@@ -66,15 +60,16 @@ const initialFromAccount = (account) => account ? ({
   username: "", password: "",
 });
 
+const inp = "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm";
+
 export default function ImapConnectModal({ open, onClose, onConnected, account }) {
   const imap = useContext(ImapContext);
-
-  const [form, setForm] = useState(() => initialFromAccount(account));
-  const [submitting, setSubmitting] = useState(false);
-  const [error,      setError]      = useState(null);
-  const [showAdvanced, setShowAdvanced] = useState(!!account);
-
   const isReauth = !!account;
+
+  const [form,        setForm]        = useState(() => initialFromAccount(account));
+  const [submitting,  setSubmitting]  = useState(false);
+  const [error,       setError]       = useState(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -85,37 +80,51 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
   }, [open, account]);
 
   const detected = useMemo(() => presetFor(form.email), [form.email]);
+
+  // Auto-fill server settings when a known provider is detected
   useEffect(() => {
     if (!detected || isReauth) return;
     setForm(prev => ({
       ...prev,
-      imap_host:    prev.imap_host    || detected.imap,
-      imap_port:    prev.imap_port    || detected.imapPort,
+      imap_host:    detected.imap,
+      imap_port:    detected.imapPort,
       imap_use_ssl: detected.ssl,
-      smtp_host:    prev.smtp_host    || detected.smtp,
-      smtp_port:    prev.smtp_port    || detected.smtpPort,
+      smtp_host:    detected.smtp,
+      smtp_port:    detected.smtpPort,
       smtp_use_ssl: detected.smtpSsl,
-      username:     prev.username     || prev.email,
+      username:     prev.username || prev.email,
     }));
-  }, [detected, isReauth]);
+    setShowAdvanced(false);
+  }, [detected?.domain]);
+
+  // Show advanced settings automatically for unknown providers
+  useEffect(() => {
+    if (!form.email.includes("@")) return;
+    const dom = form.email.split("@")[1]?.toLowerCase();
+    if (dom && dom.length > 2 && !PRESETS[dom]) {
+      setShowAdvanced(true);
+    }
+  }, [form.email]);
 
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
     setError(null);
-
-    if (!form.email || !form.password || !form.imap_host) {
-      setError("E-Mail, Passwort und IMAP-Host sind Pflicht.");
+    if (!form.email || !form.password) {
+      setError("E-Mail und Passwort sind Pflicht.");
       return;
     }
-
+    if (showAdvanced && !form.imap_host) {
+      setError("IMAP-Host ist Pflicht.");
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
         email:         form.email,
         display_name:  form.display_name || null,
-        imap_host:     form.imap_host,
+        imap_host:     form.imap_host || (detected?.imap ?? ""),
         imap_port:     Number(form.imap_port) || 993,
         imap_use_ssl:  !!form.imap_use_ssl,
         imap_starttls: !!form.imap_starttls,
@@ -131,15 +140,8 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
       onConnected?.(result);
       onClose?.();
     } catch (err) {
-      console.error("[ImapConnectModal] connect error", err);
-      const detail = err?.response?.data?.detail;
-      if (typeof detail === "object" && detail?.error) {
-        setError(detail.error);
-      } else if (typeof detail === "string") {
-        setError(detail);
-      } else {
-        setError("Verbindung fehlgeschlagen. Server, Port und Passwort prüfen.");
-      }
+      console.error("[ImapConnectModal]", err);
+      setError(friendlyError(err));
     } finally {
       setSubmitting(false);
     }
@@ -147,305 +149,209 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
   if (!open) return null;
 
+  const needsAppPassword = detected?.name && ["Mailbox.org","Posteo","Fastmail","Yandex Mail"].includes(detected.name);
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <form onSubmit={handleSubmit} className="p-7 space-y-5">
-          <div>
-            <h2 className="text-xl font-bold text-white">
-              {isReauth ? "Verbindung erneuern" : "Custom Domain verbinden"}
-            </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              {isReauth
-                ? "Passwort eingeben um die Verbindung wiederherzustellen."
-                : "Verbinde dein eigenes Postfach (z.B. info@dein-business.de) per IMAP."}
-            </p>
+      <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-white">
+                {isReauth ? "Verbindung erneuern" : "Postfach verbinden"}
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {isReauth
+                  ? "Gib dein aktuelles Passwort ein."
+                  : "Verbinde dein Business-Postfach (z.B. info@deine-firma.de)."}
+              </p>
+            </div>
+            <button type="button" onClick={onClose} className="text-gray-500 hover:text-white transition mt-0.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
 
           {/* Email */}
           <div>
-            <label className="text-gray-300 text-sm mb-1 flex items-center">
+            <label className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
               E-Mail Adresse
-              <InfoHint>
-                Deine vollständige Email-Adresse, z.B. <strong>info@deinefirma.de</strong>.
-                Wird gleichzeitig als Standard-Username für den IMAP-Login verwendet.
-                Falls dein Hoster einen anderen Benutzernamen verlangt (z.B. eine
-                Kundennummer), kannst du das weiter unten in den Server-Einstellungen
-                überschreiben.
-              </InfoHint>
             </label>
             <input
-              type="email"
-              autoComplete="username"
+              type="email" autoComplete="username"
               value={form.email}
               onChange={e => update("email", e.target.value)}
               placeholder="info@dein-business.de"
               disabled={isReauth}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm disabled:opacity-60"
+              className={`${inp} ${isReauth ? "opacity-60" : ""}`}
               required
             />
+            {/* Provider detected */}
             {detected && !isReauth && (
-              <p className="text-xs text-emerald-400 mt-1">
-                Erkannt: {detected.domain} — Server-Settings automatisch befüllt.
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"/>
+                <span className="text-xs text-emerald-400">
+                  {detected.name} erkannt — Servereinstellungen automatisch konfiguriert.
+                </span>
+              </div>
+            )}
+            {!detected && form.email.includes("@") && form.email.split("@")[1]?.length > 2 && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"/>
+                <span className="text-xs text-amber-400">
+                  Provider unbekannt — bitte Servereinstellungen unten ausfüllen.
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Passwort */}
+          <div>
+            <label className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
+              Passwort
+            </label>
+            <input
+              type="password" autoComplete="current-password"
+              value={form.password}
+              onChange={e => update("password", e.target.value)}
+              placeholder="••••••••"
+              className={inp}
+              required
+            />
+            {needsAppPassword && (
+              <p className="text-xs text-amber-400/80 mt-1.5 leading-relaxed">
+                <strong className="text-amber-300">Hinweis:</strong> {detected.name} erfordert bei aktivierter 2FA ein <strong>App-Passwort</strong> — in den Sicherheitseinstellungen deines Kontos erstellen.
               </p>
             )}
+            <p className="text-[11px] text-gray-600 mt-1">Wird verschlüsselt gespeichert.</p>
           </div>
 
           {/* Anzeigename */}
           <div>
-            <label className="text-gray-300 text-sm mb-1 flex items-center">
-              Anzeigename <span className="text-gray-500 ml-1">(optional)</span>
-              <InfoHint>
-                Der Name, der bei deinen Empfängern als Absender erscheint —
-                z.B. <strong>Müller GmbH Service</strong> statt nur
-                „info@mueller-gmbh.de". Lass das Feld leer wenn dir die
-                blanke Email-Adresse reicht.
-              </InfoHint>
+            <label className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
+              Anzeigename <span className="text-gray-600 font-normal normal-case">(optional)</span>
             </label>
             <input
               type="text"
               value={form.display_name}
               onChange={e => update("display_name", e.target.value)}
               placeholder="z.B. Müller GmbH Service"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
+              className={inp}
             />
           </div>
 
-          {/* Passwort */}
-          <div>
-            <label className="text-gray-300 text-sm mb-1 flex items-center">
-              Passwort
-              <InfoHint width="w-80">
-                Das gleiche Passwort, mit dem du dich auch im Web-Mailer
-                deines Anbieters anmelden würdest.
-                <br /><br />
-                <strong className="text-amber-300">Wichtig bei 2-Faktor-Authentifizierung:</strong>{" "}
-                Hast du 2FA bei deinem Provider aktiviert (z.B. Mailbox.org,
-                Fastmail, Yandex), funktioniert dein normales Passwort hier
-                <em> nicht</em>. Du brauchst stattdessen ein <strong>App-Passwort</strong>,
-                das du in den Sicherheitseinstellungen deines Providers
-                erzeugst — meist unter „App-Passwörter" oder
-                „Anwendungsspezifische Passwörter".
-              </InfoHint>
-            </label>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={form.password}
-              onChange={e => update("password", e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 text-sm"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Wird verschlüsselt gespeichert (Fernet/AES-128).
-            </p>
-          </div>
-
-          {/* Erweiterte Einstellungen */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(s => !s)}
-              className="text-sm text-gray-400 hover:text-white transition flex items-center gap-1"
-            >
-              {showAdvanced ? "▾" : "▸"} Server-Einstellungen {detected && !showAdvanced && "(Auto)"}
-            </button>
-          </div>
+          {/* Advanced toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(s => !s)}
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+              style={{ transform: showAdvanced ? "rotate(90deg)" : "none", transition: "transform .15s" }}>
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+            Servereinstellungen {detected && !showAdvanced ? "(automatisch)" : ""}
+          </button>
 
           {showAdvanced && (
-            <div className="space-y-5 border border-gray-800 rounded-xl p-4">
+            <div className="space-y-4 border border-gray-800 rounded-xl p-4 bg-black/20">
+
               {/* IMAP */}
               <div>
-                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider flex items-center">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-2">
                   Eingang (IMAP)
-                  <InfoHint width="w-80">
-                    IMAP ist das Protokoll zum <strong>Lesen</strong> von Mails.
-                    Der Server hier ist die Adresse von dem dein Posteingang
-                    abgeholt wird. Findest du in deiner Provider-Doku unter
-                    „IMAP-Einstellungen", „E-Mail-Konfiguration" oder
-                    „Postfach einrichten".
-                  </InfoHint>
                 </p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
-                    <label className="text-gray-400 text-xs mb-1 flex items-center">
-                      Host
-                      <InfoHint placement="bottom-left">
-                        Adresse des Eingangs-Servers, z.B.{" "}
-                        <strong>imap.mailbox.org</strong>,{" "}
-                        <strong>imap.ionos.de</strong> oder{" "}
-                        <strong>imap.strato.de</strong>. Bei einigen Hostern
-                        ist es einfach <strong>imap.deinedomain.de</strong>.
-                      </InfoHint>
-                    </label>
-                    <input
-                      type="text"
-                      value={form.imap_host}
+                    <label className="text-gray-500 text-[11px] mb-1 block">Host</label>
+                    <input type="text" value={form.imap_host}
                       onChange={e => update("imap_host", e.target.value)}
                       placeholder="imap.dein-provider.de"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
-                    />
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
                   </div>
                   <div>
-                    <label className="text-gray-400 text-xs mb-1 flex items-center">
-                      Port
-                      <InfoHint placement="bottom-right">
-                        <strong>993</strong> ist Standard und passt für 99%
-                        aller Provider (mit SSL/TLS).
-                        Nur ändern wenn dein Anbieter explizit etwas anderes
-                        vorgibt — z.B. <strong>143</strong> für sehr alte
-                        Setups mit STARTTLS statt SSL.
-                      </InfoHint>
-                    </label>
-                    <input
-                      type="number"
-                      value={form.imap_port}
+                    <label className="text-gray-500 text-[11px] mb-1 block">Port</label>
+                    <input type="number" value={form.imap_port}
                       onChange={e => update("imap_port", e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
-                    />
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
                   </div>
                 </div>
-                <div className="flex gap-4 mt-2">
-                  <label className="text-xs text-gray-300 flex items-center gap-2">
-                    <input type="checkbox" checked={form.imap_use_ssl}
+                <div className="flex gap-5 mt-2.5">
+                  <label className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="accent-amber-500" checked={form.imap_use_ssl}
                       onChange={e => update("imap_use_ssl", e.target.checked)} />
-                    SSL/TLS
-                    <InfoHint placement="top-left">
-                      Verbindung ist von Anfang an verschlüsselt — heute
-                      Standard. Bei Port 993 <strong>immer aktiv</strong> lassen.
-                    </InfoHint>
+                    SSL/TLS <span className="text-gray-600">(Port 993)</span>
                   </label>
-                  <label className="text-xs text-gray-300 flex items-center gap-2">
-                    <input type="checkbox" checked={form.imap_starttls}
+                  <label className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="accent-amber-500" checked={form.imap_starttls}
                       onChange={e => update("imap_starttls", e.target.checked)} />
-                    STARTTLS
-                    <InfoHint placement="top-right">
-                      Alternative Verschlüsselungsart, die erst nach dem
-                      Verbindungsaufbau ausgehandelt wird. Brauchst du nur
-                      bei Port 143 mit älteren Server-Konfigurationen — bei
-                      Port 993 deaktiviert lassen.
-                    </InfoHint>
+                    STARTTLS <span className="text-gray-600">(Port 143)</span>
                   </label>
                 </div>
               </div>
 
               {/* SMTP */}
               <div>
-                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider flex items-center">
-                  Ausgang (SMTP)
-                  <span className="text-gray-600 normal-case ml-1">— optional, für Senden</span>
-                  <InfoHint width="w-80">
-                    SMTP ist das Protokoll zum <strong>Senden</strong> von Mails.
-                    Wenn du das Feld leer lässt, kannst du Mails nur empfangen,
-                    nicht versenden — fürs reine Lesen reicht das.
-                    SMTP-Server hat oft denselben Anbieter wie IMAP, aber einen
-                    leicht anderen Hostnamen.
-                  </InfoHint>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-2">
+                  Ausgang (SMTP) <span className="font-normal normal-case text-gray-600">— optional, zum Senden</span>
                 </p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
-                    <label className="text-gray-400 text-xs mb-1 flex items-center">
-                      Host
-                      <InfoHint placement="bottom-left">
-                        Adresse des Ausgangs-Servers, z.B.{" "}
-                        <strong>smtp.mailbox.org</strong>,{" "}
-                        <strong>smtp.ionos.de</strong> oder{" "}
-                        <strong>smtp.deinedomain.de</strong>.
-                        In der Provider-Doku oft direkt unter dem IMAP-Host
-                        gelistet.
-                      </InfoHint>
-                    </label>
-                    <input
-                      type="text"
-                      value={form.smtp_host}
+                    <label className="text-gray-500 text-[11px] mb-1 block">Host</label>
+                    <input type="text" value={form.smtp_host}
                       onChange={e => update("smtp_host", e.target.value)}
                       placeholder="smtp.dein-provider.de"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
-                    />
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
                   </div>
                   <div>
-                    <label className="text-gray-400 text-xs mb-1 flex items-center">
-                      Port
-                      <InfoHint placement="bottom-right">
-                        <strong>465</strong> mit SSL (häufiger) oder{" "}
-                        <strong>587</strong> mit STARTTLS — beide sind heute
-                        üblich. Welcher passt, steht in deiner Provider-Doku;
-                        bei Mailbox.org/Posteo/IONOS/Strato meist 465.
-                      </InfoHint>
-                    </label>
-                    <input
-                      type="number"
-                      value={form.smtp_port}
+                    <label className="text-gray-500 text-[11px] mb-1 block">Port</label>
+                    <input type="number" value={form.smtp_port}
                       onChange={e => update("smtp_port", e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
-                    />
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
                   </div>
                 </div>
-                <div className="mt-2">
-                  <label className="text-xs text-gray-300 flex items-center gap-2">
-                    <input type="checkbox" checked={!!form.smtp_use_ssl}
-                      onChange={e => update("smtp_use_ssl", e.target.checked)} />
-                    SSL (Port 465). Sonst STARTTLS auf Port 587.
-                    <InfoHint placement="top-left">
-                      <strong>An lassen</strong> wenn dein Provider Port 465 nutzt
-                      (heute am häufigsten). <strong>Aus lassen</strong> bei Port 587 —
-                      dann wird automatisch STARTTLS verwendet. Wenn du
-                      unsicher bist und das Senden später fehlschlägt: einmal
-                      umschalten und Port entsprechend anpassen.
-                    </InfoHint>
-                  </label>
-                </div>
+                <label className="text-xs text-gray-400 flex items-center gap-2 mt-2.5 cursor-pointer">
+                  <input type="checkbox" className="accent-amber-500" checked={!!form.smtp_use_ssl}
+                    onChange={e => update("smtp_use_ssl", e.target.checked)} />
+                  SSL auf Port 465 <span className="text-gray-600">(sonst STARTTLS auf 587)</span>
+                </label>
               </div>
 
-              {/* Username Override */}
+              {/* Username override */}
               <div>
-                <label className="text-gray-400 text-xs mb-1 flex items-center">
-                  Login-Username
-                  <span className="text-gray-600 ml-1">(falls abweichend von Email)</span>
-                  <InfoHint width="w-80">
-                    <strong>In 95% der Fälle leer lassen</strong> — der Login
-                    erfolgt dann mit deiner Email-Adresse als Username.
-                    Ausfüllen nur wenn dein Provider einen anderen Benutzernamen
-                    verlangt, z.B. eine Kundennummer wie <strong>k1234567</strong>{" "}
-                    bei manchen Strato/IONOS-Setups oder eine separat vergebene
-                    Mailbox-ID. Steht typischerweise in der Begrüßungsmail
-                    deines Hosters.
-                  </InfoHint>
+                <label className="text-gray-500 text-[11px] mb-1 block">
+                  Login-Benutzername <span className="text-gray-600">(nur wenn abweichend von der E-Mail-Adresse)</span>
                 </label>
-                <input
-                  type="text"
-                  value={form.username}
+                <input type="text" value={form.username}
                   onChange={e => update("username", e.target.value)}
-                  placeholder={form.email}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
-                />
+                  placeholder={form.email || "In 95% der Fälle leer lassen"}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-gray-500" />
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-300">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-300 leading-relaxed">
               {error}
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-white transition text-sm"
-            >
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} disabled={submitting}
+              className="px-4 py-2.5 rounded-xl text-sm text-gray-400 border border-gray-700 hover:bg-white/5 transition disabled:opacity-40">
               Abbrechen
             </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl font-medium bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition disabled:opacity-50 text-sm"
-            >
-              {submitting
-                ? "Verbinde …"
-                : isReauth ? "Erneut verbinden" : "Verbinden & testen"}
+            <button type="submit" disabled={submitting}
+              className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-[var(--nill-primary)] hover:bg-[var(--nill-primary-hover)] text-white transition disabled:opacity-50 flex items-center justify-center gap-2">
+              {submitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                  Verbinde…
+                </>
+              ) : isReauth ? "Erneut verbinden" : "Postfach verbinden"}
             </button>
           </div>
         </form>

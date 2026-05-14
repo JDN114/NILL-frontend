@@ -1076,8 +1076,8 @@ export default function SettingsPage() {
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: "0.85rem", color: text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email}</div>
                             <div style={{ fontSize: "0.72rem", color: dim, marginTop: 1 }}>
-                              IMAP {a.imap_host && `· ${a.imap_host}`}
-                              {a.status === "needs_reauth" && <span style={{ color: amber }}> · Erneuerung erforderlich</span>}
+                              Custom-Domain{a.imap_host ? ` · ${a.imap_host.replace(/^imap\./, "")}` : ""}
+                              {a.status === "needs_reauth" && <span style={{ color: amber }}> · Verbindung erneuern</span>}
                             </div>
                           </div>
                         </div>

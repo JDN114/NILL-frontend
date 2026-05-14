@@ -8,16 +8,17 @@ import React, { useEffect, useState } from "react";
 import { aiReply, replyToEmail } from "../services/mailApi";
 
 export default function ImapReplyModal({ open, onClose, emailId, onSent }) {
-  const [body, setBody]         = useState("");
-  const [cc, setCc]             = useState("");
-  const [files, setFiles]       = useState([]);
-  const [busy, setBusy]         = useState(false);
-  const [aiBusy, setAiBusy]     = useState(false);
-  const [error, setError]       = useState(null);
+  const [body, setBody]             = useState("");
+  const [cc, setCc]                 = useState("");
+  const [files, setFiles]           = useState([]);
+  const [busy, setBusy]             = useState(false);
+  const [aiBusy, setAiBusy]         = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [error, setError]           = useState(null);
 
   useEffect(() => {
     if (open) {
-      setBody(""); setCc(""); setFiles([]); setError(null);
+      setBody(""); setCc(""); setFiles([]); setError(null); setAiGenerated(false);
     }
   }, [open, emailId]);
 
@@ -29,6 +30,7 @@ export default function ImapReplyModal({ open, onClose, emailId, onSent }) {
     try {
       const text = await aiReply({ provider: "imap", emailId });
       setBody(text);
+      setAiGenerated(true);
     } catch (err) {
       console.error("[ImapReply] ai-reply failed", err);
       setError("KI-Antwort fehlgeschlagen.");
@@ -76,17 +78,28 @@ export default function ImapReplyModal({ open, onClose, emailId, onSent }) {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-gray-400 text-xs">Nachricht (HTML erlaubt)</label>
+            <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
+              <div className="flex items-center gap-2">
+                <label className="text-gray-400 text-xs">Nachricht (HTML erlaubt)</label>
+                {aiGenerated && (
+                  <span style={{
+                    display:"inline-flex", alignItems:"center", gap:3,
+                    padding:"1px 7px", borderRadius:99,
+                    fontSize:9, fontFamily:"JetBrains Mono,monospace", letterSpacing:"0.1em",
+                    background:"rgba(122,92,255,0.15)", border:"1px solid rgba(122,92,255,0.3)",
+                    color:"rgba(122,92,255,0.9)",
+                  }}>◈ KI-Entwurf</span>
+                )}
+              </div>
               <button
                 type="button" onClick={handleAiReply} disabled={aiBusy}
                 className="text-xs px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition disabled:opacity-50"
               >
-                {aiBusy ? "KI denkt …" : "✨ KI-Antwort generieren"}
+                {aiBusy ? "◈ KI denkt …" : "◈ KI-Antwort generieren"}
               </button>
             </div>
             <textarea
-              value={body} onChange={e => setBody(e.target.value)}
+              value={body} onChange={e => { setBody(e.target.value); setAiGenerated(false); }}
               rows={12}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500 font-mono"
             />

@@ -4,6 +4,14 @@ import api from "../../services/api";
 
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 
+const AI_BADGE_STYLE = {
+  display:"inline-flex", alignItems:"center", gap:3,
+  padding:"1px 6px", borderRadius:99, marginLeft:6,
+  fontSize:9, fontFamily:"JetBrains Mono,monospace", letterSpacing:"0.1em",
+  background:"rgba(122,92,255,0.12)", border:"1px solid rgba(122,92,255,0.25)",
+  color:"rgba(122,92,255,0.8)", verticalAlign:"middle", userSelect:"none",
+};
+
 const STATUS_META = {
   paid:    { label:"Bezahlt",    cls:"ac-badge-green"  },
   open:    { label:"Offen",      cls:"ac-badge-gray"   },
@@ -170,8 +178,11 @@ export default function InvoiceList() {
                   <td className="ac-mono" style={{color:"var(--accent)", fontSize:".82rem", whiteSpace:"nowrap"}}>
                     {inv.invoice_number || <span style={{color:"var(--ink2)",fontStyle:"italic"}}>—</span>}
                   </td>
-                  <td style={{maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                  <td style={{maxWidth:220, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
                     {inv.vendor || inv.description || "—"}
+                    {inv.ai_status === "completed" && (
+                      <span style={AI_BADGE_STYLE} title="KI-verarbeitet">◈ KI</span>
+                    )}
                   </td>
                   <td className="ac-mono" style={{whiteSpace:"nowrap"}}>{inv.date || "—"}</td>
                   <td className="ac-mono" style={{textAlign:"right", color:"var(--ink2)"}}>

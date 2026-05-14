@@ -29,10 +29,19 @@ function Toggle({ checked, onChange, label }) {
   );
 }
 
+const AI_BADGE = {
+  display: "inline-flex", alignItems: "center", gap: 4,
+  padding: "1px 7px", borderRadius: 99,
+  fontSize: 10, fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.12em",
+  background: "rgba(122,92,255,0.12)", border: "1px solid rgba(122,92,255,0.28)",
+  color: "rgba(122,92,255,0.85)", userSelect: "none",
+};
+
 export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
   const [body, setBody]               = useState("");
   const [loading, setLoading]         = useState(false);
   const [aiLoading, setAiLoading]     = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
   const [error, setError]             = useState(null);
   const [cc, setCc]                   = useState("");
   const [showCc, setShowCc]           = useState(false);
@@ -43,8 +52,8 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
   useEffect(() => {
     if (open) {
       setBody(""); setError(null); setLoading(false);
-      setAiLoading(false); setCc(""); setShowCc(false);
-      setFiles([]);
+      setAiLoading(false); setAiGenerated(false);
+      setCc(""); setShowCc(false); setFiles([]);
     }
   }, [open, emailId]);
 
@@ -58,6 +67,7 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
         headers: { "X-CSRF-Token": localStorage.getItem("csrf_token") || "" },
       });
       setBody(sanitizeReply(res.data?.reply || ""));
+      setAiGenerated(true);
     } catch {
       setError("KI-Antwort konnte nicht geladen werden.");
     } finally {
@@ -108,8 +118,11 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
         )}
 
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Antwort</label>
-          <textarea value={body} onChange={e => setBody(e.target.value)} rows={6}
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-500">Antwort</label>
+            {aiGenerated && <span style={AI_BADGE}>◈ KI-Entwurf</span>}
+          </div>
+          <textarea value={body} onChange={e => { setBody(e.target.value); setAiGenerated(false); }} rows={6}
             placeholder="Schreibe deine Antwort hier…" disabled={loading} autoFocus
             className={`${inputCls} resize-none`} />
           <div className={`text-right text-[11px] mt-0.5 ${body.length > MAX_LENGTH * 0.85 ? "text-amber-400" : "text-slate-600"}`}>
