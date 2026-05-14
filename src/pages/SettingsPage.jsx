@@ -12,7 +12,7 @@ import api, { logoutUser } from "../services/api";
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal  from "../components/DeleteAccountModal";
 import EmailVorlagenTab    from "../components/EmailVorlagenTab";
-import ImapConnectModal    from "../components/ImapConnectModal";
+import ImapConnectModal, { getImapSavedConfigs } from "../components/ImapConnectModal";
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
 const surface  = "rgba(255,255,255,0.03)";
@@ -387,6 +387,9 @@ export default function SettingsPage() {
   const { connected: outlookConn, connectOutlook, disconnectOutlook, fetchStatus: fetchOutlookStatus } = useContext(OutlookContext);
   const imap = useContext(ImapContext);
   const imapAccounts = imap?.accounts ?? [];
+  const savedImapConfigs = getImapSavedConfigs().filter(
+    s => !imapAccounts.some(a => a.email === s.email)
+  );
 
   // ── UI state ────────────────────────────────────────────────────────────
   const [activeTab,        setActiveTab]        = useState("konto");
@@ -1088,6 +1091,29 @@ export default function SettingsPage() {
                               onClick={() => handleReauth(a)}>Erneuern</button>
                           )}
                           <button style={btnDanger} onClick={() => handleDisconnectImap(a.id)} disabled={loadingStatus}>Trennen</button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {savedImapConfigs.map(s => (
+                      <div key={s.email} style={{ ...rowStyle, opacity: 0.7 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 0, flex: 1 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(197,165,114,0.05)",
+                            border: `1px solid ${border}`, display: "flex", alignItems: "center",
+                            justifyContent: "center", fontSize: "0.75rem", flexShrink: 0, color: mute, fontWeight: 700 }}>@</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: "0.85rem", color: dim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email}</div>
+                            <div style={{ fontSize: "0.72rem", color: mute, marginTop: 1 }}>
+                              Getrennt{s.imap_host ? ` · ${s.imap_host.replace(/^imap\./, "")}` : ""}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                          <Badge label="Getrennt" color={mute} />
+                          <button
+                            style={{ ...btnGhost, color: gold, borderColor: "rgba(197,165,114,0.3)" }}
+                            onClick={() => { setReauthAccount({ email: s.email }); setShowImapModal(true); }}
+                          >Wiederverbinden</button>
                         </div>
                       </div>
                     ))}
@@ -1833,7 +1859,7 @@ export default function SettingsPage() {
         open={showImapModal}
         account={reauthAccount}
         onClose={() => { setShowImapModal(false); setReauthAccount(null); }}
-        onConnected={() => { setShowImapModal(false); setReauthAccount(null); }}
+        onConnected={async () => { await imap?.fetchStatus?.(); setShowImapModal(false); setReauthAccount(null); }}
       />
     </PageLayout>
   );
