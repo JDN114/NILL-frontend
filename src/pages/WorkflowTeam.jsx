@@ -157,6 +157,7 @@ export default function WorkflowTeam() {
   const [members, setMembers]     = useState([]);
   const [roles, setRoles]         = useState([]);
   const [invites, setInvites]     = useState([]);
+  const [limits, setLimits]       = useState(null);
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "members");
 
@@ -183,16 +184,20 @@ export default function WorkflowTeam() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [mRes, rRes, iRes] = await Promise.all([
+      const [mRes, rRes, iRes, lRes] = await Promise.all([
         api.get("/team/members", { withCredentials: true }),
         api.get("/team/roles",   { withCredentials: true }),
         isCompanyAdmin()
           ? api.get("/team/invites", { withCredentials: true })
           : Promise.resolve({ data: [] }),
+        isCompanyAdmin()
+          ? api.get("/team/members/limits", { withCredentials: true })
+          : Promise.resolve({ data: null }),
       ]);
       setMembers(mRes.data ?? []);
       setRoles(rRes.data ?? []);
       setInvites(iRes.data ?? []);
+      setLimits(lRes.data ?? null);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -254,7 +259,11 @@ export default function WorkflowTeam() {
       setInviteEmail(""); setInviteRoleId("");
     } catch (err) {
       const d = err.response?.data?.detail;
-      setInviteError(typeof d === "string" ? d : "Fehler beim Einladen.");
+      if (err.response?.status === 402 && d?.code === "USER_LIMIT_REACHED") {
+        setInviteError(`__LIMIT__:${d.max_users}`);
+      } else {
+        setInviteError(typeof d === "string" ? d : "Fehler beim Einladen.");
+      }
     } finally { setInviteSending(false); }
   };
 
@@ -322,28 +331,55 @@ export default function WorkflowTeam() {
             </p>
           </div>
 
-          {isCompanyAdmin() && (
-            <button
-              onClick={() => setShowInviteModal(true)}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: "0.4rem",
-                padding: "0.6rem 1.2rem",
-                background: "var(--nill-gold-dim)",
-                border: "1px solid rgba(197,165,114,0.28)",
-                borderRadius: 22, cursor: "pointer",
-                color: "var(--nill-gold)", fontSize: "0.82rem", fontWeight: 700,
-                transition: "background 0.15s, border-color 0.15s, box-shadow 0.15s",
-              }}
-              onMouseOver={e => { e.currentTarget.style.background = "var(--nill-gold-glow)"; e.currentTarget.style.boxShadow = "0 0 12px rgba(197,165,114,0.15)"; }}
-              onMouseOut={e => { e.currentTarget.style.background = "var(--nill-gold-dim)"; e.currentTarget.style.boxShadow = "none"; }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Mitglied einladen
-            </button>
-          )}
+          {isCompanyAdmin() && (() => {
+            const atLimit = limits && limits.member_count + limits.pending_invites >= limits.max_users;
+            return (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem" }}>
+                {limits && (
+                  <span style={{ fontSize: "0.7rem", color: atLimit ? "#fbbf24" : "var(--nill-text-mute)", fontWeight: 600 }}>
+                    {limits.member_count} / {limits.max_users} Nutzer
+                  </span>
+                )}
+                {atLimit ? (
+                  <a
+                    href="/settings?tab=abonnement"
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                      padding: "0.6rem 1.2rem",
+                      background: "rgba(251,191,36,0.08)",
+                      border: "1px solid rgba(251,191,36,0.25)",
+                      borderRadius: 22, cursor: "pointer",
+                      color: "#fbbf24", fontSize: "0.82rem", fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Plan upgraden →
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                      padding: "0.6rem 1.2rem",
+                      background: "var(--nill-gold-dim)",
+                      border: "1px solid rgba(197,165,114,0.28)",
+                      borderRadius: 22, cursor: "pointer",
+                      color: "var(--nill-gold)", fontSize: "0.82rem", fontWeight: 700,
+                      transition: "background 0.15s, border-color 0.15s, box-shadow 0.15s",
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.background = "var(--nill-gold-glow)"; e.currentTarget.style.boxShadow = "0 0 12px rgba(197,165,114,0.15)"; }}
+                    onMouseOut={e => { e.currentTarget.style.background = "var(--nill-gold-dim)"; e.currentTarget.style.boxShadow = "none"; }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Mitglied einladen
+                  </button>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* ── Meine Rolle (non-admin) ─────────────────────── */}
@@ -777,7 +813,28 @@ export default function WorkflowTeam() {
             </select>
           </div>
 
-          {inviteError   && <p style={{ margin: 0, fontSize: "0.78rem", color: "#f87171" }}>{inviteError}</p>}
+          {inviteError && (inviteError.startsWith("__LIMIT__:") ? (
+            <div style={{
+              padding: "0.75rem 1rem", borderRadius: 10,
+              background: "rgba(251,191,36,0.07)",
+              border: "1px solid rgba(251,191,36,0.2)",
+            }}>
+              <p style={{ margin: "0 0 0.4rem", fontSize: "0.8rem", fontWeight: 600, color: "#fbbf24" }}>
+                Plan-Limit erreicht ({inviteError.split(":")[1]} Nutzer max.)
+              </p>
+              <p style={{ margin: "0 0 0.6rem", fontSize: "0.75rem", color: "rgba(251,191,36,0.75)", lineHeight: 1.5 }}>
+                Dein aktueller Plan erlaubt keine weiteren Mitglieder.
+              </p>
+              <a href="/settings?tab=abonnement" style={{
+                fontSize: "0.76rem", fontWeight: 700, color: "#fbbf24",
+                textDecoration: "underline", cursor: "pointer",
+              }}>
+                Jetzt upgraden →
+              </a>
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: "0.78rem", color: "#f87171" }}>{inviteError}</p>
+          ))}
           {inviteSuccess && <p style={{ margin: 0, fontSize: "0.78rem", color: "#86efac" }}>{inviteSuccess}</p>}
 
           <div style={{ display: "flex", gap: "0.75rem" }}>

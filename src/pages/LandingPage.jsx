@@ -1215,7 +1215,7 @@ function Footer() {
           </ul></div>
         </div>
         <div className="wordmark">NILL<em>.</em></div>
-        <div className="foot-meta"><span>© 2026 NILL GmbH · nillai.de</span><span>Made with intelligence · Frankfurt a.M.</span></div>
+        <div className="foot-meta"><span>© 2026 NILL AI - Inh. Julian David Nill · nillai.de</span><span>Made with intelligence · Frankfurt a.M.</span></div>
       </div>
     </footer>
   );

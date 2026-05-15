@@ -1398,7 +1398,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* ── Abonnement kündigen ─────────────────────────────────── */}
-                {subscription?.has_subscription && (
+                {subscription?.is_subscription_active && (
                   <div style={{ ...panelStyle, borderColor: subscription?.cancel_at_period_end ? "rgba(239,68,68,0.25)" : border }}>
                     <SectionHead title="Abonnement kündigen" />
                     <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
