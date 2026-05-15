@@ -20,6 +20,14 @@ const RECHNUNGEN_VORLAGE = [
   "2026-04-01;RE-2026-035;IT-Service GmbH;1500.00;19;1785.00;open",
 ].join("\n");
 
+const AUSGANGSRECHNUNGEN_VORLAGE = [
+  "rechnungsdatum;rechnungsnummer;empfaenger_name;empfaenger_strasse;empfaenger_plz;empfaenger_ort;betreff;beschreibung;menge;einzelpreis;ust_satz;zahlungsziel_tage;status",
+  "2026-01-15;AR-2026-001;Müller GmbH;Hauptstr. 1;80331;München;Beratung Januar;Strategieberatung;10;150.00;19;14;bezahlt",
+  "2026-01-15;AR-2026-001;Müller GmbH;Hauptstr. 1;80331;München;Beratung Januar;Reisekosten;1;85.00;0;14;bezahlt",
+  "2026-02-01;AR-2026-002;Schmidt AG;;;Berlin;Webentwicklung Februar;Frontend-Entwicklung;20;120.00;19;30;bezahlt",
+  "2026-03-10;AR-2026-003;Beispiel KG;;;Hamburg;Consulting;Workshop-Durchführung;2;800.00;19;14;offen",
+].join("\n");
+
 const UST_KZ_HINWEIS = [
   "ust_19 → Umsatzsteuer 19 %",
   "ust_7  → Umsatzsteuer 7 %",
@@ -231,8 +239,12 @@ export default function ImportTab({ onDone }) {
         </div>
       </div>
 
-      <div style={{ display:"flex", gap:4, background:"var(--surface)", borderRadius:10, padding:4, marginBottom:20, width:"fit-content" }}>
-        {[["buchungen","📒 Buchungen (Journal)"],["rechnungen","🧾 Eingangsrechnungen"]].map(([s,l]) => (
+      <div style={{ display:"flex", gap:4, background:"var(--surface)", borderRadius:10, padding:4, marginBottom:20, flexWrap:"wrap" }}>
+        {[
+          ["buchungen",         "📒 Buchungen (Journal)"],
+          ["rechnungen",        "🧾 Eingangsrechnungen"],
+          ["ausgangsrechnungen","📤 Ausgangsrechnungen"],
+        ].map(([s,l]) => (
           <button key={s}
             className={`ac-btn ${sub===s?"ac-btn-primary":"ac-btn-ghost"}`}
             style={{ fontSize:".82rem" }}
@@ -261,11 +273,27 @@ export default function ImportTab({ onDone }) {
           label="Eingangsrechnungen"
           endpoint="/api/v1/buchhaltung/import/rechnungen"
           vorlage={RECHNUNGEN_VORLAGE}
-          vorlageName="Rechnungen_Import_Vorlage.csv"
+          vorlageName="Eingangsrechnungen_Import_Vorlage.csv"
           hinweise={[
             "mwst_satz: Prozentsatz ohne % (z. B. 19, 7 oder 0)",
             "status: open | paid | overdue | draft",
-            "Netto + Brutto können beide angegeben werden; fehlender Brutto = Netto",
+            "Netto + Brutto können beide angegeben werden; fehlt Brutto wird Netto verwendet",
+          ]}
+          onDone={onDone}
+        />
+      )}
+      {sub === "ausgangsrechnungen" && (
+        <FileUploadSection
+          label="Ausgangsrechnungen"
+          endpoint="/api/v1/buchhaltung/import/ausgangsrechnungen"
+          vorlage={AUSGANGSRECHNUNGEN_VORLAGE}
+          vorlageName="Ausgangsrechnungen_Import_Vorlage.csv"
+          hinweise={[
+            "Mehrere Zeilen mit gleicher rechnungsnummer → mehrere Positionen auf einer Rechnung.",
+            "einzelpreis: Netto-Einzelpreis in EUR (z. B. 150.00).",
+            "ust_satz: Steuersatz als Zahl ohne % (19, 7 oder 0).",
+            "status: offen | bezahlt | entwurf | storniert.",
+            "Pflichtfelder: rechnungsdatum, empfaenger_name, beschreibung, einzelpreis.",
           ]}
           onDone={onDone}
         />
