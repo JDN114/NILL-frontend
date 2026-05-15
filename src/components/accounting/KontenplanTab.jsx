@@ -1,5 +1,5 @@
 // src/components/accounting/KontenplanTab.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../services/api";
 
 const KLASSEN = {
@@ -19,19 +19,19 @@ export default function KontenplanTab() {
   const [konten, setKonten]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [filter, setFilter]       = useState("");
-  const [expanded, setExpanded]   = useState({});
+  const [expanded, setExpanded]   = useState({});  // true = open, false/undefined = closed
   const [showModal, setShowModal] = useState(false);
   const [newKonto, setNewKonto]   = useState({ kontonummer: "", bezeichnung: "", kontoart: "aufwand" });
   const [saving, setSaving]       = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     api.get("/api/v1/buchhaltung/konten", { params: { include_saldo: true } })
       .then(r => setKonten(r.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
-  useEffect(() => { load(); }, []);
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => {
     if (!filter) return konten;
@@ -61,20 +61,32 @@ export default function KontenplanTab() {
 
   return (
     <div>
-      <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center" }}>
+      <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
         <input className="ac-input" style={{ maxWidth:300 }} placeholder="Suche (Nr. oder Bezeichnung)..."
           value={filter} onChange={e => setFilter(e.target.value)} />
         <span style={{ color:"var(--ink2)", fontSize:".85rem" }}>{konten.length} Konten</span>
         <div style={{ flex:1 }} />
+        <button className="ac-btn ac-btn-ghost ac-btn-sm"
+          onClick={() => setExpanded(e => {
+            const allOpen = Object.values(e).every(v => v === true) && Object.keys(e).length === Object.keys(grouped).length;
+            const next = {};
+            Object.keys(grouped).forEach(k => { next[k] = !allOpen; });
+            return next;
+          })}>
+          Alle {Object.values(expanded).some(v => v) ? "zuklappen" : "aufklappen"}
+        </button>
+        <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => setShowModal(true)}>
+          + Konto anlegen
+        </button>
       </div>
       {Object.keys(grouped).sort().map(cls => (
         <div key={cls} className="ac-card" style={{ marginBottom:12, padding:0 }}>
           <div style={{ padding:"14px 20px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center" }}
             onClick={() => setExpanded(e => ({ ...e, [cls]: !e[cls] }))}>
             <span style={{ fontFamily:"Fraunces,serif", fontWeight:600 }}>{KLASSEN[cls] || `Klasse ${cls}`}</span>
-            <span style={{ color:"var(--ink2)", fontSize:".8rem" }}>{grouped[cls].length} Konten {expanded[cls] ? "A" : "V"}</span>
+            <span style={{ color:"var(--ink2)", fontSize:".8rem" }}>{grouped[cls].length} Konten {expanded[cls] ? "▲" : "▼"}</span>
           </div>
-          {(expanded[cls] !== false && cls in expanded ? expanded[cls] : true) && (
+          {expanded[cls] === true && (
             <table className="ac-table">
               <thead><tr><th style={{width:100}}>Nr.</th><th>Bezeichnung</th><th>Art</th><th style={{textAlign:"right"}}>Saldo</th><th>USt</th></tr></thead>
               <tbody>

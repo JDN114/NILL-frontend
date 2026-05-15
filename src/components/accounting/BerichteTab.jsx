@@ -110,8 +110,8 @@ function GuV({ von, bis }) {
       <div className="ac-section-title">GuV {von} - {bis} (§275 HGB Gesamtkostenverfahren)</div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
         <div>
-          <div style={{ color:"var(--ink2)", fontSize:".75rem", marginBottom:8, textTransform:"uppercase", letterSpacing:".04em" }}>Ertrage</div>
-          {[["1. Umsatzerlose", data.umsatzerloese],["2. Sonstige betr. Ertrage", data.sonstige_ertraege],["Gesamtleistung", data.gesamtleistung, true]].map(([label, val, bold], i) => (
+          <div style={{ color:"var(--ink2)", fontSize:".75rem", marginBottom:8, textTransform:"uppercase", letterSpacing:".04em" }}>Erträge</div>
+          {[["1. Umsatzerlöse", data.umsatzerloese],["2. Sonstige betr. Erträge", data.sonstige_ertraege],["Gesamtleistung", data.gesamtleistung, true]].map(([label, val, bold], i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderTop: bold ? "1px solid var(--border)" : "none" }}>
               <span style={{ fontSize:".85rem", color: bold ? "var(--ink)" : "var(--ink2)" }}>{label}</span>
               <span className="ac-mono" style={{ color:"var(--accent)", fontWeight: bold ? 700 : 400, fontSize:".85rem" }}>{fmtEur(val)}</span>
@@ -129,7 +129,7 @@ function GuV({ von, bis }) {
         </div>
       </div>
       <div style={{ borderTop:"2px solid var(--border)", paddingTop:16, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <span style={{ fontFamily:"Fraunces,serif", fontWeight:700, fontSize:"1.1rem" }}>{gewinn >= 0 ? "Jahresuberschuss" : "Jahresfehlbetrag"}</span>
+        <span style={{ fontFamily:"Fraunces,serif", fontWeight:700, fontSize:"1.1rem" }}>{gewinn >= 0 ? "Jahresüberschuss" : "Jahresfehlbetrag"}</span>
         <span className="ac-mono" style={{ fontSize:"1.5rem", fontWeight:700, color: gewinn >= 0 ? "var(--accent)" : "var(--a3)" }}>{fmtEur(Math.abs(gewinn))}</span>
       </div>
     </div>
@@ -145,11 +145,11 @@ function EueR({ jahr }) {
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade EUR...</div>;
-  if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>EUR {jahr} laden</button></div></div>;
+  if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>EÜR {jahr} laden</button></div></div>;
   const gewinn = (data.betriebseinnahmen || 0) - (data.betriebsausgaben || 0);
   return (
     <div className="ac-card">
-      <div className="ac-section-title">EUR {jahr} (§4 Abs. 3 EStG)</div>
+      <div className="ac-section-title">EÜR {jahr} (§4 Abs. 3 EStG)</div>
       <div className="ac-grid-2">
         <div>
           <div className="ac-label" style={{ marginBottom:12 }}>Betriebseinnahmen</div>
@@ -219,7 +219,7 @@ const BERICHT_TABS = [
   { id:"saldenliste", label:"Saldenliste" },
   { id:"bilanz",      label:"Bilanz (§266 HGB)" },
   { id:"guv",         label:"GuV (§275 HGB)" },
-  { id:"euer",        label:"EUR (§4 EStG)" },
+  { id:"euer",        label:"EÜR (§4 EStG)" },
   { id:"bwa",         label:"BWA" },
 ];
 

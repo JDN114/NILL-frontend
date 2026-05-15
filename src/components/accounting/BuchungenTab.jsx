@@ -118,7 +118,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
               <div className="ac-form-col" style={{ flex: 3 }}>
                 <select className="ac-select" value={z.konto_id}
                   onChange={e => setZeile(i, "konto_id", e.target.value)}>
-                  <option value="">-- Konto wahlen --</option>
+                  <option value="">-- Konto wählen --</option>
                   {konten.map(k => (
                     <option key={k.id} value={k.id}>{k.kontonummer} - {k.bezeichnung}</option>
                   ))}

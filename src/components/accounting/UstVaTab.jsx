@@ -1,5 +1,5 @@
 // src/components/accounting/UstVaTab.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
 
 const fmt    = (n) => Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -24,21 +24,65 @@ const KZ_BESCHREIBUNG = {
   kz_65_zahllast:             { kz:"65", label:"Zahllast / Erstattung",             typ:"zahllast" },
 };
 
-function PeriodStatus({ perioden }) {
+function PeriodStatus({ perioden, onReload }) {
+  const [marking, setMarking] = useState(null);
+  const [msg, setMsg]         = useState(null);
+
+  const markEingereicht = async (id) => {
+    setMarking(id);
+    try {
+      await api.patch(`/api/v1/buchhaltung/ust/perioden/${id}/eingereicht`);
+      setMsg({ type:"ok", text:"Periode als eingereicht markiert." });
+      if (onReload) onReload();
+    } catch(e) {
+      setMsg({ type:"err", text: e.response?.data?.detail || "Fehler" });
+    } finally { setMarking(null); }
+  };
+
   return (
     <div className="ac-card" style={{ marginBottom:16 }}>
-      <div className="ac-section-title">USt-Perioden</div>
+      <div className="ac-section-title">USt-Voranmeldungen</div>
+      {msg && (
+        <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+          style={{cursor:"pointer",marginBottom:12}} onClick={() => setMsg(null)}>
+          {msg.text}
+        </div>
+      )}
       <table className="ac-table">
-        <thead><tr><th>Periode</th><th>Typ</th><th>Status</th><th style={{textAlign:"right"}}>Zahllast</th><th>Falligkeit</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Periode</th><th>Typ</th><th>Status</th>
+            <th style={{textAlign:"right"}}>Zahllast</th>
+            <th>Fälligkeit</th><th></th>
+          </tr>
+        </thead>
         <tbody>
-          {perioden.length === 0 && <tr><td colSpan={5} className="ac-empty">Noch keine USt-Perioden.</td></tr>}
+          {perioden.length === 0 && <tr><td colSpan={6} className="ac-empty">Noch keine USt-Perioden.</td></tr>}
           {perioden.map(p => (
             <tr key={p.id}>
               <td className="ac-mono">{`${p.periode_von} – ${p.periode_bis}`}</td>
               <td><span className="ac-badge ac-badge-gray">{p.art || "monatlich"}</span></td>
-              <td>{p.status === "eingereicht" ? <span className="ac-badge ac-badge-green">Eingereicht</span> : <span className="ac-badge ac-badge-gray">Offen</span>}</td>
-              <td className="ac-mono" style={{ textAlign:"right", color: (p.kz_65_zahllast || 0) >= 0 ? "var(--a3)" : "var(--accent)" }}>{fmtEur(p.kz_65_zahllast)}</td>
+              <td>
+                {p.status === "eingereicht"
+                  ? <span className="ac-badge ac-badge-green">Eingereicht</span>
+                  : <span className="ac-badge ac-badge-gray">Offen</span>}
+              </td>
+              <td className="ac-mono" style={{ textAlign:"right", color: (p.kz_65_zahllast || 0) >= 0 ? "var(--a3)" : "var(--accent)" }}>
+                {fmtEur(p.kz_65_zahllast)}
+              </td>
               <td className="ac-mono">{faelligkeitsDatum(p.periode_bis)}</td>
+              <td>
+                {p.status !== "eingereicht" && (
+                  <button
+                    className="ac-btn ac-btn-ghost ac-btn-sm"
+                    onClick={() => markEingereicht(p.id)}
+                    disabled={marking === p.id}
+                    title="Als an ELSTER eingereicht markieren"
+                  >
+                    {marking === p.id ? "…" : "Eingereicht"}
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -50,17 +94,20 @@ function PeriodStatus({ perioden }) {
 export default function UstVaTab() {
   const today = new Date();
   const firstOfMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-01`;
-  const [von, setVon]             = useState(firstOfMonth);
-  const [bis, setBis]             = useState(today.toISOString().slice(0,10));
+  const [von, setVon]               = useState(firstOfMonth);
+  const [bis, setBis]               = useState(today.toISOString().slice(0,10));
   const [berechnung, setBerechnung] = useState(null);
-  const [perioden, setPerioden]   = useState([]);
-  const [loading, setLoading]     = useState(false);
+  const [perioden, setPerioden]     = useState([]);
+  const [loading, setLoading]       = useState(false);
   const [periodLoading, setPeriodLoading] = useState(true);
+  const [savingPeriod, setSavingPeriod]   = useState(false);
+  const [periodMsg, setPeriodMsg]         = useState(null);
 
-  useEffect(() => {
+  const loadPerioden = useCallback(() => {
     api.get("/api/v1/buchhaltung/ust/perioden")
       .then(r => setPerioden(r.data || [])).catch(() => {}).finally(() => setPeriodLoading(false));
   }, []);
+  useEffect(() => { loadPerioden(); }, [loadPerioden]);
 
   const berechnen = () => {
     setLoading(true);
@@ -68,17 +115,41 @@ export default function UstVaTab() {
       .then(r => setBerechnung(r.data)).catch(() => setBerechnung(null)).finally(() => setLoading(false));
   };
 
+  const savePeriode = async () => {
+    setSavingPeriod(true); setPeriodMsg(null);
+    try {
+      await api.post("/api/v1/buchhaltung/ust/perioden", {
+        periode_von: von, periode_bis: bis, art: "monatlich",
+      });
+      setPeriodMsg({ type:"ok", text:"Periode gespeichert." });
+      loadPerioden();
+    } catch(e) {
+      setPeriodMsg({ type:"err", text: e.response?.data?.detail || "Fehler beim Speichern." });
+    } finally { setSavingPeriod(false); }
+  };
+
   const zahllast = berechnung?.kz_65_zahllast || 0;
 
   return (
     <div>
-      {!periodLoading && <PeriodStatus perioden={perioden} />}
+      {!periodLoading && <PeriodStatus perioden={perioden} onReload={loadPerioden} />}
       <div className="ac-card" style={{ marginBottom:16 }}>
-        <div className="ac-section-title">UStVA berechnen</div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+          <div className="ac-section-title" style={{ marginBottom:0 }}>UStVA berechnen</div>
+        </div>
+        {periodMsg && (
+          <div className={`ac-alert ${periodMsg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+            style={{cursor:"pointer",marginBottom:12}} onClick={() => setPeriodMsg(null)}>
+            {periodMsg.text}
+          </div>
+        )}
         <div className="ac-form-row">
           <div className="ac-form-col"><label className="ac-label">Von</label><input className="ac-input" type="date" value={von} onChange={e => setVon(e.target.value)} /></div>
           <div className="ac-form-col"><label className="ac-label">Bis</label><input className="ac-input" type="date" value={bis} onChange={e => setBis(e.target.value)} /></div>
-          <button className="ac-btn ac-btn-primary" onClick={berechnen} disabled={loading}>{loading ? "..." : "Berechnen"}</button>
+          <button className="ac-btn ac-btn-primary" onClick={berechnen} disabled={loading}>{loading ? "…" : "Berechnen"}</button>
+          <button className="ac-btn ac-btn-ghost" onClick={savePeriode} disabled={savingPeriod} title="Periode mit aktueller Berechnung speichern">
+            {savingPeriod ? "…" : "Periode speichern"}
+          </button>
         </div>
       </div>
       {berechnung && (

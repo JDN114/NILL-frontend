@@ -18,6 +18,7 @@ import InvoiceList          from "../components/accounting/InvoiceList";
 import BankInsights         from "../components/accounting/BankInsights";
 import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
 import AusgangsrechnungTab  from "../components/accounting/AusgangsrechnungTab";
+import ImportTab            from "../components/accounting/ImportTab";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -455,17 +456,35 @@ function OverviewTab() {
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
+const ELSTER_MONATE = [
+  {value:"01",label:"Januar"},{value:"02",label:"Februar"},{value:"03",label:"März"},
+  {value:"04",label:"April"},{value:"05",label:"Mai"},{value:"06",label:"Juni"},
+  {value:"07",label:"Juli"},{value:"08",label:"August"},{value:"09",label:"September"},
+  {value:"10",label:"Oktober"},{value:"11",label:"November"},{value:"12",label:"Dezember"},
+  {value:"41",label:"Q1 (Jan–Mär)"},{value:"42",label:"Q2 (Apr–Jun)"},
+  {value:"43",label:"Q3 (Jul–Sep)"},{value:"44",label:"Q4 (Okt–Dez)"},
+];
+
 function ExportTab() {
   const today = new Date();
   const [von, setVon]             = useState(`${today.getFullYear()}-01-01`);
   const [bis, setBis]             = useState(today.toISOString().slice(0,10));
   const [beraternr, setBeraternr] = useState("99999");
   const [mandantnr, setMandantnr] = useState("00001");
-  const [loading, setLoading]     = useState(false);
-  const [msg, setMsg]             = useState(null);
+  const [loadingD, setLoadingD]   = useState(false);
 
-  const doExport = async () => {
-    setLoading(true); setMsg(null);
+  // ELSTER state
+  const [elsterVon, setElsterVon]         = useState(`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-01`);
+  const [elsterBis, setElsterBis]         = useState(today.toISOString().slice(0,10));
+  const [steuernummer, setSteuernummer]   = useState("");
+  const [finanzamtId, setFinanzamtId]     = useState("9300");
+  const [zeitraum, setZeitraum]           = useState(String(today.getMonth()+1).padStart(2,"0"));
+  const [testModus, setTestModus]         = useState(true);
+  const [loadingE, setLoadingE]           = useState(false);
+  const [msg, setMsg]                     = useState(null);
+
+  const doDatev = async () => {
+    setLoadingD(true); setMsg(null);
     try {
       const r = await api.get("/api/v1/buchhaltung/export/datev", {
         params: { von, bis, beraternummer: beraternr, mandantennummer: mandantnr },
@@ -475,22 +494,119 @@ function ExportTab() {
       const a = document.createElement("a"); a.href=url; a.download=`DATEV_${von}_${bis}.csv`; a.click();
       URL.revokeObjectURL(url);
       setMsg({type:"ok", text:"DATEV-Export heruntergeladen."});
-    } catch(e) { setMsg({type:"err", text:"Export fehlgeschlagen."}); }
-    finally { setLoading(false); }
+    } catch(e) { setMsg({type:"err", text:"DATEV-Export fehlgeschlagen."}); }
+    finally { setLoadingD(false); }
+  };
+
+  const doElster = async () => {
+    if (!steuernummer.trim()) { setMsg({type:"err", text:"Bitte Steuernummer eingeben."}); return; }
+    setLoadingE(true); setMsg(null);
+    try {
+      const r = await api.get("/api/v1/buchhaltung/export/elster", {
+        params: {
+          von: elsterVon, bis: elsterBis,
+          steuernummer: steuernummer.trim(),
+          finanzamt_id: finanzamtId,
+          zeitraum,
+          test_modus: testModus,
+        },
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(r.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ELSTER_UStVA_${elsterVon.slice(0,7)}.xml`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg({type:"ok", text:"ELSTER XML heruntergeladen. Bitte auf elster.de unter 'Formulare & Leistungen → Umsatzsteuervoranmeldung → Datei hochladen' einreichen."});
+    } catch(e) { setMsg({type:"err", text:"ELSTER-Export fehlgeschlagen."}); }
+    finally { setLoadingE(false); }
   };
 
   return (
-    <div className="ac-card">
-      <div className="ac-section-title">DATEV-Export (Format 700, CP1252)</div>
-      {msg && <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}>{msg.text}</div>}
-      <div className="ac-form-row">
-        <div className="ac-form-col"><label className="ac-label">Von</label><input className="ac-input" type="date" value={von} onChange={e=>setVon(e.target.value)}/></div>
-        <div className="ac-form-col"><label className="ac-label">Bis</label><input className="ac-input" type="date" value={bis} onChange={e=>setBis(e.target.value)}/></div>
-        <div className="ac-form-col"><label className="ac-label">Beraternr.</label><input className="ac-input" value={beraternr} onChange={e=>setBeraternr(e.target.value)} maxLength={5}/></div>
-        <div className="ac-form-col"><label className="ac-label">Mandantennr.</label><input className="ac-input" value={mandantnr} onChange={e=>setMandantnr(e.target.value)} maxLength={5}/></div>
-        <button className="ac-btn ac-btn-primary" onClick={doExport} disabled={loading}>{loading?"…":"DATEV exportieren"}</button>
+    <div>
+      {msg && (
+        <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+          style={{cursor:"pointer",marginBottom:16}} onClick={() => setMsg(null)}>
+          {msg.text}
+        </div>
+      )}
+
+      {/* DATEV */}
+      <div className="ac-card" style={{marginBottom:16}}>
+        <div className="ac-section-title">DATEV-Export (Format 700, CP1252)</div>
+        <div className="ac-form-row">
+          <div className="ac-form-col"><label className="ac-label">Von</label><input className="ac-input" type="date" value={von} onChange={e=>setVon(e.target.value)}/></div>
+          <div className="ac-form-col"><label className="ac-label">Bis</label><input className="ac-input" type="date" value={bis} onChange={e=>setBis(e.target.value)}/></div>
+          <div className="ac-form-col"><label className="ac-label">Beraternr.</label><input className="ac-input" value={beraternr} onChange={e=>setBeraternr(e.target.value)} maxLength={5}/></div>
+          <div className="ac-form-col"><label className="ac-label">Mandantennr.</label><input className="ac-input" value={mandantnr} onChange={e=>setMandantnr(e.target.value)} maxLength={5}/></div>
+          <div style={{display:"flex",alignItems:"flex-end"}}>
+            <button className="ac-btn ac-btn-primary" onClick={doDatev} disabled={loadingD}>{loadingD?"…":"DATEV exportieren"}</button>
+          </div>
+        </div>
+        <p style={{fontSize:".8rem",color:"var(--ink2)"}}>Direkt importierbar in DATEV Kanzlei-Rechnungswesen und DATEV Unternehmen Online.</p>
       </div>
-      <p style={{fontSize:".8rem",color:"var(--ink2)"}}>Direkt importierbar in DATEV Kanzlei-Rechnungswesen und DATEV Unternehmen Online.</p>
+
+      {/* ELSTER */}
+      <div className="ac-card" style={{borderColor:"rgba(122,92,255,.25)"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16}}>
+          <div className="ac-section-title" style={{marginBottom:0}}>ELSTER UStVA-Export (XML)</div>
+          <span className="ac-badge ac-badge-purple" style={{fontSize:".7rem"}}>Neu</span>
+        </div>
+        <div style={{
+          background:"rgba(122,92,255,.07)",border:"1px solid rgba(122,92,255,.18)",
+          borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:".82rem",color:"var(--ink2)",lineHeight:1.6,
+        }}>
+          Erzeugt eine ELSTER-XML-Datei, die Sie direkt auf{" "}
+          <strong style={{color:"var(--ink)"}}>elster.de</strong> unter
+          «Formulare → Umsatzsteuervoranmeldung → Datei hochladen» einreichen können.
+          {testModus && <span style={{color:"var(--a2)",marginLeft:6,fontWeight:600}}>
+            [TESTMODUS — kein echter Versand]
+          </span>}
+        </div>
+        <div className="ac-form-row">
+          <div className="ac-form-col"><label className="ac-label">Von</label><input className="ac-input" type="date" value={elsterVon} onChange={e=>setElsterVon(e.target.value)}/></div>
+          <div className="ac-form-col"><label className="ac-label">Bis</label><input className="ac-input" type="date" value={elsterBis} onChange={e=>setElsterBis(e.target.value)}/></div>
+          <div className="ac-form-col" style={{flex:2}}>
+            <label className="ac-label">Steuernummer *</label>
+            <input className="ac-input ac-mono" value={steuernummer} placeholder="21/815/08150"
+              onChange={e=>setSteuernummer(e.target.value)}/>
+          </div>
+          <div className="ac-form-col" style={{maxWidth:120}}>
+            <label className="ac-label">Finanzamt-Nr.</label>
+            <input className="ac-input ac-mono" value={finanzamtId} maxLength={4}
+              onChange={e=>setFinanzamtId(e.target.value)} placeholder="9300"/>
+          </div>
+        </div>
+        <div className="ac-form-row">
+          <div className="ac-form-col" style={{maxWidth:220}}>
+            <label className="ac-label">Voranmeldezeitraum</label>
+            <select className="ac-select" value={zeitraum} onChange={e=>setZeitraum(e.target.value)}>
+              {ELSTER_MONATE.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
+          </div>
+          <div className="ac-form-col" style={{maxWidth:200,justifyContent:"flex-end"}}>
+            <label className="ac-label">Modus</label>
+            <div style={{display:"flex",gap:8}}>
+              <label style={{display:"flex",alignItems:"center",gap:6,fontSize:".85rem",cursor:"pointer"}}>
+                <input type="checkbox" checked={testModus} onChange={e=>setTestModus(e.target.checked)}
+                  style={{accentColor:"var(--a2)"}}/>
+                Testmodus (empfohlen)
+              </label>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"flex-end",marginLeft:"auto"}}>
+            <button className="ac-btn ac-btn-primary" onClick={doElster} disabled={loadingE}
+              style={{background:"var(--a2)",color:"#fff"}}>
+              {loadingE?"…":"ELSTER XML herunterladen"}
+            </button>
+          </div>
+        </div>
+        <p style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
+          Steuernummer beim Finanzamt erfragen. Finanzamt-Nr.: die 4-stellige Nummer Ihres zuständigen Finanzamts
+          (Beispiel Bayern Mitte: 9162, Berlin: 1121). Im Testmodus können Sie das XML prüfen, ohne Daten zu übermitteln.
+        </p>
+      </div>
     </div>
   );
 }
@@ -744,8 +860,9 @@ const ALL_TABS = [
   {id:"bank",        label:"Bank",             modes:["doppelt"], comingSoon: true},
   {id:"steuern",     label:"Steuern",          modes:["doppelt"]},
   {id:"lohnsteuer",  label:"Lohnsteuer",       modes:["doppelt"]},
-  {id:"export",      label:"Export",           modes:["einfach","doppelt"]},
-  {id:"hilfe",       label:"❓ Hilfe",         modes:["einfach","doppelt"]},
+  {id:"import",      label:"Daten importieren", modes:["einfach","doppelt"]},
+  {id:"export",      label:"Export",            modes:["einfach","doppelt"]},
+  {id:"hilfe",       label:"❓ Hilfe",          modes:["einfach","doppelt"]},
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -797,6 +914,7 @@ export default function AccountingPage() {
       case "bank_insights_disabled": return <BankInsights key={refreshKey}/>;
       case "steuern":    return <TaxDashboard key={refreshKey}/>;
       case "lohnsteuer": return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
+      case "import":     return <ImportTab onDone={triggerRefresh}/>;
       case "export":     return <ExportTab/>;
       case "hilfe":      return <HilfeTab onNavigate={goTo}/>;
       default:           return null;
