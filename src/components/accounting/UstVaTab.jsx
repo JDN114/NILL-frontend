@@ -5,6 +5,13 @@ import api from "../../services/api";
 const fmt    = (n) => Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtEur = (n) => `${fmt(n)} EUR`;
 
+const faelligkeitsDatum = (periode_bis) => {
+  if (!periode_bis) return "--";
+  const d = new Date(periode_bis);
+  const next = new Date(d.getFullYear(), d.getMonth() + 1, 10);
+  return next.toLocaleDateString("de-DE");
+};
+
 const KZ_BESCHREIBUNG = {
   kz_21_umsaetze_19:          { kz:"21", label:"Steuerpfl. Umsatze 19%",           typ:"umsatz" },
   kz_35_umsaetze_7:           { kz:"35", label:"Steuerpfl. Umsatze 7%",            typ:"umsatz" },
@@ -31,7 +38,7 @@ function PeriodStatus({ perioden }) {
               <td><span className="ac-badge ac-badge-gray">{p.art || "monatlich"}</span></td>
               <td>{p.status === "eingereicht" ? <span className="ac-badge ac-badge-green">Eingereicht</span> : <span className="ac-badge ac-badge-gray">Offen</span>}</td>
               <td className="ac-mono" style={{ textAlign:"right", color: (p.kz_65_zahllast || 0) >= 0 ? "var(--a3)" : "var(--accent)" }}>{fmtEur(p.kz_65_zahllast)}</td>
-              <td className="ac-mono">--</td>
+              <td className="ac-mono">{faelligkeitsDatum(p.periode_bis)}</td>
             </tr>
           ))}
         </tbody>

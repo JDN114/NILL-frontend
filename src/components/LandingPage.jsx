@@ -1102,7 +1102,7 @@ function Pricing({ onCTA }) {
         <div className="pricing-grid reveal in">
           {[
             {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],pop:false},
-            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Dedizierter Steuerberater-Zugang'],pop:true},
+            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Steuerberater-Einladung & Lesezugriff'],pop:true},
             {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],pop:false},
           ].map(({tier,sub,price,per,items,pop})=>{
             const ref2 = useRef(null); useTilt(ref2);
@@ -1172,10 +1172,9 @@ function Sustainability({ onCTA }) {
 function FAQ() {
   const [ref, vis] = useReveal();
   const items = [
-    ['Wo werden meine Daten gespeichert?','Alle Daten liegen verschlüsselt auf Servern in Deutschland (Frankfurt). Wir sind ISO 27001-konform, nach DSGVO geprüft und bieten auf Wunsch eine Private-Cloud-Instanz.'],
-    ['Ersetzt NILL meinen Steuerberater?','Nein — NILL bereitet alles so vor, dass dein Steuerberater deutlich weniger Zeit braucht. Dein Steuerberater bekommt einen dedizierten Zugang.'],
-    ['Wie lange dauert das Onboarding?','Die meisten Teams sind in 48 Stunden produktiv. Wir importieren deine bestehenden E-Mail-Konten, DATEV-Listen und Mitarbeiterdaten automatisch.'],
-    ['Kann ich einzelne Module abschalten?','Ja. Nutze nur, was du brauchst. Module lassen sich jederzeit aktivieren oder pausieren — ohne Vertragsanpassung.'],
+    ['Wo werden meine Daten gespeichert?','Alle Daten liegen verschlüsselt auf Servern in Deutschland (Frankfurt, Hetzner). Wir hosten ausschließlich in der EU, arbeiten DSGVO-konform und bieten auf Wunsch eine Private-Cloud-Instanz.'],
+    ['Ersetzt NILL meinen Steuerberater?','Nein — NILL bereitet alles so vor, dass dein Steuerberater deutlich weniger Zeit (und damit Kosten) braucht. Du kannst deinen Steuerberater einfach per E-Mail einladen und ihm Lesezugriff auf alle relevanten Auswertungen geben.'],
+    ['Wie lange dauert das Onboarding?','Die meisten Teams sind in 1–2 Werktagen startklar. Unser Team begleitet euch beim Setup, und bestehende Daten (E-Mail-Konten, Kontakte) lassen sich unkompliziert importieren.'],
     ['Was passiert, wenn die KI einen Fehler macht?','Jede automatische Aktion ist standardmäßig im "Vorschlags-Modus". Du entscheidest, was direkt geht, was freigegeben werden muss, und was dokumentiert wird.'],
     ['Wie nachhaltig ist NILL wirklich?','Unsere Kern-Infrastruktur läuft auf 100 % Ökostrom. Drittanbieter kompensieren wir zu 105 % über Gold-Standard-Projekte. Jährlicher Nachhaltigkeitsbericht auf Anfrage.'],
   ];

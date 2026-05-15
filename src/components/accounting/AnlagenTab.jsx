@@ -154,7 +154,7 @@ function AfaVorschau({ anlage }) {
       <div className="ac-form-row" style={{ marginBottom:12 }}>
         <label className="ac-label" style={{ alignSelf:"center" }}>Jahr:</label>
         <select className="ac-select" value={buchungJahr} onChange={e => setBuchungJahr(Number(e.target.value))}>
-          {[2023,2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+          {Array.from({length: 6}, (_, i) => new Date().getFullYear() - 2 + i).map(y => <option key={y} value={y}>{y}</option>)}
         </select>
       </div>
       {buchungMsg && (

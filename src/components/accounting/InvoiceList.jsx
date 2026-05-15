@@ -20,12 +20,15 @@ const STATUS_META = {
   unpaid:  { label:"Offen",      cls:"ac-badge-gray"   },
 };
 
-const norm = (inv) => ({
-  ...inv,
-  date:   inv.invoice_date || inv.date,
-  amount: inv.gross_amount || inv.amount,
-  status: inv.payment_status || inv.status || "open",
-});
+const norm = (inv) => {
+  const rawStatus = inv.payment_status || inv.status || "open";
+  return {
+    ...inv,
+    date:   inv.invoice_date || inv.date,
+    amount: inv.gross_amount || inv.amount,
+    status: rawStatus === "unpaid" ? "open" : rawStatus,
+  };
+};
 
 export default function InvoiceList() {
   const [invoices,    setInvoices]    = useState([]);

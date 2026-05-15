@@ -236,10 +236,6 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 // ── Übersicht ─────────────────────────────────────────────────────────────────────────────────
-const PERIODEN = [
-  { key:"3", label:"3M" }, { key:"6", label:"6M" },
-  { key:"12", label:"12M" }, { key:"all", label:"Alle" },
-];
 
 function OverviewTab() {
   const [dash,      setDash]      = useState(null);
@@ -258,9 +254,14 @@ function OverviewTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  const fmtMonat = (iso) => {
+    const [y, mo] = iso.split("-");
+    return new Date(parseInt(y), parseInt(mo) - 1).toLocaleDateString("de-DE", { month: "short", year: "2-digit" });
+  };
+
   const allArea = useMemo(() =>
     (dash?.monatsverlauf || []).map(m => ({
-      name: m.monat, Einnahmen: m.einnahmen, Ausgaben: m.ausgaben,
+      name: fmtMonat(m.monat), Einnahmen: m.einnahmen, Ausgaben: m.ausgaben,
     })), [dash]);
 
   const areaData = useMemo(() => {
@@ -291,8 +292,6 @@ function OverviewTab() {
         <div className="ac-kpi"><div className="ac-kpi-label">Buchungen gesamt</div><div className="ac-kpi-value">{dash.buchungen_gesamt ?? 0}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">USt-Zahllast lfd. Jahr</div><div className="ac-kpi-value">{fmtEur(dash.ust_zahllast)}</div></div>
       </div>
-
-      {dash._error && <div className="ac-alert ac-alert-warn" style={{marginBottom:16}}>⚠ {dash._error}</div>}
 
       <div className="ac-grid-2" style={{marginBottom:16}}>
         <div className="ac-card">
@@ -762,11 +761,6 @@ export default function AccountingPage() {
     [accountingMode]
   );
 
-  useEffect(() => {
-    api.post("/api/v1/buchhaltung/kontenrahmen/init").catch(() => {});
-  }, []);
-
-  // init Kontenrahmen
   useEffect(() => {
     api.post("/api/v1/buchhaltung/kontenrahmen/init")
       .catch(() => {})

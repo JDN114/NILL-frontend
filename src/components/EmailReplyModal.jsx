@@ -82,12 +82,10 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
       const fd = new FormData();
       fd.append("body", safeBody);
       if (showCc && cc) fd.append("cc", cc);
-      fd.append("use_template", !!templateId);
+      fd.append("use_template", String(!!templateId));
       if (templateId) fd.append("template_id", templateId);
       files.forEach(f => fd.append("files", f));
-      await api.post(`/gmail/emails/${emailId}/reply`, fd, {
-        headers: { "Content-Type": files.length ? "multipart/form-data" : "application/json" },
-      });
+      await api.post(`/gmail/emails/${emailId}/reply`, fd);
       onSent?.(safeBody); setBody(""); onClose();
     } catch {
       setError("Antwort konnte nicht gesendet werden.");

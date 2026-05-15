@@ -135,6 +135,16 @@ export default function GeschaeftspartnerTab() {
       setMahnungen(m.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const deactivate = async (id) => {
+    if (!window.confirm("Geschäftspartner wirklich deaktivieren?")) return;
+    try {
+      await api.delete(`/api/v1/buchhaltung/geschaeftspartner/${id}`);
+      load();
+    } catch (e) {
+      alert(e.response?.data?.detail || "Fehler");
+    }
+  };
   useEffect(() => { load(); }, [load]);
 
   const filtered = partner.filter(p => !filter || (p.firmenname || "").toLowerCase().includes(filter.toLowerCase()) || (p.nummer || "").toLowerCase().includes(filter.toLowerCase()) || (p.ort || "").toLowerCase().includes(filter.toLowerCase()));
@@ -172,10 +182,11 @@ export default function GeschaeftspartnerTab() {
                     <td className="ac-mono">{p.land || "DE"}</td>
                     <td className="ac-mono" style={{ color:"var(--ink2)", fontSize:".8rem" }}>{p.ust_id || "--"}</td>
                     <td style={{ fontSize:".82rem" }}>{p.email || "--"}</td>
-                    <td>
-                      {p.ist_debitor ? (
+                    <td style={{ display:"flex", gap:6 }}>
+                      {p.ist_debitor && (
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setMahnPartner(p)}>Mahnen</button>
-                      ) : null}
+                      )}
+                      <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => deactivate(p.id)}>Deaktivieren</button>
                     </td>
                   </tr>
                   );
@@ -195,7 +206,7 @@ export default function GeschaeftspartnerTab() {
                 const stufe = MAHNSTUFEN[m.mahnstufe] || { label: m.mahnstufe, color: "ac-badge-gray" };
                 return (
                   <tr key={m.id}>
-                    <td>{m.geschaeftspartner_name || m.geschaeftspartner_id}</td>
+                    <td>{partner.find(p => p.id === m.geschaeftspartner_id)?.firmenname || `ID ${m.geschaeftspartner_id}`}</td>
                     <td><span className={`ac-badge ${stufe.color}`}>{stufe.label}</span></td>
                     <td className="ac-mono">{m.mahnungsdatum}</td>
                     <td className="ac-mono">{m.faelligkeitsdatum || "--"}</td>

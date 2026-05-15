@@ -152,7 +152,7 @@ export const OutlookProvider = ({ children }) => {
   // =========================
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 15000);
+    const interval = setInterval(fetchStatus, 60000);
     return () => clearInterval(interval);
   }, [fetchStatus]);
 

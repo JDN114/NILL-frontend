@@ -254,7 +254,7 @@ export default function BerichteTab() {
           <div className="ac-form-col" style={{ maxWidth:160 }}>
             <label className="ac-label">Geschaftsjahr</label>
             <select className="ac-select" value={jahr} onChange={e => setJahr(Number(e.target.value))}>
-              {[2022,2023,2024,2025,2026].map(y => <option key={y} value={y}>{y}</option>)}
+              {Array.from({length: 5}, (_, i) => new Date().getFullYear() - 3 + i).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>

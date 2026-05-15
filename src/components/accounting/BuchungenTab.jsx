@@ -89,7 +89,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
             <select className="ac-select" value={form.periode_id}
               onChange={e => setForm(f => ({ ...f, periode_id: e.target.value }))}>
               {perioden.map(p => (
-                <option key={p.id} value={p.id}>{p.bezeichnung || `${p.monat}/${p.jahr}`}</option>
+                <option key={p.id} value={p.id}>{p.bezeichnung || `${p.von} – ${p.bis}`}</option>
               ))}
             </select>
           </div>
@@ -156,6 +156,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
 }
 
 export default function BuchungenTab() {
+  const today = new Date();
   const [buchungen, setBuchungen] = useState([]);
   const [konten, setKonten]       = useState([]);
   const [perioden, setPerioden]   = useState([]);
@@ -164,11 +165,13 @@ export default function BuchungenTab() {
   const [expanded, setExpanded]   = useState({});
   const [filter, setFilter]       = useState("");
   const [msg, setMsg]             = useState(null);
+  const [von, setVon]             = useState(`${today.getFullYear()}-01-01`);
+  const [bis, setBis]             = useState(today.toISOString().slice(0, 10));
 
   const load = useCallback(() => {
     setLoading(true);
     Promise.all([
-      api.get("/api/v1/buchhaltung/buchungen"),
+      api.get("/api/v1/buchhaltung/buchungen", { params: { von, bis, limit: 500 } }),
       api.get("/api/v1/buchhaltung/konten"),
       api.get("/api/v1/buchhaltung/perioden"),
     ]).then(([b, k, p]) => {
@@ -176,7 +179,7 @@ export default function BuchungenTab() {
       setKonten(k.data || []);
       setPerioden(p.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [von, bis]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -204,8 +207,16 @@ export default function BuchungenTab() {
 
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <input className="ac-input" style={{ maxWidth: 300 }} placeholder="Suche (Text, Belegnr.)..."
+      <div style={{ display:"flex", gap:10, alignItems:"flex-end", marginBottom:16, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          <label className="ac-label">Von</label>
+          <input className="ac-input" type="date" value={von} onChange={e => setVon(e.target.value)} style={{ width:140 }} />
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          <label className="ac-label">Bis</label>
+          <input className="ac-input" type="date" value={bis} onChange={e => setBis(e.target.value)} style={{ width:140 }} />
+        </div>
+        <input className="ac-input" style={{ flex:1, minWidth:180 }} placeholder="Suche (Text, Belegnr.)..."
           value={filter} onChange={e => setFilter(e.target.value)} />
         <button className="ac-btn ac-btn-primary" onClick={() => setShowModal(true)}>+ Buchungssatz</button>
       </div>

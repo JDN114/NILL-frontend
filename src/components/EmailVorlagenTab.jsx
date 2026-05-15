@@ -375,7 +375,7 @@ export default function EmailVorlagenTab() {
                 <button onClick={() => openEdit(t)}
                   className="text-xs text-slate-400 hover:text-white border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-1.5 transition-all hover:bg-[rgba(255,255,255,0.05)]">
                   Bearbeiten
-                </button>}
+                </button>
                 {t.is_own !== false && <button onClick={() => deleteTemplate(t.id)} disabled={deleting === t.id}
                   className="text-xs text-red-400 hover:text-red-300 border border-[rgba(248,113,113,0.2)] rounded-lg px-3 py-1.5 transition-all hover:bg-[rgba(248,113,113,0.08)] disabled:opacity-40">
                   {deleting === t.id ? "..." : "Löschen"}

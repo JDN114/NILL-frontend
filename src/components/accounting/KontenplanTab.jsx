@@ -26,7 +26,7 @@ export default function KontenplanTab() {
 
   const load = () => {
     setLoading(true);
-    api.get("/api/v1/buchhaltung/konten")
+    api.get("/api/v1/buchhaltung/konten", { params: { include_saldo: true } })
       .then(r => setKonten(r.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));

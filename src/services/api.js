@@ -10,9 +10,6 @@ if (!API_URL) {
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // 🔐 HttpOnly Cookies
-  headers: {
-    "Content-Type": "application/json",
-  },
   timeout: 15000,
 });
 
