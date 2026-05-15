@@ -280,7 +280,7 @@ function CameraRig({ cameraProxy, lookProxy, fovProxy }) {
 }
 
 /* ─── Scene — flat hierarchy, no nested function components ─────── */
-function SceneContent({ stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onReady }) {
+function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onReady }) {
   useEffect(() => { onReady?.() }, [onReady])
 
   return (
@@ -295,9 +295,9 @@ function SceneContent({ stationProxy, cameraProxy, lookProxy, thrusterProxy, fov
 
       <Suspense fallback={null}>
         <ISSModel
+          ref={issGroupRef}
           thrusterProxy={thrusterProxy}
           focusProxy={focusProxy}
-          stationProxy={stationProxy}
         />
       </Suspense>
 
@@ -307,7 +307,7 @@ function SceneContent({ stationProxy, cameraProxy, lookProxy, thrusterProxy, fov
 }
 
 /* ─── Public component ───────────────────────────────────────────── */
-export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onLoaded }) {
+export function ISSScene({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onLoaded }) {
   return (
     <Canvas
       dpr={[1, 1.6]}
@@ -319,6 +319,7 @@ export function ISSScene({ stationProxy, cameraProxy, lookProxy, thrusterProxy, 
       }}
     >
       <SceneContent
+        issGroupRef={issGroupRef}
         stationProxy={stationProxy}
         cameraProxy={cameraProxy}
         lookProxy={lookProxy}

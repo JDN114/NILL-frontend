@@ -339,19 +339,8 @@ export const ISSModel = forwardRef(function ISSModel({ thrusterProxy, focusProxy
   }, [])
 
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime
-
-    if (groupRef.current) {
-      const g = groupRef.current
-      g.position.x = Math.sin(t * 0.31) * 0.04
-      g.position.y = Math.sin(t * 0.23) * 0.055
-      g.position.z = Math.sin(t * 0.17) * 0.03
-      g.rotation.x = (stationProxy?.rotX ?? 0) + Math.sin(t * 0.07) * 0.005
-      g.rotation.y = (stationProxy?.rotY ?? 0) + Math.sin(t * 0.09) * 0.008
-      g.rotation.z = (stationProxy?.rotZ ?? 0) + Math.sin(t * 0.11) * 0.004
-    }
-
     if (!internalsRef.current) return
+    const t = clock.elapsedTime
     const intensity = thrusterProxy?.intensity ?? 0
     const activeFocus = focusProxy?.value ?? -1
     const { thrusterGlows, navLights, focusHalos } = internalsRef.current

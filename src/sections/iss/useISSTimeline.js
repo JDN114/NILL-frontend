@@ -48,6 +48,7 @@ function sampleWaypoints(p) {
 
 export function useISSTimeline({
   sectionRef,
+  issGroupRef,
   stationProxy,
   cameraProxy,
   lookProxy,
@@ -84,6 +85,7 @@ export function useISSTimeline({
       if (Math.abs(smoothP - rawP) < 1e-4) smoothP = rawP
 
       const s = sampleWaypoints(smoothP)
+      const t = performance.now() / 1000
 
       if (cameraProxy)   { cameraProxy.x   = s.cam.x;  cameraProxy.y   = s.cam.y;  cameraProxy.z = s.cam.z }
       if (lookProxy)     { lookProxy.x     = s.look.x; lookProxy.y     = s.look.y; lookProxy.z   = s.look.z }
@@ -91,6 +93,17 @@ export function useISSTimeline({
       if (thrusterProxy) { thrusterProxy.intensity = s.thruster }
       if (fovProxy)      { fovProxy.value = s.fov }
       if (focusProxy)    { focusProxy.value = s.focus }
+
+      // Apply rotation directly to the Three.js group — same tick as camera, guaranteed in sync
+      const g = issGroupRef?.current
+      if (g) {
+        g.position.x = Math.sin(t * 0.31) * 0.04
+        g.position.y = Math.sin(t * 0.23) * 0.055
+        g.position.z = Math.sin(t * 0.17) * 0.03
+        g.rotation.x = s.rotX + Math.sin(t * 0.07) * 0.005
+        g.rotation.y = s.rotY + Math.sin(t * 0.09) * 0.008
+        g.rotation.z = s.rotZ + Math.sin(t * 0.11) * 0.004
+      }
 
       if (s.card !== lastCard) {
         lastCard = s.card
@@ -113,5 +126,5 @@ export function useISSTimeline({
       window.removeEventListener('scroll', recomputeRaw)
       window.removeEventListener('resize', recomputeRaw)
     }
-  }, [sectionRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onPhaseChange, onCardChange, damping])
+  }, [sectionRef, issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onPhaseChange, onCardChange, damping])
 }

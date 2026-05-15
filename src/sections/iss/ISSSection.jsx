@@ -46,6 +46,7 @@ const MODULES = [
 
 export default function ISSSection() {
   const sectionRef = useRef(null)
+  const issGroupRef = useRef(null)
   const cardRefs = [useRef(null), useRef(null), useRef(null)]
 
   const [activeCard, setActiveCard] = useState(-1)
@@ -63,6 +64,7 @@ export default function ISSSection() {
 
   useISSTimeline({
     sectionRef,
+    issGroupRef,
     stationProxy,
     cameraProxy,
     lookProxy,
@@ -106,6 +108,7 @@ export default function ISSSection() {
 
         <div className="iss-canvas-wrap">
           <ISSScene
+            issGroupRef={issGroupRef}
             stationProxy={stationProxy}
             cameraProxy={cameraProxy}
             lookProxy={lookProxy}
