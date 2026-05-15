@@ -40,9 +40,9 @@ function sampleWaypoints(p) {
     rotZ:  lerp(a.rotZ, b.rotZ, local),
     fov:   lerp(a.fov,  b.fov,  local),
     thruster: lerp(a.thruster, b.thruster, local),
-    focus: local > 0.55 ? b.focus : a.focus,
-    card:  local > 0.55 ? b.card  : a.card,
-    phase: local > 0.55 ? b.phase : a.phase,
+    focus: local > 0.65 ? b.focus : a.focus,
+    card:  local > 0.65 ? b.card  : a.card,
+    phase: local > 0.65 ? b.phase : a.phase,
   }
 }
 
@@ -60,7 +60,10 @@ export function useISSTimeline({
   damping = 0.07,
 } = {}) {
   useEffect(() => {
-    if (!sectionRef?.current) return
+    if (!sectionRef?.current) {
+      console.warn('[ISS] sectionRef.current ist null – RAF wurde nicht gestartet')
+      return
+    }
 
     let raf = 0
     let rawP = 0
@@ -69,6 +72,21 @@ export function useISSTimeline({
     let lastPhase = ''
     let mounted = true
     let debugFrame = 0
+
+    // Immediate diagnostic — fires once on mount
+    {
+      const el = sectionRef.current
+      const vh = document.documentElement.clientHeight || window.innerHeight
+      console.log('[ISS INIT]', {
+        offsetH: el?.offsetHeight,
+        vh,
+        total: (el?.offsetHeight ?? 0) - vh,
+        rTop: el?.getBoundingClientRect().top?.toFixed(1),
+        scrollY: window.scrollY,
+        bodyScrollTop: document.body.scrollTop,
+        docScrollTop: document.documentElement.scrollTop,
+      })
+    }
 
     // getBoundingClientRect reflects any scroll container (window or inner div).
     // Called inside RAF so the DOM is always in a fully-settled, consistent state —
