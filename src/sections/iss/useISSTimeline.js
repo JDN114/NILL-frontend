@@ -73,7 +73,7 @@ export function useISSTimeline({
       const el = sectionRef.current
       if (!el) return
       const r = el.getBoundingClientRect()
-      const total = el.offsetHeight - window.innerHeight
+      const total = el.offsetHeight - document.documentElement.clientHeight
       if (total <= 0) { rawP = 0; return }
       rawP = clamp(-r.top / total, 0, 1)
     }
