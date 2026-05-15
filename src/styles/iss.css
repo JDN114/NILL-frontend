@@ -38,17 +38,6 @@
   position: absolute;
   inset: 0;
 }
-.iss-canvas-wrap::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 20%;
-  background: linear-gradient(to bottom, #02030a 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
-}
 .iss-canvas-wrap canvas {
   display: block;
   width: 100% !important;

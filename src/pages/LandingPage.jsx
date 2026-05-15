@@ -5,7 +5,7 @@ import '../styles/landing.css'
 
 const __css = `
 :root{
-  --bg:#040407;--bg-2:#08080c;--ink:#efede7;--ink-dim:rgba(239,237,231,.5);--ink-faint:rgba(239,237,231,.14);
+  --bg:#02030a;--bg-2:#06070f;--ink:#efede7;--ink-dim:rgba(239,237,231,.5);--ink-faint:rgba(239,237,231,.14);
   --line:rgba(239,237,231,.07);--glass:rgba(255,255,255,.035);--glass-strong:rgba(255,255,255,.06);
   --accent:#c6ff3c;--accent-2:#7a5cff;--accent-3:#ff4d8d;--accent-4:#38f5d0;
   --serif:"Fraunces","Iowan Old Style",Georgia,serif;
@@ -64,8 +64,8 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 .btn:hover .arrow{transform:translateX(4px)}
 
 /* HERO */
-.hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 80px;display:flex;align-items:center;overflow:hidden}
-.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40vh;background:linear-gradient(to bottom,transparent,#02030a 80%);z-index:2;pointer-events:none}
+.hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 0;display:flex;align-items:center;overflow:hidden}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:18vh;background:linear-gradient(to bottom,transparent,#02030a);z-index:2;pointer-events:none}
 .hero-inner{position:relative;z-index:3;width:100%}
 .hero-eyebrow{margin-bottom:24px}
 .hero h1{margin-bottom:28px;max-width:14ch}
