@@ -65,7 +65,7 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 
 /* HERO */
 .hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 80px;display:flex;align-items:center;overflow:hidden}
-.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:35vh;background:linear-gradient(to bottom,transparent,var(--bg) 85%);z-index:2;pointer-events:none}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40vh;background:linear-gradient(to bottom,transparent,#02030a 80%);z-index:2;pointer-events:none}
 .hero-inner{position:relative;z-index:3;width:100%}
 .hero-eyebrow{margin-bottom:24px}
 .hero h1{margin-bottom:28px;max-width:14ch}
@@ -587,31 +587,37 @@ function buildScene(canvas) {
   const T = THREE;
   const renderer = new T.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.0));
-  renderer.setClearColor(0x000000, 1);
+  renderer.setClearColor(0x02030a, 1);
 
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(42, 2, 0.1, 300);
   camera.position.set(0, 1.8, 11.0);
   camera.lookAt(0, 0, 0);
 
-  /* STARS — Points only, clean black BG */
-  const N = 350;
+  /* STARS — ISS-quality shader: 2200 stars, color-tinted, same GLSL as ISSScene */
+  const N = 2200;
   const sp = new Float32Array(N * 3);
   const ss = new Float32Array(N);
+  const sc = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) {
-    const r = 30 + Math.random() * 70, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+    const r = 60 + Math.random() * 70, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
     sp[i*3]   = r * Math.sin(ph) * Math.cos(th);
     sp[i*3+1] = r * Math.sin(ph) * Math.sin(th);
     sp[i*3+2] = r * Math.cos(ph);
     ss[i] = 0.4 + Math.random() * 1.4;
+    const tint = Math.random();
+    sc[i*3]   = tint < .15 ? 1   : (tint > .85 ? .7  : .95);
+    sc[i*3+1] = tint < .15 ? .85 : (tint > .85 ? .8  : .95);
+    sc[i*3+2] = tint < .15 ? .7  : (tint > .85 ? 1   : .95);
   }
   const sGeo = new T.BufferGeometry();
   sGeo.setAttribute('position', new T.BufferAttribute(sp, 3));
-  sGeo.setAttribute('size', new T.BufferAttribute(ss, 1));
+  sGeo.setAttribute('starSize', new T.BufferAttribute(ss, 1));
+  sGeo.setAttribute('color', new T.BufferAttribute(sc, 3));
   const starMat = new T.ShaderMaterial({
     uniforms: {},
-    vertexShader: `attribute float size;void main(){gl_PointSize=size*(700./-(modelViewMatrix*vec4(position,1.)).z);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader: `void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.3,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(1.,.97,.92,a*.8);}`,
+    vertexShader: `attribute float starSize;attribute vec3 color;varying vec3 vC;void main(){vC=color;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `varying vec3 vC;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.25,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vC,a*.85);}`,
     transparent: true, depthWrite: false, blending: T.AdditiveBlending
   });
   const stars = new T.Points(sGeo, starMat);

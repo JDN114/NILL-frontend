@@ -410,6 +410,9 @@ export default function SettingsPage() {
   const [refundLoading,     setRefundLoading]     = useState(false);
   const [refundDone,        setRefundDone]        = useState(null);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+  const [cancelLoading,     setCancelLoading]     = useState(false);
+  const [cancelDone,        setCancelDone]        = useState(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // ── DSGVO Export ────────────────────────────────────────────────────────
   const [gdprExporting, setGdprExporting] = useState(false);
@@ -694,6 +697,20 @@ export default function SettingsPage() {
       alert(e?.response?.data?.detail || "Rückerstattung fehlgeschlagen.");
     } finally {
       setRefundLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
+    try {
+      const r = await api.post("/me/cancel-subscription");
+      setCancelDone(r.data);
+      setSubscription(s => ({ ...s, cancel_at_period_end: true }));
+      setShowCancelConfirm(false);
+    } catch (e) {
+      alert(e?.response?.data?.detail || "Kündigung fehlgeschlagen. Bitte versuche es erneut.");
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -1379,6 +1396,73 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* ── Abonnement kündigen ─────────────────────────────────── */}
+                {subscription?.has_subscription && (
+                  <div style={{ ...panelStyle, borderColor: subscription?.cancel_at_period_end ? "rgba(239,68,68,0.25)" : border }}>
+                    <SectionHead title="Abonnement kündigen" />
+                    <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+                      {cancelDone || subscription?.cancel_at_period_end ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                          <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+                          <p style={{ fontSize: "0.85rem", color: text, fontWeight: 700, margin: 0 }}>
+                            Kündigung vorgemerkt
+                          </p>
+                          <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                            {cancelDone?.message || (
+                              subscription?.next_billing_date
+                                ? `Dein Abonnement läuft zum ${new Date(subscription.next_billing_date).toLocaleDateString("de-DE")} aus. Bis dahin hast du vollen Zugriff.`
+                                : "Dein Abonnement wird zum Ende der aktuellen Abrechnungsperiode beendet."
+                            )}
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                            Dein Abonnement läuft bis zum Ende der aktuellen Abrechnungsperiode weiter.
+                            Danach wird dein Account automatisch auf Free zurückgesetzt — du verlierst keinen Cent für die bereits bezahlte Zeit.
+                          </p>
+
+                          {!showCancelConfirm ? (
+                            <button
+                              onClick={() => setShowCancelConfirm(true)}
+                              style={{ ...btnDanger, alignSelf: "flex-start" }}>
+                              Abonnement kündigen
+                            </button>
+                          ) : (
+                            <div style={{
+                              padding: "1rem", borderRadius: 10,
+                              background: "rgba(239,68,68,0.06)",
+                              border: "1px solid rgba(239,68,68,0.25)",
+                              display: "flex", flexDirection: "column", gap: "0.75rem",
+                            }}>
+                              <p style={{ fontSize: "0.83rem", color: text, fontWeight: 700, margin: 0 }}>
+                                Abonnement wirklich kündigen?
+                              </p>
+                              <p style={{ fontSize: "0.8rem", color: dim, margin: 0 }}>
+                                Du behältst deinen Zugriff bis zum Ende des aktuellen Abrechnungszeitraums.
+                                Danach werden alle Pro-Funktionen deaktiviert. Eine Reaktivierung ist jederzeit möglich.
+                              </p>
+                              <div style={{ display: "flex", gap: "0.65rem" }}>
+                                <button onClick={() => setShowCancelConfirm(false)} style={btnGhost}>
+                                  Abbrechen
+                                </button>
+                                <button
+                                  onClick={handleCancelSubscription}
+                                  disabled={cancelLoading}
+                                  style={{ ...btnDanger, opacity: cancelLoading ? 0.6 : 1 }}>
+                                  {cancelLoading ? "Wird bearbeitet…" : "Ja, kündigen"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </>
             )}
 
