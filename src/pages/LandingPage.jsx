@@ -65,7 +65,8 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 
 /* HERO */
 .hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 0;display:flex;align-items:center;overflow:hidden}
-.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:18vh;background:linear-gradient(to bottom,transparent,#02030a);z-index:2;pointer-events:none}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:24vh;background:linear-gradient(to bottom,transparent,#02030a);z-index:2;pointer-events:none}
+.iss-section{margin-top:-22vh!important}
 .hero-inner{position:relative;z-index:3;width:100%}
 .hero-eyebrow{margin-bottom:24px}
 .hero h1{margin-bottom:28px;max-width:14ch}
