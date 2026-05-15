@@ -93,18 +93,12 @@ const ICONS = {
   settings:      "◉",
 };
 
-const NILL_ICONS = {
-  travel: "✈️", application: "👤", contract: "📄",
-  onboarding: "🚀", competitor: "🔍", meeting: "📅",
-  daily: "◈", default: "◈",
-};
 
 export default function DashboardLanding() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour]       = useState(false);
   const [userName, setUserName]       = useState(null);
-  const [notifications, setNotifications]         = useState([]);
-  const [nillNotifications, setNillNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [accountingMode, setAccountingMode] = useState(
     () => localStorage.getItem("nill_accounting_mode") || "doppelt"
   );
@@ -125,9 +119,6 @@ export default function DashboardLanding() {
       if (r.data.is_subscription_active && !r.data.has_seen_onboarding) setShowWelcome(true);
     }).catch(() => {});
     api.get("/me/notifications").then(r => setNotifications(r.data || [])).catch(() => {});
-    if (hasModule("nill")) {
-      api.get("/nill/notifications/dashboard").then(r => setNillNotifications(r.data || [])).catch(() => {});
-    }
   }, []);
 
   const handleWelcomeClose = async () => {
@@ -145,7 +136,7 @@ export default function DashboardLanding() {
     { key: "settings",    title: "Einstellungen",  desc: "Account & Verbindungen",            link: "/dashboard/settings",       feature: null,         module: null,         adminOnly: true },
   ].filter(c => !c.adminOnly || isCompanyAdmin());
 
-  const actionCount = nillNotifications.filter(n => n.requires_action).length;
+  const actionCount = 0;
   const greeting    = org?.name ?? userName ?? null;
   const hour        = new Date().getHours();
   const timeOfDay   = hour < 12 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
@@ -173,33 +164,13 @@ export default function DashboardLanding() {
                 : <>{timeOfDay}<em>.</em></>
               }
             </h1>
-            <p className="nd-welcome-sub">
-              {hasModule("nill") && actionCount > 0
-                ? `NILL hat ${actionCount} Aufgabe${actionCount !== 1 ? "n" : ""} für dich vorbereitet.`
-                : "Alles im grünen Bereich — keine offenen Aufgaben."}
-            </p>
+            <p className="nd-welcome-sub">Alles im grünen Bereich — keine offenen Aufgaben.</p>
 
             {/* Notifications */}
-            {(notifications.length > 0 || (hasModule("nill") && nillNotifications.length > 0)) && (
+            {notifications.length > 0 && (
               <div className="nd-notifs">
                 {notifications.slice(0, 2).map((n, i) => (
                   <div key={i} className="nd-notif">{n.message}</div>
-                ))}
-                {hasModule("nill") && nillNotifications.slice(0, 3).map((n, i) => (
-                  <div
-                    key={i}
-                    className="nd-notif nd-notif-nill"
-                    onClick={() => navigate(`/dashboard/nill?module=${n.module || "applications"}`)}
-                  >
-                    <span>{NILL_ICONS[n.type] || NILL_ICONS.default}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="nd-notif-label">NILL</div>
-                      <div style={{ marginTop: 2 }}>{n.message}</div>
-                    </div>
-                    {n.requires_action && (
-                      <span className="nd-notif-action">Aktion</span>
-                    )}
-                  </div>
                 ))}
               </div>
             )}
@@ -283,11 +254,7 @@ export default function DashboardLanding() {
                           </div>
                         ))}
                       </div>
-                      <p className="nd-card-desc" style={{ marginTop: 4 }}>
-                        {nillNotifications.length > 0
-                          ? `${nillNotifications.length} neue Meldung${nillNotifications.length !== 1 ? "en" : ""}`
-                          : "Keine offenen Aufgaben"}
-                      </p>
+                      <p className="nd-card-desc" style={{ marginTop: 4 }}>Keine offenen Aufgaben</p>
                       <div className="nd-card-arrow">Öffnen <span>→</span></div>
                     </Link>
                   </motion.div>

@@ -899,7 +899,7 @@ function Products({ onCTA }) {
     <section id="produkte">
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">Module — 06</span><h2>Sechs Module. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Eine</em> Intelligenz.</h2></div>
+          <div><span className="eyebrow">Module — 05 live · 01 in Entwicklung</span><h2>Sechs Module. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Eine</em> Intelligenz.</h2></div>
           <p className="lead">Jedes Modul steht für sich — doch gemeinsam werden sie zu einem Gehirn, das dein Unternehmen versteht.</p>
         </div>
         <div className="bento reveal in">
@@ -921,10 +921,10 @@ function Products({ onCTA }) {
             </div>
           </TiltCard>
           <TiltCard className="k3">
-            <div><span className="tag"><span className="n">03</span> · Inventur</span><h3>Bestände, die sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>selbst zählen.</em></h3><p>Automatische Fortschreibung, Warnsystem bei Unterbestand, Prognosen.</p></div>
+            <div><span className="tag"><span className="n">03</span> · Inventur</span><h3>Bestände, die sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>selbst zählen.</em></h3><p>Automatische Fortschreibung, Meldegrenzen mit Benachrichtigung.</p></div>
           </TiltCard>
           <TiltCard className="k4">
-            <div><span className="tag"><span className="n">04</span> · Zeiterfassung</span><h3>Zeit erfasst sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>von selbst.</em></h3><p>Per App, Browser, Chip oder Sprachbefehl. NILL weist Projekte zu.</p></div>
+            <div><span className="tag"><span className="n">04</span> · Zeiterfassung</span><h3>Zeit erfasst sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>per Klick.</em></h3><p>Per App oder Browser. NILL weist Projekte zu und berechnet Überstunden.</p></div>
             <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--ink-dim)',display:'flex',justifyContent:'space-between'}}><span>EuGH-konform</span><span>GPS-optional</span></div>
           </TiltCard>
           <TiltCard className="k5">
@@ -978,11 +978,11 @@ function FeatureWalkthrough() {
         <div className="feature-sticky">
           <div className="text-col">
             {[
-              {scene:'inbox',  idx:'01',title:'07:48 — Die erste Mail liegt schon beantwortet bereit.',text:'NILL hat die Nacht durchgearbeitet. 47 E-Mails gesichtet, 12 automatisch beantwortet, 3 zur Freigabe vorbereitet.'},
+              {scene:'inbox',  idx:'01',title:'07:48 — Die erste Mail liegt schon vorbereitet bereit.',text:'NILL hat die Nacht durchgearbeitet. 47 E-Mails gesichtet, 12 Antworten vorformuliert, 3 zur Freigabe bereit.'},
               {scene:'ledger', idx:'02',title:'09:15 — Der Handwerker schickt die Rechnung per Foto.',text:'OCR, Kontierung, Zuordnung zum richtigen Projekt, Vorbereitung für DATEV — in 4 Sekunden.'},
               {scene:'inventory',idx:'03',title:'11:02 — Zwei Artikel rutschen unter die Meldegrenze.',text:'NILL kennt deinen Lieferanten, deine Rabattstufen, deine historische Liefertreue. Die Nachbestellung liegt auf deinem Schreibtisch.'},
-              {scene:'time',   idx:'04',title:'13:30 — Mittagspause. Erfasst sich selbst.',text:'Keine App öffnen. Keine Buttons. Die KI erkennt Muster, Projekte, Pausen und Überstunden. EuGH-konform.'},
-              {scene:'team',   idx:'05',title:'16:48 — Zwei Krankmeldungen, ein Dienstplan neu.',text:'NILL plant den Morgen um, informiert die betroffenen Kunden, schlägt den passenden Springer vor.'},
+              {scene:'time',   idx:'04',title:'13:30 — Mittagspause. Per Klick erfasst.',text:'App oder Browser öffnen, Projekt wählen, starten. NILL berechnet Projekte, Pausen und Überstunden. EuGH-konform.'},
+              {scene:'team',   idx:'05',title:'16:48 — Zwei Krankmeldungen, ein Dienstplan neu.',text:'NILL zeigt die Lücken, informiert die betroffenen Kunden und schlägt den passenden Springer vor (folgt Q4 2026).'},
             ].map(({scene,idx,title,text})=>(
               <div key={scene} className="step-item" data-scene={scene}>
                 <div className="step-index"><em>{idx}</em> / {['Postfach','Buchhaltung','Inventur','Zeiterfassung','Team­verwaltung'][parseInt(idx)-1]}</div>
@@ -1063,35 +1063,7 @@ function Stats() {
           <div className="stat"><div className="num"><em>3,5</em><span>×</span></div><div className="label">Schneller im Alltag</div></div>
           <div className="stat"><div className="num"><span ref={countRef}>{count}</span><em>%</em></div><div className="label">Weniger manuelle Arbeit</div></div>
           <div className="stat"><div className="num"><em>24</em><span>/</span><em>7</em></div><div className="label">KI im Einsatz</div></div>
-          <div className="stat"><div className="num"><em>06</em><span>·</span><em>01</em></div><div className="label">Module · Ein Login</div></div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── TESTIMONIALS ───────────────────────────────────────── */
-function Testimonials() {
-  const [ref, vis] = useReveal();
-  const quotes = [
-    {q:'„Seit NILL läuft meine Buchhaltung <em>nebenbei.</em> Ich fotografiere den Beleg und vergesse ihn. Mein Steuerberater hat nichts mehr zu meckern."', name:'Martin K.', role:'Inhaber · Sanitär-Meisterbetrieb', av:'MK', avStyle:{}},
-    {q:'„Das Postfach beantwortet sich selbst — <em>nüchtern und gut formuliert.</em> Ich prüfe nur noch und klicke auf senden."', name:'Sandra R.', role:'Geschäftsführung · Logistik, 42 MA', av:'SR', avStyle:{background:'linear-gradient(135deg,var(--accent-3),var(--accent-2))'}},
-    {q:'„Die Dienstpläne kommen automatisch. Wenn jemand krank ist, liegt der <em>Ersatz schon bereit.</em> Das spart Stunden pro Woche."', name:'Andreas H.', role:'Teamleitung · Pflegedienst', av:'AH', avStyle:{background:'linear-gradient(135deg,var(--accent),var(--accent-4))'}},
-  ];
-  return (
-    <section>
-      <div className="wrap">
-        <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">Stimmen aus der Praxis</span><h2>Was Teams <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>spüren.</em></h2></div>
-          <p className="lead">Kein Feature-Katalog. Sondern weniger Abende am Schreibtisch.</p>
-        </div>
-        <div className="quotes reveal in">
-          {quotes.map(({q,name,role,av,avStyle})=>(
-            <figure key={name} className="quote">
-              <blockquote dangerouslySetInnerHTML={{__html:q}}/>
-              <footer><span className="avatar" style={{width:38,height:38,...avStyle}}>{av}</span><div><div className="name">{name}</div><div className="role">{role}</div></div></footer>
-            </figure>
-          ))}
+          <div className="stat"><div className="num"><em>05</em><span>·</span><em>01</em></div><div className="label">Module live · Ein Login</div></div>
         </div>
       </div>
     </section>
@@ -1106,13 +1078,13 @@ function Pricing({ onCTA }) {
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
           <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Eins. Zwei. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Drei.</em></h2></div>
-          <p className="lead">Alle Pakete beinhalten alle sechs Module. Kündbar monatlich.</p>
+          <p className="lead">Transparent. Ohne versteckte Kosten. Monatlich kündbar.</p>
         </div>
         <div className="pricing-grid reveal in">
           {[
-            {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],pop:false},
-            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Dedizierter Steuerberater-Zugang'],pop:true},
-            {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],pop:false},
+            {tier:'Solo',sub:'Für Einzelunternehmer & kleine Büros',price:'25',per:'€ / Monat · 1–2 Nutzer',items:['E-Mail, Kalender & Buchhaltung','OCR-Belegerfassung & DATEV-ready','Rechnungserstellung & PDF-Export','KI-Kategorisierung & Vorschläge','E-Mail-Support'],pop:false},
+            {tier:'Team',sub:'Für wachsende Teams & KMUs',price:'50',per:'€ / Monat · bis 10 Nutzer',items:['Alles aus Solo — für bis zu 10 Nutzer','Lohnbuchhaltung & HR-Verwaltung','Arbeitszeiterfassung & Stempeluhr','Urlaubs- & Abwesenheitsverwaltung','Priority-Support'],pop:true},
+            {tier:'Business',sub:'Für größere Unternehmen',price:'90',per:'€ / Monat · 10+ Nutzer',items:['Alles aus Team — unbegrenzte Nutzer','API-Zugang & Webhooks (folgt Q4 2026)','Erweiterte KI-Automatisierungen','Priorisierter Support mit SLA-Garantie'],pop:false},
           ].map(({tier,sub,price,per,items,pop})=>{
             const ref2 = useRef(null); useTilt(ref2);
             return (
@@ -1156,7 +1128,7 @@ function Sustainability({ onCTA }) {
           </div>
         </div>
         <div className="nh-stats reveal in">
-          {[['100 %','Rechenzentren erneuerbar','Frankfurt & Paris — Stromversorgung aus Wasserkraft und Wind.'],['<2 g','CO₂ pro KI-Anfrage','Effiziente Modelle, Caching, Batching — jede Operation wird gemessen.'],['105 %','Überkompensation','Wir kompensieren 5 % mehr als unser Fußabdruck.']].map(([val,lbl,txt])=>(
+          {[['100 %','Rechenzentrum erneuerbar','Frankfurt — Stromversorgung aus erneuerbaren Energien.'],['<2 g','CO₂ pro KI-Anfrage','Effiziente Modelle, Caching, Batching — jede Operation wird gemessen.'],['105 %','Überkompensation','Wir kompensieren 5 % mehr als unser Fußabdruck.']].map(([val,lbl,txt])=>(
             <div key={lbl} className="nh-stat">
               <div className="val"><em>{val}</em></div>
               <span className="lbl">{lbl}</span><p>{txt}</p>
@@ -1181,12 +1153,11 @@ function Sustainability({ onCTA }) {
 function FAQ() {
   const [ref, vis] = useReveal();
   const items = [
-    ['Wo werden meine Daten gespeichert?','Alle Daten liegen verschlüsselt auf Servern in Deutschland (Frankfurt). Wir sind ISO 27001-konform, nach DSGVO geprüft und bieten auf Wunsch eine Private-Cloud-Instanz.'],
-    ['Ersetzt NILL meinen Steuerberater?','Nein — NILL bereitet alles so vor, dass dein Steuerberater deutlich weniger Zeit braucht. Dein Steuerberater bekommt einen dedizierten Zugang.'],
-    ['Wie lange dauert das Onboarding?','Die meisten Teams sind in 48 Stunden produktiv. Wir importieren deine bestehenden E-Mail-Konten, DATEV-Listen und Mitarbeiterdaten automatisch.'],
-    ['Kann ich einzelne Module abschalten?','Ja. Nutze nur, was du brauchst. Module lassen sich jederzeit aktivieren oder pausieren — ohne Vertragsanpassung.'],
+    ['Wo werden meine Daten gespeichert?','Alle Daten liegen verschlüsselt auf Servern in Deutschland (Frankfurt). Wir sind nach DSGVO geprüft und bieten auf Wunsch eine Private-Cloud-Instanz.'],
+    ['Ersetzt NILL meinen Steuerberater?','Nein — NILL bereitet alles so auf, dass dein Steuerberater deutlich weniger Zeit braucht. DATEV-ready Export sorgt für reibungslose Übergabe.'],
+    ['Wie lange dauert das Onboarding?','Die meisten Teams sind in 48 Stunden produktiv. Wir unterstützen bei der Einrichtung deiner E-Mail-Konten und Module.'],
     ['Was passiert, wenn die KI einen Fehler macht?','Jede automatische Aktion ist standardmäßig im "Vorschlags-Modus". Du entscheidest, was direkt geht, was freigegeben werden muss, und was dokumentiert wird.'],
-    ['Wie nachhaltig ist NILL wirklich?','Unsere Kern-Infrastruktur läuft auf 100 % Ökostrom. Drittanbieter kompensieren wir zu 105 % über Gold-Standard-Projekte. Jährlicher Nachhaltigkeitsbericht auf Anfrage.'],
+    ['Wie nachhaltig ist NILL wirklich?','Unsere Kern-Infrastruktur läuft auf 100 % Ökostrom in Frankfurt. Drittanbieter kompensieren wir zu 105 % über Gold-Standard-Projekte. Jährlicher Nachhaltigkeitsbericht auf Anfrage.'],
   ];
   return (
     <section id="faq">
@@ -1344,7 +1315,6 @@ export default function LandingPage() {
       <Products onCTA={openModal}/>
       <FeatureWalkthrough/>
       <Stats/>
-      <Testimonials/>
       <Pricing onCTA={openModal}/>
       <Sustainability onCTA={openModal}/>
       <FAQ/>

@@ -63,11 +63,10 @@ const PLANS = [
     yearlyPrice: 864,
     features: [
       "Alles aus Team — unbegrenzte Nutzerzahl",
-      "API-Zugang & Webhooks",
+      "API-Zugang & Webhooks (folgt Q4 2026)",
       "Erweiterte KI-Automatisierungen",
       "Priorisierter Support mit SLA-Garantie",
-      "Persönliches Onboarding durch unser Team",
-      "Nutzungsanalysen & individuelle Berichte",
+      "Nutzungsanalysen & individuelle Berichte (folgt Q4 2026)",
     ],
   },
 ];
@@ -302,7 +301,7 @@ export default function PricingPage() {
     try {
       const res = await axios.post(
         `${API_URL}/billing/create-checkout-session`,
-        { plan: planId, billing_cycle: "monthly" }, // yearly not yet in Stripe — always monthly
+        { plan: planId, billing_cycle: cycle },
         { withCredentials: true }
       );
       if (res?.data?.checkout_url) {
@@ -452,7 +451,7 @@ export default function PricingPage() {
             </div>
             {cycle === "yearly" && (
               <p style={{ fontFamily: mono, fontSize: 11, color: inkDim, letterSpacing: "0.1em", margin: 0 }}>
-                Jährliche Abrechnung — Abrechnung erfolgt derzeit monatlich · jährliche Zahlung auf Anfrage
+                Jährliche Abrechnung — einmal jährlich in Rechnung gestellt · 2 Monate gratis
               </p>
             )}
           </div>
