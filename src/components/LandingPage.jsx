@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 
 const __css = `
 :root{
@@ -1100,10 +1101,10 @@ function Pricing({ onCTA }) {
         </div>
         <div className="pricing-grid reveal in">
           {[
-            {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],cta:'Paket wählen',intent:'Paket'},
-            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Dedizierter Steuerberater-Zugang'],cta:'Demo vereinbaren',intent:'Demo',pop:true},
-            {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],cta:'Gespräch anfragen',intent:'Gespräch'},
-          ].map(({tier,sub,price,per,items,cta,intent,pop})=>{
+            {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],pop:false},
+            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Dedizierter Steuerberater-Zugang'],pop:true},
+            {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],pop:false},
+          ].map(({tier,sub,price,per,items,pop})=>{
             const ref2 = useRef(null); useTilt(ref2);
             return (
               <article key={tier} ref={ref2} className={`price${pop?' pop':''}`}>
@@ -1111,7 +1112,7 @@ function Pricing({ onCTA }) {
                 <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
                 <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
                 <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
-                <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} onClick={e=>{e.preventDefault();onCTA(intent)}} href="#"><span>{cta}</span><span className="arrow">→</span></MagBtn>
+                <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Mehr Erfahren</span><span className="arrow">→</span></MagBtn>
               </article>
             );
           })}
@@ -1216,9 +1217,22 @@ function Footer() {
       <div className="wrap">
         <div className="foot-grid">
           <div><div className="brand" style={{marginBottom:18}}><span className="brand-mark"/><span>NILL</span></div><p style={{maxWidth:'32ch'}}>Das KI-Betriebssystem für Unternehmen. Gebaut in Deutschland, gehostet in Frankfurt.</p></div>
-          <div><h4>Produkt</h4><ul>{['Module','Preise','FAQ','Changelog'].map(l=><li key={l}><a href={l==='Module'?'#produkte':l==='Preise'?'#preise':l==='FAQ'?'#faq':'#'}>{l}</a></li>)}</ul></div>
-          <div><h4>Unternehmen</h4><ul>{['Über uns','Karriere','Blog','Presse'].map(l=><li key={l}><a href="#">{l}</a></li>)}</ul></div>
-          <div><h4>Rechtliches</h4><ul>{['Impressum','Datenschutz','AGB','Sicherheit'].map(l=><li key={l}><a href="#">{l}</a></li>)}</ul></div>
+          <div><h4>Produkt</h4><ul>
+            <li><a href="#produkte">Module</a></li>
+            <li><a href="#preise">Preise</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><Link to="/changelog">Changelog</Link></li>
+          </ul></div>
+          <div><h4>Unternehmen</h4><ul>
+            <li><Link to="/ueber-uns">Über uns</Link></li>
+            <li><Link to="/karriere">Karriere</Link></li>
+          </ul></div>
+          <div><h4>Rechtliches</h4><ul>
+            <li><Link to="/Impressum">Impressum</Link></li>
+            <li><Link to="/Datenschutz">Datenschutz</Link></li>
+            <li><Link to="/agb">AGB</Link></li>
+            <li><Link to="/sicherheit">Sicherheit</Link></li>
+          </ul></div>
         </div>
         <div className="wordmark">NILL<em>.</em></div>
         <div className="foot-meta"><span>© 2026 NILL GmbH · nillai.de</span><span>Made with intelligence · Frankfurt a.M.</span></div>

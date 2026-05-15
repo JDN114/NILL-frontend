@@ -43,6 +43,9 @@ import InviteAcceptPage from "./pages/InviteAcceptPage";
 import FeatureRoute from "./FeatureRoute";
 import UpgradePage from "./pages/UpgradePage";
 import AGB from "./pages/AGB";
+import ChangelogPage from "./pages/ChangelogPage";
+import SicherheitPage from "./pages/SicherheitPage";
+import KarrierePage from "./pages/KarrierePage";
 import Footer from "./components/Footer";
 import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
 import HrDocuments from "./pages/HrDocuments.jsx";
@@ -89,6 +92,10 @@ function App() {
 		<Route path="/agb" element={<AGB />} />
 		<Route path="/about-nill" element={<AboutNillPage />} />
 		<Route path="/about-us" element={<AboutUsPage />} />
+		<Route path="/ueber-uns" element={<AboutUsPage />} />
+		<Route path="/changelog" element={<ChangelogPage />} />
+		<Route path="/sicherheit" element={<SicherheitPage />} />
+		<Route path="/karriere" element={<KarrierePage />} />
 		<Route path="/founder" element={<Founder />} />
 		<Route path="/roadmap" element={<Roadmap />} />
 		<Route path="/invite/:token" element={<InviteAcceptPage />} />
