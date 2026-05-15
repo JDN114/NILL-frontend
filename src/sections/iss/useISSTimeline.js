@@ -46,19 +46,6 @@ function sampleWaypoints(p) {
   }
 }
 
-// Walk the offsetParent chain to get element's top in document coordinates.
-// Zoom-stable: all values are in layout CSS pixels, unaffected by visual-viewport
-// pinch zoom or browser zoom.
-function getLayoutTop(el) {
-  let top = 0
-  let cur = el
-  while (cur) {
-    top += cur.offsetTop
-    cur = cur.offsetParent
-  }
-  return top
-}
-
 export function useISSTimeline({
   sectionRef,
   issGroupRef,
@@ -81,38 +68,47 @@ export function useISSTimeline({
     let lastCard = -2
     let lastPhase = ''
     let mounted = true
-    let elLayoutTop = 0
+    let debugFrame = 0
 
-    // Measure the element's absolute document-top — only needs re-running on resize.
-    const measureElTop = () => {
-      const el = sectionRef.current
-      if (el) elLayoutTop = getLayoutTop(el)
-    }
-
-    // Recompute progress using window.scrollY + layout top.
-    // Both values are in layout CSS pixels → zoom-invariant.
-    // Polled every RAF frame so no dependency on scroll events firing.
+    // getBoundingClientRect reflects any scroll container (window or inner div).
+    // Called inside RAF so the DOM is always in a fully-settled, consistent state —
+    // zoom transitions included. No resize listener needed: within a single RAF
+    // frame both r.top and total scale proportionally with any browser zoom,
+    // so rawP stays invariant.
     const recomputeRaw = () => {
       const el = sectionRef.current
       if (!el) return
+      const r = el.getBoundingClientRect()
       const vh = document.documentElement.clientHeight || window.innerHeight
       const total = el.offsetHeight - vh
       if (total <= 0) { rawP = 0; return }
-      rawP = clamp((window.scrollY - elLayoutTop) / total, 0, 1)
-    }
-
-    const onResize = () => {
-      measureElTop()
-      recomputeRaw()
+      rawP = clamp(-r.top / total, 0, 1)
     }
 
     const tick = () => {
       if (!mounted) return
       raf = requestAnimationFrame(tick)
 
-      // Poll scroll position every frame — works for any scroll container
-      // and is not affected by missing/delayed scroll events.
+      // Poll every frame — works for window scroll, inner-div scroll, and
+      // any other scroll container. No dependency on scroll/resize events.
       recomputeRaw()
+
+      // DEBUG — remove after diagnosing
+      if (debugFrame++ % 60 === 0) {
+        const el = sectionRef.current
+        if (el) {
+          const r = el.getBoundingClientRect()
+          const vh = document.documentElement.clientHeight || window.innerHeight
+          console.log('[ISS]', {
+            scrollY: window.scrollY,
+            rTop: r.top.toFixed(1),
+            offsetH: el.offsetHeight,
+            vh,
+            total: el.offsetHeight - vh,
+            rawP: rawP.toFixed(3),
+          })
+        }
+      }
 
       smoothP = lerp(smoothP, rawP, damping)
       if (Math.abs(smoothP - rawP) < 1e-4) smoothP = rawP
@@ -148,15 +144,11 @@ export function useISSTimeline({
       }
     }
 
-    measureElTop()
-    recomputeRaw()
     raf = requestAnimationFrame(tick)
-    window.addEventListener('resize', onResize)
 
     return () => {
       mounted = false
       cancelAnimationFrame(raf)
-      window.removeEventListener('resize', onResize)
     }
   }, [sectionRef, issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onPhaseChange, onCardChange, damping])
 }
