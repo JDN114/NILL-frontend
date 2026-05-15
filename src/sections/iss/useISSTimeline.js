@@ -71,22 +71,6 @@ export function useISSTimeline({
     let lastCard = -2
     let lastPhase = ''
     let mounted = true
-    let debugFrame = 0
-
-    // Immediate diagnostic — fires once on mount
-    {
-      const el = sectionRef.current
-      const vh = document.documentElement.clientHeight || window.innerHeight
-      console.log('[ISS INIT]', {
-        offsetH: el?.offsetHeight,
-        vh,
-        total: (el?.offsetHeight ?? 0) - vh,
-        rTop: el?.getBoundingClientRect().top?.toFixed(1),
-        scrollY: window.scrollY,
-        bodyScrollTop: document.body.scrollTop,
-        docScrollTop: document.documentElement.scrollTop,
-      })
-    }
 
     // getBoundingClientRect reflects any scroll container (window or inner div).
     // Called inside RAF so the DOM is always in a fully-settled, consistent state —
@@ -110,23 +94,6 @@ export function useISSTimeline({
       // Poll every frame — works for window scroll, inner-div scroll, and
       // any other scroll container. No dependency on scroll/resize events.
       recomputeRaw()
-
-      // DEBUG — remove after diagnosing
-      if (debugFrame++ % 60 === 0) {
-        const el = sectionRef.current
-        if (el) {
-          const r = el.getBoundingClientRect()
-          const vh = document.documentElement.clientHeight || window.innerHeight
-          console.log('[ISS]', {
-            scrollY: window.scrollY,
-            rTop: r.top.toFixed(1),
-            offsetH: el.offsetHeight,
-            vh,
-            total: el.offsetHeight - vh,
-            rawP: rawP.toFixed(3),
-          })
-        }
-      }
 
       smoothP = lerp(smoothP, rawP, damping)
       if (Math.abs(smoothP - rawP) < 1e-4) smoothP = rawP
