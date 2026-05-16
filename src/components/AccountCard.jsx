@@ -71,12 +71,12 @@ export default function AccountCard() {
    * ----------------------------- */
   const gmailLogin = () => {
     window.location.href =
-      `${process.env.REACT_APP_BACKEND_URL}/email-accounts/gmail/auth`;
+      `${import.meta.env.VITE_API_URL}/email-accounts/gmail/auth`;
   };
 
   const outlookLogin = () => {
     window.location.href =
-      `${process.env.REACT_APP_BACKEND_URL}/email-accounts/outlook/auth`;
+      `${import.meta.env.VITE_API_URL}/email-accounts/outlook/auth`;
   };
 
   /* -----------------------------

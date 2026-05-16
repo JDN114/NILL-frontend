@@ -36,6 +36,10 @@ function luminance({ r, g, b }) {
 function neutralizeStyle(styleStr) {
   if (!styleStr) return styleStr;
 
+  // Block CSS exfiltration: remove any url(), expression(), javascript: from styles
+  const dangerous = /url\s*\(|expression\s*\(|javascript\s*:/i;
+  if (dangerous.test(styleStr)) return "";
+
   return styleStr
     // Entferne explizit weiße/helle Backgrounds
     .replace(/background(?:-color)?\s*:\s*([^;]+)/gi, (match, val) => {

@@ -59,7 +59,7 @@ export default function ContactForm() {
 
     try {
       await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL || ""}/api/contact`,
+        `${import.meta.env.VITE_API_URL || ""}/api/contact`,
         {
           email: safeEmail,
           message: safeMessage,
