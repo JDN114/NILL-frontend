@@ -1,25 +1,15 @@
-import React, { useEffect } from "react";
+import React from "react";
 import LegalLayout from "../components/LegalLayout";
 
 export default function AGB() {
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://www.it-recht-kanzlei.de/js/itrk-legaltext.js";
-    script.async = true;
-
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   return (
     <LegalLayout title="Allgemeine Geschäftsbedingungen">
-      <div
-        className="itrk-legaltext"
-        data-itrk-legaltext-url="https://itrk.legal/1yEr.4V.17NW-iframe.html"
-      ></div>
+      <iframe
+        src="https://itrk.legal/1yEr.4V.17NW-iframe.html"
+        title="Allgemeine Geschäftsbedingungen"
+        style={{ width: "100%", minHeight: "80vh", border: "none" }}
+        loading="lazy"
+      />
     </LegalLayout>
   );
 }

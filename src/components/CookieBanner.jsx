@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { initAnalytics } from "../utils/analytics";
+import api from "../services/api";
 
 const KEY = "nill_cookie_v1";
 
@@ -44,6 +45,8 @@ export default function CookieBanner() {
       ts: new Date().toISOString(),
     }));
     if (withAnalytics) initAnalytics();
+    // Persist server-side for logged-in users (TTDSG) — fire-and-forget
+    api.post("/me/consent", { analytics: withAnalytics }).catch(() => {});
     setShow(false);
   };
 
@@ -203,7 +206,9 @@ export default function CookieBanner() {
                 <div>
                   <div style={{ fontSize:".82rem", fontWeight:600, color:"#efede7" }}>Notwendige Cookies</div>
                   <div style={{ fontSize:".73rem", color:"rgba(239,237,231,.38)", marginTop:2 }}>
-                    Session · Authentifizierung · Sicherheit — immer aktiv
+                    Session · Authentifizierung · Sicherheit — immer aktiv.
+                    Dazu gehören Stripe-Cookies (<code>__stripe_mid</code>, <code>__stripe_sid</code>)
+                    für die sichere Zahlungsabwicklung.
                   </div>
                 </div>
                 <span style={{

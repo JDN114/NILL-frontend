@@ -343,11 +343,22 @@ function Drawer({ onClose, title, subtitle, maxWidth = 580, children }) {
   );
 }
 
-function InfoBlock({ label, children, color = T.textSec }) {
+function AITag() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
+      <span style={{ fontFamily: FONT_MONO, fontSize: ".63rem", color: T.textTer, letterSpacing: ".04em", opacity: .8 }}>
+        Generiert von NILL KI · gpt-4o-mini
+      </span>
+    </div>
+  );
+}
+
+function InfoBlock({ label, children, color = T.textSec, aiGenerated = false }) {
   return (
     <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 6, padding: "12px 16px", marginBottom: 12 }}>
       <MonoLabel>{label}</MonoLabel>
       <div style={{ fontFamily: FONT_BODY, fontSize: 13, color, lineHeight: 1.65 }}>{children}</div>
+      {aiGenerated && <AITag />}
     </div>
   );
 }
@@ -398,7 +409,10 @@ function OverviewModule({ nillNotifications, dailySummary }) {
 
       {dailySummary?.message && (
         <>
-          <MonoLabel>Tagesabschluss</MonoLabel>
+          <MonoLabel>
+            Tagesabschluss{" "}
+            <span title="KI-generierter Inhalt" aria-label="KI-generierter Inhalt" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", color: "rgba(139,92,246,0.85)", background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: 4, padding: "1px 5px", verticalAlign: "middle", userSelect: "none" }}>KI</span>
+          </MonoLabel>
           <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `3px solid ${T.accent}`, borderRadius: "0 6px 6px 0", padding: "14px 18px", marginBottom: 28 }}>
             <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{dailySummary.message}</p>
           </div>
@@ -435,6 +449,7 @@ function ApplicationsModule() {
   const [filterStatus, setFilterStatus] = useState("");
   const [position, setPosition] = useState("");
   const [error, setError] = useState(null);
+  const [showAiDisclosure, setShowAiDisclosure] = useState(false);
 
   useEffect(() => { fetchApps(); }, [filterStatus]);
 
@@ -457,6 +472,7 @@ function ApplicationsModule() {
       if (position) form.append("position", position);
       const res = await api.post("/nill/applications/upload", form, { headers: { "Content-Type": "multipart/form-data" } });
       setApplications(prev => [res.data, ...prev]);
+      setShowAiDisclosure(true);
     } catch { setError("Upload fehlgeschlagen."); }
     finally { setUploading(false); }
   }
@@ -494,6 +510,18 @@ function ApplicationsModule() {
       </div>
 
       <UploadZone onFiles={handleUpload} loading={uploading} sublabel="PDF · Lebenslauf oder Anschreiben" />
+      {showAiDisclosure && (
+        <div style={{ background: T.warnDim, border: `1px solid ${T.warn}40`, borderRadius: 6, padding: "10px 14px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+          <div>
+            <p style={{ margin: "0 0 4px", fontFamily: FONT_MONO, fontSize: 10, color: T.warn, letterSpacing: ".06em" }}>EU AI ACT ART. 50 — HINWEISPFLICHT</p>
+            <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textSec, lineHeight: 1.55 }}>
+              Bewerber müssen darüber informiert werden, dass ihre Unterlagen durch ein KI-System analysiert wurden.
+              Bitte nehmen Sie einen entsprechenden Hinweis in Ihre Datenschutzerklärung oder Ihr Bewerbungsformular auf.
+            </p>
+          </div>
+          <button onClick={() => setShowAiDisclosure(false)} style={{ background: "none", border: "none", color: T.textTer, cursor: "pointer", fontSize: 14, flexShrink: 0 }}>✕</button>
+        </div>
+      )}
       <div style={{ marginTop: -12, marginBottom: 20 }}>
         <input
           type="text" placeholder="Stelle (optional)"
@@ -555,24 +583,24 @@ function ApplicationsModule() {
                 <StatusPill status={selected.status} onChange={s => handleStatusChange(selected.id, s)} />
               </div>
             </div>
-            <InfoBlock label="Zusammenfassung" color={T.textPri}>{selected.ai_summary}</InfoBlock>
+            <InfoBlock label="Zusammenfassung" color={T.textPri} aiGenerated>{selected.ai_summary}</InfoBlock>
             <TwoCol
               left={
-                <InfoBlock label="Stärken" color={T.accent}>
+                <InfoBlock label="Stärken" color={T.accent} aiGenerated>
                   <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
                     {(selected.ai_strengths || []).map((s, i) => <li key={i} style={{ marginBottom: 4 }}>{s}</li>)}
                   </ul>
                 </InfoBlock>
               }
               right={
-                <InfoBlock label="Schwächen" color={T.danger}>
+                <InfoBlock label="Schwächen" color={T.danger} aiGenerated>
                   <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
                     {(selected.ai_weaknesses || []).map((w, i) => <li key={i} style={{ marginBottom: 4 }}>{w}</li>)}
                   </ul>
                 </InfoBlock>
               }
             />
-            <InfoBlock label="NILL-Empfehlung" color={T.info}>{selected.ai_recommendation}</InfoBlock>
+            <InfoBlock label="NILL-Empfehlung" color={T.info} aiGenerated>{selected.ai_recommendation}</InfoBlock>
           </Drawer>
         )}
       </AnimatePresence>
@@ -598,11 +626,12 @@ function Row({ label, value, valueColor = T.textPri, mono = false }) {
   );
 }
 
-function Block({ label, children, accent }) {
+function Block({ label, children, accent, aiGenerated = false }) {
   return (
     <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: accent ? `2px solid ${accent}` : undefined, borderRadius: accent ? "0 6px 6px 0" : 6, padding: "14px 16px", marginBottom: 12 }}>
       {label && <MonoLabel>{label}</MonoLabel>}
       {children}
+      {aiGenerated && <AITag />}
     </div>
   );
 }
@@ -875,6 +904,7 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
             <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderLeft: `2px solid ${T.accent}`, borderRadius: "0 6px 6px 0", padding: "12px 16px", marginBottom: 16 }}>
               <MonoLabel>NILL-Zusammenfassung</MonoLabel>
               <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{plan.summary}</p>
+              <AITag />
             </div>
           )}
 
@@ -896,7 +926,7 @@ function TravelPlanDrawer({ trip, onClose, onConfirm, onReject, onRegenerate }) 
 
           {/* NILL Recommendation */}
           {plan.nill_recommendation && (
-            <Block label="NILL-Empfehlung" accent={T.accent}>
+            <Block label="NILL-Empfehlung" accent={T.accent} aiGenerated>
               <p style={{ margin: 0, fontFamily: FB, fontSize: 13, color: T.textPri, lineHeight: 1.65 }}>{plan.nill_recommendation}</p>
             </Block>
           )}
@@ -1057,6 +1087,7 @@ function TravelModule() {
                       {t.ai_suggestion.slice(0, 120)}{t.ai_suggestion.length > 120 ? "…" : ""}
                     </p>
                   )}
+                  {t.ai_suggestion && <AITag />}
                 </div>
               );
             })}
@@ -1139,9 +1170,9 @@ function ContractsModule() {
       <AnimatePresence>
         {selected && (
           <Drawer onClose={() => setSelected(null)} title={selected.title || selected.filename} maxWidth={560}>
-            {selected.ai_summary && <InfoBlock label="Zusammenfassung" color={T.textPri}>{selected.ai_summary}</InfoBlock>}
+            {selected.ai_summary && <InfoBlock label="Zusammenfassung" color={T.textPri} aiGenerated>{selected.ai_summary}</InfoBlock>}
             {(selected.key_points || []).length > 0 && (
-              <InfoBlock label="Kernpunkte">
+              <InfoBlock label="Kernpunkte" aiGenerated>
                 <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
                   {selected.key_points.map((k, i) => <li key={i} style={{ fontFamily: FONT_BODY, fontSize: 13, color: T.textSec, marginBottom: 4 }}>{k}</li>)}
                 </ul>
@@ -1379,9 +1410,9 @@ function MeetingsModule() {
       <AnimatePresence>
         {selected && (
           <Drawer onClose={() => setSelected(null)} title={selected.title} subtitle={selected.date ? new Date(selected.date).toLocaleString("de-DE", { dateStyle: "full", timeStyle: "short" }) : ""} maxWidth={580}>
-            {selected.ai_briefing && <InfoBlock label="Briefing" color={T.textPri}><span style={{ whiteSpace: "pre-wrap" }}>{selected.ai_briefing}</span></InfoBlock>}
+            {selected.ai_briefing && <InfoBlock label="Briefing" color={T.textPri} aiGenerated><span style={{ whiteSpace: "pre-wrap" }}>{selected.ai_briefing}</span></InfoBlock>}
             {(selected.talking_points || []).length > 0 && (
-              <InfoBlock label="Gesprächspunkte">
+              <InfoBlock label="Gesprächspunkte" aiGenerated>
                 <ul style={{ margin: 0, padding: "0 0 0 14px" }}>
                   {selected.talking_points.map((pt, i) => <li key={i} style={{ fontFamily: FONT_BODY, fontSize: 13, color: T.textSec, marginBottom: 4 }}>{pt}</li>)}
                 </ul>

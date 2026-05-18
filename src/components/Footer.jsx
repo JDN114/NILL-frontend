@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { openCookieSettings } from "./CookieBanner";
 
 export default function Footer() {
   return (
@@ -22,6 +23,11 @@ export default function Footer() {
           onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
           Impressum
         </Link>
+        <Link to="/barrierefreiheit" style={{ color: "inherit", textDecoration: "none" }}
+          onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
+          onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
+          Barrierefreiheit
+        </Link>
         <Link to="/Datenschutz" style={{ color: "inherit", textDecoration: "none" }}
           onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
           onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
@@ -32,6 +38,17 @@ export default function Footer() {
           onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>
           AGBs
         </Link>
+        <button
+          onClick={openCookieSettings}
+          style={{
+            background: "none", border: "none", padding: 0, cursor: "pointer",
+            color: "inherit", font: "inherit", textDecoration: "none",
+          }}
+          onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
+          onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}
+        >
+          Cookie-Einstellungen
+        </button>
       </nav>
     </footer>
   );

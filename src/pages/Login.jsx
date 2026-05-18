@@ -18,6 +18,12 @@ export default function Login() {
   const [tfaMethod, setTfaMethod] = useState("totp"); // "totp" | "email" | "webauthn"
   const [emailSent, setEmailSent] = useState(false);
 
+  // Forgot-password state
+  const [forgotEmail, setForgotEmail]     = useState("");
+  const [forgotSent, setForgotSent]       = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError]     = useState(null);
+
   const [searchParams] = useSearchParams();
   const inactivityLogout = searchParams.get("reason") === "inactivity";
 
@@ -87,6 +93,20 @@ export default function Login() {
       setError(err?.response?.data?.detail || "E-Mail konnte nicht gesendet werden.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleForgotSubmit(e) {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotLoading(true);
+    try {
+      await api.post("/auth/request-reset", { email: forgotEmail });
+      setForgotSent(true);
+    } catch (err) {
+      setForgotError(err?.response?.data?.detail || "Fehler. Bitte versuche es erneut.");
+    } finally {
+      setForgotLoading(false);
     }
   }
 
@@ -379,8 +399,9 @@ export default function Login() {
 
               <form onSubmit={handleSubmit} noValidate>
                 <div className="nill-field">
-                  <label className="nill-label">E-Mail</label>
+                  <label className="nill-label" htmlFor="login-email">E-Mail</label>
                   <input
+                    id="login-email"
                     className="nill-input"
                     type="email"
                     placeholder="du@firma.de"
@@ -388,12 +409,14 @@ export default function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     required
+                    aria-required="true"
                   />
                 </div>
 
                 <div className="nill-field">
-                  <label className="nill-label">Passwort</label>
+                  <label className="nill-label" htmlFor="login-password">Passwort</label>
                   <input
+                    id="login-password"
                     className="nill-input"
                     type="password"
                     placeholder="••••••••"
@@ -401,6 +424,7 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     required
+                    aria-required="true"
                   />
                 </div>
 
@@ -414,9 +438,64 @@ export default function Login() {
               <div className="nill-divider" />
 
               <p className="nill-auth-footer">
+                <span className="link" onClick={() => { setStep("forgot"); setError(null); }}>
+                  Passwort vergessen?
+                </span>
+              </p>
+              <p className="nill-auth-footer" style={{ marginTop: 10 }}>
                 Noch kein Konto?{" "}
                 <span className="link" onClick={() => navigate("/register")}>
                   Registrieren
+                </span>
+              </p>
+            </>
+          ) : step === "forgot" ? (
+            <>
+              <h1 className="nill-auth-heading">Passwort <em>vergessen?</em></h1>
+              <p className="nill-auth-sub">Wir schicken dir einen Reset-Link an deine E-Mail.</p>
+
+              {forgotSent ? (
+                <div style={{
+                  padding: "16px 18px",
+                  background: "rgba(198,255,60,.07)",
+                  border: "1px solid rgba(198,255,60,.25)",
+                  borderRadius: 12,
+                  fontSize: 13,
+                  color: "rgba(239,237,231,.8)",
+                  lineHeight: 1.6,
+                }}>
+                  Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.
+                  Bitte prüfe deinen Posteingang.
+                </div>
+              ) : (
+                <form onSubmit={handleForgotSubmit} noValidate>
+                  <div className="nill-field">
+                    <label className="nill-label" htmlFor="forgot-email">E-Mail</label>
+                    <input
+                      id="forgot-email"
+                      className="nill-input"
+                      type="email"
+                      placeholder="du@firma.de"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      autoComplete="email"
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  {forgotError && <div className="nill-error">{forgotError}</div>}
+
+                  <button className="nill-btn-primary" type="submit" disabled={forgotLoading || !forgotEmail}>
+                    {forgotLoading ? "Sende…" : "Reset-Link senden →"}
+                  </button>
+                </form>
+              )}
+
+              <div className="nill-divider" />
+              <p className="nill-auth-footer">
+                <span className="link" onClick={() => { setStep("credentials"); setForgotSent(false); setForgotEmail(""); setForgotError(null); }}>
+                  ← Zurück zur Anmeldung
                 </span>
               </p>
             </>

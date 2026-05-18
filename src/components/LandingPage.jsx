@@ -1324,8 +1324,32 @@ export default function LandingPage() {
   const openModal = useCallback((intent) => setModalIntent(intent || 'default'), []);
   const closeModal = useCallback(() => setModalIntent(null), []);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "NILL",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "description": "KI-gestütztes Betriebssystem für Unternehmen — Postfach, Buchhaltung, Inventur, Zeiterfassung und Teamverwaltung in einem System.",
+    "url": "https://nillai.de",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "EUR",
+      "availability": "https://schema.org/InStock"
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "NILL",
+      "url": "https://nillai.de"
+    }
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="vignette" aria-hidden="true"/>
       <Nav onDemo={openModal}/>
       <Hero onCTA={openModal}/>

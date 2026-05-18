@@ -1,0 +1,4 @@
+Contact: mailto:security@nillai.de
+Expires: 2027-05-17T00:00:00.000Z
+Preferred-Languages: de, en
+Policy: https://nillai.de/security-policy

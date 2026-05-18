@@ -607,6 +607,18 @@ function RechnungenList({ onNew, onEdit }) {
     } catch { alert("PDF-Download fehlgeschlagen."); }
   };
 
+  const downloadXRechnung = async (id, nr) => {
+    try {
+      const r = await api.get(`/api/v1/rechnungen/${id}/xrechnung`, { responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "application/xml" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `XRechnung-${nr || id}.xml`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert("XRechnung-Download fehlgeschlagen."); }
+  };
+
   const totalOffen = rechnungen
     .filter(r => r.status === "offen")
     .reduce((s, r) => s + Number(r.brutto_summe || 0), 0);
@@ -684,12 +696,18 @@ function RechnungenList({ onNew, onEdit }) {
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           style={{ color: "var(--a3)" }} onClick={() => del(r.id)}>Löschen</button>
                       </>)}
-                      {(r.status === "offen" || r.status === "bezahlt") && (
+                      {(r.status === "offen" || r.status === "bezahlt") && (<>
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
-                          onClick={() => downloadPdf(r.id, r.rechnungsnummer)}>
+                          onClick={() => downloadPdf(r.id, r.rechnungsnummer)}
+                          title="PDF herunterladen">
                           📄 PDF
                         </button>
-                      )}
+                        <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
+                          onClick={() => downloadXRechnung(r.id, r.rechnungsnummer)}
+                          title="XRechnung 3.0 XML (EN 16931) — ab 2025 Pflicht für B2B">
+                          🧾 XML
+                        </button>
+                      </>)}
                       {r.status === "offen" && (<>
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           onClick={() => act(r.id, "bezahlt")}>✓ Bezahlt</button>

@@ -37,6 +37,7 @@ import AboutUsPage from "./pages/AboutUsPage";
 import Founder from "./pages/Founder";
 import Roadmap from "./pages/Roadmap";
 import VerifyEmail from "./pages/VerifyEmail";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import VerificationFailed from "./pages/VerificationFailed";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
@@ -52,6 +53,7 @@ import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
 import CallsModule from "./pages/CallsModule.jsx";
 import Widerruf from "./pages/Widerruf.jsx";
+import Barrierefreiheit from "./pages/Barrierefreiheit";
 import useInactivityLogout from "./hooks/useInactivityLogout";
 import { useAuth } from "./context/AuthContext";
 
@@ -85,6 +87,7 @@ function App() {
   	        <Route path="/onboarding" element={<OnboardingPage />} />
   	        <Route path="/pricing" element={<Pricing />} />
 		<Route path="/verify-email" element={<VerifyEmail />} />
+		<Route path="/reset-password" element={<ResetPasswordPage />} />
 		<Route path="/verification-success" element={<VerificationSuccess />} />
  		<Route path="/verification-failed" element={<VerificationFailed />} />
 		<Route path="/Impressum" element={<Impressum />} />
@@ -100,6 +103,7 @@ function App() {
 		<Route path="/roadmap" element={<Roadmap />} />
 		<Route path="/invite/:token" element={<InviteAcceptPage />} />
                 <Route path="/Widerruf" element={<Widerruf />} />
+                <Route path="/barrierefreiheit" element={<Barrierefreiheit />} />
 
 		{/* Upgrade / Access Denied */}
 		<Route path="/upgrade" element={

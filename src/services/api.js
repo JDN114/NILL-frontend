@@ -13,6 +13,24 @@ const api = axios.create({
   timeout: 15000,
 });
 
+// Read a cookie value by name
+function _getCookie(name) {
+  const v = `; ${document.cookie}`;
+  const parts = v.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return null;
+}
+
+// CSRF double-submit: attach token from cookie to every state-changing request
+api.interceptors.request.use((config) => {
+  const method = (config.method || "get").toUpperCase();
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const token = _getCookie("csrf_token");
+    if (token) config.headers["X-CSRF-Token"] = token;
+  }
+  return config;
+});
+
 // ------------------------------------
 // AUTH
 // ------------------------------------

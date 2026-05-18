@@ -415,7 +415,9 @@ export default function SettingsPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // ── DSGVO Export ────────────────────────────────────────────────────────
-  const [gdprExporting, setGdprExporting] = useState(false);
+  const [gdprExporting,      setGdprExporting]      = useState(false);
+  const [gdprCsvExporting,   setGdprCsvExporting]   = useState(false);
+  const [auskunftExporting,  setAuskunftExporting]  = useState(false);
 
   // ── Company form ────────────────────────────────────────────────────────
   const [orgName,    setOrgName]    = useState(org?.name     ?? "");
@@ -732,6 +734,41 @@ export default function SettingsPage() {
     }
   };
 
+  const handleGdprCsvExport = async () => {
+    setGdprCsvExporting(true);
+    try {
+      const r = await api.get("/me/gdpr/export", { params: { format: "csv" }, responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "application/zip" }));
+      const a   = document.createElement("a");
+      a.href    = url;
+      a.download = `DSGVO_Export_${new Date().toISOString().slice(0,10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("CSV-Export fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setGdprCsvExporting(false);
+    }
+  };
+
+  const handleAuskunft = async () => {
+    setAuskunftExporting(true);
+    try {
+      const r = await api.get("/me/gdpr/auskunft");
+      const blob = new Blob([JSON.stringify(r.data, null, 2)], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `nill-dsgvo-auskunft-art15-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Auskunft fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setAuskunftExporting(false);
+    }
+  };
+
   const gmailIsConnected   = gmailConn   === true || gmailConn?.connected   === true;
   const outlookIsConnected = outlookConn === true || outlookConn?.connected === true;
 
@@ -927,14 +964,33 @@ export default function SettingsPage() {
                   <SectionHead title="Datenschutz & DSGVO" />
                   <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                     <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
-                      Gemäß Art. 20 DSGVO kannst du alle deine gespeicherten Daten als JSON-Datei exportieren.
+                      Gemäß <strong>Art. 20 DSGVO</strong> kannst du alle gespeicherten Daten als JSON oder CSV-ZIP exportieren
+                      (inkl. E-Mails, Bewerbungen, Reisen, Verträge, Meetings).
+                      Gemäß <strong>Art. 15 DSGVO</strong> erhältst du eine formelle Auskunft über alle Verarbeitungszwecke,
+                      Empfänger und Aufbewahrungsfristen.
                     </p>
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <button
+                        style={{ ...btnGhost, opacity: gdprExporting ? 0.6 : 1 }}
+                        disabled={gdprExporting}
+                        onClick={handleGdprExport}
+                      >
+                        {gdprExporting ? "Wird exportiert…" : "Datenkopie herunterladen (JSON)"}
+                      </button>
+                      <button
+                        style={{ ...btnGhost, opacity: gdprCsvExporting ? 0.6 : 1 }}
+                        disabled={gdprCsvExporting}
+                        onClick={handleGdprCsvExport}
+                      >
+                        {gdprCsvExporting ? "Wird exportiert…" : "Datenkopie herunterladen (CSV-ZIP)"}
+                      </button>
+                    </div>
                     <button
-                      style={{ ...btnGhost, opacity: gdprExporting ? 0.6 : 1 }}
-                      disabled={gdprExporting}
-                      onClick={handleGdprExport}
+                      style={{ ...btnGhost, opacity: auskunftExporting ? 0.6 : 1 }}
+                      disabled={auskunftExporting}
+                      onClick={handleAuskunft}
                     >
-                      {gdprExporting ? "Wird exportiert…" : "Meine Daten herunterladen"}
+                      {auskunftExporting ? "Wird erstellt…" : "Datenschutz-Auskunft (Art. 15)"}
                     </button>
                   </div>
                 </div>

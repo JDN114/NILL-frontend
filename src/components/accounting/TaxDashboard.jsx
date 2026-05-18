@@ -67,10 +67,37 @@ export default function TaxDashboard() {
   const [ust, setUst]               = useState(null);
   const [loading, setLoading]       = useState(true);
   const [showProfile, setShowProfile] = useState(false);
+  const [gobdExporting, setGobdExporting] = useState(false);
+  const [gobdVon, setGobdVon] = useState(`${new Date().getFullYear()}-01-01`);
+  const [gobdBis, setGobdBis] = useState(new Date().toISOString().slice(0, 10));
 
   const today = new Date();
   const von = `${today.getFullYear()}-01-01`;
   const bis = today.toISOString().slice(0,10);
+
+  const downloadGobdExport = async () => {
+    if (!gobdVon || !gobdBis) { alert("Bitte Von- und Bis-Datum wählen."); return; }
+    setGobdExporting(true);
+    try {
+      const r = await api.get("/tax/gobd-export", {
+        params: { von: gobdVon, bis: gobdBis },
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "application/zip" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `GoBD_Export_${gobdVon}_${gobdBis}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      const detail = e.response?.data
+        ? await e.response.data.text?.().then(t => { try { return JSON.parse(t).detail; } catch { return t; } }).catch(() => null)
+        : null;
+      alert(detail || "GoBD-Export fehlgeschlagen.");
+    } finally {
+      setGobdExporting(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -126,6 +153,48 @@ export default function TaxDashboard() {
       <div className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
         Steuerliche Angaben ohne Gewahr. Bitte mit Steuerberater abstimmen.
       </div>
+
+      {/* GoBD Betriebsprüfungsexport */}
+      <div className="ac-card" style={{ marginTop:16 }}>
+        <div className="ac-section-title" style={{ marginBottom:12 }}>
+          GoBD-Export (§147 Abs. 6 AO)
+        </div>
+        <p style={{ fontSize:".82rem", color:"var(--ink2)", marginBottom:14, lineHeight:1.5 }}>
+          Erzeugt eine prüfkonforme ZIP-Datei mit <strong>INDEX.XML</strong> und CSV-Dateien
+          (Eingangsrechnungen, Ausgangsrechnungen, Banktransaktionen) — kompatibel mit IDEA und DATEV.
+        </p>
+        <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+            <label style={{ fontSize:".75rem", color:"var(--ink2)" }}>Von</label>
+            <input
+              type="date"
+              className="ac-input"
+              style={{ width:150 }}
+              value={gobdVon}
+              onChange={e => setGobdVon(e.target.value)}
+            />
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+            <label style={{ fontSize:".75rem", color:"var(--ink2)" }}>Bis</label>
+            <input
+              type="date"
+              className="ac-input"
+              style={{ width:150 }}
+              value={gobdBis}
+              onChange={e => setGobdBis(e.target.value)}
+            />
+          </div>
+          <button
+            className="ac-btn ac-btn-ghost ac-btn-sm"
+            style={{ marginTop:18, opacity: gobdExporting ? 0.6 : 1 }}
+            disabled={gobdExporting}
+            onClick={downloadGobdExport}
+          >
+            {gobdExporting ? "Wird exportiert…" : "⬇ GoBD-ZIP herunterladen"}
+          </button>
+        </div>
+      </div>
+
       {showProfile && <LegalFormModal onClose={() => setShowProfile(false)} />}
     </div>
   );

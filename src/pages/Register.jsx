@@ -13,7 +13,7 @@ export default function Register() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const MIN_PASSWORD_LENGTH = 6;
+  const MIN_PASSWORD_LENGTH = 8;
 
   // ✅ Mappt Backend-Fehlermeldungen auf nutzerfreundliche deutsche Texte
   const mapApiError = (err) => {
@@ -359,8 +359,9 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="nill-field">
-              <label className="nill-label">E-Mail</label>
+              <label className="nill-label" htmlFor="reg-email">E-Mail</label>
               <input
+                id="reg-email"
                 className="nill-input"
                 type="email"
                 placeholder="du@firma.de"
@@ -368,12 +369,14 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
+                aria-required="true"
               />
             </div>
 
             <div className="nill-field">
-              <label className="nill-label">Passwort</label>
+              <label className="nill-label" htmlFor="reg-password">Passwort</label>
               <input
+                id="reg-password"
                 className="nill-input"
                 type="password"
                 placeholder="••••••••"
@@ -381,12 +384,14 @@ export default function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 required
+                aria-required="true"
               />
             </div>
 
             <div className="nill-field">
-              <label className="nill-label">Passwort wiederholen</label>
+              <label className="nill-label" htmlFor="reg-password-repeat">Passwort wiederholen</label>
               <input
+                id="reg-password-repeat"
                 className="nill-input"
                 type="password"
                 placeholder="••••••••"
