@@ -20,9 +20,7 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const res = await api.post("/accounting/invoices/from-photo", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await api.post("/accounting/invoices/from-photo", formData);
 
       setInvoice(res.data); // AI-extracted + created invoice
       setFile(selectedFile);

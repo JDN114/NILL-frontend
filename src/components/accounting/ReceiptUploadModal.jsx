@@ -36,7 +36,6 @@ export default function ReceiptUploadModal({ onClose }) {
     fd.append("file", file);
     try {
       const r = await api.post("/accounting/invoices/from-photo", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
         timeout: 60000, // 60 s — AI analysis can take time
       });
       setResult(r.data);
