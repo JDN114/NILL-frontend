@@ -1,8 +1,15 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
-export default defineConfig(({ mode }) => ({
+// Always resolve .env relative to this config file, not process.cwd()
+const envDir = path.resolve(__dirname, '.')
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, envDir, '')
+  return {
   plugins: [react()],
+  envDir,
 
   build: {
     outDir: 'dist',
@@ -39,4 +46,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}))
+  }
+})
