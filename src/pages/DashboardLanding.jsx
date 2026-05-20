@@ -289,6 +289,59 @@ export default function DashboardLanding() {
             })}
           </div>
 
+          {/* ── Station Guide entry ── */}
+          {org?.station_mode_enabled && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              style={{ marginTop: 32 }}
+            >
+              <div className="nd-section-label">Station Guide</div>
+              <Link to="/station" style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 20,
+                padding: "20px 24px",
+                borderRadius: 16,
+                border: "1px solid rgba(197,165,114,0.2)",
+                background: "linear-gradient(135deg,rgba(197,165,114,0.07),rgba(197,165,114,0.03))",
+                textDecoration: "none",
+                transition: "border-color 0.2s, background 0.2s",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = "rgba(197,165,114,0.4)";
+                e.currentTarget.style.background = "linear-gradient(135deg,rgba(197,165,114,0.12),rgba(197,165,114,0.05))";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = "rgba(197,165,114,0.2)";
+                e.currentTarget.style.background = "linear-gradient(135deg,rgba(197,165,114,0.07),rgba(197,165,114,0.03))";
+              }}>
+                <div style={{
+                  width: 44, height: 44,
+                  borderRadius: 12,
+                  background: "rgba(197,165,114,0.15)",
+                  border: "1px solid rgba(197,165,114,0.25)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "1.2rem", flexShrink: 0,
+                }}>⊞</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 400,
+                    color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1 }}>
+                    Station Guide
+                  </div>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ink-dim)", lineHeight: 1.4 }}>
+                    Tablet-Modus für Mitarbeiter an Arbeitsstationen
+                  </p>
+                </div>
+                <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "rgba(197,165,114,0.8)",
+                  display: "flex", alignItems: "center", gap: 6 }}>
+                  Starten <span>→</span>
+                </div>
+              </Link>
+            </motion.div>
+          )}
+
         </div>
       </PageLayout>
     </>

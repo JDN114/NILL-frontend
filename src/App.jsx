@@ -1,6 +1,6 @@
 // src/App.jsx
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
@@ -52,6 +52,7 @@ import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
 import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
 import CallsModule from "./pages/CallsModule.jsx";
+import StationGuidePage from "./pages/StationGuidePage.jsx";
 import Widerruf from "./pages/Widerruf.jsx";
 import Barrierefreiheit from "./pages/Barrierefreiheit";
 import useInactivityLogout from "./hooks/useInactivityLogout";
@@ -61,6 +62,37 @@ function InactivityGuard() {
   const { user } = useAuth();
   useInactivityLogout(!!user);
   return null;
+}
+
+function StationBackButton() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fromStation = sessionStorage.getItem("nill_from_station") === "1";
+  if (!fromStation || location.pathname === "/station") return null;
+  return (
+    <button
+      onClick={() => { sessionStorage.removeItem("nill_from_station"); navigate("/station"); }}
+      style={{
+        position: "fixed", bottom: 24, right: 24, zIndex: 9998,
+        padding: "0.55rem 1.1rem",
+        background: "rgba(4,7,15,0.92)",
+        border: "1px solid rgba(197,165,114,0.35)",
+        borderRadius: 99,
+        color: "#c5a572",
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: "0.72rem",
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        cursor: "pointer",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        display: "flex", alignItems: "center", gap: 6,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+      }}
+    >
+      ← Station Guide
+    </button>
+  );
 }
 
 function App() {
@@ -74,6 +106,7 @@ function App() {
               <InactivityGuard />
               <RouteTracker />
               <CookieBanner />
+              <StationBackButton />
               <Routes>
 
               {/* Public */}
@@ -191,6 +224,11 @@ function App() {
                 }/>
                 <Route path="/dashboard/NILL-Secretary/Calls" element={
                   <ProtectedRoute><CallsModule /></ProtectedRoute>
+                }/>
+
+		{/* Station Guide — tablet/kiosk interface */}
+                <Route path="/station" element={
+                  <ProtectedRoute><StationGuidePage /></ProtectedRoute>
                 }/>
 	      </Routes>
               <Footer />

@@ -374,6 +374,168 @@ function KontaktModal({ onClose }) {
   );
 }
 
+// ─── Station Guide Tab ───────────────────────────────────────────────────────
+const STATION_MODULES = [
+  { key: "emails",    label: "E-Mails",        icon: "✉",  desc: "Postfach & Nachrichten" },
+  { key: "accounting", label: "Buchhaltung",   icon: "◎",  desc: "Rechnungen & Ausgaben" },
+  { key: "calendar",  label: "Kalender",       icon: "▦",  desc: "Termine & Events" },
+  { key: "workflow",  label: "Aufgaben",        icon: "⌘",  desc: "Tasks & Prozesse" },
+  { key: "time",      label: "Zeiterfassung",  icon: "⏱",  desc: "Arbeitszeiten erfassen" },
+  { key: "hr_docs",   label: "HR Dokumente",   icon: "📄",  desc: "Personalunterlagen" },
+];
+
+function StationGuideTab({
+  isSoloPlan,
+  stationEnabled, setStationEnabled,
+  stationModules, setStationModules,
+  stationSaving, stationSuccess, stationError,
+  onSave,
+}) {
+  const toggleModule = (key) =>
+    setStationModules(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+
+  if (isSoloPlan) {
+    return (
+      <div style={{ ...panelStyle, padding: "2rem 1.5rem", textAlign: "center" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>⊞</div>
+        <div style={{ fontSize: "1rem", fontWeight: 700, color: text, marginBottom: "0.5rem" }}>
+          Station Guide
+        </div>
+        <p style={{ fontSize: "0.83rem", color: dim, margin: "0 0 1.25rem", lineHeight: 1.55, maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
+          Der Station Guide ist ab dem <strong style={{ color: text }}>Team-Plan</strong> verfügbar.
+          Aktiviere den Tablet-Modus für Mitarbeiter an Arbeitsstationen wie Autowäschen,
+          Bäckereien oder Tankstellen.
+        </p>
+        <a href="/upgrade" style={btnPrimary}>
+          Auf Team-Plan upgraden
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div style={panelStyle}>
+        <div style={sectionHeadStyle}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
+            textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Station Guide
+          </span>
+          <span style={{ fontSize: "0.72rem", color: mute }}>
+            Tablet-Modus für Mitarbeiter
+          </span>
+        </div>
+
+        <div style={{ padding: "1.1rem 1.25rem", borderBottom: `1px solid ${border}` }}>
+          <p style={{ margin: "0 0 0.75rem", fontSize: "0.83rem", color: dim, lineHeight: 1.55 }}>
+            Der Station Guide bietet eine vereinfachte Tablet-Oberfläche für Mitarbeiter an
+            Arbeitsstationen — z.B. in Autowäschen, Bäckereien oder Tankstellen. Aktiviere den
+            Modus und konfiguriere, welche Module sichtbar sind.
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0.85rem 1.25rem", borderBottom: `1px solid ${border}`, gap: "1rem" }}>
+          <div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>
+              Station Guide aktivieren
+            </div>
+            <div style={{ fontSize: "0.75rem", color: dim, marginTop: 2 }}>
+              Zeigt einen „Station Guide" Eintrag im Dashboard für alle Mitarbeiter
+            </div>
+          </div>
+          <button
+            onClick={() => setStationEnabled(v => !v)}
+            style={{
+              width: 44, height: 24, borderRadius: 99, border: "none",
+              background: stationEnabled ? gold : "rgba(255,255,255,0.1)",
+              cursor: "pointer", position: "relative", flexShrink: 0,
+              transition: "background 0.2s",
+            }}
+          >
+            <span style={{
+              position: "absolute", top: 3, left: stationEnabled ? 23 : 3,
+              width: 18, height: 18, borderRadius: "50%",
+              background: stationEnabled ? "#000" : "rgba(255,255,255,0.5)",
+              transition: "left 0.2s",
+            }} />
+          </button>
+        </div>
+      </div>
+
+      {stationEnabled && (
+        <div style={panelStyle}>
+          <div style={sectionHeadStyle}>
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
+              textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Sichtbare Module
+            </span>
+          </div>
+          <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            <p style={{ margin: "0 0 0.6rem", fontSize: "0.78rem", color: mute }}>
+              Wähle aus, welche Module im Station Guide angezeigt werden.
+            </p>
+            {STATION_MODULES.map(m => {
+              const active = stationModules.includes(m.key);
+              return (
+                <div
+                  key={m.key}
+                  onClick={() => toggleModule(m.key)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "1rem",
+                    padding: "0.75rem 1rem", borderRadius: 10, cursor: "pointer",
+                    background: active ? "rgba(197,165,114,0.07)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${active ? "rgba(197,165,114,0.25)" : border}`,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem", width: 24, textAlign: "center" }}>{m.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>{m.label}</div>
+                    <div style={{ fontSize: "0.72rem", color: dim }}>{m.desc}</div>
+                  </div>
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 4,
+                    background: active ? gold : "transparent",
+                    border: `2px solid ${active ? gold : "rgba(255,255,255,0.2)"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, transition: "all 0.15s",
+                  }}>
+                    {active && (
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <polyline points="2,5 4,7.5 8,3" stroke="#000" strokeWidth="1.5"
+                          strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        <button
+          onClick={onSave}
+          disabled={stationSaving}
+          style={{ ...btnPrimary, opacity: stationSaving ? 0.6 : 1 }}
+        >
+          {stationSaving ? "Speichern…" : "Einstellungen speichern"}
+        </button>
+        {stationSuccess && (
+          <span style={{ fontSize: "0.82rem", color: green }}>✓ Gespeichert</span>
+        )}
+        {stationError && (
+          <span style={{ fontSize: "0.82rem", color: red }}>{stationError}</span>
+        )}
+      </div>
+    </>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -392,7 +554,10 @@ export default function SettingsPage() {
   );
 
   // ── UI state ────────────────────────────────────────────────────────────
-  const [activeTab,        setActiveTab]        = useState("konto");
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") ?? "konto";
+  });
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showImapModal,    setShowImapModal]     = useState(false);
   const [reauthAccount,    setReauthAccount]     = useState(null);
@@ -460,6 +625,13 @@ export default function SettingsPage() {
   const [webauthnLoading,    setWebauthnLoading]    = useState(false);
   const [webauthnDeviceName, setWebauthnDeviceName] = useState("Mein Gerät");
   const [webauthnError,      setWebauthnError]      = useState("");
+
+  // ── Station Guide ────────────────────────────────────────────────────────
+  const [stationEnabled,  setStationEnabled]  = useState(org?.station_mode_enabled ?? false);
+  const [stationModules,  setStationModules]  = useState(org?.station_modules ?? []);
+  const [stationSaving,   setStationSaving]   = useState(false);
+  const [stationSuccess,  setStationSuccess]  = useState(false);
+  const [stationError,    setStationError]    = useState("");
 
   // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -787,6 +959,7 @@ export default function SettingsPage() {
     { id: "sicherheit",     label: "Sicherheit",          icon: svgShield },
     ...(isAdmin ? [
       { id: "email_vorlagen", label: "E-Mail Vorlagen",   icon: svgMail },
+      { id: "station_guide",  label: "Station Guide",     icon: svgStation },
     ] : []),
     { id: "hilfe",           label: "Hilfe",              icon: svgHelp },
   ];
@@ -1920,6 +2093,37 @@ export default function SettingsPage() {
               <EmailVorlagenTab />
             )}
 
+            {/* ══ STATION GUIDE ══════════════════════════════════════════ */}
+            {activeTab === "station_guide" && isAdmin && (
+              <StationGuideTab
+                isSoloPlan={isSolo()}
+                stationEnabled={stationEnabled}
+                setStationEnabled={setStationEnabled}
+                stationModules={stationModules}
+                setStationModules={setStationModules}
+                stationSaving={stationSaving}
+                stationSuccess={stationSuccess}
+                stationError={stationError}
+                onSave={async () => {
+                  setStationSaving(true);
+                  setStationSuccess(false);
+                  setStationError("");
+                  try {
+                    await api.patch("/auth/org/station-guide", {
+                      station_mode_enabled: stationEnabled,
+                      station_modules: stationModules,
+                    });
+                    setStationSuccess(true);
+                    setTimeout(() => setStationSuccess(false), 3000);
+                  } catch (e) {
+                    setStationError(e?.response?.data?.detail ?? "Fehler beim Speichern.");
+                  } finally {
+                    setStationSaving(false);
+                  }
+                }}
+              />
+            )}
+
             {/* ══ HILFE ══════════════════════════════════════════════════ */}
             {activeTab === "hilfe" && (
               <>
@@ -2103,6 +2307,13 @@ const svgHelp = (
     <circle cx="12" cy="12" r="10"/>
     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
     <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+const svgStation = (
+  <svg {...iconProps}>
+    <rect x="2" y="3" width="20" height="14" rx="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/>
+    <line x1="12" y1="17" x2="12" y2="21"/>
   </svg>
 );
 const svgContact = (
