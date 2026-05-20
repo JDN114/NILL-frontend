@@ -46,9 +46,7 @@ export default function InvoiceCreateModal({ open, onClose, onCreated }) {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        const res = await api.post("/accounting/invoices/from-photo", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const res = await api.post("/accounting/invoices/from-photo", formData);
 
         setInvoice(res.data);
       } catch (err) {
@@ -83,9 +81,7 @@ export default function InvoiceCreateModal({ open, onClose, onCreated }) {
         // Wenn Datei hochgeladen, AI erstellt invoice
         const formData = new FormData();
         formData.append("file", file);
-        const res = await api.post("/accounting/invoices/from-photo", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const res = await api.post("/accounting/invoices/from-photo", formData);
         onCreated?.(res.data);
       } else {
         const res = await api.post("/accounting/invoices", payload);

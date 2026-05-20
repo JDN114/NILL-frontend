@@ -25,7 +25,7 @@ function _getCookie(name) {
 api.interceptors.request.use((config) => {
   const method = (config.method || "get").toUpperCase();
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
-    const token = _getCookie("csrf_token");
+    const token = _getCookie("csrf_t");
     if (token) config.headers["X-CSRF-Token"] = token;
   }
   return config;
