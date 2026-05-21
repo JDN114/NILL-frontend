@@ -122,7 +122,7 @@ export default function ArbeitsStationLayout({ children, title, icon, accent = "
 
       <main style={{
         flex: 1,
-        overflow: "auto",
+        overflow: "hidden",
         padding: "clamp(20px, 3vw, 40px) clamp(20px, 4vw, 48px)",
         maxWidth,
         width: "100%",

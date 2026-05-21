@@ -289,7 +289,7 @@ export default function ArbeitsStationPage() {
       {/* ── Main content ── */}
       <main style={{
         flex: 1,
-        overflow: "auto",
+        overflow: "hidden",
         padding: "clamp(24px, 4vw, 56px) clamp(20px, 4vw, 48px)",
         display: "flex",
         flexDirection: "column",
