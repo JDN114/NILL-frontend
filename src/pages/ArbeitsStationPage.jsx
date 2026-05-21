@@ -1,4 +1,4 @@
-// src/pages/StationGuidePage.jsx
+// src/pages/ArbeitsStationPage.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -6,12 +6,12 @@ import api from "../services/api";
 
 // ─── Module registry ─────────────────────────────────────────────────────────
 const MODULE_META = {
-  emails:     { label: "E-Mails",       icon: "✉",  color: "#7a5cff", route: "/dashboard/emails",                    desc: "Postfach & Nachrichten" },
-  accounting: { label: "Buchhaltung",   icon: "◎",  color: "#c5a572", route: "/dashboard/accounting",               desc: "Rechnungen & Ausgaben" },
-  calendar:   { label: "Kalender",      icon: "▦",  color: "#38f5d0", route: "/dashboard/calendar",                 desc: "Termine & Planung" },
-  workflow:   { label: "Aufgaben",      icon: "⌘",  color: "#c6ff3c", route: "/dashboard/workflow/tasks",           desc: "Tasks & Prozesse" },
-  time:       { label: "Zeiterfassung", icon: "⏱",  color: "#ff4d8d", route: "/dashboard/workflow/time",            desc: "Arbeitszeiten" },
-  hr_docs:    { label: "HR Dokumente",  icon: "📄",  color: "#fbbf24", route: "/dashboard/workflow/hr-documents",   desc: "Personalunterlagen" },
+  emails:     { label: "E-Mails",       icon: "✉",  color: "#7a5cff", route: "/dashboard/emails",      desc: "Postfach & Nachrichten" },
+  accounting: { label: "Buchhaltung",   icon: "◎",  color: "#c5a572", route: "/dashboard/accounting",  desc: "Rechnungen & Ausgaben" },
+  calendar:   { label: "Kalender",      icon: "▦",  color: "#38f5d0", route: "/station/calendar",       desc: "Termine & Planung" },
+  workflow:   { label: "Aufgaben",      icon: "⌘",  color: "#c6ff3c", route: "/station/tasks",          desc: "Tasks & Prozesse" },
+  time:       { label: "Zeiterfassung", icon: "⏱",  color: "#ff4d8d", route: "/station/time",           desc: "Arbeitszeiten" },
+  hr_docs:    { label: "HR Dokumente",  icon: "📄",  color: "#fbbf24", route: "/station/hr-documents",  desc: "Personalunterlagen" },
 };
 
 // ─── Clock component ─────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ function ModuleCard({ moduleKey, onClick }) {
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
-export default function StationGuidePage() {
+export default function ArbeitsStationPage() {
   const { user, org, isCompanyAdmin } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState(null);
@@ -166,7 +166,8 @@ export default function StationGuidePage() {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      height: "100vh",
+      overflow: "hidden",
       background: "#04070F",
       display: "flex",
       flexDirection: "column",
@@ -238,7 +239,7 @@ export default function StationGuidePage() {
               textTransform: "uppercase",
               marginTop: 3,
             }}>
-              Station Guide
+              ArbeitsStation
             </div>
           </div>
         </div>
@@ -288,6 +289,7 @@ export default function StationGuidePage() {
       {/* ── Main content ── */}
       <main style={{
         flex: 1,
+        overflow: "auto",
         padding: "clamp(24px, 4vw, 56px) clamp(20px, 4vw, 48px)",
         display: "flex",
         flexDirection: "column",
@@ -404,7 +406,7 @@ export default function StationGuidePage() {
           color: "rgba(239,237,231,0.25)",
           textTransform: "uppercase",
         }}>
-          Nill Station Guide
+          Nill ArbeitsStation
         </span>
         <span style={{
           fontFamily: "'JetBrains Mono', monospace",

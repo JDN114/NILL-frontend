@@ -30,6 +30,149 @@ const norm = (inv) => {
   };
 };
 
+// ── Booking Confirm + Edit Modal ───────────────────────────────────────────────
+function BookingConfirmModal({ invoice, onClose, onBooked, setMsg }) {
+  const [form, setForm] = useState({
+    vendor:         invoice.vendor         || "",
+    invoice_number: invoice.invoice_number || "",
+    invoice_date:   invoice.date           || "",
+    net_amount:     invoice.net_amount     != null ? String(invoice.net_amount) : "",
+    vat_rate:       invoice.vat_rate       != null ? String(invoice.vat_rate)   : "",
+    gross_amount:   invoice.amount         != null ? String(invoice.amount)     : "",
+    notes:          invoice.notes          || "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [err,    setErr]    = useState(null);
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const handle = async () => {
+    setSaving(true); setErr(null);
+    try {
+      const patch = {};
+      if (form.vendor         !== (invoice.vendor         || "")) patch.vendor         = form.vendor;
+      if (form.invoice_number !== (invoice.invoice_number || "")) patch.invoice_number  = form.invoice_number;
+      if (form.invoice_date   !== (invoice.date           || "")) patch.invoice_date    = form.invoice_date;
+      if (form.notes          !== (invoice.notes          || "")) patch.notes           = form.notes;
+      const origNet   = invoice.net_amount  != null ? String(invoice.net_amount)  : "";
+      const origVat   = invoice.vat_rate    != null ? String(invoice.vat_rate)    : "";
+      const origBrutto= invoice.amount      != null ? String(invoice.amount)      : "";
+      if (form.net_amount   !== origNet   && form.net_amount)   patch.net_amount   = parseFloat(form.net_amount.replace(",","."));
+      if (form.vat_rate     !== origVat   && form.vat_rate)     patch.vat_rate     = parseFloat(form.vat_rate.replace(",","."));
+      if (form.gross_amount !== origBrutto && form.gross_amount) patch.gross_amount = parseFloat(form.gross_amount.replace(",","."));
+
+      if (Object.keys(patch).length > 0) {
+        await api.patch(`/accounting/invoices/${invoice.id}`, patch);
+      }
+      await api.post(`/api/v1/buchhaltung/buchungen/auto/${invoice.id}`);
+      setMsg({ type:"ok", text:`Rechnung ${form.invoice_number || invoice.id} erfolgreich gebucht.` });
+      onBooked();
+    } catch(e) {
+      setErr(e.response?.data?.detail || "Fehler beim Buchen. Bitte prüfen.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inp = (label, key, type="text", placeholder="") => (
+    <div style={{ display:"flex", flexDirection:"column", gap:4, flex:1, minWidth:130 }}>
+      <label style={{ fontSize:".73rem", color:"var(--ink2)", fontFamily:"Inter,sans-serif" }}>{label}</label>
+      <input
+        className="ac-input"
+        type={type}
+        step={type==="number" ? "0.01" : undefined}
+        value={form[key]}
+        onChange={set(key)}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+
+  return (
+    <div className="ac-modal-backdrop" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="ac-modal" style={{ maxWidth:560 }}>
+        <div className="ac-modal-title">
+          Rechnung prüfen &amp; buchen
+        </div>
+
+        {/* GoBD notice */}
+        <div style={{
+          background:"rgba(198,255,60,0.07)", border:"1px solid rgba(198,255,60,0.2)",
+          borderRadius:8, padding:"10px 14px", marginBottom:18,
+          fontSize:".78rem", color:"rgba(198,255,60,0.8)", lineHeight:1.55,
+        }}>
+          <strong>GoBD-Hinweis:</strong> Vor dem Buchen können alle Felder frei bearbeitet werden.
+          Nach dem Buchen sind Rechnungsnummer, Datum und Beträge unveränderlich (§146 AO).
+        </div>
+
+        {err && (
+          <div className="ac-alert ac-alert-err" style={{ marginBottom:14 }}>{err}</div>
+        )}
+
+        <div style={{ display:"flex", gap:12, marginBottom:12, flexWrap:"wrap" }}>
+          {inp("Lieferant", "vendor", "text", "Lieferantenname")}
+          {inp("Rechnungsnr.", "invoice_number", "text", "RE-2024-0001")}
+        </div>
+        <div style={{ display:"flex", gap:12, marginBottom:12, flexWrap:"wrap" }}>
+          {inp("Rechnungsdatum", "invoice_date", "date")}
+          {inp("MwSt-Satz (%)", "vat_rate", "number", "19")}
+        </div>
+        <div style={{ display:"flex", gap:12, marginBottom:12, flexWrap:"wrap" }}>
+          {inp("Nettobetrag (€)", "net_amount", "number", "0,00")}
+          {inp("Bruttobetrag (€)", "gross_amount", "number", "0,00")}
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:4, marginBottom:18 }}>
+          <label style={{ fontSize:".73rem", color:"var(--ink2)" }}>Notiz</label>
+          <input className="ac-input" value={form.notes} onChange={set("notes")} placeholder="Optional…" />
+        </div>
+
+        {/* Preview */}
+        <div style={{
+          background:"var(--surface2)", borderRadius:8, padding:"12px 14px",
+          marginBottom:18, fontSize:".82rem",
+        }}>
+          <div style={{ fontSize:".7rem", color:"var(--ink2)", textTransform:"uppercase", letterSpacing:".06em", marginBottom:8 }}>
+            Buchungsvorschau
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between", color:"var(--ink2)", marginBottom:4 }}>
+            <span>Netto</span>
+            <span className="ac-mono" style={{ color:"var(--ink)" }}>
+              {form.net_amount ? fmtEur(parseFloat(form.net_amount)||0) : "—"}
+            </span>
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between", color:"var(--ink2)", marginBottom:4 }}>
+            <span>MwSt {form.vat_rate ? `(${form.vat_rate} %)` : ""}</span>
+            <span className="ac-mono" style={{ color:"var(--ink)" }}>
+              {(form.net_amount && form.vat_rate)
+                ? fmtEur((parseFloat(form.net_amount)||0) * (parseFloat(form.vat_rate)||0) / 100)
+                : "—"}
+            </span>
+          </div>
+          <div style={{
+            display:"flex", justifyContent:"space-between", fontWeight:700,
+            borderTop:"1px solid var(--border)", paddingTop:8, marginTop:4,
+          }}>
+            <span>Brutto</span>
+            <span className="ac-mono" style={{ color:"var(--accent)" }}>
+              {form.gross_amount ? fmtEur(parseFloat(form.gross_amount)||0) : "—"}
+            </span>
+          </div>
+        </div>
+
+        <div className="ac-modal-footer">
+          <button className="ac-btn ac-btn-ghost" onClick={onClose} disabled={saving}>
+            Abbrechen
+          </button>
+          <button className="ac-btn ac-btn-primary" onClick={handle} disabled={saving}>
+            {saving ? "…" : "Jetzt buchen"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── InvoiceList ────────────────────────────────────────────────────────────────
 export default function InvoiceList() {
   const [invoices,    setInvoices]    = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -38,7 +181,7 @@ export default function InvoiceList() {
   const [sortKey,     setSortKey]     = useState("date");
   const [sortAsc,     setSortAsc]     = useState(false);
   const [msg,         setMsg]         = useState(null);
-  const [bookingIds,  setBookingIds]  = useState(new Set());
+  const [bookingInv,  setBookingInv]  = useState(null); // invoice being confirmed
 
   const load = useCallback(() => {
     setLoading(true);
@@ -72,18 +215,6 @@ export default function InvoiceList() {
       load();
     } catch(e) {
       setMsg({ type:"err", text:"Fehler beim Löschen." });
-    }
-  };
-
-  const autoBook = async (invoice) => {
-    setBookingIds(s => new Set(s).add(invoice.id));
-    try {
-      await api.post(`/api/v1/buchhaltung/buchungen/auto/${invoice.id}`);
-      setMsg({ type:"ok", text:`Rechnung ${invoice.invoice_number || invoice.id} automatisch gebucht.` });
-    } catch(e) {
-      setMsg({ type:"err", text: e.response?.data?.detail || "Automatikbuchung fehlgeschlagen." });
-    } finally {
-      setBookingIds(s => { const n = new Set(s); n.delete(invoice.id); return n; });
     }
   };
 
@@ -175,7 +306,6 @@ export default function InvoiceList() {
             )}
             {sorted.map(inv => {
               const meta = STATUS_META[inv.status] || STATUS_META.open;
-              const booking = bookingIds.has(inv.id);
               return (
                 <tr key={inv.id}>
                   <td className="ac-mono" style={{color:"var(--accent)", fontSize:".82rem", whiteSpace:"nowrap"}}>
@@ -205,11 +335,10 @@ export default function InvoiceList() {
                       )}
                       <button
                         className="ac-btn ac-btn-ghost ac-btn-sm"
-                        onClick={() => autoBook(inv)}
-                        disabled={booking}
-                        title="Automatisch in die Buchhaltung buchen"
+                        onClick={() => setBookingInv(inv)}
+                        title="Rechnung prüfen und buchen"
                       >
-                        {booking ? "…" : "Buchen"}
+                        Buchen
                       </button>
                       <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => deleteInvoice(inv.id)}>
                         ×
@@ -222,6 +351,15 @@ export default function InvoiceList() {
           </tbody>
         </table>
       </div>
+
+      {bookingInv && (
+        <BookingConfirmModal
+          invoice={bookingInv}
+          onClose={() => setBookingInv(null)}
+          onBooked={() => { setBookingInv(null); load(); }}
+          setMsg={setMsg}
+        />
+      )}
     </div>
   );
 }

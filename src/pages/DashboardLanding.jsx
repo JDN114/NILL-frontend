@@ -147,7 +147,7 @@ export default function DashboardLanding() {
       <WelcomeToNILLModal isOpen={showWelcome} onClose={handleWelcomeClose} />
       <GuidedTourModal isOpen={showTour} onFinish={() => setShowTour(false)} />
 
-      <PageLayout>
+      <PageLayout noScroll>
         <div className="nd-root">
 
           {/* ── Welcome ── */}
@@ -289,7 +289,7 @@ export default function DashboardLanding() {
             })}
           </div>
 
-          {/* ── Station Guide entry ── */}
+          {/* ── ArbeitsStation entry ── */}
           {org?.station_mode_enabled && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -297,7 +297,7 @@ export default function DashboardLanding() {
               transition={{ delay: 0.3 }}
               style={{ marginTop: 32 }}
             >
-              <div className="nd-section-label">Station Guide</div>
+              <div className="nd-section-label">ArbeitsStation</div>
               <Link to="/station" style={{
                 display: "flex",
                 alignItems: "center",
@@ -328,7 +328,7 @@ export default function DashboardLanding() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 400,
                     color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1 }}>
-                    Station Guide
+                    ArbeitsStation
                   </div>
                   <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ink-dim)", lineHeight: 1.4 }}>
                     Tablet-Modus für Mitarbeiter an Arbeitsstationen

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { initAnalytics } from "../utils/analytics";
+import { grantAnalytics, denyAnalytics } from "../utils/analytics";
 import api from "../services/api";
 
 const KEY = "nill_cookie_v1";
@@ -18,34 +18,77 @@ export function openCookieSettings() {
   window.dispatchEvent(new CustomEvent("nill:cookie-settings"));
 }
 
+function _applyConsent(withAnalytics) {
+  if (withAnalytics) grantAnalytics();
+  else denyAnalytics();
+}
+
+function _saveLocal(withAnalytics) {
+  localStorage.setItem(KEY, JSON.stringify({
+    analytics: withAnalytics,
+    ts: new Date().toISOString(),
+  }));
+}
+
 export default function CookieBanner() {
-  const [show,     setShow]     = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [show,      setShow]     = useState(false);
+  const [expanded,  setExpanded] = useState(false);
   const [analytics, setAnalytics] = useState(false);
 
   useEffect(() => {
-    const reopen = () => { setShow(true); };
+    const reopen = () => { setShow(true); setExpanded(false); };
     window.addEventListener("nill:cookie-settings", reopen);
 
-    const saved = localStorage.getItem(KEY);
-    if (!saved) {
-      const t = setTimeout(() => { setShow(true); }, 700);
-      return () => { clearTimeout(t); window.removeEventListener("nill:cookie-settings", reopen); };
+    let cancelled = false;
+
+    // Try server-side consent first (logged-in users → cross-device sync)
+    api.get("/me/consent")
+      .then(({ data }) => {
+        if (cancelled) return;
+        const serverConsent = data?.analytics_consent;
+        if (serverConsent !== null && serverConsent !== undefined) {
+          // Server record exists — apply it and don't show banner
+          _saveLocal(serverConsent);
+          _applyConsent(serverConsent);
+          return;
+        }
+        // Logged in but no server consent recorded yet → check localStorage
+        _loadFromLocal();
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Not logged in or network error → localStorage only
+        _loadFromLocal();
+      });
+
+    function _loadFromLocal() {
+      const saved = localStorage.getItem(KEY);
+      if (!saved) {
+        const t = setTimeout(() => { if (!cancelled) setShow(true); }, 700);
+        // Store t in a ref-like var via closure; cleaned up in return
+        timeoutRef = t;
+        return;
+      }
+      try {
+        const c = JSON.parse(saved);
+        _applyConsent(c.analytics);
+      } catch {
+        setShow(true);
+      }
     }
-    try {
-      const c = JSON.parse(saved);
-      if (c.analytics) initAnalytics();
-    } catch {}
-    return () => window.removeEventListener("nill:cookie-settings", reopen);
+
+    let timeoutRef = null;
+    return () => {
+      cancelled = true;
+      if (timeoutRef) clearTimeout(timeoutRef);
+      window.removeEventListener("nill:cookie-settings", reopen);
+    };
   }, []);
 
   const save = (withAnalytics) => {
-    localStorage.setItem(KEY, JSON.stringify({
-      analytics: withAnalytics,
-      ts: new Date().toISOString(),
-    }));
-    if (withAnalytics) initAnalytics();
-    // Persist server-side for logged-in users (TTDSG) — fire-and-forget
+    _saveLocal(withAnalytics);
+    _applyConsent(withAnalytics);
+    // Persist server-side for logged-in users (TTDSG §25) — fire-and-forget
     api.post("/me/consent", { analytics: withAnalytics }).catch(() => {});
     setShow(false);
   };
@@ -153,7 +196,6 @@ export default function CookieBanner() {
               style={{ "--so": s.o, "--sd": `${s.dur}s`, "--sdel": `${s.del}s`, opacity: s.o }}
             />
           ))}
-          {/* Subtle top-edge glow line */}
           <line x1="0" y1="0" x2="100%" y2="0" stroke="rgba(197,165,114,.18)" strokeWidth="1"/>
         </svg>
 
@@ -165,7 +207,6 @@ export default function CookieBanner() {
             {/* Left: logo + text */}
             <div style={{ flex:1, minWidth:260 }}>
               <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:".35rem" }}>
-                {/* NILL brand mark */}
                 <div style={{
                   width:20, height:20, borderRadius:5,
                   background:"conic-gradient(from 210deg, #c6ff3c, #38f5d0, #7a5cff, #ff4d8d, #c6ff3c)",

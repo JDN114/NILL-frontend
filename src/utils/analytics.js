@@ -1,22 +1,35 @@
 const GA_ID = import.meta.env.VITE_GA_ID;
-let ready = false;
+let loaded = false;
+
+function _gtag(...args) {
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(args);
+}
 
 export function initAnalytics() {
-  if (!GA_ID || ready) return;
-  ready = true;
+  if (!GA_ID || loaded) return;
+  loaded = true;
 
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { window.dataLayer.push(arguments); }
-  window.gtag = gtag;
-
-  gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied" });
-  gtag("js", new Date());
-  gtag("config", GA_ID, { anonymize_ip: true, send_page_view: false });
+  window.gtag = _gtag;
+  _gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied" });
+  _gtag("js", new Date());
+  _gtag("config", GA_ID, { anonymize_ip: true, send_page_view: false });
 
   const s = document.createElement("script");
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
   document.head.appendChild(s);
+}
+
+export function grantAnalytics() {
+  if (!GA_ID) return;
+  if (!loaded) initAnalytics();
+  _gtag("consent", "update", { analytics_storage: "granted", ad_storage: "denied" });
+}
+
+export function denyAnalytics() {
+  if (!loaded) return;
+  _gtag("consent", "update", { analytics_storage: "denied", ad_storage: "denied" });
 }
 
 export function trackPage(path, title) {

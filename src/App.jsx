@@ -52,7 +52,11 @@ import WorkflowDeliveryNotes from "./pages/Workflow_delivery_notes_page.jsx";
 import HrDocuments from "./pages/HrDocuments.jsx";
 import NILLModule from "./pages/NILLModule.jsx";
 import CallsModule from "./pages/CallsModule.jsx";
-import StationGuidePage from "./pages/StationGuidePage.jsx";
+import ArbeitsStationPage from "./pages/ArbeitsStationPage.jsx";
+import ArbeitsStationKalender from "./pages/station/ArbeitsStationKalender.jsx";
+import ArbeitsStationAufgaben from "./pages/station/ArbeitsStationAufgaben.jsx";
+import ArbeitsStationZeit from "./pages/station/ArbeitsStationZeit.jsx";
+import ArbeitsStationHR from "./pages/station/ArbeitsStationHR.jsx";
 import Widerruf from "./pages/Widerruf.jsx";
 import Barrierefreiheit from "./pages/Barrierefreiheit";
 import useInactivityLogout from "./hooks/useInactivityLogout";
@@ -68,7 +72,7 @@ function StationBackButton() {
   const location = useLocation();
   const navigate = useNavigate();
   const fromStation = sessionStorage.getItem("nill_from_station") === "1";
-  if (!fromStation || location.pathname === "/station") return null;
+  if (!fromStation || location.pathname.startsWith("/station")) return null;
   return (
     <button
       onClick={() => { sessionStorage.removeItem("nill_from_station"); navigate("/station"); }}
@@ -90,7 +94,7 @@ function StationBackButton() {
         boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
       }}
     >
-      ← Station Guide
+      ← ArbeitsStation
     </button>
   );
 }
@@ -226,9 +230,21 @@ function App() {
                   <ProtectedRoute><CallsModule /></ProtectedRoute>
                 }/>
 
-		{/* Station Guide — tablet/kiosk interface */}
+		{/* ArbeitsStation — tablet/kiosk interface */}
                 <Route path="/station" element={
-                  <ProtectedRoute><StationGuidePage /></ProtectedRoute>
+                  <ProtectedRoute><ArbeitsStationPage /></ProtectedRoute>
+                }/>
+                <Route path="/station/calendar" element={
+                  <ProtectedRoute><ArbeitsStationKalender /></ProtectedRoute>
+                }/>
+                <Route path="/station/tasks" element={
+                  <ProtectedRoute><ArbeitsStationAufgaben /></ProtectedRoute>
+                }/>
+                <Route path="/station/time" element={
+                  <ProtectedRoute><ArbeitsStationZeit /></ProtectedRoute>
+                }/>
+                <Route path="/station/hr-documents" element={
+                  <ProtectedRoute><ArbeitsStationHR /></ProtectedRoute>
                 }/>
 	      </Routes>
               <Footer />

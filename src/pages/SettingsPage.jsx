@@ -374,7 +374,7 @@ function KontaktModal({ onClose }) {
   );
 }
 
-// ─── Station Guide Tab ───────────────────────────────────────────────────────
+// ─── ArbeitsStation Tab ───────────────────────────────────────────────────────
 const STATION_MODULES = [
   { key: "emails",    label: "E-Mails",        icon: "✉",  desc: "Postfach & Nachrichten" },
   { key: "accounting", label: "Buchhaltung",   icon: "◎",  desc: "Rechnungen & Ausgaben" },
@@ -401,10 +401,10 @@ function StationGuideTab({
       <div style={{ ...panelStyle, padding: "2rem 1.5rem", textAlign: "center" }}>
         <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>⊞</div>
         <div style={{ fontSize: "1rem", fontWeight: 700, color: text, marginBottom: "0.5rem" }}>
-          Station Guide
+          ArbeitsStation
         </div>
         <p style={{ fontSize: "0.83rem", color: dim, margin: "0 0 1.25rem", lineHeight: 1.55, maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
-          Der Station Guide ist ab dem <strong style={{ color: text }}>Team-Plan</strong> verfügbar.
+          Der ArbeitsStation ist ab dem <strong style={{ color: text }}>Team-Plan</strong> verfügbar.
           Aktiviere den Tablet-Modus für Mitarbeiter an Arbeitsstationen wie Autowäschen,
           Bäckereien oder Tankstellen.
         </p>
@@ -421,7 +421,7 @@ function StationGuideTab({
         <div style={sectionHeadStyle}>
           <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
             textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Station Guide
+            ArbeitsStation
           </span>
           <span style={{ fontSize: "0.72rem", color: mute }}>
             Tablet-Modus für Mitarbeiter
@@ -430,7 +430,7 @@ function StationGuideTab({
 
         <div style={{ padding: "1.1rem 1.25rem", borderBottom: `1px solid ${border}` }}>
           <p style={{ margin: "0 0 0.75rem", fontSize: "0.83rem", color: dim, lineHeight: 1.55 }}>
-            Der Station Guide bietet eine vereinfachte Tablet-Oberfläche für Mitarbeiter an
+            Der ArbeitsStation bietet eine vereinfachte Tablet-Oberfläche für Mitarbeiter an
             Arbeitsstationen — z.B. in Autowäschen, Bäckereien oder Tankstellen. Aktiviere den
             Modus und konfiguriere, welche Module sichtbar sind.
           </p>
@@ -440,10 +440,10 @@ function StationGuideTab({
           padding: "0.85rem 1.25rem", borderBottom: `1px solid ${border}`, gap: "1rem" }}>
           <div>
             <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>
-              Station Guide aktivieren
+              ArbeitsStation aktivieren
             </div>
             <div style={{ fontSize: "0.75rem", color: dim, marginTop: 2 }}>
-              Zeigt einen „Station Guide" Eintrag im Dashboard für alle Mitarbeiter
+              Zeigt einen „ArbeitsStation" Eintrag im Dashboard für alle Mitarbeiter
             </div>
           </div>
           <button
@@ -475,7 +475,7 @@ function StationGuideTab({
           </div>
           <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
             <p style={{ margin: "0 0 0.6rem", fontSize: "0.78rem", color: mute }}>
-              Wähle aus, welche Module im Station Guide angezeigt werden.
+              Wähle aus, welche Module im ArbeitsStation angezeigt werden.
             </p>
             {STATION_MODULES.map(m => {
               const active = stationModules.includes(m.key);
@@ -626,7 +626,7 @@ export default function SettingsPage() {
   const [webauthnDeviceName, setWebauthnDeviceName] = useState("Mein Gerät");
   const [webauthnError,      setWebauthnError]      = useState("");
 
-  // ── Station Guide ────────────────────────────────────────────────────────
+  // ── ArbeitsStation ────────────────────────────────────────────────────────
   const [stationEnabled,  setStationEnabled]  = useState(org?.station_mode_enabled ?? false);
   const [stationModules,  setStationModules]  = useState(org?.station_modules ?? []);
   const [stationSaving,   setStationSaving]   = useState(false);
@@ -959,7 +959,7 @@ export default function SettingsPage() {
     { id: "sicherheit",     label: "Sicherheit",          icon: svgShield },
     ...(isAdmin ? [
       { id: "email_vorlagen", label: "E-Mail Vorlagen",   icon: svgMail },
-      { id: "station_guide",  label: "Station Guide",     icon: svgStation },
+      { id: "station_guide",  label: "ArbeitsStation",     icon: svgStation },
     ] : []),
     { id: "hilfe",           label: "Hilfe",              icon: svgHelp },
   ];
