@@ -68,6 +68,12 @@ function InactivityGuard() {
   return null;
 }
 
+function ConditionalFooter() {
+  const location = useLocation();
+  if (location.pathname.startsWith("/station")) return null;
+  return <Footer />;
+}
+
 function StationBackButton() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -247,7 +253,7 @@ function App() {
                   <ProtectedRoute><ArbeitsStationHR /></ProtectedRoute>
                 }/>
 	      </Routes>
-              <Footer />
+              <ConditionalFooter />
             </Router>
           </MailProvider>
           </ImapProvider>
