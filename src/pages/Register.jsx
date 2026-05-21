@@ -24,8 +24,6 @@ export default function Register() {
     if (status === 500) return "Serverfehler. Bitte versuche es später erneut.";
 
     if (typeof detail === "string") {
-      if (detail.includes("Email already registered"))
-        return "Diese E-Mail-Adresse ist bereits registriert. Möchtest du dich stattdessen einloggen?";
       if (detail.includes("Missing email or password"))
         return "Bitte E-Mail und Passwort angeben.";
       if (detail.includes("Invalid JSON"))
@@ -309,16 +307,7 @@ export default function Register() {
     .nill-privacy-label a:hover { opacity: .7; }
   `;
 
-  // ✅ "bereits registriert"-Fehler bekommt einen Login-Link direkt in der Fehlermeldung
-  const errorContent =
-    error.includes("bereits registriert") ? (
-      <>
-        Diese E-Mail-Adresse ist bereits registriert.{" "}
-        <a onClick={() => navigate("/login")}>Jetzt einloggen →</a>
-      </>
-    ) : (
-      error
-    );
+  const errorContent = error;
 
   if (success) {
     return (
