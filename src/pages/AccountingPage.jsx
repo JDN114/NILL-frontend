@@ -502,16 +502,17 @@ function ExportTab() {
     if (!steuernummer.trim()) { setMsg({type:"err", text:"Bitte Steuernummer eingeben."}); return; }
     setLoadingE(true); setMsg(null);
     try {
-      const r = await api.get("/api/v1/buchhaltung/export/elster", {
-        params: {
+      const r = await api.post(
+        "/api/v1/buchhaltung/export/elster",
+        {
           von: elsterVon, bis: elsterBis,
           steuernummer: steuernummer.trim(),
           finanzamt_id: finanzamtId,
           zeitraum,
           test_modus: testModus,
         },
-        responseType: "blob",
-      });
+        { responseType: "blob" },
+      );
       const url = URL.createObjectURL(r.data);
       const a = document.createElement("a");
       a.href = url;
