@@ -5,6 +5,23 @@ import { useAuth } from "../context/AuthContext";
 // ── Datum-Helfer ─────────────────────────────────────────────────────────────
 const DAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
+const ABSENCE_COLORS = {
+  "Urlaub":           "#60a5fa",
+  "Krankheit":        "#f87171",
+  "Sonderurlaub":     "#a78bfa",
+  "Elternzeit":       "#34d399",
+  "Überstundenabbau": "#94a3b8",
+  "Sonstiges":        "#94a3b8",
+};
+const ABSENCE_SHORT = {
+  "Urlaub":           "Urlaub",
+  "Krankheit":        "Krank",
+  "Sonderurlaub":     "Sond.",
+  "Elternzeit":       "Eltern",
+  "Überstundenabbau": "ÜSA",
+  "Sonstiges":        "Abw.",
+};
+
 function monday(d = new Date()) {
   const dt = new Date(d);
   const diff = dt.getDay() === 0 ? -6 : 1 - dt.getDay();
@@ -274,9 +291,9 @@ function GhostBtn({ children, onClick }) {
     </button>
   );
 }
-function Avatar({ name }) {
+function Avatar({ name, size = 36 }) {
   return (
-    <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(197,165,114,0.15)", border:"1px solid rgba(197,165,114,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"0.75rem", fontWeight:800, color:"var(--nill-gold)", flexShrink:0 }}>
+    <div style={{ width:size, height:size, borderRadius:"50%", background:"rgba(197,165,114,0.15)", border:"1px solid rgba(197,165,114,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize: size < 30 ? "0.6rem" : "0.75rem", fontWeight:800, color:"var(--nill-gold)", flexShrink:0 }}>
       {initials(name)}
     </div>
   );
@@ -292,6 +309,8 @@ export function SchichtplanContent() {
   const [templates,   setTemplates]   = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [loading,     setLoading]     = useState(true);
+
+  const [absences,     setAbsences]     = useState([]);
 
   const [tplModal,    setTplModal]    = useState(null);   // null | "new" | tpl
   const [memberModal, setMemberModal] = useState(null);   // null | member
@@ -311,14 +330,17 @@ export function SchichtplanContent() {
 
   useEffect(() => {
     setLoading(true);
+    const year = weekStart.getFullYear();
     Promise.all([
       api.get("/team/members"),
       api.get("/shifts/templates"),
       api.get("/shifts/assignments", { params: { week_start: isoDate(weekStart) } }),
-    ]).then(([mR, tR, aR]) => {
+      api.get(`/hr/absences?status=approved&year=${year}`),
+    ]).then(([mR, tR, aR, abR]) => {
       setMembers(Array.isArray(mR.data) ? mR.data : []);
       setTemplates(tR.data?.templates ?? []);
       setAssignments(aR.data?.assignments ?? []);
+      setAbsences(abR.data?.items ?? []);
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, [weekStart]);
@@ -365,6 +387,16 @@ export function SchichtplanContent() {
     assignments.filter(a => a.user_id === userId && a.shift_date === dateStr);
 
   const weekLabel = `${fmtDay(weekStart)} – ${fmtDay(addDays(weekStart, 6))} ${weekStart.getFullYear()}`;
+
+  const weekStartStr = isoDate(weekStart);
+  const weekEndStr   = isoDate(weekDays[6]);
+
+  const getAbsencesForCell = (userId, dateStr) =>
+    absences.filter(a => a.user_id === userId && dateStr >= a.start_date && dateStr <= a.end_date);
+
+  const absentThisWeek = members.filter(m =>
+    absences.some(a => a.user_id === m.id && a.start_date <= weekEndStr && a.end_date >= weekStartStr)
+  );
 
   return (
     <>
@@ -430,6 +462,29 @@ export function SchichtplanContent() {
                 <button onClick={() => handleDeleteTemplate(t.id)} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(239,68,68,0.5)",fontSize:"0.72rem",padding:"0 2px" }}>✕</button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Urlaubsübersicht */}
+      {!loading && absentThisWeek.length > 0 && (
+        <div style={{ marginBottom:"1.25rem", padding:"0.8rem 1.1rem", background:"rgba(96,165,250,0.05)", border:"1px solid rgba(96,165,250,0.15)", borderRadius:10 }}>
+          <div style={{ fontSize:"0.68rem", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", color:"rgba(96,165,250,0.65)", marginBottom:"0.5rem" }}>
+            Abwesend diese Woche
+          </div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:"0.4rem" }}>
+            {absentThisWeek.map(m => {
+              const typeAbs = absences.find(a => a.user_id === m.id && a.start_date <= weekEndStr && a.end_date >= weekStartStr);
+              const type  = typeAbs?.absence_type || "Abwesend";
+              const color = ABSENCE_COLORS[type] || "#94a3b8";
+              return (
+                <div key={m.id} style={{ display:"flex", alignItems:"center", gap:"0.4rem", padding:"0.3rem 0.7rem", background:`rgba(${hexRgb(color)},0.08)`, border:`1px solid rgba(${hexRgb(color)},0.22)`, borderRadius:20 }}>
+                  <Avatar name={displayName(m)} size={24} />
+                  <span style={{ fontSize:"0.78rem", fontWeight:600, color:"var(--nill-text)" }}>{displayName(m)}</span>
+                  <span style={{ fontSize:"0.68rem", color, fontStyle:"italic" }}>{type}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -508,7 +563,7 @@ export function SchichtplanContent() {
                         }}
                       >
                         <div style={{ display:"flex", flexDirection:"column", gap:3, alignItems:"center" }}>
-                          {cellItems.length === 0 && isAdmin && (
+                          {cellItems.length === 0 && getAbsencesForCell(member.id, dateStr).length === 0 && isAdmin && (
                             <span style={{ fontSize:"0.65rem", color:"rgba(255,255,255,0.1)", userSelect:"none" }}>+</span>
                           )}
                           {cellItems.map(a => (
@@ -534,6 +589,19 @@ export function SchichtplanContent() {
                               )}
                             </span>
                           ))}
+                          {getAbsencesForCell(member.id, dateStr).map(ab => {
+                            const abColor = ABSENCE_COLORS[ab.absence_type] || "#94a3b8";
+                            return (
+                              <span key={ab.id} className="sp-chip" title={ab.absence_type} style={{
+                                background:`rgba(${hexRgb(abColor)},0.1)`,
+                                border:`1px dashed rgba(${hexRgb(abColor)},0.4)`,
+                                color: abColor, cursor:"default",
+                                fontStyle:"italic", fontWeight:600,
+                              }}>
+                                {ABSENCE_SHORT[ab.absence_type] || ab.absence_type}
+                              </span>
+                            );
+                          })}
                         </div>
                       </td>
                     );
