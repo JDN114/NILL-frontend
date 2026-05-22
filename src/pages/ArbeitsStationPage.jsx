@@ -252,26 +252,8 @@ export default function ArbeitsStationPage() {
         {/* Clock */}
         <Clock />
 
-        {/* Exit button (admins) or back link */}
+        {/* Exit button */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {isAdmin && (
-            <Link to="/dashboard/settings?tab=station_guide"
-              style={{
-                padding: "0.45rem 1rem",
-                background: "rgba(197,165,114,0.08)",
-                border: "1px solid rgba(197,165,114,0.2)",
-                borderRadius: 8,
-                color: "#c5a572",
-                textDecoration: "none",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "clamp(0.65rem, 1vw, 0.75rem)",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}>
-              ⚙ Konfigurieren
-            </Link>
-          )}
           <button
             onClick={() => setShowExitModal(true)}
             style={{

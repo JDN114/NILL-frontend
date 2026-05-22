@@ -1,11 +1,12 @@
 // src/ProtectedRoute.jsx
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const { user, org, loading } = useAuth();
+  const { user, org, loading, isCompanyAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (loading) return;
@@ -24,7 +25,17 @@ export default function ProtectedRoute({ children }) {
       navigate("/onboarding", { replace: true });
       return;
     }
-  }, [loading, user, org, navigate]);
+
+    // Station-Modus: Nicht-Admins werden automatisch zur ArbeitsStation geleitet
+    if (
+      org.station_mode_enabled &&
+      !isCompanyAdmin() &&
+      !location.pathname.startsWith("/station")
+    ) {
+      navigate("/station", { replace: true });
+      return;
+    }
+  }, [loading, user, org, navigate, location.pathname]);
 
   if (loading) return null;
   if (!user) return null;

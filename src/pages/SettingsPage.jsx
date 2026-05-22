@@ -691,16 +691,24 @@ export default function SettingsPage() {
   const [webauthnError,      setWebauthnError]      = useState("");
 
   // ── ArbeitsStation ────────────────────────────────────────────────────────
-  const [stationEnabled,  setStationEnabled]  = useState(org?.station_mode_enabled ?? false);
-  const [stationModules,  setStationModules]  = useState(org?.station_modules ?? []);
+  const [stationEnabled,  setStationEnabled]  = useState(false);
+  const [stationModules,  setStationModules]  = useState([]);
   const [stationSaving,   setStationSaving]   = useState(false);
   const [stationSuccess,  setStationSuccess]  = useState(false);
   const [stationError,    setStationError]    = useState("");
-  const [exitPwSet,       setExitPwSet]       = useState(org?.station_exit_password_set ?? false);
+  const [exitPwSet,       setExitPwSet]       = useState(false);
   const [exitPwInput,     setExitPwInput]     = useState("");
   const [exitPwLoading,   setExitPwLoading]   = useState(false);
   const [exitPwSuccess,   setExitPwSuccess]   = useState("");
   const [exitPwError,     setExitPwError]     = useState("");
+
+  // Sync station state when org loads (async) or changes externally
+  useEffect(() => {
+    if (!org) return;
+    setStationEnabled(org.station_mode_enabled ?? false);
+    setStationModules(org.station_modules ?? []);
+    setExitPwSet(org.station_exit_password_set ?? false);
+  }, [org]);
 
   // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -2182,8 +2190,10 @@ export default function SettingsPage() {
                       station_mode_enabled: stationEnabled,
                       station_modules: stationModules,
                     });
+                    updateOrg({ station_mode_enabled: stationEnabled, station_modules: stationModules });
                     setStationSuccess(true);
                     setTimeout(() => setStationSuccess(false), 3000);
+                    if (stationEnabled) navigate("/station");
                   } catch (e) {
                     setStationError(e?.response?.data?.detail ?? "Fehler beim Speichern.");
                   } finally {
