@@ -26,10 +26,9 @@ export default function ProtectedRoute({ children }) {
       return;
     }
 
-    // Station-Modus: Nicht-Admins werden automatisch zur ArbeitsStation geleitet
+    // Kiosk-Gerät: dieses spezifische Gerät wurde als Station fixiert (localStorage-Flag)
     if (
-      org.station_mode_enabled &&
-      !isCompanyAdmin() &&
+      localStorage.getItem("nill_kiosk_device") === "1" &&
       !location.pathname.startsWith("/station")
     ) {
       navigate("/station", { replace: true });

@@ -147,10 +147,13 @@ function ModuleCard({ moduleKey, onClick }) {
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
+const KIOSK_KEY = "nill_kiosk_device";
+
 export default function ArbeitsStationPage() {
   const { user, org, isCompanyAdmin } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState(null);
+  const [kioskFixed, setKioskFixed] = useState(() => localStorage.getItem(KIOSK_KEY) === "1");
 
   const stationModules = org?.station_modules ?? [];
   const isAdmin = isCompanyAdmin();
@@ -159,6 +162,13 @@ export default function ArbeitsStationPage() {
   useEffect(() => {
     api.get("/me/profile").then(r => setUserName(r.data.name || null)).catch(() => {});
   }, []);
+
+  function toggleKiosk() {
+    const next = !kioskFixed;
+    if (next) localStorage.setItem(KIOSK_KEY, "1");
+    else localStorage.removeItem(KIOSK_KEY);
+    setKioskFixed(next);
+  }
 
   const handleModuleClick = (route) => {
     sessionStorage.setItem("nill_from_station", "1");
@@ -252,8 +262,40 @@ export default function ArbeitsStationPage() {
         {/* Clock */}
         <Clock />
 
-        {/* Exit button */}
+        {/* Kiosk-Toggle (Admins) + Exit */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {isAdmin && (
+            <button
+              onClick={toggleKiosk}
+              title={kioskFixed ? "Kiosk-Fixierung aufheben" : "Dieses Gerät als Kiosk fixieren"}
+              style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "0.45rem 0.9rem",
+                background: kioskFixed ? "rgba(197,165,114,0.12)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${kioskFixed ? "rgba(197,165,114,0.35)" : "rgba(255,255,255,0.1)"}`,
+                borderRadius: 8, cursor: "pointer",
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "clamp(0.6rem, 0.9vw, 0.7rem)",
+                letterSpacing: "0.08em", textTransform: "uppercase",
+                color: kioskFixed ? "#c5a572" : "rgba(239,237,231,0.45)",
+                whiteSpace: "nowrap",
+              }}>
+              <span style={{
+                width: 28, height: 16, borderRadius: 99,
+                background: kioskFixed ? "#c5a572" : "rgba(255,255,255,0.15)",
+                position: "relative", flexShrink: 0, transition: "background 0.2s",
+              }}>
+                <span style={{
+                  position: "absolute", top: 2,
+                  left: kioskFixed ? 14 : 2,
+                  width: 12, height: 12, borderRadius: "50%",
+                  background: kioskFixed ? "#000" : "rgba(255,255,255,0.5)",
+                  transition: "left 0.2s",
+                }} />
+              </span>
+              Kiosk
+            </button>
+          )}
           <button
             onClick={() => setShowExitModal(true)}
             style={{

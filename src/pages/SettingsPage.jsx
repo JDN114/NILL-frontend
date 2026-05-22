@@ -2193,7 +2193,6 @@ export default function SettingsPage() {
                     updateOrg({ station_mode_enabled: stationEnabled, station_modules: stationModules });
                     setStationSuccess(true);
                     setTimeout(() => setStationSuccess(false), 3000);
-                    if (stationEnabled) navigate("/station");
                   } catch (e) {
                     setStationError(e?.response?.data?.detail ?? "Fehler beim Speichern.");
                   } finally {

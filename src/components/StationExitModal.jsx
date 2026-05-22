@@ -72,7 +72,10 @@ export default function StationExitModal({ onClose, hasPassword }) {
   const [error, setError] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
 
-  const exit = () => navigate("/dashboard");
+  const exit = () => {
+    localStorage.removeItem("nill_kiosk_device");
+    navigate("/dashboard");
+  };
 
   // Kein Passwort gesetzt → OTP sofort beim Öffnen anfordern
   useEffect(() => {
