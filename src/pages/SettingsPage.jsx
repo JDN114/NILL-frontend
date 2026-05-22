@@ -376,12 +376,15 @@ function KontaktModal({ onClose }) {
 
 // ─── ArbeitsStation Tab ───────────────────────────────────────────────────────
 const STATION_MODULES = [
-  { key: "emails",    label: "E-Mails",        icon: "✉",  desc: "Postfach & Nachrichten" },
-  { key: "accounting", label: "Buchhaltung",   icon: "◎",  desc: "Rechnungen & Ausgaben" },
-  { key: "calendar",  label: "Kalender",       icon: "▦",  desc: "Termine & Events" },
-  { key: "workflow",  label: "Aufgaben",        icon: "⌘",  desc: "Tasks & Prozesse" },
-  { key: "time",      label: "Zeiterfassung",  icon: "⏱",  desc: "Arbeitszeiten erfassen" },
-  { key: "hr_docs",   label: "HR Dokumente",   icon: "📄",  desc: "Personalunterlagen" },
+  { key: "emails",      label: "E-Mails",              icon: "✉",  desc: "Postfach & Nachrichten" },
+  { key: "accounting",  label: "Buchhaltung",          icon: "◎",  desc: "Rechnungen & Ausgaben" },
+  { key: "calendar",    label: "Kalender",             icon: "▦",  desc: "Termine & Events" },
+  { key: "workflow",    label: "Aufgaben",             icon: "⌘",  desc: "Tasks & Prozesse" },
+  { key: "time",        label: "Zeiterfassung",        icon: "⏱",  desc: "Arbeitszeiten erfassen" },
+  { key: "hr_docs",     label: "HR Dokumente",         icon: "📄",  desc: "Personalunterlagen" },
+  { key: "shift_plan",  label: "Schichtplan & Urlaub", icon: "⬡",  desc: "Wochenschichten & Urlaubsübersicht" },
+  { key: "delivery",    label: "Lieferscheine",        icon: "📦",  desc: "Lieferungen & Belege" },
+  { key: "inventory",   label: "Inventur",             icon: "◫",  desc: "Bestand & Lager" },
 ];
 
 function StationGuideTab({
