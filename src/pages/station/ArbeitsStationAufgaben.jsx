@@ -1,134 +1,442 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import api from "../../lib/api";
 
 const ACCENT = "#c6ff3c";
 
-const PRIORITY_COLOR = {
-  high:   { dot: "#f87171", label: "Hoch" },
-  medium: { dot: "#fbbf24", label: "Mittel" },
-  low:    { dot: "#86efac", label: "Niedrig" },
+const PRIO = {
+  high:   { dot: "#f87171", label: "Hoch",    bg: "rgba(248,113,113,0.08)",  border: "rgba(248,113,113,0.25)" },
+  medium: { dot: "#fbbf24", label: "Mittel",  bg: "rgba(251,191,36,0.08)",   border: "rgba(251,191,36,0.25)" },
+  low:    { dot: "#86efac", label: "Niedrig", bg: "rgba(134,239,172,0.08)",  border: "rgba(134,239,172,0.25)" },
 };
 
-function Spinner() {
+function Spinner({ color = ACCENT, size = 20 }) {
   return (
     <div style={{
-      width: 20, height: 20,
-      border: "2px solid rgba(255,255,255,0.08)",
-      borderTopColor: ACCENT,
-      borderRadius: "50%",
-      animation: "as-spin 0.75s linear infinite",
+      width: size, height: size,
+      border: `2px solid rgba(255,255,255,0.08)`,
+      borderTopColor: color, borderRadius: "50%",
+      animation: "as-spin 0.75s linear infinite", flexShrink: 0,
     }} />
   );
 }
 
-function TaskCard({ task, onComplete, busy }) {
-  const prio = PRIORITY_COLOR[task.priority] ?? { dot: "#94a3b8", label: task.priority };
-  const isOverdue = task.due_at && new Date(task.due_at) < new Date();
-  const isToday   = task.due_at && new Date(task.due_at).toDateString() === new Date().toDateString();
+function deadlineInfo(due_at) {
+  if (!due_at) return null;
+  const d = new Date(due_at);
+  const now = new Date();
+  const diffMs = d - now;
+  const diffDays = Math.ceil(diffMs / 86400000);
+  if (diffDays < 0) return { label: "Überfällig", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)" };
+  if (diffDays === 0) return { label: "Heute", color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)" };
+  if (diffDays === 1) return { label: "Morgen", color: "#fbbf24", bg: "rgba(251,191,36,0.05)", border: "rgba(251,191,36,0.18)" };
+  return {
+    label: d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
+    color: "rgba(239,237,231,0.45)", bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.08)",
+  };
+}
+
+// ── Signature Canvas ──────────────────────────────────────────────────────────
+function SignatureCanvas({ onSigned }) {
+  const canvasRef = useRef();
+  const drawing   = useRef(false);
+  const [hasLines, setHasLines] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#efede7";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  }, []);
+
+  const getPos = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const src  = e.touches ? e.touches[0] : e;
+    return [src.clientX - rect.left, src.clientY - rect.top];
+  };
+
+  const start = (e) => {
+    e.preventDefault();
+    drawing.current = true;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const [x, y] = getPos(e, canvas);
+    ctx.beginPath(); ctx.moveTo(x, y);
+  };
+
+  const move = (e) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const [x, y] = getPos(e, canvas);
+    ctx.lineTo(x, y); ctx.stroke();
+    setHasLines(true);
+  };
+
+  const stop = () => {
+    drawing.current = false;
+    if (hasLines) onSigned(canvasRef.current.toDataURL("image/png"));
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setHasLines(false);
+    onSigned(null);
+  };
+
+  return (
+    <div>
+      <div style={{
+        fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
+        letterSpacing: "0.15em", textTransform: "uppercase",
+        color: "rgba(239,237,231,0.35)", marginBottom: 8,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        Unterschrift
+        {hasLines && (
+          <button onClick={clear} style={{
+            background: "none", border: "none", color: "rgba(239,237,231,0.35)",
+            fontSize: "0.65rem", cursor: "pointer", letterSpacing: "0.1em", textTransform: "uppercase",
+          }}>Löschen</button>
+        )}
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={360} height={120}
+        onMouseDown={start} onMouseMove={move} onMouseUp={stop} onMouseLeave={stop}
+        onTouchStart={start} onTouchMove={move} onTouchEnd={stop}
+        style={{
+          width: "100%", maxWidth: 360, height: 120, borderRadius: 12,
+          border: `1px solid ${hasLines ? "rgba(198,255,60,0.25)" : "rgba(239,237,231,0.1)"}`,
+          background: "rgba(255,255,255,0.03)", cursor: "crosshair", display: "block",
+          touchAction: "none",
+        }}
+      />
+      {!hasLines && (
+        <div style={{
+          marginTop: -68, textAlign: "center", fontSize: "0.75rem",
+          color: "rgba(239,237,231,0.2)", pointerEvents: "none",
+          fontFamily: "'Inter', system-ui, sans-serif",
+        }}>
+          Hier unterschreiben
+        </div>
+      )}
+      <div style={{ marginTop: hasLines ? 0 : 56 }} />
+    </div>
+  );
+}
+
+// ── Bestätigungs-Modal (PIN + Unterschrift) ───────────────────────────────────
+function ConfirmModal({ task, onConfirmed, onClose }) {
+  const [step, setStep]       = useState("pin");   // pin | sign
+  const [pin, setPin]         = useState("");
+  const [employee, setEmployee] = useState(null);
+  const [signature, setSig]   = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState("");
+
+  const pressPin = useCallback((k) => {
+    if (k === "⌫") { setPin(p => p.slice(0, -1)); setError(""); }
+    else if (pin.length < 6) { setPin(p => p + k); setError(""); }
+  }, [pin]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (step !== "pin") return;
+      if (e.key >= "0" && e.key <= "9") pressPin(e.key);
+      else if (e.key === "Backspace") pressPin("⌫");
+      else if (e.key === "Enter" && pin.length >= 4) verifyPin();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [step, pin, pressPin]);
+
+  const verifyPin = async () => {
+    if (pin.length < 4) return;
+    setLoading(true); setError("");
+    try {
+      const r = await api.post("/workflow/time/station-identify", { pin });
+      setEmployee(r.data);
+      setStep("sign");
+    } catch (err) {
+      setError(err?.response?.data?.detail ?? "Unbekannte PIN");
+      setPin("");
+    } finally { setLoading(false); }
+  };
+
+  const confirm = async () => {
+    setLoading(true); setError("");
+    try {
+      await api.post(`/workflow/tasks/${task.id}/station-complete`, {
+        pin,
+        signature: signature || "",
+      });
+      onConfirmed(task.id);
+    } catch (err) {
+      setError(err?.response?.data?.detail ?? "Fehler bei der Bestätigung");
+    } finally { setLoading(false); }
+  };
+
+  const keys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(4,7,15,0.9)", backdropFilter: "blur(10px)",
+      WebkitBackdropFilter: "blur(10px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem",
+    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{
+        background: "rgba(12,16,28,0.98)",
+        border: "1px solid rgba(239,237,231,0.1)",
+        borderRadius: 20, padding: "1.75rem 2rem",
+        width: "100%", maxWidth: 380,
+        display: "flex", flexDirection: "column", gap: "1.25rem",
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}>
+        {/* Header */}
+        <div>
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
+            letterSpacing: "0.18em", textTransform: "uppercase",
+            color: "rgba(239,237,231,0.3)", marginBottom: 6,
+          }}>
+            Aufgabe bestätigen
+          </div>
+          <div style={{
+            fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.2rem",
+            fontWeight: 400, color: "#efede7", letterSpacing: "-0.02em",
+            lineHeight: 1.2,
+          }}>
+            {task.title}
+          </div>
+        </div>
+
+        {/* Step indicator */}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {["pin","sign"].map((s, i) => (
+            <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%",
+                background: step === s ? ACCENT : i < ["pin","sign"].indexOf(step) ? "rgba(198,255,60,0.2)" : "rgba(255,255,255,0.06)",
+                border: `1.5px solid ${step === s ? ACCENT : i < ["pin","sign"].indexOf(step) ? "rgba(198,255,60,0.35)" : "rgba(255,255,255,0.1)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.65rem", fontWeight: 700,
+                color: step === s ? "#000" : "rgba(239,237,231,0.4)",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {i < ["pin","sign"].indexOf(step) ? "✓" : i + 1}
+              </div>
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
+                letterSpacing: "0.1em", textTransform: "uppercase",
+                color: step === s ? ACCENT : "rgba(239,237,231,0.3)",
+              }}>
+                {s === "pin" ? "Anmelden" : "Unterschrift"}
+              </span>
+              {i === 0 && <div style={{ width: 24, height: 1, background: "rgba(255,255,255,0.08)", marginRight: 0 }} />}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Schritt 1: PIN ── */}
+        {step === "pin" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", gap: 10 }}>
+              {[0,1,2,3,4,5].map(i => (
+                <div key={i} style={{
+                  width: 14, height: 14, borderRadius: "50%",
+                  background: i < pin.length ? ACCENT : "rgba(239,237,231,0.12)",
+                  border: `1.5px solid ${i < pin.length ? ACCENT : "rgba(239,237,231,0.2)"}`,
+                  boxShadow: i < pin.length ? `0 0 6px ${ACCENT}88` : "none",
+                  transition: "all 0.15s",
+                }} />
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, width: "100%" }}>
+              {keys.map((k, i) => k === "" ? <div key={i} /> : (
+                <button key={i} onClick={() => pressPin(k)} disabled={loading} style={{
+                  height: 52, borderRadius: 12,
+                  background: k === "⌫" ? "rgba(239,237,231,0.03)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${k === "⌫" ? "rgba(239,237,231,0.07)" : "rgba(255,255,255,0.09)"}`,
+                  color: "#efede7",
+                  fontFamily: k === "⌫" ? "'JetBrains Mono', monospace" : "'Fraunces', Georgia, serif",
+                  fontSize: k === "⌫" ? "1rem" : "1.4rem", fontWeight: 400,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.12s, transform 0.08s",
+                }}
+                onPointerDown={e => !loading && (e.currentTarget.style.transform = "scale(0.92)")}
+                onPointerUp={e => (e.currentTarget.style.transform = "scale(1)")}
+                onPointerLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+                >{k}</button>
+              ))}
+            </div>
+
+            {error && <div style={{ fontSize: "0.78rem", color: "#f87171" }}>{error}</div>}
+
+            <button onClick={verifyPin} disabled={pin.length < 4 || loading} style={{
+              width: "100%", padding: "0.65rem",
+              borderRadius: 10, border: "none",
+              background: pin.length >= 4 ? ACCENT : "rgba(255,255,255,0.05)",
+              color: pin.length >= 4 ? "#000" : "rgba(239,237,231,0.25)",
+              fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
+              fontSize: "0.82rem", letterSpacing: "0.1em", textTransform: "uppercase",
+              cursor: pin.length >= 4 && !loading ? "pointer" : "not-allowed",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            }}>
+              {loading ? <Spinner size={16} color="#000" /> : null}
+              Weiter
+            </button>
+          </div>
+        )}
+
+        {/* ── Schritt 2: Unterschrift ── */}
+        {step === "sign" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {employee && (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "0.4rem 0.9rem", borderRadius: 99,
+                background: "rgba(198,255,60,0.07)", border: "1px solid rgba(198,255,60,0.2)",
+                alignSelf: "flex-start",
+              }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: ACCENT, flexShrink: 0 }} />
+                <span style={{
+                  fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.85rem",
+                  color: ACCENT, fontWeight: 500,
+                }}>
+                  {employee.name}
+                </span>
+              </div>
+            )}
+
+            <SignatureCanvas onSigned={setSig} />
+
+            {error && <div style={{ fontSize: "0.78rem", color: "#f87171" }}>{error}</div>}
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { setStep("pin"); setPin(""); setSig(null); setError(""); }} style={{
+                flex: 1, padding: "0.65rem", borderRadius: 10,
+                border: "1px solid rgba(239,237,231,0.1)", background: "rgba(255,255,255,0.04)",
+                color: "rgba(239,237,231,0.55)", fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase",
+                cursor: "pointer",
+              }}>← Zurück</button>
+              <button onClick={confirm} disabled={!sig || loading} style={{
+                flex: 2, padding: "0.65rem", borderRadius: 10, border: "none",
+                background: sig ? ACCENT : "rgba(255,255,255,0.05)",
+                color: sig ? "#000" : "rgba(239,237,231,0.25)",
+                fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
+                fontSize: "0.82rem", letterSpacing: "0.1em", textTransform: "uppercase",
+                cursor: sig && !loading ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}>
+                {loading ? <Spinner size={16} color="#000" /> : null}
+                Bestätigen
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button onClick={onClose} style={{
+          background: "none", border: "none", padding: "0.2rem 0",
+          color: "rgba(239,237,231,0.3)", fontSize: "0.75rem", cursor: "pointer",
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em",
+          textTransform: "uppercase", textAlign: "center",
+        }}>Abbrechen</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Aufgaben-Karte ────────────────────────────────────────────────────────────
+function TaskCard({ task, onOpenConfirm }) {
+  const p   = PRIO[task.priority] ?? { dot: "#94a3b8", label: task.priority, bg: "rgba(148,163,184,0.08)", border: "rgba(148,163,184,0.2)" };
+  const dl  = deadlineInfo(task.due_at);
+  const isOverdue = dl?.label === "Überfällig";
 
   return (
     <div style={{
       borderRadius: 16,
-      border: `1px solid ${isOverdue ? "rgba(248,113,113,0.25)" : "rgba(239,237,231,0.07)"}`,
-      background: isOverdue ? "rgba(248,113,113,0.04)" : "rgba(255,255,255,0.025)",
-      padding: "18px 20px",
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 16,
-      transition: "border-color 0.2s",
+      border: `1px solid ${isOverdue ? "rgba(248,113,113,0.25)" : "rgba(239,237,231,0.08)"}`,
+      background: isOverdue ? "rgba(248,113,113,0.03)" : "rgba(255,255,255,0.025)",
+      padding: "16px 18px",
+      display: "flex", alignItems: "flex-start", gap: 14,
     }}>
-      {/* Priority dot */}
+      {/* Prio dot */}
       <span style={{
         width: 10, height: 10, borderRadius: "50%",
-        background: prio.dot,
-        flexShrink: 0,
-        marginTop: 5,
+        background: p.dot, flexShrink: 0, marginTop: 6,
+        boxShadow: `0 0 6px ${p.dot}66`,
       }} />
 
-      {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: "'Fraunces', Georgia, serif",
-          fontSize: "clamp(1rem, 2vw, 1.2rem)",
-          fontWeight: 400,
-          color: "#efede7",
-          letterSpacing: "-0.01em",
-          lineHeight: 1.2,
-          marginBottom: 6,
-        }}>{task.title}</div>
+          fontSize: "clamp(0.95rem, 1.8vw, 1.1rem)", fontWeight: 400,
+          color: "#efede7", letterSpacing: "-0.01em", lineHeight: 1.2, marginBottom: 6,
+        }}>
+          {task.title}
+        </div>
 
         {task.description && (
           <p style={{
-            fontFamily: "'Inter', system-ui, sans-serif",
-            fontSize: "0.78rem",
-            color: "rgba(239,237,231,0.45)",
-            margin: "0 0 8px",
-            lineHeight: 1.45,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
+            fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.78rem",
+            color: "rgba(239,237,231,0.45)", margin: "0 0 8px", lineHeight: 1.45,
+            overflow: "hidden", display: "-webkit-box",
+            WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
           }}>{task.description}</p>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "0.65rem",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: prio.dot,
-            background: `${prio.dot}14`,
-            border: `1px solid ${prio.dot}30`,
-            borderRadius: 99,
-            padding: "2px 8px",
-          }}>{prio.label}</span>
+            fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
+            letterSpacing: "0.08em", textTransform: "uppercase",
+            color: p.dot, background: p.bg, border: `1px solid ${p.border}`,
+            borderRadius: 99, padding: "2px 8px",
+          }}>{p.label}</span>
 
-          {task.due_at && (
+          {dl && (
             <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.65rem",
-              letterSpacing: "0.05em",
-              color: isOverdue ? "#f87171" : isToday ? "#fbbf24" : "rgba(239,237,231,0.4)",
-              background: isOverdue ? "rgba(248,113,113,0.08)" : isToday ? "rgba(251,191,36,0.08)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${isOverdue ? "rgba(248,113,113,0.25)" : isToday ? "rgba(251,191,36,0.25)" : "rgba(255,255,255,0.08)"}`,
-              borderRadius: 99,
-              padding: "2px 8px",
-            }}>
-              {isToday ? "Heute" : isOverdue ? "Überfällig" : new Date(task.due_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
-            </span>
+              fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
+              letterSpacing: "0.06em",
+              color: dl.color, background: dl.bg, border: `1px solid ${dl.border}`,
+              borderRadius: 99, padding: "2px 8px",
+            }}>⏰ {dl.label}</span>
           )}
 
           {task.assigned_role && (
             <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.62rem",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
               color: "rgba(239,237,231,0.35)",
-            }}>↳ {task.assigned_role}</span>
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 99, padding: "2px 8px",
+            }}>👤 {task.assigned_role}</span>
           )}
         </div>
       </div>
 
-      {/* Complete button */}
       <button
-        onClick={() => onComplete(task.id)}
-        disabled={busy}
-        title="Als erledigt markieren"
+        onClick={() => onOpenConfirm(task)}
+        title="Aufgabe erledigen"
         style={{
-          width: 38, height: 38,
-          borderRadius: 10,
-          border: `1px solid rgba(198,255,60,0.25)`,
-          background: "rgba(198,255,60,0.06)",
-          color: ACCENT,
-          fontSize: "1rem",
-          cursor: busy ? "not-allowed" : "pointer",
+          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+          border: "1px solid rgba(198,255,60,0.25)", background: "rgba(198,255,60,0.06)",
+          color: ACCENT, fontSize: "1rem", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
           transition: "background 0.2s, border-color 0.2s, transform 0.15s",
-          opacity: busy ? 0.5 : 1,
         }}
-        onPointerDown={e => !busy && (e.currentTarget.style.transform = "scale(0.92)")}
+        onPointerDown={e => (e.currentTarget.style.transform = "scale(0.92)")}
         onPointerUp={e => (e.currentTarget.style.transform = "scale(1)")}
         onPointerLeave={e => (e.currentTarget.style.transform = "scale(1)")}
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(198,255,60,0.14)"; e.currentTarget.style.borderColor = "rgba(198,255,60,0.45)"; }}
@@ -138,113 +446,168 @@ function TaskCard({ task, onComplete, busy }) {
   );
 }
 
+// ── Hauptseite ────────────────────────────────────────────────────────────────
 export default function ArbeitsStationAufgaben() {
-  const [tasks, setTasks]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy]     = useState(false);
-  const [filter, setFilter] = useState("open");
+  const [tasks, setTasks]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("open");
+  const [confirmTask, setConfirmTask] = useState(null);
 
-  const fetch = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/workflow/tasks", { params: { my_tasks: true } });
+      const res = await api.get("/workflow/tasks/station-all");
       setTasks(res.data?.items || []);
     } catch { setTasks([]); }
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { load(); }, [load]);
 
-  async function complete(id) {
-    setBusy(true);
-    try { await api.post(`/workflow/tasks/${id}/complete`, { result_data: {} }); fetch(); }
-    catch { /* non-fatal */ }
-    finally { setBusy(false); }
-  }
+  const handleConfirmed = (taskId) => {
+    setTasks(p => p.filter(t => t.id !== taskId));
+    setConfirmTask(null);
+  };
 
-  const open = tasks.filter(t => t.status !== "completed" && t.status !== "escalated");
-  const done = tasks.filter(t => t.status === "completed");
-  const shown = filter === "open" ? open : done;
+  // Alle einzigartigen Rollen aus den Aufgaben
+  const roles = [...new Set(tasks.map(t => t.assigned_role).filter(Boolean))].sort();
+
+  const filtered = tasks.filter(t => {
+    const matchRole   = roleFilter === "all" || t.assigned_role === roleFilter;
+    const matchStatus = statusFilter === "open"
+      ? t.status !== "completed" && t.status !== "escalated"
+      : t.status === statusFilter;
+    return matchRole && matchStatus;
+  });
+
+  // Sortiert: überfällig zuerst, dann nach Deadline
+  const sorted = [...filtered].sort((a, b) => {
+    const da = a.due_at ? new Date(a.due_at) : new Date("9999-01-01");
+    const db2 = b.due_at ? new Date(b.due_at) : new Date("9999-01-01");
+    return da - db2;
+  });
+
+  const overdueCount = tasks.filter(t =>
+    t.due_at && new Date(t.due_at) < new Date() &&
+    t.status !== "completed" && t.status !== "escalated"
+  ).length;
 
   return (
     <ArbeitsStationLayout title="Aufgaben" icon="⌘" accent={ACCENT}>
-      <style>{`@keyframes as-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes as-spin { to { transform: rotate(360deg); } }
+      `}</style>
 
-      {/* Filter tabs */}
+      {/* Status-Filter */}
       <div style={{
-        display: "flex", gap: 8, marginBottom: 24,
-        borderBottom: "1px solid rgba(239,237,231,0.07)",
-        paddingBottom: 16,
+        display: "flex", gap: 8, marginBottom: 16,
+        borderBottom: "1px solid rgba(239,237,231,0.07)", paddingBottom: 14,
+        flexWrap: "wrap",
       }}>
         {[
-          { key: "open",      label: "Offen",    count: open.length },
-          { key: "completed", label: "Erledigt", count: done.length },
+          { key: "open",      label: "Offen",    count: tasks.filter(t => t.status !== "completed" && t.status !== "escalated").length },
+          { key: "completed", label: "Erledigt", count: tasks.filter(t => t.status === "completed").length },
         ].map(({ key, label, count }) => (
-          <button key={key}
-            onClick={() => setFilter(key)}
-            style={{
-              padding: "6px 18px",
-              borderRadius: 99,
-              border: filter === key
-                ? `1px solid rgba(198,255,60,0.35)`
-                : "1px solid rgba(239,237,231,0.08)",
-              background: filter === key
-                ? "rgba(198,255,60,0.1)"
-                : "rgba(255,255,255,0.03)",
-              color: filter === key ? ACCENT : "rgba(239,237,231,0.5)",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.72rem",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 8,
-              transition: "all 0.2s",
-            }}
-          >
+          <button key={key} onClick={() => setStatusFilter(key)} style={{
+            padding: "5px 16px", borderRadius: 99,
+            border: statusFilter === key ? `1px solid rgba(198,255,60,0.35)` : "1px solid rgba(239,237,231,0.08)",
+            background: statusFilter === key ? "rgba(198,255,60,0.1)" : "rgba(255,255,255,0.03)",
+            color: statusFilter === key ? ACCENT : "rgba(239,237,231,0.5)",
+            fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
+            letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 7,
+          }}>
             {label}
             <span style={{
-              background: filter === key ? "rgba(198,255,60,0.15)" : "rgba(255,255,255,0.06)",
-              border: filter === key ? "1px solid rgba(198,255,60,0.2)" : "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 99,
-              padding: "0px 6px",
-              fontSize: "0.65rem",
-              color: filter === key ? ACCENT : "rgba(239,237,231,0.4)",
+              background: statusFilter === key ? "rgba(198,255,60,0.15)" : "rgba(255,255,255,0.06)",
+              border: statusFilter === key ? "1px solid rgba(198,255,60,0.2)" : "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 99, padding: "0 5px", fontSize: "0.6rem",
+              color: statusFilter === key ? ACCENT : "rgba(239,237,231,0.4)",
             }}>{count}</span>
           </button>
         ))}
+
+        {overdueCount > 0 && statusFilter === "open" && (
+          <div style={{
+            padding: "5px 14px", borderRadius: 99,
+            border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.07)",
+            color: "#f87171", fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "0.68rem", letterSpacing: "0.1em", textTransform: "uppercase",
+            display: "flex", alignItems: "center", gap: 6,
+          }}>
+            ⚠ {overdueCount} überfällig
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
-          <Spinner />
+      {/* Rollen-Filter */}
+      {roles.length > 0 && (
+        <div style={{
+          display: "flex", gap: 7, marginBottom: 20, flexWrap: "wrap", alignItems: "center",
+        }}>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
+            letterSpacing: "0.15em", textTransform: "uppercase",
+            color: "rgba(239,237,231,0.25)", marginRight: 4,
+          }}>Rolle</span>
+          {["all", ...roles].map(role => (
+            <button key={role} onClick={() => setRoleFilter(role)} style={{
+              padding: "4px 12px", borderRadius: 99, cursor: "pointer",
+              border: roleFilter === role
+                ? "1px solid rgba(198,255,60,0.3)"
+                : "1px solid rgba(239,237,231,0.07)",
+              background: roleFilter === role
+                ? "rgba(198,255,60,0.08)"
+                : "rgba(255,255,255,0.02)",
+              color: roleFilter === role ? ACCENT : "rgba(239,237,231,0.4)",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
+              letterSpacing: "0.06em", textTransform: "uppercase",
+              transition: "all 0.18s",
+            }}>
+              {role === "all" ? "Alle Rollen" : role}
+              {role !== "all" && (
+                <span style={{ marginLeft: 5, opacity: 0.6 }}>
+                  {tasks.filter(t => t.assigned_role === role && t.status !== "completed").length}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
-      ) : shown.length === 0 ? (
+      )}
+
+      {/* Aufgabenliste */}
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}><Spinner /></div>
+      ) : sorted.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "4rem 2rem",
-          border: "1px solid rgba(239,237,231,0.06)",
-          borderRadius: 20,
+          border: "1px solid rgba(239,237,231,0.06)", borderRadius: 20,
           background: "rgba(255,255,255,0.02)",
         }}>
           <div style={{ fontSize: "2rem", opacity: 0.3, marginBottom: 12 }}>⌘</div>
-          <div style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: "1.1rem",
-            color: "rgba(239,237,231,0.4)",
-          }}>
-            {filter === "open" ? "Keine offenen Aufgaben" : "Noch nichts erledigt"}
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(239,237,231,0.4)" }}>
+            {statusFilter === "open" ? "Keine offenen Aufgaben" : "Noch nichts erledigt"}
           </div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {shown.map(task => (
+          {sorted.map(task => (
             <TaskCard
               key={task.id}
               task={task}
-              onComplete={complete}
-              busy={busy}
+              onOpenConfirm={statusFilter === "open" ? setConfirmTask : undefined}
             />
           ))}
         </div>
+      )}
+
+      {confirmTask && (
+        <ConfirmModal
+          task={confirmTask}
+          onConfirmed={handleConfirmed}
+          onClose={() => setConfirmTask(null)}
+        />
       )}
     </ArbeitsStationLayout>
   );

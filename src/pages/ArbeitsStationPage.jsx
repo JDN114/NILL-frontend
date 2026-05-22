@@ -3,15 +3,19 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import StationExitModal from "../components/StationExitModal";
 
 // ─── Module registry ─────────────────────────────────────────────────────────
 const MODULE_META = {
-  emails:     { label: "E-Mails",       icon: "✉",  color: "#7a5cff", route: "/dashboard/emails",      desc: "Postfach & Nachrichten" },
-  accounting: { label: "Buchhaltung",   icon: "◎",  color: "#c5a572", route: "/dashboard/accounting",  desc: "Rechnungen & Ausgaben" },
-  calendar:   { label: "Kalender",      icon: "▦",  color: "#38f5d0", route: "/station/calendar",       desc: "Termine & Planung" },
-  workflow:   { label: "Aufgaben",      icon: "⌘",  color: "#c6ff3c", route: "/station/tasks",          desc: "Tasks & Prozesse" },
-  time:       { label: "Zeiterfassung", icon: "⏱",  color: "#ff4d8d", route: "/station/time",           desc: "Arbeitszeiten" },
-  hr_docs:    { label: "HR Dokumente",  icon: "📄",  color: "#fbbf24", route: "/station/hr-documents",  desc: "Personalunterlagen" },
+  emails:       { label: "E-Mails",       icon: "✉",  color: "#7a5cff", route: "/dashboard/emails",        desc: "Postfach & Nachrichten" },
+  accounting:   { label: "Buchhaltung",   icon: "◎",  color: "#c5a572", route: "/dashboard/accounting",    desc: "Rechnungen & Ausgaben" },
+  calendar:     { label: "Kalender",      icon: "▦",  color: "#38f5d0", route: "/station/calendar",         desc: "Termine & Planung" },
+  workflow:     { label: "Aufgaben",      icon: "⌘",  color: "#c6ff3c", route: "/station/tasks",            desc: "Tasks & Prozesse" },
+  time:         { label: "Zeiterfassung", icon: "⏱",  color: "#ff4d8d", route: "/station/time",             desc: "Arbeitszeiten" },
+  hr_docs:      { label: "HR & Listen",   icon: "📄",  color: "#fbbf24", route: "/station/hr-documents",    desc: "Dokumente, Listen & Lieferscheine" },
+  shift_plan:   { label: "Schichtplan",   icon: "⬡",  color: "#38f5d0", route: "/station/schichtplan",      desc: "Wochenschichten & Team" },
+  delivery:     { label: "Lieferscheine", icon: "📦",  color: "#fb923c", route: "/station/lieferscheine",   desc: "Lieferungen & Bestätigung" },
+  inventory:    { label: "Inventur",      icon: "◫",  color: "#a78bfa", route: "/station/inventur",         desc: "Bestand & Lager" },
 };
 
 // ─── Clock component ─────────────────────────────────────────────────────────
@@ -150,6 +154,7 @@ export default function ArbeitsStationPage() {
 
   const stationModules = org?.station_modules ?? [];
   const isAdmin = isCompanyAdmin();
+  const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {
     api.get("/me/profile").then(r => setUserName(r.data.name || null)).catch(() => {});
@@ -267,22 +272,23 @@ export default function ArbeitsStationPage() {
               ⚙ Konfigurieren
             </Link>
           )}
-          <Link to="/dashboard"
+          <button
+            onClick={() => setShowExitModal(true)}
             style={{
               padding: "0.45rem 1rem",
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: 8,
               color: "rgba(239,237,231,0.6)",
-              textDecoration: "none",
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "clamp(0.65rem, 1vw, 0.75rem)",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               whiteSpace: "nowrap",
+              cursor: "pointer",
             }}>
             ✕ Beenden
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -389,6 +395,13 @@ export default function ArbeitsStationPage() {
           </>
         )}
       </main>
+
+      {showExitModal && (
+        <StationExitModal
+          hasPassword={org?.station_exit_password_set ?? false}
+          onClose={() => setShowExitModal(false)}
+        />
+      )}
 
       {/* ── Footer bar ── */}
       <footer style={{

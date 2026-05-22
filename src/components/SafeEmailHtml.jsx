@@ -36,8 +36,8 @@ function luminance({ r, g, b }) {
 function neutralizeStyle(styleStr) {
   if (!styleStr) return styleStr;
 
-  // Block CSS exfiltration: remove any url(), expression(), javascript: from styles
-  const dangerous = /url\s*\(|expression\s*\(|javascript\s*:/i;
+  // Block CSS exfiltration and legacy IE/Mozilla execution vectors
+  const dangerous = /url\s*\(|expression\s*\(|javascript\s*:|-moz-binding\s*:|behavior\s*:/i;
   if (dangerous.test(styleStr)) return "";
 
   return styleStr

@@ -1348,7 +1348,7 @@ export default function LandingPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/<\//g, '<\\/') }}
       />
       <div className="vignette" aria-hidden="true"/>
       <Nav onDemo={openModal}/>

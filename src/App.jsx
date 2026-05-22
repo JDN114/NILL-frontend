@@ -57,6 +57,9 @@ import ArbeitsStationKalender from "./pages/station/ArbeitsStationKalender.jsx";
 import ArbeitsStationAufgaben from "./pages/station/ArbeitsStationAufgaben.jsx";
 import ArbeitsStationZeit from "./pages/station/ArbeitsStationZeit.jsx";
 import ArbeitsStationHR from "./pages/station/ArbeitsStationHR.jsx";
+import ArbeitsStationSchichtplan from "./pages/station/ArbeitsStationSchichtplan.jsx";
+import ArbeitsStationLieferscheine from "./pages/station/ArbeitsStationLieferscheine.jsx";
+import ArbeitsStationInventur from "./pages/station/ArbeitsStationInventur.jsx";
 import Widerruf from "./pages/Widerruf.jsx";
 import Barrierefreiheit from "./pages/Barrierefreiheit";
 import useInactivityLogout from "./hooks/useInactivityLogout";
@@ -251,6 +254,15 @@ function App() {
                 }/>
                 <Route path="/station/hr-documents" element={
                   <ProtectedRoute><ArbeitsStationHR /></ProtectedRoute>
+                }/>
+                <Route path="/station/schichtplan" element={
+                  <ProtectedRoute><ArbeitsStationSchichtplan /></ProtectedRoute>
+                }/>
+                <Route path="/station/lieferscheine" element={
+                  <ProtectedRoute><ArbeitsStationLieferscheine /></ProtectedRoute>
+                }/>
+                <Route path="/station/inventur" element={
+                  <ProtectedRoute><ArbeitsStationInventur /></ProtectedRoute>
                 }/>
 	      </Routes>
               <ConditionalFooter />

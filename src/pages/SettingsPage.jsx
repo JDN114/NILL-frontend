@@ -390,6 +390,9 @@ function StationGuideTab({
   stationModules, setStationModules,
   stationSaving, stationSuccess, stationError,
   onSave,
+  exitPwSet, exitPwInput, setExitPwInput,
+  exitPwLoading, exitPwSuccess, exitPwError,
+  onSetExitPw, onDeleteExitPw,
 }) {
   const toggleModule = (key) =>
     setStationModules(prev =>
@@ -517,6 +520,64 @@ function StationGuideTab({
         </div>
       )}
 
+      {stationEnabled && (
+        <div style={panelStyle}>
+          <div style={sectionHeadStyle}>
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
+              textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Kiosk-Schutz
+            </span>
+            <span style={{ fontSize: "0.72rem", color: mute }}>
+              Exit-Passwort für ArbeitsStation
+            </span>
+          </div>
+          <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <p style={{ margin: 0, fontSize: "0.83rem", color: dim, lineHeight: 1.55 }}>
+              Wenn gesetzt, müssen Mitarbeiter dieses Passwort eingeben, um den Kiosk-Modus zu verlassen.{" "}
+              {exitPwSet
+                ? <span style={{ color: green }}>✓ Passwort aktiv</span>
+                : <span style={{ color: mute }}>Kein Passwort gesetzt</span>
+              }
+            </p>
+            <div style={{ display: "flex", gap: "0.6rem" }}>
+              <input
+                type="password"
+                placeholder={exitPwSet ? "Neues Passwort (zum Ändern)" : "Passwort setzen (min. 4 Zeichen)"}
+                value={exitPwInput}
+                onChange={e => setExitPwInput(e.target.value)}
+                style={{
+                  flex: 1, padding: "0.55rem 0.75rem",
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1px solid ${border}`, borderRadius: 8,
+                  color: text, fontSize: "0.88rem",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  outline: "none", letterSpacing: "0.08em",
+                  boxSizing: "border-box",
+                }}
+              />
+              <button
+                onClick={onSetExitPw}
+                disabled={exitPwLoading || exitPwInput.length < 4}
+                style={{ ...btnPrimary, padding: "0.55rem 1.1rem", opacity: exitPwLoading || exitPwInput.length < 4 ? 0.5 : 1, whiteSpace: "nowrap" }}
+              >
+                {exitPwSet ? "Ändern" : "Setzen"}
+              </button>
+            </div>
+            {exitPwSet && (
+              <button
+                onClick={onDeleteExitPw}
+                disabled={exitPwLoading}
+                style={{ ...btnGhost, color: red, borderColor: "rgba(248,113,113,0.25)", opacity: exitPwLoading ? 0.5 : 1, alignSelf: "flex-start" }}
+              >
+                Passwort entfernen
+              </button>
+            )}
+            {exitPwSuccess && <span style={{ fontSize: "0.78rem", color: green }}>{exitPwSuccess}</span>}
+            {exitPwError && <span style={{ fontSize: "0.78rem", color: red }}>{exitPwError}</span>}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <button
           onClick={onSave}
@@ -632,6 +693,11 @@ export default function SettingsPage() {
   const [stationSaving,   setStationSaving]   = useState(false);
   const [stationSuccess,  setStationSuccess]  = useState(false);
   const [stationError,    setStationError]    = useState("");
+  const [exitPwSet,       setExitPwSet]       = useState(org?.station_exit_password_set ?? false);
+  const [exitPwInput,     setExitPwInput]     = useState("");
+  const [exitPwLoading,   setExitPwLoading]   = useState(false);
+  const [exitPwSuccess,   setExitPwSuccess]   = useState("");
+  const [exitPwError,     setExitPwError]     = useState("");
 
   // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -2119,6 +2185,38 @@ export default function SettingsPage() {
                     setStationError(e?.response?.data?.detail ?? "Fehler beim Speichern.");
                   } finally {
                     setStationSaving(false);
+                  }
+                }}
+                exitPwSet={exitPwSet}
+                exitPwInput={exitPwInput}
+                setExitPwInput={setExitPwInput}
+                exitPwLoading={exitPwLoading}
+                exitPwSuccess={exitPwSuccess}
+                exitPwError={exitPwError}
+                onSetExitPw={async () => {
+                  setExitPwLoading(true); setExitPwSuccess(""); setExitPwError("");
+                  try {
+                    await api.put("/auth/org/station-exit-password", { password: exitPwInput });
+                    setExitPwSet(true); setExitPwInput("");
+                    setExitPwSuccess("Passwort gesetzt.");
+                    setTimeout(() => setExitPwSuccess(""), 3000);
+                  } catch (e) {
+                    setExitPwError(e?.response?.data?.detail ?? "Fehler beim Setzen.");
+                  } finally {
+                    setExitPwLoading(false);
+                  }
+                }}
+                onDeleteExitPw={async () => {
+                  setExitPwLoading(true); setExitPwSuccess(""); setExitPwError("");
+                  try {
+                    await api.delete("/auth/org/station-exit-password");
+                    setExitPwSet(false);
+                    setExitPwSuccess("Passwort entfernt.");
+                    setTimeout(() => setExitPwSuccess(""), 3000);
+                  } catch (e) {
+                    setExitPwError(e?.response?.data?.detail ?? "Fehler beim Entfernen.");
+                  } finally {
+                    setExitPwLoading(false);
                   }
                 }}
               />
