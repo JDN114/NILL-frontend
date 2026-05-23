@@ -1,6 +1,6 @@
 // src/pages/SettingsPage.jsx
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import PageLayout from "../components/layout/PageLayout";
@@ -702,9 +702,11 @@ export default function SettingsPage() {
   const [exitPwSuccess,   setExitPwSuccess]   = useState("");
   const [exitPwError,     setExitPwError]     = useState("");
 
-  // Sync station state when org loads (async) or changes externally
+  // Einmalig aus org befüllen, sobald es geladen ist — danach nur noch durch den User änderbar
+  const stationSyncedRef = useRef(false);
   useEffect(() => {
-    if (!org) return;
+    if (!org || stationSyncedRef.current) return;
+    stationSyncedRef.current = true;
     setStationEnabled(org.station_mode_enabled ?? false);
     setStationModules(org.station_modules ?? []);
     setExitPwSet(org.station_exit_password_set ?? false);
