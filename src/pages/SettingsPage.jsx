@@ -389,36 +389,17 @@ const STATION_MODULES = [
 
 function StationGuideTab({
   isSoloPlan,
-  stationEnabled,
   stationModules, setStationModules,
   stationSaving, stationSuccess, stationError,
-  onActivate, onSave, onDeactivate,
+  onActivate, onSaveModules,
   exitPwSet, exitPwInput, setExitPwInput,
   exitPwLoading, exitPwSuccess, exitPwError,
   onSetExitPw, onDeleteExitPw,
 }) {
-  const [deactivatePw,    setDeactivatePw]    = useState("");
-  const [deactivateErr,   setDeactivateErr]   = useState("");
-  const [deactivating,    setDeactivating]    = useState(false);
-  const [showDeactivate,  setShowDeactivate]  = useState(false);
-
   const toggleModule = (key) =>
     setStationModules(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
-
-  async function handleDeactivate(e) {
-    e.preventDefault();
-    setDeactivating(true); setDeactivateErr("");
-    try {
-      await onDeactivate(deactivatePw);
-      setDeactivatePw(""); setShowDeactivate(false);
-    } catch (err) {
-      setDeactivateErr(err?.response?.data?.detail ?? "Falsches Passwort.");
-    } finally {
-      setDeactivating(false);
-    }
-  }
 
   if (isSoloPlan) {
     return (
@@ -435,44 +416,8 @@ function StationGuideTab({
     );
   }
 
-  // ── Inaktiv ──────────────────────────────────────────────────────────────────
-  if (!stationEnabled) {
-    return (
-      <div style={panelStyle}>
-        <div style={sectionHeadStyle}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            ArbeitsStation
-          </span>
-        </div>
-        <div style={{ padding: "1.25rem 1.25rem 1.5rem" }}>
-          <p style={{ margin: "0 0 1.25rem", fontSize: "0.83rem", color: dim, lineHeight: 1.6 }}>
-            Vereinfachte Tablet-Oberfläche für Mitarbeiter an Arbeitsstationen — Autowäschen, Bäckereien, Tankstellen, etc.
-            Einmal aktiviert, kann der Modus nur noch mit einem Passwort deaktiviert werden.
-          </p>
-          <button
-            onClick={onActivate}
-            disabled={stationSaving}
-            style={{ ...btnPrimary, opacity: stationSaving ? 0.6 : 1, fontSize: "0.9rem", padding: "0.65rem 1.75rem" }}
-          >
-            {stationSaving ? "Aktiviere…" : "Arbeitsstation aktivieren"}
-          </button>
-          {stationError && <p style={{ margin: "0.6rem 0 0", fontSize: "0.78rem", color: red }}>{stationError}</p>}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Aktiv ─────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Status */}
-      <div style={{ ...panelStyle, borderColor: "rgba(52,211,153,0.25)", background: "rgba(52,211,153,0.04)" }}>
-        <div style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px rgba(52,211,153,0.6)", flexShrink: 0 }} />
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#34d399" }}>ArbeitsStation aktiv</span>
-        </div>
-      </div>
-
       {/* Module */}
       <div style={panelStyle}>
         <div style={sectionHeadStyle}>
@@ -510,8 +455,8 @@ function StationGuideTab({
           })}
         </div>
         <div style={{ padding: "0 1.25rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-          <button onClick={onSave} disabled={stationSaving} style={{ ...btnPrimary, opacity: stationSaving ? 0.6 : 1 }}>
-            {stationSaving ? "Speichern…" : "Module speichern"}
+          <button onClick={onSaveModules} disabled={stationSaving} style={{ ...btnGhost, opacity: stationSaving ? 0.6 : 1 }}>
+            {stationSaving ? "Speichern…" : "Konfiguration speichern"}
           </button>
           {stationSuccess && <span style={{ fontSize: "0.82rem", color: green }}>✓ Gespeichert</span>}
           {stationError && <span style={{ fontSize: "0.82rem", color: red }}>{stationError}</span>}
@@ -548,46 +493,25 @@ function StationGuideTab({
         </div>
       </div>
 
-      {/* Deaktivieren */}
-      <div style={{ ...panelStyle, borderColor: "rgba(248,113,113,0.15)" }}>
+      {/* Aktivieren */}
+      <div style={{ ...panelStyle, borderColor: "rgba(197,165,114,0.2)" }}>
         <div style={sectionHeadStyle}>
           <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Deaktivieren
+            Aktivieren
           </span>
         </div>
-        <div style={{ padding: "1rem 1.25rem" }}>
-          {!showDeactivate ? (
-            <button onClick={() => setShowDeactivate(true)}
-              style={{ ...btnGhost, color: red, borderColor: "rgba(248,113,113,0.25)" }}>
-              ArbeitsStation deaktivieren
-            </button>
-          ) : (
-            <form onSubmit={handleDeactivate} style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxWidth: 380 }}>
-              <p style={{ margin: 0, fontSize: "0.82rem", color: dim, lineHeight: 1.5 }}>
-                {exitPwSet
-                  ? "Gib das Exit-Passwort ein, um die ArbeitsStation zu deaktivieren."
-                  : "Kein Exit-Passwort gesetzt — ein Einmal-Code wird an den Admin gesendet."}
-              </p>
-              {exitPwSet && (
-                <input type="password" autoFocus
-                  placeholder="Exit-Passwort"
-                  value={deactivatePw} onChange={e => setDeactivatePw(e.target.value)}
-                  style={{ padding: "0.55rem 0.75rem", background: "rgba(255,255,255,0.04)", border: `1px solid ${border}`, borderRadius: 8, color: text, fontSize: "0.88rem", fontFamily: "'JetBrains Mono', monospace", outline: "none", letterSpacing: "0.08em" }}
-                />
-              )}
-              {deactivateErr && <span style={{ fontSize: "0.78rem", color: red }}>{deactivateErr}</span>}
-              <div style={{ display: "flex", gap: "0.6rem" }}>
-                <button type="submit" disabled={deactivating || (exitPwSet && !deactivatePw)}
-                  style={{ ...btnPrimary, background: red, opacity: deactivating ? 0.6 : 1 }}>
-                  {deactivating ? "Prüfen…" : "Bestätigen & deaktivieren"}
-                </button>
-                <button type="button" onClick={() => { setShowDeactivate(false); setDeactivatePw(""); setDeactivateErr(""); }}
-                  style={btnGhost}>
-                  Abbrechen
-                </button>
-              </div>
-            </form>
-          )}
+        <div style={{ padding: "1.1rem 1.25rem 1.4rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ margin: 0, fontSize: "0.83rem", color: dim, lineHeight: 1.6 }}>
+            Dieses Gerät wechselt sofort in den Kiosk-Modus. Der Modus kann nur noch mit dem Exit-Passwort beendet werden —
+            danach muss er hier erneut aktiviert werden.
+          </p>
+          <button
+            onClick={onActivate}
+            disabled={stationSaving}
+            style={{ ...btnPrimary, alignSelf: "flex-start", opacity: stationSaving ? 0.6 : 1, fontSize: "0.9rem", padding: "0.65rem 1.75rem" }}
+          >
+            {stationSaving ? "Aktiviere…" : "Arbeitsstation aktivieren"}
+          </button>
         </div>
       </div>
     </>
@@ -2170,7 +2094,6 @@ export default function SettingsPage() {
             {activeTab === "station_guide" && isAdmin && (
               <StationGuideTab
                 isSoloPlan={isSolo()}
-                stationEnabled={stationEnabled}
                 stationModules={stationModules}
                 setStationModules={setStationModules}
                 stationSaving={stationSaving}
@@ -2185,23 +2108,23 @@ export default function SettingsPage() {
                       station_modules: stationModules,
                     });
                     updateOrg({ station_mode_enabled: true, station_modules: stationModules });
-                    setStationEnabled(true);
+                    localStorage.setItem("nill_kiosk_device", "1");
+                    navigate("/station");
                   } catch (e) {
                     setStationError(e?.response?.data?.detail ?? "Fehler beim Aktivieren.");
-                  } finally {
                     setStationSaving(false);
                   }
                 }}
-                onSave={async () => {
+                onSaveModules={async () => {
                   setStationSaving(true);
                   setStationSuccess(false);
                   setStationError("");
                   try {
                     await api.patch("/auth/org/station-guide", {
-                      station_mode_enabled: stationEnabled,
+                      station_mode_enabled: false,
                       station_modules: stationModules,
                     });
-                    updateOrg({ station_mode_enabled: stationEnabled, station_modules: stationModules });
+                    updateOrg({ station_modules: stationModules });
                     setStationSuccess(true);
                     setTimeout(() => setStationSuccess(false), 3000);
                   } catch (e) {
@@ -2209,17 +2132,6 @@ export default function SettingsPage() {
                   } finally {
                     setStationSaving(false);
                   }
-                }}
-                onDeactivate={async (password) => {
-                  if (exitPwSet) {
-                    await api.post("/auth/station/verify-exit-password", { password });
-                  }
-                  await api.patch("/auth/org/station-guide", {
-                    station_mode_enabled: false,
-                    station_modules: stationModules,
-                  });
-                  updateOrg({ station_mode_enabled: false, station_modules: stationModules });
-                  setStationEnabled(false);
                 }}
                 exitPwSet={exitPwSet}
                 exitPwInput={exitPwInput}
