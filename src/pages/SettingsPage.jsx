@@ -389,18 +389,36 @@ const STATION_MODULES = [
 
 function StationGuideTab({
   isSoloPlan,
-  stationEnabled, setStationEnabled,
+  stationEnabled,
   stationModules, setStationModules,
   stationSaving, stationSuccess, stationError,
-  onSave,
+  onActivate, onSave, onDeactivate,
   exitPwSet, exitPwInput, setExitPwInput,
   exitPwLoading, exitPwSuccess, exitPwError,
   onSetExitPw, onDeleteExitPw,
 }) {
+  const [deactivatePw,    setDeactivatePw]    = useState("");
+  const [deactivateErr,   setDeactivateErr]   = useState("");
+  const [deactivating,    setDeactivating]    = useState(false);
+  const [showDeactivate,  setShowDeactivate]  = useState(false);
+
   const toggleModule = (key) =>
     setStationModules(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
+
+  async function handleDeactivate(e) {
+    e.preventDefault();
+    setDeactivating(true); setDeactivateErr("");
+    try {
+      await onDeactivate(deactivatePw);
+      setDeactivatePw(""); setShowDeactivate(false);
+    } catch (err) {
+      setDeactivateErr(err?.response?.data?.detail ?? "Falsches Passwort.");
+    } finally {
+      setDeactivating(false);
+    }
+  }
 
   if (isSoloPlan) {
     return (
@@ -411,190 +429,166 @@ function StationGuideTab({
         </div>
         <p style={{ fontSize: "0.83rem", color: dim, margin: "0 0 1.25rem", lineHeight: 1.55, maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
           Der ArbeitsStation ist ab dem <strong style={{ color: text }}>Team-Plan</strong> verfügbar.
-          Aktiviere den Tablet-Modus für Mitarbeiter an Arbeitsstationen wie Autowäschen,
-          Bäckereien oder Tankstellen.
         </p>
-        <a href="/upgrade" style={btnPrimary}>
-          Auf Team-Plan upgraden
-        </a>
+        <a href="/upgrade" style={btnPrimary}>Auf Team-Plan upgraden</a>
       </div>
     );
   }
 
-  return (
-    <>
+  // ── Inaktiv ──────────────────────────────────────────────────────────────────
+  if (!stationEnabled) {
+    return (
       <div style={panelStyle}>
         <div style={sectionHeadStyle}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
-            textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             ArbeitsStation
           </span>
-          <span style={{ fontSize: "0.72rem", color: mute }}>
-            Tablet-Modus für Mitarbeiter
-          </span>
         </div>
-
-        <div style={{ padding: "1.1rem 1.25rem", borderBottom: `1px solid ${border}` }}>
-          <p style={{ margin: "0 0 0.75rem", fontSize: "0.83rem", color: dim, lineHeight: 1.55 }}>
-            Der ArbeitsStation bietet eine vereinfachte Tablet-Oberfläche für Mitarbeiter an
-            Arbeitsstationen — z.B. in Autowäschen, Bäckereien oder Tankstellen. Aktiviere den
-            Modus und konfiguriere, welche Module sichtbar sind.
+        <div style={{ padding: "1.25rem 1.25rem 1.5rem" }}>
+          <p style={{ margin: "0 0 1.25rem", fontSize: "0.83rem", color: dim, lineHeight: 1.6 }}>
+            Vereinfachte Tablet-Oberfläche für Mitarbeiter an Arbeitsstationen — Autowäschen, Bäckereien, Tankstellen, etc.
+            Einmal aktiviert, kann der Modus nur noch mit einem Passwort deaktiviert werden.
           </p>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0.85rem 1.25rem", borderBottom: `1px solid ${border}`, gap: "1rem" }}>
-          <div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>
-              ArbeitsStation aktivieren
-            </div>
-            <div style={{ fontSize: "0.75rem", color: dim, marginTop: 2 }}>
-              Zeigt einen „ArbeitsStation" Eintrag im Dashboard für alle Mitarbeiter
-            </div>
-          </div>
           <button
-            onClick={() => setStationEnabled(v => !v)}
-            style={{
-              width: 44, height: 24, borderRadius: 99, border: "none",
-              background: stationEnabled ? gold : "rgba(255,255,255,0.1)",
-              cursor: "pointer", position: "relative", flexShrink: 0,
-              transition: "background 0.2s",
-            }}
+            onClick={onActivate}
+            disabled={stationSaving}
+            style={{ ...btnPrimary, opacity: stationSaving ? 0.6 : 1, fontSize: "0.9rem", padding: "0.65rem 1.75rem" }}
           >
-            <span style={{
-              position: "absolute", top: 3, left: stationEnabled ? 23 : 3,
-              width: 18, height: 18, borderRadius: "50%",
-              background: stationEnabled ? "#000" : "rgba(255,255,255,0.5)",
-              transition: "left 0.2s",
-            }} />
+            {stationSaving ? "Aktiviere…" : "Arbeitsstation aktivieren"}
           </button>
+          {stationError && <p style={{ margin: "0.6rem 0 0", fontSize: "0.78rem", color: red }}>{stationError}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Aktiv ─────────────────────────────────────────────────────────────────────
+  return (
+    <>
+      {/* Status */}
+      <div style={{ ...panelStyle, borderColor: "rgba(52,211,153,0.25)", background: "rgba(52,211,153,0.04)" }}>
+        <div style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px rgba(52,211,153,0.6)", flexShrink: 0 }} />
+          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#34d399" }}>ArbeitsStation aktiv</span>
         </div>
       </div>
 
-      {stationEnabled && (
-        <div style={panelStyle}>
-          <div style={sectionHeadStyle}>
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
-              textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Sichtbare Module
-            </span>
-          </div>
-          <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-            <p style={{ margin: "0 0 0.6rem", fontSize: "0.78rem", color: mute }}>
-              Wähle aus, welche Module im ArbeitsStation angezeigt werden.
-            </p>
-            {STATION_MODULES.map(m => {
-              const active = stationModules.includes(m.key);
-              return (
-                <div
-                  key={m.key}
-                  onClick={() => toggleModule(m.key)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "1rem",
-                    padding: "0.75rem 1rem", borderRadius: 10, cursor: "pointer",
-                    background: active ? "rgba(197,165,114,0.07)" : "rgba(255,255,255,0.02)",
-                    border: `1px solid ${active ? "rgba(197,165,114,0.25)" : border}`,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <span style={{ fontSize: "1.2rem", width: 24, textAlign: "center" }}>{m.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>{m.label}</div>
-                    <div style={{ fontSize: "0.72rem", color: dim }}>{m.desc}</div>
-                  </div>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: 4,
-                    background: active ? gold : "transparent",
-                    border: `2px solid ${active ? gold : "rgba(255,255,255,0.2)"}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0, transition: "all 0.15s",
-                  }}>
-                    {active && (
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <polyline points="2,5 4,7.5 8,3" stroke="#000" strokeWidth="1.5"
-                          strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </div>
+      {/* Module */}
+      <div style={panelStyle}>
+        <div style={sectionHeadStyle}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Sichtbare Module
+          </span>
+        </div>
+        <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+          {STATION_MODULES.map(m => {
+            const active = stationModules.includes(m.key);
+            return (
+              <div key={m.key} onClick={() => toggleModule(m.key)} style={{
+                display: "flex", alignItems: "center", gap: "1rem",
+                padding: "0.75rem 1rem", borderRadius: 10, cursor: "pointer",
+                background: active ? "rgba(197,165,114,0.07)" : "rgba(255,255,255,0.02)",
+                border: `1px solid ${active ? "rgba(197,165,114,0.25)" : border}`,
+                transition: "all 0.15s",
+              }}>
+                <span style={{ fontSize: "1.2rem", width: 24, textAlign: "center" }}>{m.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 600, color: text }}>{m.label}</div>
+                  <div style={{ fontSize: "0.72rem", color: dim }}>{m.desc}</div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{
+                  width: 18, height: 18, borderRadius: 4,
+                  background: active ? gold : "transparent",
+                  border: `2px solid ${active ? gold : "rgba(255,255,255,0.2)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, transition: "all 0.15s",
+                }}>
+                  {active && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7.5 8,3" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
-
-      {stationEnabled && (
-        <div style={panelStyle}>
-          <div style={sectionHeadStyle}>
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim,
-              textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Kiosk-Schutz
-            </span>
-            <span style={{ fontSize: "0.72rem", color: mute }}>
-              Exit-Passwort für ArbeitsStation
-            </span>
-          </div>
-          <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <p style={{ margin: 0, fontSize: "0.83rem", color: dim, lineHeight: 1.55 }}>
-              Wenn gesetzt, müssen Mitarbeiter dieses Passwort eingeben, um den Kiosk-Modus zu verlassen.{" "}
-              {exitPwSet
-                ? <span style={{ color: green }}>✓ Passwort aktiv</span>
-                : <span style={{ color: mute }}>Kein Passwort gesetzt</span>
-              }
-            </p>
-            <div style={{ display: "flex", gap: "0.6rem" }}>
-              <input
-                type="password"
-                placeholder={exitPwSet ? "Neues Passwort (zum Ändern)" : "Passwort setzen (min. 4 Zeichen)"}
-                value={exitPwInput}
-                onChange={e => setExitPwInput(e.target.value)}
-                style={{
-                  flex: 1, padding: "0.55rem 0.75rem",
-                  background: "rgba(255,255,255,0.04)",
-                  border: `1px solid ${border}`, borderRadius: 8,
-                  color: text, fontSize: "0.88rem",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  outline: "none", letterSpacing: "0.08em",
-                  boxSizing: "border-box",
-                }}
-              />
-              <button
-                onClick={onSetExitPw}
-                disabled={exitPwLoading || exitPwInput.length < 4}
-                style={{ ...btnPrimary, padding: "0.55rem 1.1rem", opacity: exitPwLoading || exitPwInput.length < 4 ? 0.5 : 1, whiteSpace: "nowrap" }}
-              >
-                {exitPwSet ? "Ändern" : "Setzen"}
-              </button>
-            </div>
-            {exitPwSet && (
-              <button
-                onClick={onDeleteExitPw}
-                disabled={exitPwLoading}
-                style={{ ...btnGhost, color: red, borderColor: "rgba(248,113,113,0.25)", opacity: exitPwLoading ? 0.5 : 1, alignSelf: "flex-start" }}
-              >
-                Passwort entfernen
-              </button>
-            )}
-            {exitPwSuccess && <span style={{ fontSize: "0.78rem", color: green }}>{exitPwSuccess}</span>}
-            {exitPwError && <span style={{ fontSize: "0.78rem", color: red }}>{exitPwError}</span>}
-          </div>
+        <div style={{ padding: "0 1.25rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button onClick={onSave} disabled={stationSaving} style={{ ...btnPrimary, opacity: stationSaving ? 0.6 : 1 }}>
+            {stationSaving ? "Speichern…" : "Module speichern"}
+          </button>
+          {stationSuccess && <span style={{ fontSize: "0.82rem", color: green }}>✓ Gespeichert</span>}
+          {stationError && <span style={{ fontSize: "0.82rem", color: red }}>{stationError}</span>}
         </div>
-      )}
+      </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <button
-          onClick={onSave}
-          disabled={stationSaving}
-          style={{ ...btnPrimary, opacity: stationSaving ? 0.6 : 1 }}
-        >
-          {stationSaving ? "Speichern…" : "Einstellungen speichern"}
-        </button>
-        {stationSuccess && (
-          <span style={{ fontSize: "0.82rem", color: green }}>✓ Gespeichert</span>
-        )}
-        {stationError && (
-          <span style={{ fontSize: "0.82rem", color: red }}>{stationError}</span>
-        )}
+      {/* Exit-Passwort */}
+      <div style={panelStyle}>
+        <div style={sectionHeadStyle}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Kiosk-Schutz
+          </span>
+          <span style={{ fontSize: "0.72rem", color: mute }}>Exit-Passwort</span>
+        </div>
+        <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <p style={{ margin: 0, fontSize: "0.83rem", color: dim, lineHeight: 1.55 }}>
+            Mitarbeiter brauchen dieses Passwort, um den Kiosk-Modus zu verlassen.{" "}
+            {exitPwSet ? <span style={{ color: green }}>✓ Passwort aktiv</span> : <span style={{ color: mute }}>Kein Passwort gesetzt</span>}
+          </p>
+          <div style={{ display: "flex", gap: "0.6rem" }}>
+            <input type="password"
+              placeholder={exitPwSet ? "Neues Passwort (zum Ändern)" : "Passwort setzen (min. 4 Zeichen)"}
+              value={exitPwInput} onChange={e => setExitPwInput(e.target.value)}
+              style={{ flex: 1, padding: "0.55rem 0.75rem", background: "rgba(255,255,255,0.04)", border: `1px solid ${border}`, borderRadius: 8, color: text, fontSize: "0.88rem", fontFamily: "'JetBrains Mono', monospace", outline: "none", letterSpacing: "0.08em", boxSizing: "border-box" }}
+            />
+            <button onClick={onSetExitPw} disabled={exitPwLoading || exitPwInput.length < 4}
+              style={{ ...btnPrimary, padding: "0.55rem 1.1rem", opacity: exitPwLoading || exitPwInput.length < 4 ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              {exitPwSet ? "Ändern" : "Setzen"}
+            </button>
+          </div>
+          {exitPwSet && <button onClick={onDeleteExitPw} disabled={exitPwLoading} style={{ ...btnGhost, color: red, borderColor: "rgba(248,113,113,0.25)", opacity: exitPwLoading ? 0.5 : 1, alignSelf: "flex-start" }}>Passwort entfernen</button>}
+          {exitPwSuccess && <span style={{ fontSize: "0.78rem", color: green }}>{exitPwSuccess}</span>}
+          {exitPwError && <span style={{ fontSize: "0.78rem", color: red }}>{exitPwError}</span>}
+        </div>
+      </div>
+
+      {/* Deaktivieren */}
+      <div style={{ ...panelStyle, borderColor: "rgba(248,113,113,0.15)" }}>
+        <div style={sectionHeadStyle}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Deaktivieren
+          </span>
+        </div>
+        <div style={{ padding: "1rem 1.25rem" }}>
+          {!showDeactivate ? (
+            <button onClick={() => setShowDeactivate(true)}
+              style={{ ...btnGhost, color: red, borderColor: "rgba(248,113,113,0.25)" }}>
+              ArbeitsStation deaktivieren
+            </button>
+          ) : (
+            <form onSubmit={handleDeactivate} style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxWidth: 380 }}>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: dim, lineHeight: 1.5 }}>
+                {exitPwSet
+                  ? "Gib das Exit-Passwort ein, um die ArbeitsStation zu deaktivieren."
+                  : "Kein Exit-Passwort gesetzt — ein Einmal-Code wird an den Admin gesendet."}
+              </p>
+              {exitPwSet && (
+                <input type="password" autoFocus
+                  placeholder="Exit-Passwort"
+                  value={deactivatePw} onChange={e => setDeactivatePw(e.target.value)}
+                  style={{ padding: "0.55rem 0.75rem", background: "rgba(255,255,255,0.04)", border: `1px solid ${border}`, borderRadius: 8, color: text, fontSize: "0.88rem", fontFamily: "'JetBrains Mono', monospace", outline: "none", letterSpacing: "0.08em" }}
+                />
+              )}
+              {deactivateErr && <span style={{ fontSize: "0.78rem", color: red }}>{deactivateErr}</span>}
+              <div style={{ display: "flex", gap: "0.6rem" }}>
+                <button type="submit" disabled={deactivating || (exitPwSet && !deactivatePw)}
+                  style={{ ...btnPrimary, background: red, opacity: deactivating ? 0.6 : 1 }}>
+                  {deactivating ? "Prüfen…" : "Bestätigen & deaktivieren"}
+                </button>
+                <button type="button" onClick={() => { setShowDeactivate(false); setDeactivatePw(""); setDeactivateErr(""); }}
+                  style={btnGhost}>
+                  Abbrechen
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </>
   );
@@ -2177,12 +2171,27 @@ export default function SettingsPage() {
               <StationGuideTab
                 isSoloPlan={isSolo()}
                 stationEnabled={stationEnabled}
-                setStationEnabled={setStationEnabled}
                 stationModules={stationModules}
                 setStationModules={setStationModules}
                 stationSaving={stationSaving}
                 stationSuccess={stationSuccess}
                 stationError={stationError}
+                onActivate={async () => {
+                  setStationSaving(true);
+                  setStationError("");
+                  try {
+                    await api.patch("/auth/org/station-guide", {
+                      station_mode_enabled: true,
+                      station_modules: stationModules,
+                    });
+                    updateOrg({ station_mode_enabled: true, station_modules: stationModules });
+                    setStationEnabled(true);
+                  } catch (e) {
+                    setStationError(e?.response?.data?.detail ?? "Fehler beim Aktivieren.");
+                  } finally {
+                    setStationSaving(false);
+                  }
+                }}
                 onSave={async () => {
                   setStationSaving(true);
                   setStationSuccess(false);
@@ -2200,6 +2209,17 @@ export default function SettingsPage() {
                   } finally {
                     setStationSaving(false);
                   }
+                }}
+                onDeactivate={async (password) => {
+                  if (exitPwSet) {
+                    await api.post("/auth/station/verify-exit-password", { password });
+                  }
+                  await api.patch("/auth/org/station-guide", {
+                    station_mode_enabled: false,
+                    station_modules: stationModules,
+                  });
+                  updateOrg({ station_mode_enabled: false, station_modules: stationModules });
+                  setStationEnabled(false);
                 }}
                 exitPwSet={exitPwSet}
                 exitPwInput={exitPwInput}
