@@ -1,0 +1,1 @@
+import{j as t}from"./vendor-react--hPKs4bs.js";import{L as e}from"./LegalLayout-BhFIp0P4.js";function i(){return t.jsx(e,{title:"Datenschutzerklärung",children:t.jsx("iframe",{src:"https://itrk.legal/1yEr.bg.17NW-iframe.html",title:"Datenschutzerklärung",style:{width:"100%",minHeight:"80vh",border:"none"},loading:"lazy"})})}export{i as default};

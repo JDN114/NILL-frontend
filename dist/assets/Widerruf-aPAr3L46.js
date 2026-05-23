@@ -1,0 +1,1 @@
+import{j as r}from"./vendor-react--hPKs4bs.js";import{L as e}from"./LegalLayout-BhFIp0P4.js";function l(){return r.jsx(e,{title:"Widerrufsbelehrung",children:r.jsx("iframe",{src:"https://itrk.legal/1yEr.3K.17NW-iframe.html",title:"Widerrufsbelehrung",style:{width:"100%",minHeight:"80vh",border:"none"},loading:"lazy"})})}export{l as default};

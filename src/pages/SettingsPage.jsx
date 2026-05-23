@@ -387,6 +387,181 @@ const STATION_MODULES = [
   { key: "inventory",   label: "Inventur",             icon: "◫",  desc: "Bestand & Lager" },
 ];
 
+// ── Mitarbeiter-Ausweis Tab ──────────────────────────────────────────────────
+function MitarbeiterAusweis() {
+  const [badge, setBadge]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState("");
+
+  useEffect(() => {
+    api.get("/workflow/badge/me")
+      .then(r => { setBadge(r.data); setLoading(false); })
+      .catch(() => { setError("Ausweis konnte nicht geladen werden."); setLoading(false); });
+  }, []);
+
+  if (loading) return (
+    <div style={{ padding: "3rem", display: "flex", justifyContent: "center" }}>
+      <div style={{
+        width: 28, height: 28, border: "3px solid rgba(255,255,255,0.08)",
+        borderTopColor: gold, borderRadius: "50%", animation: "nill-spin 0.8s linear infinite",
+      }} />
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ padding: "2rem", color: red, fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.85rem" }}>
+      {error}
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      {/* Ausweis-Karte */}
+      <div style={{
+        background: "linear-gradient(135deg, rgba(197,165,114,0.08), rgba(197,165,114,0.03))",
+        border: `1px solid rgba(197,165,114,0.25)`,
+        borderRadius: 20,
+        padding: "2rem",
+        display: "flex",
+        gap: "2rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}>
+        {/* QR-Code */}
+        {badge?.qr_payload && (
+          <div style={{
+            background: "#fff",
+            borderRadius: 12,
+            padding: "12px",
+            flexShrink: 0,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+          }}>
+            <QRCodeSVG
+              value={badge.qr_payload}
+              size={140}
+              level="M"
+              bgColor="#ffffff"
+              fgColor="#04070f"
+            />
+          </div>
+        )}
+
+        {/* Ausweis-Info */}
+        <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* NILL-Nummer */}
+          <div>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
+              color: "rgba(239,237,231,0.35)", marginBottom: 4,
+            }}>
+              Mitarbeiternummer
+            </div>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "1.4rem", fontWeight: 700,
+              color: gold, letterSpacing: "0.08em",
+            }}>
+              {badge?.nill_number ?? "—"}
+            </div>
+          </div>
+
+          {/* Name */}
+          <div>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
+              color: "rgba(239,237,231,0.35)", marginBottom: 2,
+            }}>Name</div>
+            <div style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: "1.1rem", fontWeight: 400, color: text,
+            }}>
+              {badge?.name ?? "—"}
+            </div>
+          </div>
+
+          {/* Unternehmen + Rolle */}
+          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+            {badge?.org_name && (
+              <div>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: "rgba(239,237,231,0.35)", marginBottom: 2,
+                }}>Unternehmen</div>
+                <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.88rem", color: dim }}>
+                  {badge.org_name}
+                </div>
+              </div>
+            )}
+            {badge?.role && (
+              <div>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: "rgba(239,237,231,0.35)", marginBottom: 2,
+                }}>Rolle</div>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: "0.82rem",
+                  color: gold, letterSpacing: "0.06em",
+                }}>
+                  {badge.role}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Verwendung */}
+      <div style={{
+        background: surface, border: `1px solid ${border}`,
+        borderRadius: 16, padding: "1.25rem 1.5rem",
+        display: "flex", flexDirection: "column", gap: 8,
+      }}>
+        <div style={{ fontSize: "0.9rem", fontWeight: 700, color: text }}>
+          Ausweis verwenden
+        </div>
+        <ul style={{
+          margin: 0, paddingLeft: "1.2rem",
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontSize: "0.82rem", color: dim, lineHeight: 1.7,
+        }}>
+          <li>QR-Code an der Arbeitsstation scannen zum <strong style={{ color: text }}>Ein- und Ausstempeln</strong></li>
+          <li>QR-Code scannen um <strong style={{ color: text }}>Aufgaben abzuhaken</strong></li>
+          <li>Ausweis auf dem Smartphone oder ausgedruckt verwenden</li>
+        </ul>
+      </div>
+
+      {/* DSGVO-Hinweis */}
+      <div style={{
+        background: "rgba(59,130,246,0.05)",
+        border: "1px solid rgba(59,130,246,0.18)",
+        borderRadius: 14, padding: "1rem 1.25rem",
+        display: "flex", flexDirection: "column", gap: 6,
+      }}>
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
+          letterSpacing: "0.15em", textTransform: "uppercase",
+          color: "rgba(96,165,250,0.7)", marginBottom: 2,
+        }}>Datenschutzhinweis (DSGVO Art. 13)</div>
+        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.8rem", color: dim, lineHeight: 1.6 }}>
+          <strong style={{ color: text }}>Zweck:</strong> {badge?.purpose ?? "Zeiterfassung und Aufgabenbestätigung an der Arbeitsstation"}
+        </div>
+        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.8rem", color: dim, lineHeight: 1.6 }}>
+          <strong style={{ color: text }}>Rechtsgrundlage:</strong> {badge?.legal_basis ?? "Art. 6 Abs. 1 lit. b DSGVO — Vertragserfüllung"}
+        </div>
+        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.78rem", color: "rgba(239,237,231,0.3)", marginTop: 4, lineHeight: 1.5 }}>
+          Der QR-Code enthält ausschließlich deine NILL-Mitarbeiternummer (pseudonymisiert).
+          Keine personenbezogenen Daten (Name, E-Mail) sind im Code gespeichert.
+          Zeitstempel werden gem. § 16 ArbZG für 2 Jahre aufbewahrt und danach gelöscht.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StationGuideTab({
   isSoloPlan,
   stationModules, setStationModules,
@@ -954,6 +1129,7 @@ export default function SettingsPage() {
     ] : []),
     { id: "benachrichtigungen", label: "Benachrichtigungen", icon: svgBell },
     { id: "sicherheit",     label: "Sicherheit",          icon: svgShield },
+    { id: "ausweis",        label: "Mein Ausweis",        icon: svgBadge },
     ...(isAdmin ? [
       { id: "email_vorlagen", label: "E-Mail Vorlagen",   icon: svgMail },
       { id: "station_guide",  label: "ArbeitsStation",     icon: svgStation },
@@ -2168,6 +2344,11 @@ export default function SettingsPage() {
               />
             )}
 
+            {/* ══ MEIN AUSWEIS ═══════════════════════════════════════════ */}
+            {activeTab === "ausweis" && (
+              <MitarbeiterAusweis />
+            )}
+
             {/* ══ HILFE ══════════════════════════════════════════════════ */}
             {activeTab === "hilfe" && (
               <>
@@ -2363,6 +2544,14 @@ const svgStation = (
 const svgContact = (
   <svg {...iconProps}>
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+const svgBadge = (
+  <svg {...iconProps}>
+    <rect x="2" y="4" width="20" height="16" rx="2"/>
+    <circle cx="8.5" cy="11" r="2.5"/>
+    <path d="M13 9h5M13 12h3"/>
+    <path d="M3 8h18"/>
   </svg>
 );
 const svgDownload = (

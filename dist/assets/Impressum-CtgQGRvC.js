@@ -1,0 +1,1 @@
+import{j as t}from"./vendor-react--hPKs4bs.js";import{L as e}from"./LegalLayout-BhFIp0P4.js";function m(){return t.jsx(e,{title:"Impressum",children:t.jsx("iframe",{src:"https://itrk.legal/1yEr.0.17NW-de-iframe.html",title:"Impressum",style:{width:"100%",minHeight:"80vh",border:"none"},loading:"lazy"})})}export{m as default};

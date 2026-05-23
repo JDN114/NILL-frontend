@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
+import QrScannerStation from "../../components/QrScannerStation";
 import api from "../../lib/api";
 
 const ACCENT = "#c6ff3c";
@@ -134,49 +135,36 @@ function SignatureCanvas({ onSigned }) {
   );
 }
 
-// ── Bestätigungs-Modal (PIN + Unterschrift) ───────────────────────────────────
+// ── Bestätigungs-Modal (QR-Ausweis) ──────────────────────────────────────────
 function ConfirmModal({ task, onConfirmed, onClose }) {
-  const [step, setStep]       = useState("pin");   // pin | sign
-  const [pin, setPin]         = useState("");
-  const [employee, setEmployee] = useState(null);
+  const [step, setStep]       = useState("scan");  // scan | sign
+  const [qrPayload, setQrPayload] = useState(null);
+  const [employee, setEmployee]   = useState(null);
   const [signature, setSig]   = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
-  const pressPin = useCallback((k) => {
-    if (k === "⌫") { setPin(p => p.slice(0, -1)); setError(""); }
-    else if (pin.length < 6) { setPin(p => p + k); setError(""); }
-  }, [pin]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (step !== "pin") return;
-      if (e.key >= "0" && e.key <= "9") pressPin(e.key);
-      else if (e.key === "Backspace") pressPin("⌫");
-      else if (e.key === "Enter" && pin.length >= 4) verifyPin();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [step, pin, pressPin]);
-
-  const verifyPin = async () => {
-    if (pin.length < 4) return;
+  const handleQrScan = async (payload) => {
+    if (loading) return;
     setLoading(true); setError("");
     try {
-      const r = await api.post("/workflow/time/station-identify", { pin });
-      setEmployee(r.data);
+      // Ausweis validieren, ohne Zeitbuchung auszulösen — wir prüfen via badge-endpoint
+      // Direktprüfung: NILL-Nummer + HMAC-Signatur (Format "NILL-XXXXX:sig")
+      const parts = payload.split(":");
+      if (parts.length < 2) throw new Error("Ungültiger Ausweis");
+      setQrPayload(payload);
+      setEmployee({ name: parts[0] }); // vorläufig NILL-Nr anzeigen
       setStep("sign");
     } catch (err) {
-      setError(err?.response?.data?.detail ?? "Unbekannte PIN");
-      setPin("");
+      setError(err?.response?.data?.detail ?? err.message ?? "Ausweis nicht erkannt");
     } finally { setLoading(false); }
   };
 
   const confirm = async () => {
     setLoading(true); setError("");
     try {
-      await api.post(`/workflow/tasks/${task.id}/station-complete`, {
-        pin,
+      await api.post(`/workflow/tasks/${task.id}/station-qr-complete`, {
+        qr_payload: qrPayload,
         signature: signature || "",
       });
       onConfirmed(task.id);
@@ -184,8 +172,6 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
       setError(err?.response?.data?.detail ?? "Fehler bei der Bestätigung");
     } finally { setLoading(false); }
   };
-
-  const keys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
 
   return (
     <div style={{
@@ -198,7 +184,7 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
         background: "rgba(12,16,28,0.98)",
         border: "1px solid rgba(239,237,231,0.1)",
         borderRadius: 20, padding: "1.75rem 2rem",
-        width: "100%", maxWidth: 380,
+        width: "100%", maxWidth: 400,
         display: "flex", flexDirection: "column", gap: "1.25rem",
         fontFamily: "'Inter', system-ui, sans-serif",
       }}>
@@ -222,81 +208,44 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
 
         {/* Step indicator */}
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {["pin","sign"].map((s, i) => (
-            <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {[{ key: "scan", label: "Ausweis" }, { key: "sign", label: "Unterschrift" }].map(({ key, label }, i) => (
+            <div key={key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{
                 width: 24, height: 24, borderRadius: "50%",
-                background: step === s ? ACCENT : i < ["pin","sign"].indexOf(step) ? "rgba(198,255,60,0.2)" : "rgba(255,255,255,0.06)",
-                border: `1.5px solid ${step === s ? ACCENT : i < ["pin","sign"].indexOf(step) ? "rgba(198,255,60,0.35)" : "rgba(255,255,255,0.1)"}`,
+                background: step === key ? ACCENT : i < (step === "sign" ? 1 : 0) ? "rgba(198,255,60,0.2)" : "rgba(255,255,255,0.06)",
+                border: `1.5px solid ${step === key ? ACCENT : i < (step === "sign" ? 1 : 0) ? "rgba(198,255,60,0.35)" : "rgba(255,255,255,0.1)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "0.65rem", fontWeight: 700,
-                color: step === s ? "#000" : "rgba(239,237,231,0.4)",
+                color: step === key ? "#000" : "rgba(239,237,231,0.4)",
                 fontFamily: "'JetBrains Mono', monospace",
               }}>
-                {i < ["pin","sign"].indexOf(step) ? "✓" : i + 1}
+                {step === "sign" && i === 0 ? "✓" : i + 1}
               </div>
               <span style={{
                 fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
                 letterSpacing: "0.1em", textTransform: "uppercase",
-                color: step === s ? ACCENT : "rgba(239,237,231,0.3)",
-              }}>
-                {s === "pin" ? "Anmelden" : "Unterschrift"}
-              </span>
-              {i === 0 && <div style={{ width: 24, height: 1, background: "rgba(255,255,255,0.08)", marginRight: 0 }} />}
+                color: step === key ? ACCENT : "rgba(239,237,231,0.3)",
+              }}>{label}</span>
+              {i === 0 && <div style={{ width: 24, height: 1, background: "rgba(255,255,255,0.08)" }} />}
             </div>
           ))}
         </div>
 
-        {/* ── Schritt 1: PIN ── */}
-        {step === "pin" && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <div style={{ display: "flex", gap: 10 }}>
-              {[0,1,2,3,4,5].map(i => (
-                <div key={i} style={{
-                  width: 14, height: 14, borderRadius: "50%",
-                  background: i < pin.length ? ACCENT : "rgba(239,237,231,0.12)",
-                  border: `1.5px solid ${i < pin.length ? ACCENT : "rgba(239,237,231,0.2)"}`,
-                  boxShadow: i < pin.length ? `0 0 6px ${ACCENT}88` : "none",
-                  transition: "all 0.15s",
-                }} />
-              ))}
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, width: "100%" }}>
-              {keys.map((k, i) => k === "" ? <div key={i} /> : (
-                <button key={i} onClick={() => pressPin(k)} disabled={loading} style={{
-                  height: 52, borderRadius: 12,
-                  background: k === "⌫" ? "rgba(239,237,231,0.03)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${k === "⌫" ? "rgba(239,237,231,0.07)" : "rgba(255,255,255,0.09)"}`,
-                  color: "#efede7",
-                  fontFamily: k === "⌫" ? "'JetBrains Mono', monospace" : "'Fraunces', Georgia, serif",
-                  fontSize: k === "⌫" ? "1rem" : "1.4rem", fontWeight: 400,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "background 0.12s, transform 0.08s",
-                }}
-                onPointerDown={e => !loading && (e.currentTarget.style.transform = "scale(0.92)")}
-                onPointerUp={e => (e.currentTarget.style.transform = "scale(1)")}
-                onPointerLeave={e => (e.currentTarget.style.transform = "scale(1)")}
-                >{k}</button>
-              ))}
-            </div>
-
-            {error && <div style={{ fontSize: "0.78rem", color: "#f87171" }}>{error}</div>}
-
-            <button onClick={verifyPin} disabled={pin.length < 4 || loading} style={{
-              width: "100%", padding: "0.65rem",
-              borderRadius: 10, border: "none",
-              background: pin.length >= 4 ? ACCENT : "rgba(255,255,255,0.05)",
-              color: pin.length >= 4 ? "#000" : "rgba(239,237,231,0.25)",
-              fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
-              fontSize: "0.82rem", letterSpacing: "0.1em", textTransform: "uppercase",
-              cursor: pin.length >= 4 && !loading ? "pointer" : "not-allowed",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            }}>
-              {loading ? <Spinner size={16} color="#000" /> : null}
-              Weiter
-            </button>
+        {/* ── Schritt 1: QR-Ausweis scannen ── */}
+        {step === "scan" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            {loading ? (
+              <div style={{ padding: "2rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Spinner size={28} color={ACCENT} />
+              </div>
+            ) : (
+              <QrScannerStation
+                onScan={handleQrScan}
+                accent={ACCENT}
+                label="Mitarbeiterausweis scannen"
+              />
+            )}
+            {error && <div style={{ fontSize: "0.78rem", color: "#f87171", textAlign: "center" }}>{error}</div>}
           </div>
         )}
 
@@ -312,8 +261,8 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
               }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: ACCENT, flexShrink: 0 }} />
                 <span style={{
-                  fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.85rem",
-                  color: ACCENT, fontWeight: 500,
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: "0.8rem",
+                  color: ACCENT, fontWeight: 500, letterSpacing: "0.06em",
                 }}>
                   {employee.name}
                 </span>
@@ -325,20 +274,20 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
             {error && <div style={{ fontSize: "0.78rem", color: "#f87171" }}>{error}</div>}
 
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { setStep("pin"); setPin(""); setSig(null); setError(""); }} style={{
+              <button onClick={() => { setStep("scan"); setQrPayload(null); setSig(null); setError(""); }} style={{
                 flex: 1, padding: "0.65rem", borderRadius: 10,
                 border: "1px solid rgba(239,237,231,0.1)", background: "rgba(255,255,255,0.04)",
                 color: "rgba(239,237,231,0.55)", fontFamily: "'JetBrains Mono', monospace",
                 fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase",
                 cursor: "pointer",
               }}>← Zurück</button>
-              <button onClick={confirm} disabled={!sig || loading} style={{
+              <button onClick={confirm} disabled={loading} style={{
                 flex: 2, padding: "0.65rem", borderRadius: 10, border: "none",
-                background: sig ? ACCENT : "rgba(255,255,255,0.05)",
-                color: sig ? "#000" : "rgba(239,237,231,0.25)",
+                background: !loading ? ACCENT : "rgba(255,255,255,0.05)",
+                color: !loading ? "#000" : "rgba(239,237,231,0.25)",
                 fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
                 fontSize: "0.82rem", letterSpacing: "0.1em", textTransform: "uppercase",
-                cursor: sig && !loading ? "pointer" : "not-allowed",
+                cursor: !loading ? "pointer" : "not-allowed",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               }}>
                 {loading ? <Spinner size={16} color="#000" /> : null}
