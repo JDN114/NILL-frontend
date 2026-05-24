@@ -639,8 +639,8 @@ function Block({ label, children, accent, aiGenerated = false }) {
 // ─── Travel Plan Sections ─────────────────────────────────────────────────────
 
 function TransportLeg({ leg, title }) {
-  if (!leg?.options?.length) return null;
   const [selectedIdx, setSelectedIdx] = useState(0);
+  if (!leg?.options?.length) return null;
   const opt = leg.options[selectedIdx];
 
   return (
@@ -693,8 +693,8 @@ function TransportLeg({ leg, title }) {
 }
 
 function HotelSection({ hotels }) {
-  if (!hotels?.length) return null;
   const [selectedIdx, setSelectedIdx] = useState(0);
+  if (!hotels?.length) return null;
   const h = hotels[selectedIdx];
 
   return (

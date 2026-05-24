@@ -1071,6 +1071,24 @@ function Stats() {
 }
 
 /* ─── PRICING ────────────────────────────────────────────── */
+const PRICING_TIERS = [
+  {tier:'Solo',sub:'Für Einzelunternehmer & kleine Büros',price:'25',per:'€ / Monat · 1–2 Nutzer',items:['E-Mail, Kalender & Buchhaltung','OCR-Belegerfassung & DATEV-ready','Rechnungserstellung & PDF-Export','KI-Kategorisierung & Vorschläge','E-Mail-Support'],pop:false},
+  {tier:'Team',sub:'Für wachsende Teams & KMUs',price:'50',per:'€ / Monat · bis 10 Nutzer',items:['Alles aus Solo — für bis zu 10 Nutzer','Lohnbuchhaltung & HR-Verwaltung','Arbeitszeiterfassung & Stempeluhr','Urlaubs- & Abwesenheitsverwaltung','Priority-Support'],pop:true},
+  {tier:'Business',sub:'Für größere Unternehmen',price:'90',per:'€ / Monat · 10+ Nutzer',items:['Alles aus Team — unbegrenzte Nutzer','API-Zugang & Webhooks (folgt Q4 2026)','Erweiterte KI-Automatisierungen','Priorisierter Support mit SLA-Garantie'],pop:false},
+];
+function PricingCard({tier,sub,price,per,items,pop}) {
+  const ref2 = useRef(null);
+  useTilt(ref2);
+  return (
+    <article ref={ref2} className={`price${pop?' pop':''}`}>
+      {pop && <span className="pop-chip">Meistgewählt</span>}
+      <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
+      <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
+      <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
+      <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Mehr Erfahren</span><span className="arrow">→</span></MagBtn>
+    </article>
+  );
+}
 function Pricing({ onCTA }) {
   const [ref, vis] = useReveal();
   return (
@@ -1081,22 +1099,7 @@ function Pricing({ onCTA }) {
           <p className="lead">Transparent. Ohne versteckte Kosten. Monatlich kündbar.</p>
         </div>
         <div className="pricing-grid reveal in">
-          {[
-            {tier:'Solo',sub:'Für Einzelunternehmer & kleine Büros',price:'25',per:'€ / Monat · 1–2 Nutzer',items:['E-Mail, Kalender & Buchhaltung','OCR-Belegerfassung & DATEV-ready','Rechnungserstellung & PDF-Export','KI-Kategorisierung & Vorschläge','E-Mail-Support'],pop:false},
-            {tier:'Team',sub:'Für wachsende Teams & KMUs',price:'50',per:'€ / Monat · bis 10 Nutzer',items:['Alles aus Solo — für bis zu 10 Nutzer','Lohnbuchhaltung & HR-Verwaltung','Arbeitszeiterfassung & Stempeluhr','Urlaubs- & Abwesenheitsverwaltung','Priority-Support'],pop:true},
-            {tier:'Business',sub:'Für größere Unternehmen',price:'90',per:'€ / Monat · 10+ Nutzer',items:['Alles aus Team — unbegrenzte Nutzer','API-Zugang & Webhooks (folgt Q4 2026)','Erweiterte KI-Automatisierungen','Priorisierter Support mit SLA-Garantie'],pop:false},
-          ].map(({tier,sub,price,per,items,pop})=>{
-            const ref2 = useRef(null); useTilt(ref2);
-            return (
-              <article key={tier} ref={ref2} className={`price${pop?' pop':''}`}>
-                {pop && <span className="pop-chip">Meistgewählt</span>}
-                <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
-                <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
-                <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
-                <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Mehr Erfahren</span><span className="arrow">→</span></MagBtn>
-              </article>
-            );
-          })}
+          {PRICING_TIERS.map(t => <PricingCard key={t.tier} {...t} />)}
         </div>
       </div>
     </section>

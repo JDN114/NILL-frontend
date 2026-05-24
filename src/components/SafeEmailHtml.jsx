@@ -96,11 +96,11 @@ function normalizeEmailDom(doc) {
 // Haupt-Komponente
 // ─────────────────────────────────────────────
 export default function SafeEmailHtml({ html }) {
-  if (!html) return <i className="text-gray-400">Kein Inhalt</i>;
-
-  const isPlainText = !/<\/?[a-z][\s\S]*>/i.test(html);
+  const isPlainText = html ? !/<\/?[a-z][\s\S]*>/i.test(html) : false;
 
   const cleanHtml = useMemo(() => {
+    if (!html) return "";
+
     // DOMPurify mit FORCE_BODY damit wir einen vollständigen DOM traversieren können
     const dirty = DOMPurify.sanitize(html, {
       USE_PROFILES: { html: true },
@@ -147,6 +147,8 @@ export default function SafeEmailHtml({ html }) {
 
     return doc.body.innerHTML;
   }, [html, isPlainText]);
+
+  if (!html) return <i className="text-gray-400">Kein Inhalt</i>;
 
   if (isPlainText) {
     return (

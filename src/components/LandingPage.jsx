@@ -1090,6 +1090,24 @@ function Testimonials() {
 }
 
 /* ─── PRICING ────────────────────────────────────────────── */
+const PRICING_TIERS_C = [
+  {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],pop:false},
+  {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Steuerberater-Einladung & Lesezugriff'],pop:true},
+  {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],pop:false},
+];
+function PricingCard({tier,sub,price,per,items,pop}) {
+  const ref2 = useRef(null);
+  useTilt(ref2);
+  return (
+    <article ref={ref2} className={`price${pop?' pop':''}`}>
+      {pop && <span className="pop-chip">Meistgewählt</span>}
+      <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
+      <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
+      <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
+      <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Mehr Erfahren</span><span className="arrow">→</span></MagBtn>
+    </article>
+  );
+}
 function Pricing({ onCTA }) {
   const [ref, vis] = useReveal();
   return (
@@ -1100,22 +1118,7 @@ function Pricing({ onCTA }) {
           <p className="lead">Alle Pakete beinhalten alle sechs Module. Kündbar monatlich.</p>
         </div>
         <div className="pricing-grid reveal in">
-          {[
-            {tier:'Start',sub:'Für Solo & kleine Teams',price:'29',per:'€ / Monat · pro Nutzer',items:['Alle 6 Module, 1 Nutzer inkl.','500 KI-Aktionen / Monat','DATEV-Export','E-Mail-Support'],pop:false},
-            {tier:'Pro',sub:'Für wachsende Betriebe',price:'99',per:'€ / Monat · Team bis 10',items:['Alle Module, bis 10 Nutzer','Unbegrenzte KI-Aktionen','API & Webhooks','Priority-Support & Onboarding','Steuerberater-Einladung & Lesezugriff'],pop:true},
-            {tier:'Enterprise',sub:'Für Mittelstand',price:'Ab Gespräch',per:'',items:['Unbegrenzte Nutzer','Private Cloud / On-Prem','Custom-Integrationen','SLA & Account-Manager','DSGVO-Audit inkl.'],pop:false},
-          ].map(({tier,sub,price,per,items,pop})=>{
-            const ref2 = useRef(null); useTilt(ref2);
-            return (
-              <article key={tier} ref={ref2} className={`price${pop?' pop':''}`}>
-                {pop && <span className="pop-chip">Meistgewählt</span>}
-                <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
-                <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
-                <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
-                <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Mehr Erfahren</span><span className="arrow">→</span></MagBtn>
-              </article>
-            );
-          })}
+          {PRICING_TIERS_C.map(t => <PricingCard key={t.tier} {...t} />)}
         </div>
       </div>
     </section>
