@@ -60,6 +60,22 @@ export function AuthProvider({ children }) {
     return user.org_role.permissions?.includes(feature) ?? false;
   }, [user, isCompanyAdmin, isSolo]);
 
+  // useMemo MUST be before any early return (Rules of Hooks)
+  const value = useMemo(() => ({
+    user,
+    org,
+    loading,
+    setUser,
+    setOrg,
+    logout,
+    updateOrg,
+    isSolo,
+    isCompanyAdmin,
+    isNillAdmin,
+    hasModule,
+    hasFeature,
+  }), [user, org, loading, logout, updateOrg, isSolo, isCompanyAdmin, isNillAdmin, hasModule, hasFeature]);
+
   if (loading) {
     return (
       <div style={{
@@ -108,21 +124,6 @@ export function AuthProvider({ children }) {
       </div>
     );
   }
-
-  const value = useMemo(() => ({
-    user,
-    org,
-    loading,
-    setUser,
-    setOrg,
-    logout,
-    updateOrg,
-    isSolo,
-    isCompanyAdmin,
-    isNillAdmin,
-    hasModule,
-    hasFeature,
-  }), [user, org, loading, logout, updateOrg, isSolo, isCompanyAdmin, isNillAdmin, hasModule, hasFeature]);
 
   return (
     <AuthContext.Provider value={value}>
