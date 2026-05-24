@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback, useEffect, useRef } from "react";
+import React, { createContext, useState, useCallback, useEffect, useRef, useMemo } from "react";
 
 export const GmailContext = createContext();
 
@@ -151,14 +151,22 @@ const openEmail = useCallback(async (id) => {
 
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
+  const value = useMemo(() => ({
+    connected, connectGmail, disconnectGmail, fetchStatus,
+    emails, sentEmails, activeEmail, initializing,
+    fetchInboxEmails, fetchSentEmails, searchEmails,
+    openEmail, closeEmail,
+    hasMoreInbox, hasMoreSent,
+  }), [
+    connected, disconnectGmail, fetchStatus,
+    emails, sentEmails, activeEmail, initializing,
+    fetchInboxEmails, fetchSentEmails, searchEmails,
+    openEmail, closeEmail,
+    hasMoreInbox, hasMoreSent,
+  ]);
+
   return (
-    <GmailContext.Provider value={{
-      connected, connectGmail, disconnectGmail, fetchStatus,
-      emails, sentEmails, activeEmail, initializing,
-      fetchInboxEmails, fetchSentEmails, searchEmails,
-      openEmail, closeEmail,
-      hasMoreInbox, hasMoreSent,
-    }}>
+    <GmailContext.Provider value={value}>
       {children}
     </GmailContext.Provider>
   );

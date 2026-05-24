@@ -218,7 +218,7 @@ export default function EmailsPage() {
   useEffect(() => {
     if (connected && !initializing) loadEmails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, mailbox, activeFolder, provider, imap?.activeAccountId]);
+  }, [connected, initializing, mailbox, activeFolder, provider, imap?.activeAccountId]);
 
   // ── Mehr laden ────────────────────────────────────────────────────────────
   const loadMore = async () => {

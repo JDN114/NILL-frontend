@@ -43,7 +43,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.post("/auth/login", { email, password });
-      if (res.data?.["2fa_required"]) {
+      if (res.data?.["requires_2fa"]) {
         setTempToken(res.data.temp_token);
         setStep("2fa");
         setLoading(false);

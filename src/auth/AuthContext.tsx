@@ -39,23 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      try {
-        const res = await api.get("/auth/me");
-        if (alive) setUser(res.data);
-      } catch {
-        if (alive) setUser(null);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
+    fetchMe();
+  }, [fetchMe]);
 
   const login = async (email: string, password: string) => {
     try {

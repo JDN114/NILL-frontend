@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import api from "../services/api";
 
 export const AuthContext = createContext(null);
@@ -37,28 +37,28 @@ export function AuthProvider({ children }) {
     return () => { mounted = false; };
   }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout", {}, { withCredentials: true });
     } catch (_) {}
     setUser(null);
     setOrg(null);
-  };
+  }, []);
 
-  const updateOrg = (fields) =>
-    setOrg(prev => ({ ...prev, ...fields }));
+  const updateOrg = useCallback((fields) =>
+    setOrg(prev => ({ ...prev, ...fields })), []);
 
-  const isSolo         = () => org?.plan === "solo";
-  const isCompanyAdmin = () => user?.role === "admin";
-  const isNillAdmin    = () => user?.is_admin === true;
-  const hasModule      = (module) => org?.modules?.includes(module) ?? false;
+  const isSolo         = useCallback(() => org?.plan === "solo",             [org]);
+  const isCompanyAdmin = useCallback(() => user?.role === "admin",           [user]);
+  const isNillAdmin    = useCallback(() => user?.is_admin === true,          [user]);
+  const hasModule      = useCallback((module) => org?.modules?.includes(module) ?? false, [org]);
 
-  const hasFeature = (feature) => {
+  const hasFeature = useCallback((feature) => {
     if (!user) return false;
     if (isCompanyAdmin() || isSolo()) return true;
     if (!user.org_role) return false;
     return user.org_role.permissions?.includes(feature) ?? false;
-  };
+  }, [user, isCompanyAdmin, isSolo]);
 
   if (loading) {
     return (
@@ -109,21 +109,23 @@ export function AuthProvider({ children }) {
     );
   }
 
+  const value = useMemo(() => ({
+    user,
+    org,
+    loading,
+    setUser,
+    setOrg,
+    logout,
+    updateOrg,
+    isSolo,
+    isCompanyAdmin,
+    isNillAdmin,
+    hasModule,
+    hasFeature,
+  }), [user, org, loading, logout, updateOrg, isSolo, isCompanyAdmin, isNillAdmin, hasModule, hasFeature]);
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      org,
-      loading,
-      setUser,
-      setOrg,
-      logout,
-      updateOrg,
-      isSolo,
-      isCompanyAdmin,
-      isNillAdmin,
-      hasModule,
-      hasFeature,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
