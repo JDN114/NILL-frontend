@@ -1,4 +1,5 @@
 // src/components/accounting/InvoiceList.jsx
+// @refresh reset
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../services/api";
 
@@ -250,13 +251,12 @@ function BookingConfirmModal({ invoice, onClose, onBooked, setMsg }) {
   );
 }
 
-// ── Info tooltip ──────────────────────────────────────────────────────────────
-function BookingInfoTooltip() {
-  const [open, setOpen] = useState(false);
+// ── Info tooltip (stateless — open/setOpen from parent) ──────────────────────
+function BookingInfoTooltip({ open, onToggle }) {
   return (
     <div style={{ position:"relative", display:"inline-flex" }}>
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={onToggle}
         style={{
           width:20, height:20, borderRadius:"50%", border:"1px solid var(--border)",
           background:"var(--surface2)", color:"var(--ink2)", fontSize:11,
@@ -269,7 +269,7 @@ function BookingInfoTooltip() {
       </button>
       {open && (
         <div
-          onClick={() => setOpen(false)}
+          onClick={onToggle}
           style={{
             position:"absolute", top:26, left:0, zIndex:100,
             width:300, background:"var(--surface)", border:"1px solid var(--border)",
@@ -288,7 +288,7 @@ function BookingInfoTooltip() {
             Rechnungen mit Status <strong style={{color:"rgba(100,220,120,0.9)"}}>✓ Gebucht</strong> erscheinen im Buchungsjournal und in der BWA.
           </p>
           <div style={{ textAlign:"right", marginTop:10 }}>
-            <button onClick={() => setOpen(false)} style={{ fontSize:".73rem", color:"var(--accent)", background:"none", border:"none", cursor:"pointer" }}>Schließen</button>
+            <button onClick={onToggle} style={{ fontSize:".73rem", color:"var(--accent)", background:"none", border:"none", cursor:"pointer" }}>Schließen</button>
           </div>
         </div>
       )}
@@ -302,11 +302,12 @@ export default function InvoiceList() {
   const [loading,       setLoading]       = useState(true);
   const [filter,        setFilter]        = useState("");
   const [statusFilter,  setStatusFilter]  = useState("all");
-  const [bookingFilter, setBookingFilter] = useState("all"); // all | booked | unbooked
+  const [bookingFilter, setBookingFilter] = useState("all");
   const [sortKey,       setSortKey]       = useState("date");
   const [sortAsc,       setSortAsc]       = useState(false);
   const [msg,           setMsg]           = useState(null);
   const [bookingInv,    setBookingInv]    = useState(null);
+  const [infoOpen,      setInfoOpen]      = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -414,7 +415,7 @@ export default function InvoiceList() {
           <option value="booked">Gebucht</option>
           <option value="unbooked">Nicht gebucht</option>
         </select>
-        <BookingInfoTooltip />
+        <BookingInfoTooltip open={infoOpen} onToggle={() => setInfoOpen(o => !o)} />
         <span style={{ color:"var(--ink2)", fontSize:".85rem", marginLeft:"auto" }}>
           Offen: <strong style={{color:"var(--a3)"}}>{fmtEur(totalOpen)}</strong>
         </span>
