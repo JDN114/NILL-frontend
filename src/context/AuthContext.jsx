@@ -24,7 +24,9 @@ export function AuthProvider({ children }) {
           setOrg(res.data.org ?? null);
         }
       } catch (err) {
-        console.error("auth/me failed:", err);
+        if (err?.response?.status !== 401) {
+          console.error("auth/me failed:", err);
+        }
         if (mounted) {
           setUser(null);
           setOrg(null);

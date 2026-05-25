@@ -39,7 +39,9 @@ export const OutlookProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.error("[OutlookContext] Status error:", err);
+      if (err?.response?.status !== 401) {
+        console.error("[OutlookContext] Status error:", err);
+      }
       if (connectedRef.current !== false) {
         connectedRef.current = false;
         setConnected({ connected: false });
