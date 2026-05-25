@@ -76,6 +76,29 @@ export default function ReceiptUploadModal({ onClose }) {
 
         {!result ? (
           <>
+            {/* Mobile camera shortcut (F23) */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <button
+                className="ac-btn ac-btn-ghost"
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px" }}
+                onClick={() => {
+                  const inp = document.createElement("input");
+                  inp.type = "file"; inp.accept = "image/*"; inp.capture = "environment";
+                  inp.onchange = e => onFile(e.target.files[0]);
+                  inp.click();
+                }}
+              >
+                📷 Foto aufnehmen
+              </button>
+              <button
+                className="ac-btn ac-btn-ghost"
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px" }}
+                onClick={() => inputRef.current?.click()}
+              >
+                📁 Datei wählen
+              </button>
+            </div>
+
             {/* Drop zone */}
             <div
               onClick={() => inputRef.current?.click()}

@@ -26,6 +26,18 @@ import SerienrechnungTab    from "../components/accounting/SerienrechnungTab";
 import BelegarchivTab       from "../components/accounting/BelegarchivTab";
 import ErechnungTab         from "../components/accounting/ErechnungTab";
 import BankSyncTab          from "../components/accounting/BankSyncTab";
+import AngeboteTab          from "../components/accounting/AngeboteTab";
+import ReisekostenTab       from "../components/accounting/ReisekostenTab";
+import KassenbuchTab        from "../components/accounting/KassenbuchTab";
+import GewerbesteuerTab     from "../components/accounting/GewerbesteuerTab";
+import BelegEmailTab        from "../components/accounting/BelegEmailTab";
+import ProjektTab           from "../components/accounting/ProjektTab";
+import BudgetTab            from "../components/accounting/BudgetTab";
+import LieferscheinTab      from "../components/accounting/LieferscheinTab";
+import SteuerkalenderTab    from "../components/accounting/SteuerkalenderTab";
+import WechselkurseTab      from "../components/accounting/WechselkurseTab";
+import ZahlungsmoralTab     from "../components/accounting/ZahlungsmoralTab";
+import OnboardingWizard     from "../components/accounting/OnboardingWizard";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -540,6 +552,40 @@ function ExportTab() {
         </div>
       )}
 
+      {/* DATEV Stammdaten (F20 + F22) */}
+      <div className="ac-card" style={{marginBottom:16,borderColor:"rgba(198,255,60,.15)"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:10}}>
+          <div className="ac-section-title" style={{marginBottom:0}}>DATEV Stammdaten-Export (Debitoren/Kreditoren)</div>
+          <span className="ac-badge ac-badge-green" style={{fontSize:".7rem"}}>Neu</span>
+        </div>
+        <p style={{fontSize:".82rem",color:"var(--ink2)",marginBottom:12}}>
+          Exportiert alle Geschäftspartner mit DATEV-Personenkontennummern (Debitoren ab 10000, Kreditoren ab 70000). Direkt importierbar in DATEV.
+        </p>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <div className="ac-form-col" style={{maxWidth:160}}>
+            <label className="ac-label">Beraternr.</label>
+            <input className="ac-input" value={beraternr} onChange={e=>setBeraternr(e.target.value)} maxLength={5}/>
+          </div>
+          <div className="ac-form-col" style={{maxWidth:160}}>
+            <label className="ac-label">Mandantennr.</label>
+            <input className="ac-input" value={mandantnr} onChange={e=>setMandantnr(e.target.value)} maxLength={5}/>
+          </div>
+          <div style={{display:"flex",alignItems:"flex-end"}}>
+            <button className="ac-btn ac-btn-primary" onClick={async () => {
+              try {
+                const r = await api.get("/api/v1/buchhaltung/export/datev-stammdaten", {
+                  params:{beraternummer:beraternr,mandantennummer:mandantnr}, responseType:"blob"
+                });
+                const url = URL.createObjectURL(r.data);
+                const a = document.createElement("a"); a.href=url; a.download="DATEV_Stammdaten.csv"; a.click();
+                URL.revokeObjectURL(url);
+                setMsg({type:"ok",text:"DATEV Stammdaten heruntergeladen."});
+              } catch(e) { setMsg({type:"err",text:"Stammdaten-Export fehlgeschlagen."}); }
+            }}>Stammdaten exportieren</button>
+          </div>
+        </div>
+      </div>
+
       {/* DATEV */}
       <div className="ac-card" style={{marginBottom:16}}>
         <div className="ac-section-title">DATEV-Export (Format 700, CP1252)</div>
@@ -862,8 +908,19 @@ const ALL_TABS = [
   {id:"erechnung",      label:"E-Rechnung",         modes:["einfach","doppelt"]},
   {id:"serienrechnung", label:"Serienrechnungen",   modes:["einfach","doppelt"]},
   {id:"gutschriften",   label:"Gutschriften",       modes:["einfach","doppelt"]},
+  {id:"angebote",       label:"Angebote",           modes:["einfach","doppelt"]},
+  {id:"lieferscheine",  label:"Lieferscheine",      modes:["einfach","doppelt"]},
   {id:"opos",           label:"Offene Posten",      modes:["einfach","doppelt"]},
   {id:"mahnwesen",      label:"Mahnwesen",          modes:["einfach","doppelt"]},
+  {id:"projekte",       label:"Projekte",           modes:["einfach","doppelt"]},
+  {id:"budget",         label:"Budget",             modes:["einfach","doppelt"]},
+  {id:"reisekosten",    label:"Reisekosten",        modes:["einfach","doppelt"]},
+  {id:"kassenbuch",     label:"Kassenbuch",         modes:["einfach","doppelt"]},
+  {id:"zahlungsmoral",  label:"Zahlungsmoral",      modes:["einfach","doppelt"]},
+  {id:"waehrungen",     label:"Währungen",          modes:["einfach","doppelt"]},
+  {id:"gewerbesteuer",  label:"GewSt / ZM",        modes:["einfach","doppelt"]},
+  {id:"steuerkalender", label:"Steuer-Kalender",   modes:["einfach","doppelt"]},
+  {id:"belege-email",   label:"📧 Belege-Mail",     modes:["einfach","doppelt"]},
   {id:"belegarchiv",    label:"Belegarchiv",        modes:["einfach","doppelt"]},
   {id:"buchungen",      label:"Journal",            modes:["doppelt"]},
   {id:"kontenplan",     label:"Kontenplan",         modes:["einfach","doppelt"]},
@@ -886,6 +943,7 @@ export default function AccountingPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sessionReady, setSessionReady] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const accountingMode = localStorage.getItem("nill_accounting_mode") || "doppelt";
   const TABS = useMemo(
     () => ALL_TABS.filter(t => t.modes.includes(accountingMode)),
@@ -923,6 +981,17 @@ export default function AccountingPage() {
       case "gutschriften":   return <GutschriftTab key={refreshKey}/>;
       case "opos":           return <OposTab key={refreshKey} onNavigate={goTo}/>;
       case "mahnwesen":      return <MahnwesenTab key={refreshKey}/>;
+      case "angebote":       return <AngeboteTab key={refreshKey}/>;
+      case "lieferscheine":  return <LieferscheinTab key={refreshKey}/>;
+      case "projekte":       return <ProjektTab key={refreshKey}/>;
+      case "budget":         return <BudgetTab key={refreshKey}/>;
+      case "reisekosten":    return <ReisekostenTab key={refreshKey}/>;
+      case "kassenbuch":     return <KassenbuchTab key={refreshKey}/>;
+      case "zahlungsmoral":  return <ZahlungsmoralTab key={refreshKey}/>;
+      case "waehrungen":     return <WechselkurseTab key={refreshKey}/>;
+      case "gewerbesteuer":  return <GewerbesteuerTab key={refreshKey}/>;
+      case "steuerkalender": return <SteuerkalenderTab key={refreshKey}/>;
+      case "belege-email":   return <BelegEmailTab key={refreshKey}/>;
       case "belegarchiv":    return <BelegarchivTab key={refreshKey}/>;
       case "buchungen":      return <BuchungenTab key={refreshKey}/>;
       case "kontenplan":     return <KontenplanTab key={refreshKey}/>;
@@ -954,6 +1023,7 @@ export default function AccountingPage() {
           <div className="ac-header-divider"/>
           <span className="ac-title">Buchhaltung</span>
           <div className="ac-header-right">
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup-Assistent</button>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>❓ Hilfe</button>
             <button className="ac-btn ac-btn-primary" onClick={()=>setUploadOpen(true)}>+ Beleg</button>
           </div>
@@ -978,6 +1048,16 @@ export default function AccountingPage() {
         {uploadOpen && (
           <ReceiptUploadModal
             onClose={()=>{ setUploadOpen(false); triggerRefresh(); }}
+          />
+        )}
+
+        {showOnboarding && (
+          <OnboardingWizard
+            onClose={() => setShowOnboarding(false)}
+            onComplete={(mode) => {
+              setShowOnboarding(false);
+              window.location.reload();
+            }}
           />
         )}
       </div>

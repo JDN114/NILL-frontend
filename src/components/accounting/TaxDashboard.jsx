@@ -62,6 +62,98 @@ function LegalFormModal({ onClose }) {
   );
 }
 
+function SteuerrueckstellungPanel() {
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr]       = useState(false);
+  const yr = new Date().getFullYear();
+
+  useEffect(() => {
+    api.get("/tax/steuerrueckstellung")
+      .then(r => setData(r.data))
+      .catch(() => setErr(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="ac-card" style={{ marginTop: 16 }}>
+      <div className="ac-loading" style={{ padding: 20 }}><span className="ac-spinner" />Steuerrückstellung berechnen…</div>
+    </div>
+  );
+  if (err || !data) return null;
+
+  const brkKeys = Object.keys(data.breakdown || {});
+
+  return (
+    <div className="ac-card" style={{ marginTop: 16, borderColor: "rgba(198,255,60,.2)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div style={{ fontFamily: "Fraunces,serif", fontSize: "1.05rem", fontWeight: 600, marginBottom: 2 }}>
+            Steuerrückstellungs-Rechner {yr}
+          </div>
+          <div style={{ fontSize: ".78rem", color: "var(--ink2)" }}>
+            Rechtsform: <strong style={{ color: "var(--ink)" }}>{data.rechtsform}</strong>
+            {" · "}Effektiver Steuersatz: <strong style={{ color: "var(--a3)" }}>{data.effektiver_steuersatz}%</strong>
+          </div>
+        </div>
+        <div style={{
+          background: "rgba(198,255,60,.1)", border: "1px solid rgba(198,255,60,.25)",
+          borderRadius: 10, padding: "10px 18px", textAlign: "center", flexShrink: 0,
+        }}>
+          <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 4 }}>
+            Monatliche Rücklage
+          </div>
+          <div style={{ fontFamily: "JetBrains Mono,monospace", fontSize: "1.5rem", fontWeight: 700, color: "var(--accent)" }}>
+            {fmtEur(data.monatliche_ruecklage)}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10, marginBottom: 14 }}>
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>Einnahmen netto</div>
+          <div className="ac-mono" style={{ fontWeight: 700, color: "var(--accent)" }}>{fmtEur(data.einnahmen_netto)}</div>
+        </div>
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>Ausgaben netto</div>
+          <div className="ac-mono" style={{ fontWeight: 700, color: "var(--a3)" }}>{fmtEur(data.ausgaben_netto)}</div>
+        </div>
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>Gewinn</div>
+          <div className="ac-mono" style={{ fontWeight: 700 }}>{fmtEur(data.gewinn)}</div>
+        </div>
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>Gesamtsteuer</div>
+          <div className="ac-mono" style={{ fontWeight: 700, color: "var(--a3)" }}>{fmtEur(data.gesamtsteuer)}</div>
+        </div>
+      </div>
+
+      {brkKeys.length > 0 && (
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          {brkKeys.map(k => (
+            <div key={k} style={{
+              background: "var(--surface2)", borderRadius: 8, padding: "8px 14px",
+              fontSize: ".8rem", display: "flex", gap: 8, alignItems: "center",
+            }}>
+              <span style={{ color: "var(--ink2)" }}>
+                {{
+                  einkommensteuer:       "Einkommensteuer",
+                  koerperschaftsteuer:   "Körperschaftsteuer",
+                  solidaritaetszuschlag: "Solidaritätszuschlag",
+                  gewerbesteuer:         "Gewerbesteuer",
+                }[k] || k}
+              </span>
+              <span className="ac-mono" style={{ fontWeight: 600, color: "var(--ink)" }}>{fmtEur(data.breakdown[k])}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ fontSize: ".75rem", color: "var(--ink2)", fontStyle: "italic" }}>{data.hinweis}</div>
+    </div>
+  );
+}
+
 export default function TaxDashboard() {
   const [summary, setSummary]       = useState(null);
   const [ust, setUst]               = useState(null);
@@ -194,6 +286,8 @@ export default function TaxDashboard() {
           </button>
         </div>
       </div>
+
+      <SteuerrueckstellungPanel />
 
       {showProfile && <LegalFormModal onClose={() => setShowProfile(false)} />}
     </div>
