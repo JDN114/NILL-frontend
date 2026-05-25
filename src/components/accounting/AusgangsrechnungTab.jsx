@@ -619,6 +619,18 @@ function RechnungenList({ onNew, onEdit }) {
     } catch { alert("XRechnung-Download fehlgeschlagen."); }
   };
 
+  const downloadZugferd = async (id, nr) => {
+    try {
+      const r = await api.get(`/api/v1/rechnungen/${id}/zugferd-pdf`, { responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ZUGFeRD-${nr || id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert("ZUGFeRD-Download fehlgeschlagen."); }
+  };
+
   const totalOffen = rechnungen
     .filter(r => r.status === "offen")
     .reduce((s, r) => s + Number(r.brutto_summe || 0), 0);
@@ -706,6 +718,11 @@ function RechnungenList({ onNew, onEdit }) {
                           onClick={() => downloadXRechnung(r.id, r.rechnungsnummer)}
                           title="XRechnung 3.0 XML (EN 16931) — ab 2025 Pflicht für B2B">
                           🧾 XML
+                        </button>
+                        <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
+                          onClick={() => downloadZugferd(r.id, r.rechnungsnummer)}
+                          title="ZUGFeRD Hybrid-PDF — PDF mit eingebettetem XML">
+                          ⚡ ZUGFeRD
                         </button>
                       </>)}
                       {r.status === "offen" && (<>

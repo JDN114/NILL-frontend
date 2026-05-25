@@ -19,6 +19,13 @@ import BankInsights         from "../components/accounting/BankInsights";
 import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
 import AusgangsrechnungTab  from "../components/accounting/AusgangsrechnungTab";
 import ImportTab            from "../components/accounting/ImportTab";
+import OposTab              from "../components/accounting/OposTab";
+import MahnwesenTab         from "../components/accounting/MahnwesenTab";
+import GutschriftTab        from "../components/accounting/GutschriftTab";
+import SerienrechnungTab    from "../components/accounting/SerienrechnungTab";
+import BelegarchivTab       from "../components/accounting/BelegarchivTab";
+import ErechnungTab         from "../components/accounting/ErechnungTab";
+import BankSyncTab          from "../components/accounting/BankSyncTab";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -850,20 +857,26 @@ function HilfeTab({ onNavigate }) {
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const ALL_TABS = [
-  {id:"overview",    label:"Übersicht",        modes:["einfach","doppelt"]},
-  {id:"rechnungen",  label:"Rechnungen",       modes:["einfach","doppelt"]},
-  {id:"buchungen",   label:"Journal",          modes:["doppelt"]},
-  {id:"kontenplan",  label:"Kontenplan",       modes:["einfach","doppelt"]},
-  {id:"anlagen",     label:"Anlagenbuch",      modes:["einfach","doppelt"]},
-  {id:"ustva",       label:"UStVA",            modes:["einfach","doppelt"]},
-  {id:"berichte",    label:"Berichte",         modes:["einfach","doppelt"]},
-  {id:"partner",     label:"Geschäftspartner", modes:["einfach","doppelt"]},
-  {id:"bank",        label:"Bank",             modes:["doppelt"], comingSoon: true},
-  {id:"steuern",     label:"Steuern",          modes:["einfach","doppelt"]},
-  {id:"lohnsteuer",  label:"Lohnsteuer",       modes:["doppelt"]},
-  {id:"import",      label:"Daten importieren", modes:["einfach","doppelt"]},
-  {id:"export",      label:"Export",            modes:["einfach","doppelt"]},
-  {id:"hilfe",       label:"❓ Hilfe",          modes:["einfach","doppelt"]},
+  {id:"overview",       label:"Übersicht",          modes:["einfach","doppelt"]},
+  {id:"rechnungen",     label:"Rechnungen",         modes:["einfach","doppelt"]},
+  {id:"erechnung",      label:"E-Rechnung",         modes:["einfach","doppelt"]},
+  {id:"serienrechnung", label:"Serienrechnungen",   modes:["einfach","doppelt"]},
+  {id:"gutschriften",   label:"Gutschriften",       modes:["einfach","doppelt"]},
+  {id:"opos",           label:"Offene Posten",      modes:["einfach","doppelt"]},
+  {id:"mahnwesen",      label:"Mahnwesen",          modes:["einfach","doppelt"]},
+  {id:"belegarchiv",    label:"Belegarchiv",        modes:["einfach","doppelt"]},
+  {id:"buchungen",      label:"Journal",            modes:["doppelt"]},
+  {id:"kontenplan",     label:"Kontenplan",         modes:["einfach","doppelt"]},
+  {id:"anlagen",        label:"Anlagenbuch",        modes:["einfach","doppelt"]},
+  {id:"ustva",          label:"UStVA",              modes:["einfach","doppelt"]},
+  {id:"berichte",       label:"Berichte",           modes:["einfach","doppelt"]},
+  {id:"partner",        label:"Geschäftspartner",   modes:["einfach","doppelt"]},
+  {id:"bank",           label:"Bank-Sync",          modes:["doppelt"]},
+  {id:"steuern",        label:"Steuern",            modes:["einfach","doppelt"]},
+  {id:"lohnsteuer",     label:"Lohnsteuer",         modes:["doppelt"]},
+  {id:"import",         label:"Daten importieren",  modes:["einfach","doppelt"]},
+  {id:"export",         label:"Export",             modes:["einfach","doppelt"]},
+  {id:"hilfe",          label:"❓ Hilfe",            modes:["einfach","doppelt"]},
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -897,28 +910,33 @@ export default function AccountingPage() {
 
   const renderTab = () => {
     switch(tab) {
-      case "overview":   return <OverviewTab key={refreshKey}/>;
-      case "rechnungen": return (
+      case "overview":       return <OverviewTab key={refreshKey}/>;
+      case "rechnungen":     return (
         <RechnungenTab
           onUpload={() => setUploadOpen(true)}
           onRefresh={triggerRefresh}
           refreshKey={refreshKey}
         />
       );
-      case "buchungen":  return <BuchungenTab key={refreshKey}/>;
-      case "kontenplan": return <KontenplanTab key={refreshKey}/>;
-      case "anlagen":    return <AnlagenTab key={refreshKey}/>;
-      case "ustva":      return <UstVaTab key={refreshKey}/>;
-      case "berichte":   return <BerichteTab key={refreshKey}/>;
-      case "partner":    return <GeschaeftspartnerTab key={refreshKey}/>;
-      case "bank":       return <ComingSoonTab title="Banksynchronisation" desc="Automatischer Bankabgleich mit deinen Buchungen — in Kürze verfügbar." />;
-      case "bank_insights_disabled": return <BankInsights key={refreshKey}/>;
-      case "steuern":    return <TaxDashboard key={refreshKey}/>;
-      case "lohnsteuer": return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
-      case "import":     return <ImportTab onDone={triggerRefresh}/>;
-      case "export":     return <ExportTab/>;
-      case "hilfe":      return <HilfeTab onNavigate={goTo}/>;
-      default:           return null;
+      case "erechnung":      return <ErechnungTab key={refreshKey}/>;
+      case "serienrechnung": return <SerienrechnungTab key={refreshKey}/>;
+      case "gutschriften":   return <GutschriftTab key={refreshKey}/>;
+      case "opos":           return <OposTab key={refreshKey} onNavigate={goTo}/>;
+      case "mahnwesen":      return <MahnwesenTab key={refreshKey}/>;
+      case "belegarchiv":    return <BelegarchivTab key={refreshKey}/>;
+      case "buchungen":      return <BuchungenTab key={refreshKey}/>;
+      case "kontenplan":     return <KontenplanTab key={refreshKey}/>;
+      case "anlagen":        return <AnlagenTab key={refreshKey}/>;
+      case "ustva":          return <UstVaTab key={refreshKey}/>;
+      case "berichte":       return <BerichteTab key={refreshKey}/>;
+      case "partner":        return <GeschaeftspartnerTab key={refreshKey}/>;
+      case "bank":           return <BankSyncTab key={refreshKey}/>;
+      case "steuern":        return <TaxDashboard key={refreshKey}/>;
+      case "lohnsteuer":     return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
+      case "import":         return <ImportTab onDone={triggerRefresh}/>;
+      case "export":         return <ExportTab/>;
+      case "hilfe":          return <HilfeTab onNavigate={goTo}/>;
+      default:               return null;
     }
   };
 

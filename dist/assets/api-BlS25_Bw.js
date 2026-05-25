@@ -1,1 +1,0 @@
-import{O as r}from"./vendor-misc-DR5OIT6T.js";const t=r.create({baseURL:"https://api.nillai.de",withCredentials:!0,timeout:15e3});t.interceptors.response.use(e=>e,e=>(console.error("API Error:",e),Promise.reject(e)));export{t as a};
