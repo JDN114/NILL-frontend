@@ -88,14 +88,14 @@ export default function ReceiptUploadModal({ onClose }) {
                   inp.click();
                 }}
               >
-                📷 Foto aufnehmen
+                Foto aufnehmen
               </button>
               <button
                 className="ac-btn ac-btn-ghost"
                 style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px" }}
                 onClick={() => inputRef.current?.click()}
               >
-                📁 Datei wählen
+                Datei wählen
               </button>
             </div>
 
@@ -119,7 +119,7 @@ export default function ReceiptUploadModal({ onClose }) {
                 <img src={preview} alt="Vorschau" style={{ maxHeight: 180, maxWidth: "100%", borderRadius: 8 }} />
               ) : (
                 <div>
-                  <div style={{ fontSize: "2rem", marginBottom: 8 }}>📄</div>
+                  <div style={{ fontSize: "2rem", marginBottom: 8 }}></div>
                   <div style={{ color: "var(--ink2)", fontSize: ".9rem" }}>
                     {file ? file.name : "Datei hierher ziehen oder klicken"}
                   </div>
@@ -168,7 +168,7 @@ export default function ReceiptUploadModal({ onClose }) {
                 fontSize:10, fontFamily:"JetBrains Mono,monospace", letterSpacing:"0.1em",
                 background:"rgba(122,92,255,0.15)", border:"1px solid rgba(122,92,255,0.3)",
                 color:"rgba(122,92,255,0.9)", userSelect:"none", flexShrink:0,
-              }}>◈ KI-Erkennung</span>
+              }}>KI-Erkennung</span>
             </div>
 
             {/* Extracted data grid */}

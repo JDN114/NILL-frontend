@@ -184,7 +184,7 @@ export default function ReisekostenTab() {
         <div className="ac-loading"><span className="ac-spinner" />Lade Reisekosten…</div>
       ) : data.eintraege.length === 0 ? (
         <div className="ac-empty">
-          <div style={{ fontSize: "2rem", marginBottom: 12 }}>🚗</div>
+          <div style={{ fontSize: "2rem", marginBottom: 12 }}></div>
           <div>Noch keine Reisekosten erfasst.</div>
         </div>
       ) : (
@@ -221,8 +221,8 @@ export default function ReisekostenTab() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
-                        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal(r)}>✏️</button>
-                        <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(r.id)}>🗑</button>
+                        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal(r)}>Bearb.</button>
+                        <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(r.id)}>Löschen</button>
                       </div>
                     </td>
                   </tr>

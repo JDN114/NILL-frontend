@@ -272,7 +272,7 @@ export default function GutschriftTab() {
                         {g.status !== "entwurf" && (
                           <button className="ac-btn ac-btn-ghost ac-btn-sm"
                             onClick={() => downloadPdf(g.id, g.gutschriftnummer)}>
-                            📄 PDF
+                            PDF
                           </button>
                         )}
                       </div>

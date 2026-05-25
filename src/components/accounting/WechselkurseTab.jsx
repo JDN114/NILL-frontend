@@ -7,7 +7,6 @@ const fmtEur  = (n) => `${Number(n || 0).toLocaleString("de-DE", { minimumFracti
 const fmtFx   = (n, sym) => `${Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${sym}`;
 
 const POPULAR = ["USD", "GBP", "CHF", "JPY", "DKK", "SEK", "NOK", "PLN", "CZK", "HUF"];
-const FLAG = { USD:"🇺🇸", GBP:"🇬🇧", CHF:"🇨🇭", JPY:"🇯🇵", DKK:"🇩🇰", SEK:"🇸🇪", NOK:"🇳🇴", PLN:"🇵🇱", CZK:"🇨🇿", HUF:"🇭🇺", EUR:"🇪🇺" };
 
 export default function WechselkurseTab() {
   const [rates, setRates]       = useState({});
@@ -82,14 +81,14 @@ export default function WechselkurseTab() {
           <div className="ac-form-col" style={{ maxWidth: 120 }}>
             <label className="ac-label">Von</label>
             <select className="ac-select" value={von} onChange={e => { setVon(e.target.value); setErgebnis(null); }}>
-              {allCurrencies.map(c => <option key={c} value={c}>{FLAG[c] || ""} {c}</option>)}
+              {allCurrencies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div style={{ paddingBottom: 8, fontSize: "1.2rem", color: "var(--ink2)" }}>→</div>
           <div className="ac-form-col" style={{ maxWidth: 120 }}>
             <label className="ac-label">Nach</label>
             <select className="ac-select" value={nach} onChange={e => { setNach(e.target.value); setErgebnis(null); }}>
-              {allCurrencies.map(c => <option key={c} value={c}>{FLAG[c] || ""} {c}</option>)}
+              {allCurrencies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <button className="ac-btn ac-btn-primary" onClick={umrechnen} disabled={converting}>
@@ -139,7 +138,6 @@ export default function WechselkurseTab() {
               {displayRates.map(c => (
                 <tr key={c}>
                   <td>
-                    <span style={{ marginRight: 8 }}>{FLAG[c] || "🌐"}</span>
                     <strong>{c}</strong>
                   </td>
                   <td className="ac-mono" style={{ textAlign: "right" }}>{fmtRate(rates[c])}</td>

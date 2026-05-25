@@ -263,7 +263,6 @@ function OverviewTab({ onNavigate, onUpload }) {
   const [periode,   setPeriode]   = useState("12");
   const [activeIdx, setActiveIdx] = useState(null);
   const [activeKat, setActiveKat] = useState(null);
-  const [opos,      setOpos]      = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -271,7 +270,6 @@ function OverviewTab({ onNavigate, onUpload }) {
       .then(r => setDash(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-    api.get("/api/v1/opos/summary").then(r => setOpos(r.data)).catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -342,63 +340,19 @@ function OverviewTab({ onNavigate, onUpload }) {
         </div>
       </div>
       {/* Quick actions */}
-      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
         <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => onNavigate?.("rechnungen")}>
           + Rechnung
         </button>
         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={onUpload}>
           + Beleg hochladen
         </button>
-        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("bank")}>
-          ⟳ Bank sync
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("posten")}>
+          Offene Posten
         </button>
         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("steuern")}>
-          📊 UStVA
+          UStVA
         </button>
-      </div>
-
-      {/* At-a-glance cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:20}}>
-        <div className="ac-card" style={{cursor:"pointer",transition:"border-color .15s"}}
-          onClick={() => onNavigate?.("posten")}
-          onMouseEnter={e=>e.currentTarget.style.borderColor="var(--a3)"}
-          onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
-          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Offene Rechnungen</div>
-          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1.6rem",fontWeight:800,color:"var(--a3)"}}>
-            {opos?.offene_count ?? "—"}
-          </div>
-          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
-            {opos?.offene_summe != null ? `${fmtEur(opos.offene_summe)} ausstehend` : "Lade…"}
-          </div>
-        </div>
-        <div className="ac-card" style={{cursor:"pointer",transition:"border-color .15s"}}
-          onClick={() => onNavigate?.("posten")}
-          onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
-          onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
-          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Überfällig</div>
-          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1.6rem",fontWeight:800,color:((opos?.ueberfaellig_count??0)>0)?"var(--a3)":"var(--accent)"}}>
-            {opos?.ueberfaellig_count ?? "—"}
-          </div>
-          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
-            {opos?.ueberfaellig_summe != null ? `${fmtEur(opos.ueberfaellig_summe)} fällig` : "Rechnungen"}
-          </div>
-        </div>
-        <div className="ac-card">
-          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Nächste Steuer</div>
-          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1rem",fontWeight:700,lineHeight:1.3}}>
-            {dash.naechste_steuer_datum || "—"}
-          </div>
-          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
-            {dash.naechste_steuer_art || "Im Steuerkalender prüfen"}
-          </div>
-        </div>
-        <div className="ac-card">
-          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Buchungen gesamt</div>
-          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1.6rem",fontWeight:800}}>
-            {dash.buchungen_gesamt ?? 0}
-          </div>
-          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>lfd. Jahr</div>
-        </div>
       </div>
 
       <div className="ac-grid-2" style={{marginBottom:16}}>
@@ -787,7 +741,7 @@ function RechnungenTab({ onUpload, onRefresh, refreshKey }) {
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
         <div style={{display:"flex",gap:4,background:"var(--surface)",borderRadius:10,padding:4}}>
-          {[["eingehend","📥 Eingehende Rechnungen"],["ausgehend","📤 Ausgehende Rechnungen"]].map(([s,l]) => (
+          {[["eingehend","Eingehende Rechnungen"],["ausgehend","Ausgehende Rechnungen"]].map(([s,l]) => (
             <button key={s}
               className={`ac-btn ${sub===s?"ac-btn-primary":"ac-btn-ghost"}`}
               style={{fontSize:".82rem"}}
@@ -809,7 +763,7 @@ function RechnungenTab({ onUpload, onRefresh, refreshKey }) {
 // ── Hilfe ─────────────────────────────────────────────────────────────────────
 const HELP_MODULES = [
   {
-    icon: "📊", id: "overview", title: "Übersicht",
+    icon: "", id: "overview", title: "Übersicht",
     desc: "Das Buchhaltungs-Cockpit. Zeigt Einnahmen, Ausgaben und Gewinn des laufenden Jahres auf einen Blick — mit Cashflow-Chart (monatlich), Ausgaben-Kreisdiagramm nach Kategorie und einer Vorschau der letzten Buchungen. Ideal als täglicher Einstieg.",
     tags: ["Dashboard","KPIs","Cashflow","Jahresübersicht"],
     tips: [
@@ -818,7 +772,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "🧾", id: "rechnungen", title: "Rechnungen",
+    icon: "", id: "rechnungen", title: "Rechnungen",
     desc: "Zentrale Rechnungsverwaltung in zwei Bereichen. Eingehende Rechnungen: Foto oder PDF hochladen, KI erkennt Vendor, Datum, Beträge und SKR03-Konto automatisch — per Klick in die doppelte Buchführung buchen. Ausgehende Rechnungen: rechtssichere Ausgangsrechnungen nach §14 UStG erstellen, mit automatischer laufender Nummer (RE-JJJJ-NNNN), Kleinunternehmer §19, Reverse Charge §13b, PDF im DIN 5008-Layout und wiederverwendbaren Vorlagen für Absenderstammdaten.",
     tags: ["Eingangsrechnung","Ausgangsrechnung","§14 UStG","KI-Erkennung","PDF","Vorlagen","DIN 5008"],
     tips: [
@@ -831,7 +785,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "📒", id: "buchungen", title: "Journal (Buchungen)",
+    icon: "", id: "buchungen", title: "Journal (Buchungen)",
     desc: "Das Herzstück der doppelten Buchführung nach HGB/GoB. Buchungssätze bestehen aus mindestens einer Soll- und einer Haben-Zeile, die bilanziell ausgeglichen sein müssen (Soll = Haben). GoBD-konformer Storno per Gegenbuchung statt Löschen. Buchungen können festgeschrieben werden.",
     tags: ["Doppelte Buchführung","HGB","GoBD","Storno","Festschreibung"],
     tips: [
@@ -841,7 +795,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "📋", id: "kontenplan", title: "Kontenplan",
+    icon: "", id: "kontenplan", title: "Kontenplan",
     desc: "Vollständiger SKR03-Kontenrahmen, automatisch beim ersten Login für deinen Account angelegt. Konten sind nach Klassen 0–9 (Anlagevermögen, Umlaufvermögen, Eigenkapital, Verbindlichkeiten, Kosten, Erlöse) strukturiert. Salden werden aus den Buchungszeilen live berechnet.",
     tags: ["SKR03","Kontenrahmen","Klassen 0–9","Salden"],
     tips: [
@@ -851,7 +805,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "🏗️", id: "anlagen", title: "Anlagenbuch",
+    icon: "", id: "anlagen", title: "Anlagenbuch",
     desc: "Anlagevermögen (Computer, Maschinen, Fahrzeuge, Software) erfassen und automatisch abschreiben. Unterstützt lineare AfA, Sofortabschreibung für GWG bis 800 € netto und degressive Methode. AfA-Vorschau zeigt Abschreibung für jedes Jahr der Nutzungsdauer. Ein Knopfdruck bucht die Jahres-AfA ins Journal.",
     tags: ["AfA","GWG","Lineare AfA","Degressive AfA","§7 EStG"],
     tips: [
@@ -861,7 +815,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "🧮", id: "ustva", title: "UStVA",
+    icon: "", id: "ustva", title: "UStVA",
     desc: "Umsatzsteuer-Voranmeldung vorbereiten. NILL berechnet alle ELSTER-Kennzahlen (KZ 21, 35, 41, 44, 59, 61, 65, 81, 86) aus deinen Buchungen für einen frei wählbaren Zeitraum. Zeigt Zahllast oder Erstattungsbetrag (KZ 65). Perioden-Übersicht mit Fälligkeitsdaten.",
     tags: ["UStVA","ELSTER","KZ 21–86","§18 UStG","Voranmeldung"],
     tips: [
@@ -871,7 +825,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "📈", id: "berichte", title: "Berichte",
+    icon: "", id: "berichte", title: "Berichte",
     desc: "Vollwertige gesetzliche Abschlüsse auf Knopfdruck: Bilanz nach §266 HGB (Aktiva/Passiva), GuV nach §275 HGB (Gesamtkostenverfahren), EÜR nach §4 Abs. 3 EStG für Freiberufler und Kleingewerbe, Betriebswirtschaftliche Auswertung (BWA) und Summen-/Saldenliste aller Konten.",
     tags: ["Bilanz §266","GuV §275","EÜR §4 EStG","BWA","Saldenliste"],
     tips: [
@@ -881,7 +835,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "🤝", id: "partner", title: "Geschäftspartner",
+    icon: "", id: "partner", title: "Geschäftspartner",
     desc: "Stammdaten für Debitoren (Kunden) und Kreditoren (Lieferanten) pflegen: Name, Anschrift, USt-IdNr., E-Mail, Bankverbindung. Mahnwesen mit drei Mahnstufen (freundlich → Frist → letzte) und Übergabe an Inkasso. Mahngebühren und individuelle Mahntexte einstellbar.",
     tags: ["Debitoren","Kreditoren","Mahnwesen","Inkasso","§286 HGB"],
     tips: [
@@ -891,7 +845,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "🏦", id: "bank", title: "Bank",
+    icon: "", id: "bank", title: "Bank",
     desc: "Bankkonten-Übersicht mit aktuellem Kontostand und vollständiger Transaktionsliste. Monatlicher Cashflow-Chart (Einnahmen grün, Ausgaben pink). Volltext-Suche über alle Transaktionsdetails. Grundlage für den Bankabgleich mit deinen Buchungen.",
     tags: ["Banking","Kontostand","Transaktionen","Cashflow","Kontoabgleich"],
     tips: [
@@ -900,7 +854,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "📉", id: "steuern", title: "Steuern",
+    icon: "", id: "steuern", title: "Steuern",
     desc: "Steuer-Cockpit mit laufenden Kennzahlen: Einnahmen, Ausgaben, Gewinn und geschätzte Steuerlast (Einkommensteuer/Körperschaftsteuer je nach Rechtsform). UStVA-Schnellübersicht. Unternehmensprofil: Rechtsform, USt-Pflicht und Kleinunternehmer-Status einstellbar.",
     tags: ["Steuerlast","EkSt","KSt","Rechtsform","§19 UStG"],
     tips: [
@@ -910,7 +864,7 @@ const HELP_MODULES = [
     ],
   },
   {
-    icon: "📤", id: "export", title: "Export",
+    icon: "", id: "export", title: "Export",
     desc: "DATEV Buchungsstapel im Format 700, CP1252-kodiert — direkt importierbar in DATEV Kanzlei-Rechnungswesen und DATEV Unternehmen Online. Export mit Beraternummer, Mandantennummer und frei wählbarem Zeitraum. Erleichtert die Zusammenarbeit mit dem Steuerberater erheblich.",
     tags: ["DATEV","Format 700","CP1252","Steuerberater","Schnittstelle"],
     tips: [
@@ -924,7 +878,7 @@ const HELP_MODULES = [
 function ComingSoonTab({ title = "Dieses Feature", desc = "Demnächst verfügbar." }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:320, gap:16, opacity:.7 }}>
-      <div style={{ fontSize:36 }}>🚧</div>
+      <div style={{ fontSize:36 }}></div>
       <div style={{ fontFamily:"var(--mono,monospace)", fontSize:11, letterSpacing:".15em", textTransform:"uppercase", color:"var(--ink-dim,rgba(255,255,255,.4))" }}>Work in Progress</div>
       <div style={{ fontFamily:"var(--serif,serif)", fontSize:22, color:"var(--ink,#efede7)" }}>{title}</div>
       <p style={{ fontSize:13, color:"var(--ink-dim,rgba(255,255,255,.5))", textAlign:"center", maxWidth:340 }}>{desc}</p>
@@ -955,7 +909,7 @@ function HilfeTab({ onNavigate }) {
               borderLeft:"3px solid var(--accent)",
             }}>
               <div style={{fontSize:".75rem",color:"var(--accent)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10,fontWeight:600}}>
-                💡 Tipps & Hinweise
+                Tipps & Hinweise
               </div>
               <ul style={{listStyle:"none",padding:0,margin:0,display:"flex",flexDirection:"column",gap:8}}>
                 {m.tips.map((tip,i) => (
@@ -1038,8 +992,8 @@ function SubNav({ tabs, active, onChange }) {
 function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
   const [sub, setSub] = useState("eingehend");
   const SUBS = [
-    {id:"eingehend",    label:"📥 Eingehend"},
-    {id:"ausgehend",    label:"📤 Ausgehend"},
+    {id:"eingehend",    label:"Eingehend"},
+    {id:"ausgehend",    label:"Ausgehend"},
     {id:"erechnung",    label:"E-Rechnung"},
     {id:"angebote",     label:"Angebote"},
     {id:"lieferscheine",label:"Lieferscheine"},
@@ -1121,7 +1075,7 @@ function BelegeGruppe({ refreshKey }) {
   const [sub, setSub] = useState("archiv");
   return (
     <div>
-      <SubNav tabs={[{id:"archiv",label:"Belegarchiv"},{id:"email",label:"📧 Belege per E-Mail"}]} active={sub} onChange={setSub}/>
+      <SubNav tabs={[{id:"archiv",label:"Belegarchiv"},{id:"email",label:"Belege per E-Mail"}]} active={sub} onChange={setSub}/>
       {sub==="archiv"&& <BelegarchivTab key={refreshKey}/>}
       {sub==="email" && <BelegEmailTab key={refreshKey}/>}
     </div>
@@ -1165,7 +1119,7 @@ const ALL_TABS = [
   {id:"berichte",       label:"Berichte & Export",  modes:["einfach","doppelt"]},
   {id:"import",         label:"Import",             modes:["einfach","doppelt"]},
   {id:"lohnsteuer",     label:"Lohnsteuer",         modes:["doppelt"]},
-  {id:"hilfe",          label:"❓ Hilfe",            modes:["einfach","doppelt"]},
+  {id:"hilfe",          label:"Hilfe",               modes:["einfach","doppelt"]},
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -1237,10 +1191,10 @@ export default function AccountingPage() {
               borderRadius:20,background:"rgba(198,255,60,.1)",border:"1px solid rgba(198,255,60,.25)",
               fontSize:".72rem",color:"var(--accent)",fontWeight:600,cursor:"default",
             }} title="NILL entspricht den GoBD-Anforderungen (§147 AO, BMF-Schreiben 2019)">
-              ✓ GoBD-konform
+              GoBD-konform
             </div>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup</button>
-            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>❓</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>Hilfe</button>
             <button className="ac-btn ac-btn-primary" onClick={()=>setUploadOpen(true)}>+ Beleg</button>
           </div>
         </div>

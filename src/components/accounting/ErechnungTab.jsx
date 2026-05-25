@@ -29,7 +29,7 @@ function DropZone({ onFile }) {
         background: drag ? "rgba(198,255,60,.04)" : "transparent",
       }}
     >
-      <div style={{ fontSize: 32, marginBottom: 10 }}>📥</div>
+      <div style={{ fontSize: 32, marginBottom: 10 }}></div>
       <div style={{ fontWeight: 600, marginBottom: 6 }}>
         XRechnung / ZUGFeRD Datei hier ablegen
       </div>
@@ -47,7 +47,7 @@ function ParsedPreview({ parsed, onImport, importing }) {
   return (
     <div className="ac-card" style={{ marginTop: 16 }}>
       <div className="ac-section-title" style={{ marginBottom: 14 }}>
-        ✓ E-Rechnung erkannt
+        E-Rechnung erkannt
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px", marginBottom: 16 }}>
         {[

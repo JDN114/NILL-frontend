@@ -204,7 +204,7 @@ export default function OnboardingWizard({ onClose, onComplete }) {
         {/* Step 3: Abschluss */}
         {step === 3 && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <div style={{ fontSize: "3rem", marginBottom: 16 }}>🎉</div>
+            <div style={{ fontSize: "3rem", marginBottom: 16 }}></div>
             <div className="ac-modal-title" style={{ textAlign: "center" }}>Setup abgeschlossen!</div>
             <p style={{ color: "var(--ink2)", fontSize: ".9rem", lineHeight: 1.6, marginBottom: 20 }}>
               Ihr Profil ist konfiguriert. Modus:{" "}

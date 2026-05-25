@@ -146,7 +146,7 @@ function FileUploadSection({ label, endpoint, vorlage, vorlageName, hinweise, on
           onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
         >
           <input ref={inputRef} type="file" accept=".csv,.txt" style={{ display:"none" }} onChange={onFileChange} />
-          <div style={{ fontSize: "1.8rem", marginBottom: 10 }}>📂</div>
+          <div style={{ fontSize: "1.8rem", marginBottom: 10 }}></div>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>CSV-Datei hochladen</div>
           <div style={{ fontSize: ".8rem", color: "var(--ink2)" }}>Klicken oder hierher ziehen (.csv, .txt)</div>
         </label>
@@ -154,7 +154,7 @@ function FileUploadSection({ label, endpoint, vorlage, vorlageName, hinweise, on
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16,
             background:"var(--surface2)", borderRadius:8, padding:"10px 14px" }}>
-            <span style={{ fontSize:"1.2rem" }}>📄</span>
+            <span style={{ fontSize:"1.2rem" }}></span>
             <div style={{ flex:1 }}>
               <div style={{ fontWeight:600, fontSize:".9rem" }}>{file.name}</div>
               <div style={{ fontSize:".75rem", color:"var(--ink2)" }}>
@@ -227,7 +227,7 @@ export default function ImportTab({ onDone }) {
         borderRadius: 10, padding: "14px 18px", marginBottom: 20,
         display: "flex", gap: 14, alignItems: "flex-start",
       }}>
-        <div style={{ fontSize: "1.4rem", flexShrink: 0 }}>📥</div>
+        <div style={{ fontSize: "1.4rem", flexShrink: 0 }}></div>
         <div>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>Jahres-Import — bestehende Daten übernehmen</div>
           <p style={{ fontSize:".85rem", color:"var(--ink2)", lineHeight:1.6, margin:0 }}>
@@ -241,9 +241,9 @@ export default function ImportTab({ onDone }) {
 
       <div style={{ display:"flex", gap:4, background:"var(--surface)", borderRadius:10, padding:4, marginBottom:20, flexWrap:"wrap" }}>
         {[
-          ["buchungen",         "📒 Buchungen (Journal)"],
-          ["rechnungen",        "🧾 Eingangsrechnungen"],
-          ["ausgangsrechnungen","📤 Ausgangsrechnungen"],
+          ["buchungen",         "Buchungen (Journal)"],
+          ["rechnungen",        "Eingangsrechnungen"],
+          ["ausgangsrechnungen","Ausgangsrechnungen"],
         ].map(([s,l]) => (
           <button key={s}
             className={`ac-btn ${sub===s?"ac-btn-primary":"ac-btn-ghost"}`}
@@ -301,7 +301,7 @@ export default function ImportTab({ onDone }) {
 
       <div className="ac-card" style={{ borderColor:"rgba(155,152,144,.12)", marginTop:8 }}>
         <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-          <div style={{ fontSize:"1.2rem" }}>💡</div>
+          <div style={{ fontSize:"1.2rem" }}></div>
           <div>
             <div style={{ fontWeight:600, marginBottom:6, fontSize:".9rem" }}>Hinweise zum Import</div>
             <ul style={{ fontSize:".82rem", color:"var(--ink2)", lineHeight:1.75, paddingLeft:18, margin:0 }}>

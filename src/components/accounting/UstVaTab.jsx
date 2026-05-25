@@ -118,7 +118,7 @@ function SchnellElster({ von, bis }) {
       borderRadius:10, padding:"14px 18px", marginBottom:16,
     }}>
       <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:10 }}>
-        <div style={{ fontWeight:700, fontSize:".9rem" }}>⚡ UStVA in 2 Klicks einreichen</div>
+        <div style={{ fontWeight:700, fontSize:".9rem" }}>UStVA in 2 Klicks einreichen</div>
         <span style={{ fontSize:".72rem", padding:"2px 8px", borderRadius:10, background:"rgba(198,255,60,.15)", color:"var(--accent)" }}>D Feature</span>
       </div>
       {msg && <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`} style={{marginBottom:10,cursor:"pointer"}} onClick={()=>setMsg(null)}>{msg.text}</div>}
@@ -129,7 +129,7 @@ function SchnellElster({ von, bis }) {
             onChange={e=>setSteuernr(e.target.value)} />
         </div>
         <button className="ac-btn ac-btn-primary" onClick={einreichen} disabled={loading} style={{background:"var(--accent)",color:"#000"}}>
-          {loading ? "…" : "📤 ELSTER XML herunterladen"}
+          {loading ? "…" : "ELSTER XML herunterladen"}
         </button>
       </div>
       <div style={{fontSize:".74rem",color:"var(--ink2)",marginTop:8}}>

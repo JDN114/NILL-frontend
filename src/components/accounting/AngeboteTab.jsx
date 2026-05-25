@@ -418,7 +418,7 @@ export default function AngeboteTab() {
         <div className="ac-loading"><span className="ac-spinner" />Lade Angebote…</div>
       ) : angebote.length === 0 ? (
         <div className="ac-empty">
-          <div style={{ fontSize: "2rem", marginBottom: 12 }}>📋</div>
+          <div style={{ fontSize: "2rem", marginBottom: 12 }}></div>
           <div>Noch keine Angebote angelegt.</div>
           <div style={{ fontSize: ".82rem", marginTop: 6 }}>
             Erstelle dein erstes Angebot und konvertiere es mit einem Klick zur Rechnung.
@@ -483,7 +483,7 @@ export default function AngeboteTab() {
                         {a.status !== "konvertiert" && (
                           <>
                             <button className="ac-btn ac-btn-ghost ac-btn-sm"
-                              onClick={() => setModal(a)} title="Bearbeiten">✏️</button>
+                              onClick={() => setModal(a)} title="Bearbeiten">Bearbeiten</button>
                             <button
                               className="ac-btn ac-btn-primary ac-btn-sm"
                               onClick={() => konvertieren(a.id)}

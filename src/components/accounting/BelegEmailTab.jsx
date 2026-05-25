@@ -7,7 +7,6 @@ export default function BelegEmailTab() {
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", minHeight: 320, gap: 14, textAlign: "center",
     }}>
-      <div style={{ fontSize: "2.8rem" }}>📧</div>
       <div style={{
         fontFamily: "Fraunces,serif", fontSize: "1.4rem",
         fontWeight: 600, color: "var(--ink)",

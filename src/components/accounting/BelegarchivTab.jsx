@@ -109,7 +109,7 @@ export default function BelegarchivTab() {
       {!loading && results === null && (
         <div className="ac-card">
           <div className="ac-empty" style={{ padding: 60 }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontSize: 32, marginBottom: 12 }}></div>
             <div>Suchbegriff eingeben, um Belege zu finden.</div>
             <div style={{ marginTop: 8, fontSize: ".8rem", color: "var(--ink2)" }}>
               Unterstützt Volltext, Firmennamen, Rechnungsnummern und Beträge.

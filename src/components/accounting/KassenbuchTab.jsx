@@ -97,7 +97,7 @@ export default function KassenbuchTab() {
           <span style={{ fontSize: ".75rem", color: "var(--ink2)", marginLeft: 10 }}>Bargeldtransaktionen mit Saldo-Übertrag</span>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={exportCsv}>⬇ CSV</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={exportCsv}>CSV Export</button>
           <button className="ac-btn ac-btn-primary" onClick={() => setModal("new")}>+ Kasseneintrag</button>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function KassenbuchTab() {
         <div className="ac-loading"><span className="ac-spinner" />Lade Kassenbuch…</div>
       ) : data.eintraege.length === 0 ? (
         <div className="ac-empty">
-          <div style={{ fontSize: "2rem", marginBottom: 12 }}>💶</div>
+          <div style={{ fontSize: "2rem", marginBottom: 12 }}></div>
           <div>Noch keine Kasseneinträge vorhanden.</div>
         </div>
       ) : (
@@ -176,8 +176,8 @@ export default function KassenbuchTab() {
                       </td>
                       <td>
                         <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
-                          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal(e)}>✏️</button>
-                          <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(e.id)}>🗑</button>
+                          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal(e)}>Bearb.</button>
+                          <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(e.id)}>Löschen</button>
                         </div>
                       </td>
                     </tr>
