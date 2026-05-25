@@ -205,7 +205,7 @@ export default function SerienrechnungTab() {
   const load = useCallback(() => {
     setLoading(true);
     api.get("/api/v1/serienrechnungen")
-      .then(r => setList(r.data || []))
+      .then(r => setList(r.data?.serienrechnungen || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

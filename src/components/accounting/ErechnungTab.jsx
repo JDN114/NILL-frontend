@@ -117,7 +117,7 @@ export default function ErechnungTab() {
   const loadList = useCallback(() => {
     setLoadingList(true);
     api.get("/api/v1/erechnung/list")
-      .then(r => setImported(r.data || []))
+      .then(r => setImported(r.data?.erechnungen || []))
       .catch(() => {})
       .finally(() => setLoadingList(false));
   }, []);

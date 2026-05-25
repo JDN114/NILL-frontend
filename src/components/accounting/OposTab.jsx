@@ -32,7 +32,7 @@ export default function OposTab({ onNavigate }) {
       api.get("/api/v1/opos/summary"),
     ])
       .then(([r, s]) => {
-        setRows(r.data || []);
+        setRows(r.data?.opos || []);
         setSummary(s.data || null);
       })
       .catch(() => {})

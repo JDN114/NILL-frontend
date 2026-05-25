@@ -159,7 +159,7 @@ export default function GutschriftTab() {
   const load = useCallback(() => {
     setLoading(true);
     api.get("/api/v1/gutschriften")
-      .then(r => setList(r.data || []))
+      .then(r => setList(r.data?.gutschriften || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

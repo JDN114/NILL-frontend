@@ -70,8 +70,8 @@ export default function MahnwesenTab() {
       api.get("/api/v1/mahnwesen/ueberfaellig"),
     ])
       .then(([m, u]) => {
-        setMahnungen(m.data || []);
-        setUeberfaellig(u.data || []);
+        setMahnungen(m.data?.mahnungen || []);
+        setUeberfaellig(u.data?.rechnungen || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
