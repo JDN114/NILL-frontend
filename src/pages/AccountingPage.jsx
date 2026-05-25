@@ -257,12 +257,13 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 // ── Übersicht ─────────────────────────────────────────────────────────────────────────────────
 
-function OverviewTab() {
+function OverviewTab({ onNavigate, onUpload }) {
   const [dash,      setDash]      = useState(null);
   const [loading,   setLoading]   = useState(true);
   const [periode,   setPeriode]   = useState("12");
   const [activeIdx, setActiveIdx] = useState(null);
   const [activeKat, setActiveKat] = useState(null);
+  const [opos,      setOpos]      = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -270,6 +271,7 @@ function OverviewTab() {
       .then(r => setDash(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
+    api.get("/api/v1/opos/summary").then(r => setOpos(r.data)).catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -339,12 +341,64 @@ function OverviewTab() {
           </div>
         </div>
       </div>
-      <div className="ac-kpi-grid">
-        <div className="ac-kpi"><div className="ac-kpi-label">Einnahmen lfd. Jahr</div><div className="ac-kpi-value green">{fmtEur(dash.einnahmen)}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">Ausgaben lfd. Jahr</div><div className="ac-kpi-value pink">{fmtEur(dash.ausgaben)}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">Gewinn / Verlust</div><div className={`ac-kpi-value ${gewinn>=0?"green":"pink"}`}>{fmtEur(gewinn)}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">Buchungen gesamt</div><div className="ac-kpi-value">{dash.buchungen_gesamt ?? 0}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">USt-Zahllast lfd. Jahr</div><div className="ac-kpi-value">{fmtEur(dash.ust_zahllast)}</div></div>
+      {/* Quick actions */}
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => onNavigate?.("rechnungen")}>
+          + Rechnung
+        </button>
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={onUpload}>
+          + Beleg hochladen
+        </button>
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("bank")}>
+          ⟳ Bank sync
+        </button>
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("steuern")}>
+          📊 UStVA
+        </button>
+      </div>
+
+      {/* At-a-glance cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:20}}>
+        <div className="ac-card" style={{cursor:"pointer",transition:"border-color .15s"}}
+          onClick={() => onNavigate?.("posten")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="var(--a3)"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
+          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Offene Rechnungen</div>
+          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1.6rem",fontWeight:800,color:"var(--a3)"}}>
+            {opos?.offene_count ?? "—"}
+          </div>
+          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
+            {opos?.offene_summe != null ? `${fmtEur(opos.offene_summe)} ausstehend` : "Lade…"}
+          </div>
+        </div>
+        <div className="ac-card" style={{cursor:"pointer",transition:"border-color .15s"}}
+          onClick={() => onNavigate?.("posten")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
+          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Überfällig</div>
+          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1.6rem",fontWeight:800,color:((opos?.ueberfaellig_count??0)>0)?"var(--a3)":"var(--accent)"}}>
+            {opos?.ueberfaellig_count ?? "—"}
+          </div>
+          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
+            {opos?.ueberfaellig_summe != null ? `${fmtEur(opos.ueberfaellig_summe)} fällig` : "Rechnungen"}
+          </div>
+        </div>
+        <div className="ac-card">
+          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Nächste Steuer</div>
+          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1rem",fontWeight:700,lineHeight:1.3}}>
+            {dash.naechste_steuer_datum || "—"}
+          </div>
+          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
+            {dash.naechste_steuer_art || "Im Steuerkalender prüfen"}
+          </div>
+        </div>
+        <div className="ac-card">
+          <div style={{fontSize:".68rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Buchungen gesamt</div>
+          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"1.6rem",fontWeight:800}}>
+            {dash.buchungen_gesamt ?? 0}
+          </div>
+          <div style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>lfd. Jahr</div>
+        </div>
       </div>
 
       <div className="ac-grid-2" style={{marginBottom:16}}>
@@ -1146,7 +1200,7 @@ export default function AccountingPage() {
 
   const renderTab = () => {
     switch(tab) {
-      case "overview":    return <OverviewTab key={refreshKey}/>;
+      case "overview":    return <OverviewTab key={refreshKey} onNavigate={goTo} onUpload={() => setUploadOpen(true)}/>;
       case "rechnungen":  return <RechnungenGruppe onUpload={() => setUploadOpen(true)} onRefresh={triggerRefresh} refreshKey={refreshKey}/>;
       case "posten":      return <PostenGruppe refreshKey={refreshKey} onNavigate={goTo}/>;
       case "planung":     return <PlanungGruppe refreshKey={refreshKey}/>;

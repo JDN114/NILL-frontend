@@ -100,12 +100,6 @@ function SchnellElster({ von, bis }) {
     if (!steuernr.trim()) { setMsg({ type:"err", text:"Steuernummer eingeben." }); return; }
     setLoading(true); setMsg(null);
     try {
-      const r = await api.get("/api/v1/buchhaltung/export/elster", {
-        method: "POST",
-        data: { von, bis, steuernummer: steuernr.trim(), finanzamt_id: "9300", zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: false },
-        responseType: "blob",
-      });
-      // Use axios post
       const resp = await api.post("/api/v1/buchhaltung/export/elster", {
         von, bis, steuernummer: steuernr.trim(), finanzamt_id: "9300",
         zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: false,
