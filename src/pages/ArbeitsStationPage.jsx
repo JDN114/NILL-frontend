@@ -33,7 +33,7 @@ function Clock() {
     <div style={{ textAlign: "right" }}>
       <div style={{
         fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-        fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
+        fontSize: "clamp(1.1rem, 2vw, 1.6rem)",
         fontWeight: 700,
         color: "#efede7",
         letterSpacing: "0.04em",
@@ -41,9 +41,9 @@ function Clock() {
       }}>{timeStr}</div>
       <div style={{
         fontFamily: "'Inter', system-ui, sans-serif",
-        fontSize: "clamp(0.72rem, 1.2vw, 0.9rem)",
+        fontSize: "clamp(0.6rem, 0.9vw, 0.75rem)",
         color: "rgba(239,237,231,0.5)",
-        marginTop: 4,
+        marginTop: 3,
         letterSpacing: "0.03em",
       }}>{dateStr}</div>
     </div>
@@ -61,19 +61,20 @@ function ModuleCard({ moduleKey, onClick }) {
       style={{
         background: "rgba(255,255,255,0.04)",
         border: `1px solid rgba(255,255,255,0.08)`,
-        borderRadius: 20,
-        padding: "clamp(24px, 3vw, 40px) clamp(20px, 2.5vw, 32px)",
+        borderRadius: 14,
+        padding: "12px 16px",
         display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
+        flexDirection: "row",
+        alignItems: "center",
         gap: 12,
         cursor: "pointer",
         transition: "background 0.2s, border-color 0.2s, transform 0.15s",
         textAlign: "left",
         width: "100%",
-        minHeight: "clamp(140px, 18vw, 200px)",
+        height: "100%",
         position: "relative",
         overflow: "hidden",
+        boxSizing: "border-box",
       }}
       onPointerDown={e => { e.currentTarget.style.transform = "scale(0.97)"; }}
       onPointerUp={e => { e.currentTarget.style.transform = "scale(1)"; }}
@@ -90,42 +91,48 @@ function ModuleCard({ moduleKey, onClick }) {
       {/* Accent glow */}
       <div style={{
         position: "absolute",
-        top: -40, right: -40,
-        width: 120, height: 120,
+        top: -30, right: -30,
+        width: 80, height: 80,
         borderRadius: "50%",
         background: `radial-gradient(circle, ${meta.color}18, transparent 70%)`,
         pointerEvents: "none",
       }} />
 
       <div style={{
-        width: 52, height: 52,
-        borderRadius: 14,
+        width: 36, height: 36,
+        borderRadius: 10,
         background: `${meta.color}18`,
         border: `1px solid ${meta.color}30`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "1.5rem",
+        fontSize: "1.05rem",
         flexShrink: 0,
       }}>
         {meta.icon}
       </div>
 
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: "'Fraunces', Georgia, serif",
-          fontSize: "clamp(1.1rem, 2vw, 1.5rem)",
+          fontSize: "clamp(0.85rem, 1.4vw, 1.05rem)",
           fontWeight: 400,
           color: "#efede7",
           letterSpacing: "-0.02em",
-          lineHeight: 1.1,
-          marginBottom: 4,
+          lineHeight: 1.15,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}>
           {meta.label}
         </div>
         <div style={{
           fontFamily: "'Inter', system-ui, sans-serif",
-          fontSize: "clamp(0.72rem, 1.2vw, 0.83rem)",
-          color: "rgba(239,237,231,0.5)",
-          lineHeight: 1.4,
+          fontSize: "clamp(0.62rem, 0.9vw, 0.72rem)",
+          color: "rgba(239,237,231,0.45)",
+          lineHeight: 1.3,
+          marginTop: 2,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}>
           {meta.desc}
         </div>
@@ -133,14 +140,12 @@ function ModuleCard({ moduleKey, onClick }) {
 
       <div style={{
         fontFamily: "'JetBrains Mono', monospace",
-        fontSize: "0.7rem",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
+        fontSize: "0.65rem",
         color: meta.color,
-        opacity: 0.8,
-        display: "flex", alignItems: "center", gap: 6,
+        opacity: 0.7,
+        flexShrink: 0,
       }}>
-        Öffnen <span style={{ fontSize: "0.85rem" }}>→</span>
+        →
       </div>
     </button>
   );
@@ -169,6 +174,10 @@ export default function ArbeitsStationPage() {
   const greeting = hour < 12 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
   const displayName = org?.name ?? userName ?? null;
 
+  // Compute grid columns based on module count
+  const count = stationModules.length;
+  const cols = count <= 2 ? count : count <= 4 ? 2 : count <= 6 ? 3 : count <= 9 ? 3 : 4;
+
   return (
     <div style={{
       height: "100vh",
@@ -180,18 +189,6 @@ export default function ArbeitsStationPage() {
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-
-        .sg-card-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(clamp(220px, 28vw, 320px), 1fr));
-          gap: clamp(12px, 2vw, 20px);
-        }
-
-        @media (max-width: 600px) {
-          .sg-card-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
       `}</style>
 
       {/* ── Header ── */}
@@ -200,27 +197,24 @@ export default function ArbeitsStationPage() {
         borderBottom: "1px solid rgba(239,237,231,0.07)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-        padding: "0 clamp(20px, 4vw, 48px)",
-        height: "clamp(72px, 10vw, 96px)",
+        padding: "0 clamp(16px, 3vw, 40px)",
+        height: "clamp(56px, 7vw, 72px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 24,
+        gap: 20,
         flexShrink: 0,
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
       }}>
         {/* Logo + company */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: "clamp(36px, 5vw, 48px)",
-            height: "clamp(36px, 5vw, 48px)",
+            width: "clamp(30px, 3.5vw, 40px)",
+            height: "clamp(30px, 3.5vw, 40px)",
             background: "#c5a572",
-            borderRadius: 10,
+            borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "center",
             fontWeight: 900,
-            fontSize: "clamp(0.9rem, 1.5vw, 1.2rem)",
+            fontSize: "clamp(0.8rem, 1.2vw, 1rem)",
             color: "#03060a",
             letterSpacing: "-0.02em",
             flexShrink: 0,
@@ -228,7 +222,7 @@ export default function ArbeitsStationPage() {
           <div>
             <div style={{
               fontFamily: "'Fraunces', Georgia, serif",
-              fontSize: "clamp(1rem, 2vw, 1.4rem)",
+              fontSize: "clamp(0.9rem, 1.4vw, 1.15rem)",
               fontWeight: 400,
               color: "#efede7",
               letterSpacing: "-0.02em",
@@ -238,11 +232,11 @@ export default function ArbeitsStationPage() {
             </div>
             <div style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "clamp(0.6rem, 1vw, 0.72rem)",
+              fontSize: "clamp(0.55rem, 0.75vw, 0.65rem)",
               color: "rgba(239,237,231,0.4)",
               letterSpacing: "0.15em",
               textTransform: "uppercase",
-              marginTop: 3,
+              marginTop: 2,
             }}>
               ArbeitsStation
             </div>
@@ -253,57 +247,55 @@ export default function ArbeitsStationPage() {
         <Clock />
 
         {/* Exit */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            onClick={() => setShowExitModal(true)}
-            style={{
-              padding: "0.45rem 1rem",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 8,
-              color: "rgba(239,237,231,0.6)",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "clamp(0.65rem, 1vw, 0.75rem)",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
-              cursor: "pointer",
-            }}>
-            ✕ Beenden
-          </button>
-        </div>
+        <button
+          onClick={() => setShowExitModal(true)}
+          style={{
+            padding: "0.35rem 0.9rem",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 7,
+            color: "rgba(239,237,231,0.6)",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "clamp(0.58rem, 0.8vw, 0.68rem)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            cursor: "pointer",
+          }}>
+          ✕ Beenden
+        </button>
       </header>
 
       {/* ── Main content ── */}
       <main style={{
         flex: 1,
         overflow: "hidden",
-        padding: "clamp(24px, 4vw, 56px) clamp(20px, 4vw, 48px)",
+        padding: "clamp(12px, 2vw, 28px) clamp(16px, 3vw, 40px)",
         display: "flex",
         flexDirection: "column",
-        gap: "clamp(24px, 3vw, 40px)",
+        gap: "clamp(10px, 1.5vw, 20px)",
         maxWidth: 1400,
         width: "100%",
         margin: "0 auto",
         boxSizing: "border-box",
       }}>
         {/* Greeting */}
-        <div>
+        <div style={{ flexShrink: 0 }}>
           <div style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "clamp(0.65rem, 1vw, 0.75rem)",
+            fontSize: "clamp(0.55rem, 0.75vw, 0.65rem)",
             letterSpacing: "0.2em",
             textTransform: "uppercase",
-            color: "rgba(239,237,231,0.4)",
-            marginBottom: 8,
+            color: "rgba(239,237,231,0.35)",
+            marginBottom: 4,
             display: "flex", alignItems: "center", gap: 8,
           }}>
-            <span style={{ width: 16, height: 1, background: "currentColor", opacity: 0.5, display: "inline-block" }} />
+            <span style={{ width: 12, height: 1, background: "currentColor", opacity: 0.5, display: "inline-block" }} />
             Arbeitsstation
           </div>
           <h1 style={{
             fontFamily: "'Fraunces', Georgia, serif",
-            fontSize: "clamp(1.8rem, 4vw, 3rem)",
+            fontSize: "clamp(1.2rem, 2.5vw, 2rem)",
             fontWeight: 400,
             color: "#efede7",
             letterSpacing: "-0.025em",
@@ -325,17 +317,16 @@ export default function ArbeitsStationPage() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 16,
-            padding: "4rem 2rem",
+            gap: 12,
             background: "rgba(255,255,255,0.02)",
             border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 20,
+            borderRadius: 16,
             textAlign: "center",
           }}>
-            <div style={{ fontSize: "2.5rem", opacity: 0.4 }}>◎</div>
+            <div style={{ fontSize: "2rem", opacity: 0.4 }}>◎</div>
             <div style={{
               fontFamily: "'Fraunces', serif",
-              fontSize: "1.3rem",
+              fontSize: "1.1rem",
               fontWeight: 400,
               color: "rgba(239,237,231,0.5)",
             }}>
@@ -343,38 +334,32 @@ export default function ArbeitsStationPage() {
             </div>
             {isAdmin && (
               <Link to="/dashboard/settings?tab=station_guide" style={{
-                marginTop: 8,
-                padding: "0.55rem 1.3rem",
+                marginTop: 4,
+                padding: "0.45rem 1.1rem",
                 background: "#c5a572",
                 color: "#000",
-                borderRadius: 8,
+                borderRadius: 7,
                 textDecoration: "none",
                 fontWeight: 700,
-                fontSize: "0.82rem",
+                fontSize: "0.78rem",
               }}>
                 Module einrichten
               </Link>
             )}
           </div>
         ) : (
-          <>
-            <div style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "clamp(0.65rem, 1vw, 0.75rem)",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "rgba(239,237,231,0.35)",
-              display: "flex", alignItems: "center", gap: 12,
-            }}>
-              Module
-              <span style={{ flex: 1, height: 1, background: "rgba(239,237,231,0.07)" }} />
-            </div>
-            <div className="sg-card-grid">
-              {stationModules.map(key => (
-                <ModuleCard key={key} moduleKey={key} onClick={handleModuleClick} />
-              ))}
-            </div>
-          </>
+          <div style={{
+            flex: 1,
+            overflow: "hidden",
+            display: "grid",
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gridAutoRows: "1fr",
+            gap: "clamp(6px, 1vw, 12px)",
+          }}>
+            {stationModules.map(key => (
+              <ModuleCard key={key} moduleKey={key} onClick={handleModuleClick} />
+            ))}
+          </div>
         )}
       </main>
 
@@ -388,7 +373,7 @@ export default function ArbeitsStationPage() {
       {/* ── Footer bar ── */}
       <footer style={{
         borderTop: "1px solid rgba(239,237,231,0.06)",
-        padding: "clamp(12px, 2vw, 16px) clamp(20px, 4vw, 48px)",
+        padding: "clamp(8px, 1vw, 12px) clamp(16px, 3vw, 40px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -396,18 +381,18 @@ export default function ArbeitsStationPage() {
       }}>
         <span style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "0.68rem",
+          fontSize: "0.62rem",
           letterSpacing: "0.1em",
-          color: "rgba(239,237,231,0.25)",
+          color: "rgba(239,237,231,0.2)",
           textTransform: "uppercase",
         }}>
           Nill ArbeitsStation
         </span>
         <span style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "0.68rem",
+          fontSize: "0.62rem",
           letterSpacing: "0.1em",
-          color: "rgba(239,237,231,0.25)",
+          color: "rgba(239,237,231,0.2)",
         }}>
           {user?.email}
         </span>
