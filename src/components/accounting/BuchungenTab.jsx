@@ -157,16 +157,17 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
 
 export default function BuchungenTab() {
   const today = new Date();
-  const [buchungen, setBuchungen] = useState([]);
-  const [konten, setKonten]       = useState([]);
-  const [perioden, setPerioden]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [expanded, setExpanded]   = useState({});
-  const [filter, setFilter]       = useState("");
-  const [msg, setMsg]             = useState(null);
-  const [von, setVon]             = useState(`${today.getFullYear()}-01-01`);
-  const [bis, setBis]             = useState(today.toISOString().slice(0, 10));
+  const [buchungen, setBuchungen]   = useState([]);
+  const [konten, setKonten]         = useState([]);
+  const [perioden, setPerioden]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [showModal, setShowModal]   = useState(false);
+  const [expanded, setExpanded]     = useState({});
+  const [filter, setFilter]         = useState("");
+  const [kontoFilter, setKontoFilter] = useState("");
+  const [msg, setMsg]               = useState(null);
+  const [von, setVon]               = useState(`${today.getFullYear()}-01-01`);
+  const [bis, setBis]               = useState(today.toISOString().slice(0, 10));
 
   const load = useCallback(() => {
     setLoading(true);
@@ -197,11 +198,14 @@ export default function BuchungenTab() {
     }
   };
 
-  const filtered = buchungen.filter(b =>
-    !filter ||
-    (b.buchungstext || "").toLowerCase().includes(filter.toLowerCase()) ||
-    (b.beleg_nummer || "").toLowerCase().includes(filter.toLowerCase())
-  );
+  const filtered = buchungen.filter(b => {
+    if (filter && !(
+      (b.buchungstext || "").toLowerCase().includes(filter.toLowerCase()) ||
+      (b.beleg_nummer || "").toLowerCase().includes(filter.toLowerCase())
+    )) return false;
+    if (kontoFilter && !(b.zeilen || []).some(z => String(z.konto_id) === kontoFilter)) return false;
+    return true;
+  });
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Journal...</div>;
 
@@ -218,6 +222,16 @@ export default function BuchungenTab() {
         </div>
         <input className="ac-input" style={{ flex:1, minWidth:180 }} placeholder="Suche (Text, Belegnr.)..."
           value={filter} onChange={e => setFilter(e.target.value)} />
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          <label className="ac-label">Konto</label>
+          <select className="ac-select" style={{ minWidth:200 }} value={kontoFilter}
+            onChange={e => setKontoFilter(e.target.value)}>
+            <option value="">Alle Konten</option>
+            {konten.map(k => (
+              <option key={k.id} value={String(k.id)}>{k.kontonummer} – {k.bezeichnung}</option>
+            ))}
+          </select>
+        </div>
         <button className="ac-btn ac-btn-primary" onClick={() => setShowModal(true)}>+ Buchungssatz</button>
       </div>
       {msg && (
