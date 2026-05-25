@@ -853,7 +853,7 @@ const ALL_TABS = [
   {id:"overview",    label:"Übersicht",        modes:["einfach","doppelt"]},
   {id:"rechnungen",  label:"Rechnungen",       modes:["einfach","doppelt"]},
   {id:"buchungen",   label:"Journal",          modes:["doppelt"]},
-  {id:"kontenplan",  label:"Kontenplan",       modes:["doppelt"]},
+  {id:"kontenplan",  label:"Kontenplan",       modes:["einfach","doppelt"]},
   {id:"anlagen",     label:"Anlagenbuch",      modes:["einfach","doppelt"]},
   {id:"ustva",       label:"UStVA",            modes:["einfach","doppelt"]},
   {id:"berichte",    label:"Berichte",         modes:["einfach","doppelt"]},
