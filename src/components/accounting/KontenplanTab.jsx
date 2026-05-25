@@ -2,6 +2,73 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import api from "../../services/api";
 
+const fmtMono = (n) => Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// ─── Buchungen-Panel für ein einzelnes Konto ────────────────────���────────────
+function KontoBuchungenPanel({ kontoId, kontoNr }) {
+  const [buchungen, setBuchungen] = useState(null);
+  const [loading,   setLoading]   = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    api.get("/api/v1/buchhaltung/buchungen", { params: { konto_id: kontoId, limit: 100 } })
+      .then(r => setBuchungen(r.data || []))
+      .catch(() => setBuchungen([]))
+      .finally(() => setLoading(false));
+  }, [kontoId]);
+
+  if (loading) return (
+    <div style={{ padding:"12px 20px", color:"var(--ink2)", fontSize:".8rem" }}>
+      Lade Buchungen…
+    </div>
+  );
+
+  if (!buchungen.length) return (
+    <div style={{ padding:"12px 20px", color:"var(--ink2)", fontSize:".8rem", fontStyle:"italic" }}>
+      Keine Buchungen auf Konto {kontoNr}.
+    </div>
+  );
+
+  return (
+    <div style={{ borderTop:"1px solid var(--border)", background:"var(--surface2)" }}>
+      <table className="ac-table" style={{ fontSize:".8rem" }}>
+        <thead>
+          <tr style={{ background:"rgba(0,0,0,.15)" }}>
+            <th>Datum</th>
+            <th>Beleg</th>
+            <th>Text</th>
+            <th style={{ textAlign:"right" }}>Soll</th>
+            <th style={{ textAlign:"right" }}>Haben</th>
+          </tr>
+        </thead>
+        <tbody>
+          {buchungen.map(b => {
+            const z = (b.zeilen || []).find(z => z.konto_id === kontoId);
+            const soll  = z ? Number(z.soll  || 0) : 0;
+            const haben = z ? Number(z.haben || 0) : 0;
+            return (
+              <tr key={b.id} style={{ opacity: b.ist_storno ? 0.45 : 1 }}>
+                <td className="ac-mono" style={{ color:"var(--ink2)", whiteSpace:"nowrap" }}>{b.buchungsdatum}</td>
+                <td className="ac-mono" style={{ color:"var(--ink2)", fontSize:".75rem" }}>{b.beleg_nummer || "—"}</td>
+                <td style={{ maxWidth:260, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {b.buchungstext || "—"}
+                  {b.ist_storno && <span className="ac-badge ac-badge-pink" style={{ marginLeft:6, fontSize:".65rem" }}>Storno</span>}
+                </td>
+                <td className="ac-mono" style={{ textAlign:"right", color: soll > 0 ? "var(--accent)" : "var(--ink3)" }}>
+                  {soll > 0 ? fmtMono(soll) : "—"}
+                </td>
+                <td className="ac-mono" style={{ textAlign:"right", color: haben > 0 ? "var(--a2)" : "var(--ink3)" }}>
+                  {haben > 0 ? fmtMono(haben) : "—"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── EÜR-Kontenkatalog ────────────────────────────────────────────────────────
 const EUR_GRUPPEN = [
   {
@@ -277,8 +344,9 @@ function Kontofinder({ saldoMap }) {
 }
 
 // ─── Einfach-Ansicht ──────────────────────────────────────────────────────────
-function EinfachAnsicht({ saldoMap }) {
+function EinfachAnsicht({ saldoMap, kontenIdMap }) {
   const [offeneGruppe, setOffeneGruppe] = useState({ einnahmen:true, bank:true, ausgaben:true, privat:false });
+  const [openBuchungen, setOpenBuchungen] = useState({});
 
   return (
     <div>
@@ -305,45 +373,59 @@ function EinfachAnsicht({ saldoMap }) {
           {offeneGruppe[g.id] && (
             <div style={{ padding:"4px 0 0 0", display:"flex", flexDirection:"column", gap:4 }}>
               {g.konten.map(k => {
-                const saldo = saldoMap[k.nr];
+                const saldo    = saldoMap[k.nr];
+                const dbId     = kontenIdMap[k.nr];
+                const buchOpen = openBuchungen[k.nr];
                 return (
                   <div key={k.nr} style={{
-                    display:"flex", alignItems:"center", gap:12, padding:"11px 18px",
                     background:"var(--surface2)", border:"1px solid var(--border)",
-                    borderRadius:8, marginLeft:4,
+                    borderRadius:8, marginLeft:4, overflow:"hidden",
                   }}>
-                    <span style={{
-                      fontFamily:"JetBrains Mono,monospace", fontSize:".75rem",
-                      color:g.farbe, minWidth:36, opacity:.8,
-                    }}>{k.nr}</span>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                        <span style={{ fontSize:".88rem", color:"#efede7", fontWeight:500 }}>{k.name}</span>
-                        {k.flag === "kleinunternehmer" && (
-                          <span style={{
-                            fontSize:".65rem", padding:"1px 7px", borderRadius:99,
-                            background:"rgba(122,92,255,.15)", border:"1px solid rgba(122,92,255,.25)",
-                            color:"#a08fff", fontWeight:600,
-                          }}>Kleinunternehmer</span>
-                        )}
-                        {k.warnung && (
-                          <span style={{ fontSize:".68rem", color:"rgba(255,165,0,.7)" }}>⚠</span>
-                        )}
-                      </div>
-                      <div style={{ fontSize:".78rem", color:"rgba(239,237,231,.4)", marginTop:2 }}>{k.kurz}</div>
-                    </div>
-                    <InfoPill konto={k} />
-                    {saldo !== undefined ? (
+                    <div style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 18px" }}>
                       <span style={{
-                        fontFamily:"JetBrains Mono,monospace", fontSize:".82rem",
-                        color: saldo >= 0 ? "rgba(198,255,60,.8)" : "rgba(255,77,141,.8)",
-                        whiteSpace:"nowrap",
-                      }}>
-                        {Number(saldo).toLocaleString("de-DE",{minimumFractionDigits:2})} €
-                      </span>
-                    ) : (
-                      <span style={{ fontSize:".75rem", color:"rgba(239,237,231,.2)", whiteSpace:"nowrap" }}>– €</span>
-                    )}
+                        fontFamily:"JetBrains Mono,monospace", fontSize:".75rem",
+                        color:g.farbe, minWidth:36, opacity:.8,
+                      }}>{k.nr}</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                          <span style={{ fontSize:".88rem", color:"#efede7", fontWeight:500 }}>{k.name}</span>
+                          {k.flag === "kleinunternehmer" && (
+                            <span style={{
+                              fontSize:".65rem", padding:"1px 7px", borderRadius:99,
+                              background:"rgba(122,92,255,.15)", border:"1px solid rgba(122,92,255,.25)",
+                              color:"#a08fff", fontWeight:600,
+                            }}>Kleinunternehmer</span>
+                          )}
+                          {k.warnung && <span style={{ fontSize:".68rem", color:"rgba(255,165,0,.7)" }}>⚠</span>}
+                        </div>
+                        <div style={{ fontSize:".78rem", color:"rgba(239,237,231,.4)", marginTop:2 }}>{k.kurz}</div>
+                      </div>
+                      <InfoPill konto={k} />
+                      {saldo !== undefined ? (
+                        <span style={{
+                          fontFamily:"JetBrains Mono,monospace", fontSize:".82rem",
+                          color: saldo >= 0 ? "rgba(198,255,60,.8)" : "rgba(255,77,141,.8)",
+                          whiteSpace:"nowrap",
+                        }}>
+                          {Number(saldo).toLocaleString("de-DE",{minimumFractionDigits:2})} €
+                        </span>
+                      ) : (
+                        <span style={{ fontSize:".75rem", color:"rgba(239,237,231,.2)", whiteSpace:"nowrap" }}>– €</span>
+                      )}
+                      {dbId && (
+                        <button
+                          onClick={() => setOpenBuchungen(o => ({ ...o, [k.nr]: !o[k.nr] }))}
+                          style={{
+                            background:"transparent", border:"1px solid rgba(239,237,231,.12)",
+                            borderRadius:6, color:"rgba(239,237,231,.4)", cursor:"pointer",
+                            fontSize:".72rem", padding:"3px 8px", whiteSpace:"nowrap",
+                          }}
+                        >
+                          {buchOpen ? "▲" : "▼ Buchungen"}
+                        </button>
+                      )}
+                    </div>
+                    {buchOpen && dbId && <KontoBuchungenPanel kontoId={dbId} kontoNr={k.nr} />}
                   </div>
                 );
               })}
@@ -369,6 +451,7 @@ export default function KontenplanTab() {
   const [loading, setLoading]     = useState(true);
   const [filter, setFilter]       = useState("");
   const [expanded, setExpanded]   = useState({});
+  const [kontoDetail, setKontoDetail] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [newKonto, setNewKonto]   = useState({ kontonummer:"", bezeichnung:"", kontoart:"aufwand" });
   const [saving, setSaving]       = useState(false);
@@ -389,6 +472,13 @@ export default function KontenplanTab() {
   const saldoMap = useMemo(() => {
     const m = {};
     konten.forEach(k => { if (k.saldo !== undefined) m[k.kontonummer] = k.saldo; });
+    return m;
+  }, [konten]);
+
+  // kontenIdMap: kontonummer → DB-id (für Buchungen-Panel in Einfach-Ansicht)
+  const kontenIdMap = useMemo(() => {
+    const m = {};
+    konten.forEach(k => { m[k.kontonummer] = k.id; });
     return m;
   }, [konten]);
 
@@ -444,7 +534,7 @@ export default function KontenplanTab() {
 
       {/* ── Inhalt ── */}
       {modus === "einfach" ? (
-        <EinfachAnsicht saldoMap={saldoMap} />
+        <EinfachAnsicht saldoMap={saldoMap} kontenIdMap={kontenIdMap} />
       ) : (
         <div>
           <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
@@ -469,18 +559,34 @@ export default function KontenplanTab() {
               </div>
               {expanded[cls] && (
                 <table className="ac-table">
-                  <thead><tr><th style={{width:100}}>Nr.</th><th>Bezeichnung</th><th>Art</th><th style={{textAlign:"right"}}>Saldo</th><th>USt</th></tr></thead>
+                  <thead><tr><th style={{width:100}}>Nr.</th><th>Bezeichnung</th><th>Art</th><th style={{textAlign:"right"}}>Saldo</th><th>USt</th><th style={{width:32}}></th></tr></thead>
                   <tbody>
                     {grouped[cls].map(k => (
-                      <tr key={k.id}>
-                        <td className="ac-mono" style={{ color:"var(--accent)" }}>{k.kontonummer}</td>
-                        <td>{k.bezeichnung}</td>
-                        <td><span className={`ac-badge ${KONTOART_BADGE[k.kontoart] || "ac-badge-gray"}`}>{k.kontoart}</span></td>
-                        <td className="ac-mono" style={{ textAlign:"right", color:"var(--ink2)" }}>
-                          {k.saldo !== undefined ? `${Number(k.saldo).toLocaleString("de-DE",{minimumFractionDigits:2})} €` : "--"}
-                        </td>
-                        <td style={{ fontSize:".75rem", color:"var(--ink2)" }}>{k.ust_kennzeichen || "--"}</td>
-                      </tr>
+                      <React.Fragment key={k.id}>
+                        <tr
+                          style={{ cursor:"pointer" }}
+                          onClick={() => setKontoDetail(d => ({ ...d, [k.id]: !d[k.id] }))}
+                          title="Buchungen aufklappen"
+                        >
+                          <td className="ac-mono" style={{ color:"var(--accent)" }}>{k.kontonummer}</td>
+                          <td>{k.bezeichnung}</td>
+                          <td><span className={`ac-badge ${KONTOART_BADGE[k.kontoart] || "ac-badge-gray"}`}>{k.kontoart}</span></td>
+                          <td className="ac-mono" style={{ textAlign:"right", color:"var(--ink2)" }}>
+                            {k.saldo !== undefined ? `${Number(k.saldo).toLocaleString("de-DE",{minimumFractionDigits:2})} €` : "--"}
+                          </td>
+                          <td style={{ fontSize:".75rem", color:"var(--ink2)" }}>{k.ust_kennzeichen || "--"}</td>
+                          <td style={{ textAlign:"center", color:"var(--ink3)", fontSize:".75rem" }}>
+                            {kontoDetail[k.id] ? "▲" : "▼"}
+                          </td>
+                        </tr>
+                        {kontoDetail[k.id] && (
+                          <tr>
+                            <td colSpan={6} style={{ padding:0 }}>
+                              <KontoBuchungenPanel kontoId={k.id} kontoNr={k.kontonummer} />
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
