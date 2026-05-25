@@ -305,6 +305,40 @@ function OverviewTab() {
 
   return (
     <div>
+      {/* I — Echtzeit-Gewinnübersicht Hero */}
+      <div style={{
+        display:"flex", gap:24, alignItems:"center",
+        background: gewinn>=0 ? "rgba(198,255,60,.06)" : "rgba(255,77,141,.06)",
+        border: `1px solid ${gewinn>=0?"rgba(198,255,60,.2)":"rgba(255,77,141,.2)"}`,
+        borderRadius:12, padding:"16px 24px", marginBottom:20, flexWrap:"wrap",
+      }}>
+        <div>
+          <div style={{fontSize:".72rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>
+            Gewinn lfd. Jahr — Echtzeit
+          </div>
+          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"2.2rem",fontWeight:800,color:gewinn>=0?"var(--accent)":"var(--a3)",letterSpacing:"-.02em"}}>
+            {fmtEur(gewinn)}
+          </div>
+        </div>
+        <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+          <div>
+            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>Einnahmen</div>
+            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:"var(--accent)"}}>{fmtEur(dash.einnahmen)}</div>
+          </div>
+          <div>
+            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>Ausgaben</div>
+            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:"var(--a3)"}}>{fmtEur(dash.ausgaben)}</div>
+          </div>
+          <div>
+            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>USt-Zahllast</div>
+            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{fmtEur(dash.ust_zahllast)}</div>
+          </div>
+          <div>
+            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>Buchungen</div>
+            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{dash.buchungen_gesamt ?? 0}</div>
+          </div>
+        </div>
+      </div>
       <div className="ac-kpi-grid">
         <div className="ac-kpi"><div className="ac-kpi-label">Einnahmen lfd. Jahr</div><div className="ac-kpi-value green">{fmtEur(dash.einnahmen)}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">Ausgaben lfd. Jahr</div><div className="ac-kpi-value pink">{fmtEur(dash.ausgaben)}</div></div>
@@ -551,6 +585,33 @@ function ExportTab() {
           {msg.text}
         </div>
       )}
+
+      {/* G — Steuerberater-Paket */}
+      <div className="ac-card" style={{marginBottom:16,borderColor:"rgba(198,255,60,.35)",background:"rgba(198,255,60,.03)"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
+          <div className="ac-section-title" style={{marginBottom:0}}>🗂️ Steuerberater-Übergabe mit 1 Klick</div>
+          <span className="ac-badge ac-badge-green" style={{fontSize:".7rem"}}>Verkaufsschlager</span>
+        </div>
+        <p style={{fontSize:".85rem",color:"var(--ink2)",marginBottom:14,lineHeight:1.6}}>
+          DATEV Buchungsstapel + Stammdaten + Anleitung — alles in einem ZIP. Direkt an Ihren Steuerberater schicken.
+        </p>
+        <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap"}}>
+          <div className="ac-form-col"><label className="ac-label">Von</label><input className="ac-input" type="date" value={von} onChange={e=>setVon(e.target.value)}/></div>
+          <div className="ac-form-col"><label className="ac-label">Bis</label><input className="ac-input" type="date" value={bis} onChange={e=>setBis(e.target.value)}/></div>
+          <div className="ac-form-col" style={{maxWidth:120}}><label className="ac-label">Beraternr.</label><input className="ac-input" value={beraternr} onChange={e=>setBeraternr(e.target.value)} maxLength={5}/></div>
+          <button className="ac-btn ac-btn-primary" style={{fontSize:".9rem",padding:"9px 20px"}} onClick={async () => {
+            try {
+              const r = await api.get("/api/v1/buchhaltung/export/steuerberater-paket", {
+                params:{von,bis,beraternummer:beraternr,mandantennummer:mandantnr}, responseType:"blob"
+              });
+              const url = URL.createObjectURL(r.data);
+              const a = document.createElement("a"); a.href=url; a.download=`Steuerberater_Paket_${von}_${bis}.zip`; a.click();
+              URL.revokeObjectURL(url);
+              setMsg({type:"ok",text:"Steuerberater-Paket heruntergeladen."});
+            } catch { setMsg({type:"err",text:"Paket-Export fehlgeschlagen."}); }
+          }}>📦 ZIP herunterladen</button>
+        </div>
+      </div>
 
       {/* DATEV Stammdaten (F20 + F22) */}
       <div className="ac-card" style={{marginBottom:16,borderColor:"rgba(198,255,60,.15)"}}>
@@ -901,38 +962,155 @@ function HilfeTab({ onNavigate }) {
   );
 }
 
+// ── Sub-tab nav helper ────────────────────────────────────────────────────────
+function SubNav({ tabs, active, onChange }) {
+  return (
+    <div style={{display:"flex",gap:4,background:"var(--surface2)",borderRadius:10,padding:4,marginBottom:20,overflowX:"auto",scrollbarWidth:"none",flexWrap:"nowrap"}}>
+      {tabs.map(t => (
+        <button key={t.id} onClick={() => onChange(t.id)}
+          style={{
+            padding:"6px 14px",borderRadius:8,border:"none",whiteSpace:"nowrap",flexShrink:0,
+            background:active===t.id?"var(--accent)":"transparent",
+            color:active===t.id?"#000":"var(--ink2)",
+            fontFamily:"Inter,sans-serif",fontSize:".8rem",cursor:"pointer",transition:"all .15s",
+            fontWeight:active===t.id?600:400,
+          }}>{t.label}</button>
+      ))}
+    </div>
+  );
+}
+
+// ── Mega-tab wrapper components ───────────────────────────────────────────────
+function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
+  const [sub, setSub] = useState("eingehend");
+  const SUBS = [
+    {id:"eingehend",    label:"📥 Eingehend"},
+    {id:"ausgehend",    label:"📤 Ausgehend"},
+    {id:"erechnung",    label:"E-Rechnung"},
+    {id:"angebote",     label:"Angebote"},
+    {id:"lieferscheine",label:"Lieferscheine"},
+    {id:"gutschriften", label:"Gutschriften"},
+    {id:"serienrechnung",label:"Serienrechnungen"},
+  ];
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+        <SubNav tabs={SUBS} active={sub} onChange={setSub}/>
+        {sub==="eingehend" && <button className="ac-btn ac-btn-primary ac-btn-sm" style={{marginBottom:20,marginLeft:8}} onClick={onUpload}>+ Beleg</button>}
+      </div>
+      {sub==="eingehend"    && <InvoiceList key={refreshKey} onRefresh={onRefresh}/>}
+      {sub==="ausgehend"    && <AusgangsrechnungTab key={refreshKey}/>}
+      {sub==="erechnung"    && <ErechnungTab key={refreshKey}/>}
+      {sub==="angebote"     && <AngeboteTab key={refreshKey}/>}
+      {sub==="lieferscheine"&& <LieferscheinTab key={refreshKey}/>}
+      {sub==="gutschriften" && <GutschriftTab key={refreshKey}/>}
+      {sub==="serienrechnung"&&<SerienrechnungTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function PostenGruppe({ refreshKey, onNavigate }) {
+  const [sub, setSub] = useState("opos");
+  return (
+    <div>
+      <SubNav tabs={[{id:"opos",label:"Offene Posten"},{id:"mahnwesen",label:"Mahnwesen"}]} active={sub} onChange={setSub}/>
+      {sub==="opos"     && <OposTab key={refreshKey} onNavigate={onNavigate}/>}
+      {sub==="mahnwesen"&& <MahnwesenTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function SteuernGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("dashboard");
+  return (
+    <div>
+      <SubNav tabs={[
+        {id:"dashboard",    label:"Steuer-Cockpit"},
+        {id:"ustva",        label:"UStVA"},
+        {id:"gewerbesteuer",label:"GewSt / ZM"},
+        {id:"steuerkalender",label:"Steuer-Kalender"},
+      ]} active={sub} onChange={setSub}/>
+      {sub==="dashboard"    && <TaxDashboard key={refreshKey}/>}
+      {sub==="ustva"        && <UstVaTab key={refreshKey}/>}
+      {sub==="gewerbesteuer"&& <GewerbesteuerTab key={refreshKey}/>}
+      {sub==="steuerkalender"&&<SteuerkalenderTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function BuchhaltungGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("buchungen");
+  return (
+    <div>
+      <SubNav tabs={[{id:"buchungen",label:"Journal"},{id:"kontenplan",label:"Kontenplan"},{id:"anlagen",label:"Anlagenbuch"}]} active={sub} onChange={setSub}/>
+      {sub==="buchungen" && <BuchungenTab key={refreshKey}/>}
+      {sub==="kontenplan"&& <KontenplanTab key={refreshKey}/>}
+      {sub==="anlagen"   && <AnlagenTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function PlanungGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("projekte");
+  return (
+    <div>
+      <SubNav tabs={[{id:"projekte",label:"Projekte & Zeit"},{id:"budget",label:"Budget"},{id:"reisekosten",label:"Reisekosten"},{id:"kassenbuch",label:"Kassenbuch"}]} active={sub} onChange={setSub}/>
+      {sub==="projekte"  && <ProjektTab key={refreshKey}/>}
+      {sub==="budget"    && <BudgetTab key={refreshKey}/>}
+      {sub==="reisekosten"&&<ReisekostenTab key={refreshKey}/>}
+      {sub==="kassenbuch"&& <KassenbuchTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function BelegeGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("archiv");
+  return (
+    <div>
+      <SubNav tabs={[{id:"archiv",label:"Belegarchiv"},{id:"email",label:"📧 Belege per E-Mail"}]} active={sub} onChange={setSub}/>
+      {sub==="archiv"&& <BelegarchivTab key={refreshKey}/>}
+      {sub==="email" && <BelegEmailTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function GeschaeftspartnerGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("partner");
+  return (
+    <div>
+      <SubNav tabs={[{id:"partner",label:"Partner"},{id:"zahlungsmoral",label:"Zahlungsmoral"},{id:"waehrungen",label:"Währungen"}]} active={sub} onChange={setSub}/>
+      {sub==="partner"      && <GeschaeftspartnerTab key={refreshKey}/>}
+      {sub==="zahlungsmoral"&& <ZahlungsmoralTab key={refreshKey}/>}
+      {sub==="waehrungen"   && <WechselkurseTab key={refreshKey}/>}
+    </div>
+  );
+}
+
+function BerichteExportGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("berichte");
+  return (
+    <div>
+      <SubNav tabs={[{id:"berichte",label:"Berichte"},{id:"export",label:"Export & DATEV"}]} active={sub} onChange={setSub}/>
+      {sub==="berichte"&& <BerichteTab key={refreshKey}/>}
+      {sub==="export"  && <ExportTab/>}
+    </div>
+  );
+}
+
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const ALL_TABS = [
   {id:"overview",       label:"Übersicht",          modes:["einfach","doppelt"]},
   {id:"rechnungen",     label:"Rechnungen",         modes:["einfach","doppelt"]},
-  {id:"erechnung",      label:"E-Rechnung",         modes:["einfach","doppelt"]},
-  {id:"serienrechnung", label:"Serienrechnungen",   modes:["einfach","doppelt"]},
-  {id:"gutschriften",   label:"Gutschriften",       modes:["einfach","doppelt"]},
-  {id:"angebote",       label:"Angebote",           modes:["einfach","doppelt"]},
-  {id:"lieferscheine",  label:"Lieferscheine",      modes:["einfach","doppelt"]},
-  {id:"opos",           label:"Offene Posten",      modes:["einfach","doppelt"]},
-  {id:"mahnwesen",      label:"Mahnwesen",          modes:["einfach","doppelt"]},
-  {id:"projekte",       label:"Projekte",           modes:["einfach","doppelt"]},
-  {id:"budget",         label:"Budget",             modes:["einfach","doppelt"]},
-  {id:"reisekosten",    label:"Reisekosten",        modes:["einfach","doppelt"]},
-  {id:"kassenbuch",     label:"Kassenbuch",         modes:["einfach","doppelt"]},
-  {id:"zahlungsmoral",  label:"Zahlungsmoral",      modes:["einfach","doppelt"]},
-  {id:"waehrungen",     label:"Währungen",          modes:["einfach","doppelt"]},
-  {id:"gewerbesteuer",  label:"GewSt / ZM",        modes:["einfach","doppelt"]},
-  {id:"steuerkalender", label:"Steuer-Kalender",   modes:["einfach","doppelt"]},
-  {id:"belege-email",   label:"📧 Belege-Mail",     modes:["einfach","doppelt"]},
-  {id:"belegarchiv",    label:"Belegarchiv",        modes:["einfach","doppelt"]},
-  {id:"buchungen",      label:"Journal",            modes:["doppelt"]},
-  {id:"kontenplan",     label:"Kontenplan",         modes:["einfach","doppelt"]},
-  {id:"anlagen",        label:"Anlagenbuch",        modes:["einfach","doppelt"]},
-  {id:"ustva",          label:"UStVA",              modes:["einfach","doppelt"]},
-  {id:"berichte",       label:"Berichte",           modes:["einfach","doppelt"]},
-  {id:"partner",        label:"Geschäftspartner",   modes:["einfach","doppelt"]},
-  {id:"bank",           label:"Bank-Sync",          modes:["doppelt"]},
+  {id:"posten",         label:"Posten & Mahnwesen", modes:["einfach","doppelt"]},
+  {id:"planung",        label:"Planung",            modes:["einfach","doppelt"]},
   {id:"steuern",        label:"Steuern",            modes:["einfach","doppelt"]},
+  {id:"buchhaltung",    label:"Buchführung",        modes:["doppelt"]},
+  {id:"belege",         label:"Belege",             modes:["einfach","doppelt"]},
+  {id:"partner",        label:"Geschäftspartner",   modes:["einfach","doppelt"]},
+  {id:"bank",           label:"Bank",               modes:["doppelt"]},
+  {id:"berichte",       label:"Berichte & Export",  modes:["einfach","doppelt"]},
+  {id:"import",         label:"Import",             modes:["einfach","doppelt"]},
   {id:"lohnsteuer",     label:"Lohnsteuer",         modes:["doppelt"]},
-  {id:"import",         label:"Daten importieren",  modes:["einfach","doppelt"]},
-  {id:"export",         label:"Export",             modes:["einfach","doppelt"]},
   {id:"hilfe",          label:"❓ Hilfe",            modes:["einfach","doppelt"]},
 ];
 
@@ -968,44 +1146,20 @@ export default function AccountingPage() {
 
   const renderTab = () => {
     switch(tab) {
-      case "overview":       return <OverviewTab key={refreshKey}/>;
-      case "rechnungen":     return (
-        <RechnungenTab
-          onUpload={() => setUploadOpen(true)}
-          onRefresh={triggerRefresh}
-          refreshKey={refreshKey}
-        />
-      );
-      case "erechnung":      return <ErechnungTab key={refreshKey}/>;
-      case "serienrechnung": return <SerienrechnungTab key={refreshKey}/>;
-      case "gutschriften":   return <GutschriftTab key={refreshKey}/>;
-      case "opos":           return <OposTab key={refreshKey} onNavigate={goTo}/>;
-      case "mahnwesen":      return <MahnwesenTab key={refreshKey}/>;
-      case "angebote":       return <AngeboteTab key={refreshKey}/>;
-      case "lieferscheine":  return <LieferscheinTab key={refreshKey}/>;
-      case "projekte":       return <ProjektTab key={refreshKey}/>;
-      case "budget":         return <BudgetTab key={refreshKey}/>;
-      case "reisekosten":    return <ReisekostenTab key={refreshKey}/>;
-      case "kassenbuch":     return <KassenbuchTab key={refreshKey}/>;
-      case "zahlungsmoral":  return <ZahlungsmoralTab key={refreshKey}/>;
-      case "waehrungen":     return <WechselkurseTab key={refreshKey}/>;
-      case "gewerbesteuer":  return <GewerbesteuerTab key={refreshKey}/>;
-      case "steuerkalender": return <SteuerkalenderTab key={refreshKey}/>;
-      case "belege-email":   return <BelegEmailTab key={refreshKey}/>;
-      case "belegarchiv":    return <BelegarchivTab key={refreshKey}/>;
-      case "buchungen":      return <BuchungenTab key={refreshKey}/>;
-      case "kontenplan":     return <KontenplanTab key={refreshKey}/>;
-      case "anlagen":        return <AnlagenTab key={refreshKey}/>;
-      case "ustva":          return <UstVaTab key={refreshKey}/>;
-      case "berichte":       return <BerichteTab key={refreshKey}/>;
-      case "partner":        return <GeschaeftspartnerTab key={refreshKey}/>;
-      case "bank":           return <BankSyncTab key={refreshKey}/>;
-      case "steuern":        return <TaxDashboard key={refreshKey}/>;
-      case "lohnsteuer":     return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
-      case "import":         return <ImportTab onDone={triggerRefresh}/>;
-      case "export":         return <ExportTab/>;
-      case "hilfe":          return <HilfeTab onNavigate={goTo}/>;
-      default:               return null;
+      case "overview":    return <OverviewTab key={refreshKey}/>;
+      case "rechnungen":  return <RechnungenGruppe onUpload={() => setUploadOpen(true)} onRefresh={triggerRefresh} refreshKey={refreshKey}/>;
+      case "posten":      return <PostenGruppe refreshKey={refreshKey} onNavigate={goTo}/>;
+      case "planung":     return <PlanungGruppe refreshKey={refreshKey}/>;
+      case "steuern":     return <SteuernGruppe refreshKey={refreshKey}/>;
+      case "buchhaltung": return <BuchhaltungGruppe refreshKey={refreshKey}/>;
+      case "belege":      return <BelegeGruppe refreshKey={refreshKey}/>;
+      case "partner":     return <GeschaeftspartnerGruppe refreshKey={refreshKey}/>;
+      case "bank":        return <BankSyncTab key={refreshKey}/>;
+      case "berichte":    return <BerichteExportGruppe refreshKey={refreshKey}/>;
+      case "import":      return <ImportTab onDone={triggerRefresh}/>;
+      case "lohnsteuer":  return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
+      case "hilfe":       return <HilfeTab onNavigate={goTo}/>;
+      default:            return null;
     }
   };
 
@@ -1023,8 +1177,16 @@ export default function AccountingPage() {
           <div className="ac-header-divider"/>
           <span className="ac-title">Buchhaltung</span>
           <div className="ac-header-right">
-            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup-Assistent</button>
-            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>❓ Hilfe</button>
+            {/* H — GoBD-Badge */}
+            <div style={{
+              display:"flex",alignItems:"center",gap:5,padding:"4px 10px",
+              borderRadius:20,background:"rgba(198,255,60,.1)",border:"1px solid rgba(198,255,60,.25)",
+              fontSize:".72rem",color:"var(--accent)",fontWeight:600,cursor:"default",
+            }} title="NILL entspricht den GoBD-Anforderungen (§147 AO, BMF-Schreiben 2019)">
+              ✓ GoBD-konform
+            </div>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>❓</button>
             <button className="ac-btn ac-btn-primary" onClick={()=>setUploadOpen(true)}>+ Beleg</button>
           </div>
         </div>

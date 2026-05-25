@@ -3,6 +3,32 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../services/api";
 
+function ErechungComplianceBanner() {
+  return (
+    <div style={{
+      display:"flex", gap:14, alignItems:"center",
+      background:"rgba(122,92,255,.09)", border:"1px solid rgba(122,92,255,.3)",
+      borderRadius:10, padding:"12px 18px", marginBottom:16, flexWrap:"wrap",
+    }}>
+      <div style={{ fontSize:"1.5rem" }}>✅</div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontWeight:700, color:"var(--a2)", marginBottom:2 }}>
+          NILL ist E-Rechnung ready — 2025 Pflicht erfüllt
+        </div>
+        <div style={{ fontSize:".8rem", color:"var(--ink2)", lineHeight:1.5 }}>
+          Seit 01.01.2025 sind B2B-Unternehmen verpflichtet, E-Rechnungen <em>empfangen</em> zu können (§14 UStG i.V.m. BEG IV 2024).
+          Ab 2027 gilt die Sendepflicht. NILL unterstützt XRechnung 3.0 und ZUGFeRD 2.3.
+        </div>
+      </div>
+      <div style={{
+        padding:"4px 12px", borderRadius:20,
+        background:"rgba(122,92,255,.2)", color:"var(--a2)",
+        fontSize:".75rem", fontWeight:700, whiteSpace:"nowrap",
+      }}>GoBD-konform ✓</div>
+    </div>
+  );
+}
+
 const fmtEur = (n) =>
   `${Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
@@ -162,6 +188,7 @@ export default function ErechnungTab() {
 
   return (
     <div>
+      <ErechungComplianceBanner />
       <div style={{
         padding: "10px 16px", marginBottom: 20,
         background: "rgba(122,92,255,.07)", border: "1px solid rgba(122,92,255,.15)",

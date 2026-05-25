@@ -91,6 +91,60 @@ function PeriodStatus({ perioden, onReload }) {
   );
 }
 
+function SchnellElster({ von, bis }) {
+  const [loading, setLoading] = useState(false);
+  const [steuernr, setSteuernr] = useState("");
+  const [msg, setMsg] = useState(null);
+
+  const einreichen = async () => {
+    if (!steuernr.trim()) { setMsg({ type:"err", text:"Steuernummer eingeben." }); return; }
+    setLoading(true); setMsg(null);
+    try {
+      const r = await api.get("/api/v1/buchhaltung/export/elster", {
+        method: "POST",
+        data: { von, bis, steuernummer: steuernr.trim(), finanzamt_id: "9300", zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: false },
+        responseType: "blob",
+      });
+      // Use axios post
+      const resp = await api.post("/api/v1/buchhaltung/export/elster", {
+        von, bis, steuernummer: steuernr.trim(), finanzamt_id: "9300",
+        zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: false,
+      }, { responseType: "blob" });
+      const url = URL.createObjectURL(resp.data);
+      const a = document.createElement("a"); a.href=url; a.download=`ELSTER_UStVA_${von.slice(0,7)}.xml`; a.click();
+      URL.revokeObjectURL(url);
+      setMsg({ type:"ok", text:"ELSTER XML heruntergeladen. Auf elster.de hochladen." });
+    } catch { setMsg({ type:"err", text:"Export fehlgeschlagen. Steuernummer prüfen." }); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{
+      background:"rgba(198,255,60,.06)", border:"1px solid rgba(198,255,60,.25)",
+      borderRadius:10, padding:"14px 18px", marginBottom:16,
+    }}>
+      <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:10 }}>
+        <div style={{ fontWeight:700, fontSize:".9rem" }}>⚡ UStVA in 2 Klicks einreichen</div>
+        <span style={{ fontSize:".72rem", padding:"2px 8px", borderRadius:10, background:"rgba(198,255,60,.15)", color:"var(--accent)" }}>D Feature</span>
+      </div>
+      {msg && <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`} style={{marginBottom:10,cursor:"pointer"}} onClick={()=>setMsg(null)}>{msg.text}</div>}
+      <div style={{ display:"flex", gap:8, alignItems:"flex-end", flexWrap:"wrap" }}>
+        <div className="ac-form-col" style={{ flex:2, minWidth:160 }}>
+          <label className="ac-label">Steuernummer</label>
+          <input className="ac-input ac-mono" value={steuernr} placeholder="21/815/08150"
+            onChange={e=>setSteuernr(e.target.value)} />
+        </div>
+        <button className="ac-btn ac-btn-primary" onClick={einreichen} disabled={loading} style={{background:"var(--accent)",color:"#000"}}>
+          {loading ? "…" : "📤 ELSTER XML herunterladen"}
+        </button>
+      </div>
+      <div style={{fontSize:".74rem",color:"var(--ink2)",marginTop:8}}>
+        Für Zeitraum {von} – {bis}. XML auf <strong style={{color:"var(--ink)"}}>elster.de</strong> unter Formulare → UStVA → Datei hochladen einreichen.
+      </div>
+    </div>
+  );
+}
+
 export default function UstVaTab() {
   const today = new Date();
   const firstOfMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-01`;
@@ -132,6 +186,7 @@ export default function UstVaTab() {
 
   return (
     <div>
+      <SchnellElster von={von} bis={bis} />
       {!periodLoading && <PeriodStatus perioden={perioden} onReload={loadPerioden} />}
       <div className="ac-card" style={{ marginBottom:16 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>

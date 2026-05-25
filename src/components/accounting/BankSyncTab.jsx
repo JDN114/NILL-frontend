@@ -15,6 +15,8 @@ export default function BankSyncTab() {
   const [statusFilter, setStatusFilter] = useState("");
   const [busy,         setBusy]         = useState({});
   const [matchInput,   setMatchInput]   = useState({});
+  const [kiVorschlaege, setKiVorschlaege] = useState(null);
+  const [kiLoading,    setKiLoading]    = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -106,7 +108,48 @@ export default function BankSyncTab() {
           style={{ marginLeft: "auto" }}>
           {syncing ? "Sync läuft…" : "⟳ Bank synchronisieren"}
         </button>
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={kiLoading}
+          style={{ borderColor: "var(--a2)", color: "var(--a2)" }}
+          onClick={async () => {
+            setKiLoading(true); setMsg(null);
+            try {
+              const r = await api.post("/api/v1/bank/auto-kategorisieren");
+              setKiVorschlaege(r.data?.vorschlaege || []);
+              if ((r.data?.vorschlaege || []).length === 0)
+                setMsg({ type: "ok", text: "Keine unkategorisierten Ausgaben gefunden." });
+            } catch {
+              setMsg({ type: "err", text: "KI-Kategorisierung fehlgeschlagen." });
+            } finally { setKiLoading(false); }
+          }}>
+          {kiLoading ? "…" : "✨ KI kategorisieren"}
+        </button>
       </div>
+
+      {kiVorschlaege && kiVorschlaege.length > 0 && (
+        <div className="ac-card" style={{ marginBottom: 16, borderColor: "rgba(122,92,255,.3)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontFamily: "Fraunces,serif", fontWeight: 600 }}>✨ KI-Kategorisierungsvorschläge ({kiVorschlaege.length})</div>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setKiVorschlaege(null)}>✕</button>
+          </div>
+          <table className="ac-table" style={{ fontSize: ".82rem" }}>
+            <thead><tr><th>Datum</th><th>Beschreibung</th><th style={{textAlign:"right"}}>Betrag</th><th>SKR03 Konto</th><th>Kategorie</th></tr></thead>
+            <tbody>
+              {kiVorschlaege.map(v => (
+                <tr key={v.tx_id}>
+                  <td className="ac-mono">{v.datum || "—"}</td>
+                  <td style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.description}</td>
+                  <td className="ac-mono" style={{ textAlign: "right", color: "var(--a3)" }}>{fmtEur(v.amount)}</td>
+                  <td className="ac-mono" style={{ color: "var(--a2)", fontWeight: 700 }}>{v.vorschlag_konto}</td>
+                  <td style={{ color: "var(--ink2)" }}>{v.vorschlag_bezeichnung}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p style={{ fontSize: ".76rem", color: "var(--ink2)", marginTop: 10 }}>
+            Vorschläge basieren auf Schlüsselwort-Erkennung. Buchungssatz manuell über Journal anlegen oder Buchungsautomatik im Belegarchiv nutzen.
+          </p>
+        </div>
+      )}
 
       {msg && (
         <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
