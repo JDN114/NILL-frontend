@@ -118,9 +118,10 @@ export default function Login() {
       const optRes = await api.post("/auth/2fa/webauthn/auth-options", { temp_token: tempToken });
       const options = optRes.data;
 
-      // Convert base64url to ArrayBuffer
+      // Convert base64url to ArrayBuffer (with padding restoration for atob compatibility)
       const b64toArr = s => {
-        const b = atob(s.replace(/-/g,"+").replace(/_/g,"/"));
+        const padded = s.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(s.length/4)*4, "=");
+        const b = atob(padded);
         return Uint8Array.from(b, c => c.charCodeAt(0)).buffer;
       };
       const arrToB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
@@ -160,7 +161,9 @@ export default function Login() {
       if (err?.name === "NotAllowedError") {
         setError("Biometrische Authentifizierung abgebrochen.");
       } else {
-        setError(err?.response?.data?.detail || "Biometrische Authentifizierung fehlgeschlagen.");
+        const detail = err?.response?.data?.detail;
+        const browserErr = !detail && err?.name ? ` (${err.name})` : "";
+        setError((detail || "Biometrische Authentifizierung fehlgeschlagen.") + browserErr);
       }
     } finally {
       setLoading(false);
