@@ -216,6 +216,23 @@ export default function AnlagenTab() {
 
   return (
     <div>
+      <div style={{
+        marginBottom: 16,
+        padding: "0.8rem 1rem",
+        background: "rgba(251,191,36,0.07)",
+        border: "1px solid rgba(251,191,36,0.3)",
+        borderRadius: 9,
+        fontSize: ".78rem",
+        color: "#fbbf24",
+        lineHeight: 1.6,
+      }}>
+        <strong>§ 15a UStG – Vorsteuerberichtigung:</strong>{" "}
+        Bei Wirtschaftsgütern mit Anschaffungskosten über 1.000 € netto muss die Vorsteuer
+        über einen Berichtigungszeitraum von 5 Jahren (Immobilien: 10 Jahre) anteilig korrigiert
+        werden, wenn sich die unternehmerische Nutzung ändert. NILL erfasst Berichtigungszeiträume
+        und Nutzungsänderungen derzeit <strong>nicht automatisch</strong>. Bitte prüfen Sie §15a-Berichtigungspflichten
+        regelmäßig mit Ihrem Steuerberater.
+      </div>
       <div className="ac-kpi-grid" style={{ marginBottom:16 }}>
         <div className="ac-kpi"><div className="ac-kpi-label">Anlagen gesamt</div><div className="ac-kpi-value">{anlagen.length}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">Anschaffungskosten gesamt</div><div className="ac-kpi-value purple">{fmtEur(totalAHK)}</div></div>

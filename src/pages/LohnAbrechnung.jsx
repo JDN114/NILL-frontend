@@ -237,9 +237,21 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
         </div>
       )}
 
-      <p style={{ marginTop: "0.9rem", fontSize: "0.71rem", color: "var(--nill-text-mute)" }}>
-        * Steuer- und SV-Beträge sind Schätzwerte. Keine Steuer- oder Rechtsberatung.
-      </p>
+      <div style={{
+        marginTop: "1rem",
+        padding: "0.85rem 1rem",
+        background: "rgba(251,191,36,0.08)",
+        border: "1px solid rgba(251,191,36,0.35)",
+        borderRadius: 10,
+        fontSize: "0.77rem",
+        color: "#fbbf24",
+        lineHeight: 1.65,
+      }}>
+        <strong style={{ display: "block", marginBottom: "0.3rem" }}>
+          Hinweis: Steuerberechnung mit Pauschalsätzen — keine §32a EStG-Berechnung
+        </strong>
+        NILL berechnet die Lohnsteuer mit festen Pauschalsätzen je Steuerklasse (Kl. I: 22 %, II: 20 %, III: 14 %, IV: 22 %, V: 35 %, VI: 40 %) sowie einem Sozialversicherungsanteil (AN) von pauschal 19,4 %. Die gesetzliche Einkommensteuer nach §32a EStG (progressive Steuertabelle) sowie individuelle Freibeträge, Kinderfreibeträge, Kirchensteuer und Solidaritätszuschlag werden <strong>nicht</strong> berücksichtigt. Die ausgewiesenen Nettowerte sind Schätzwerte und ersetzen keine rechtsgültige Lohnabrechnung durch einen Steuerberater oder eine zugelassene Lohnabrechnungssoftware.
+      </div>
 
       {editSlip && (
         <SlipEditModal

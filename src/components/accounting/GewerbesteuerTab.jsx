@@ -162,6 +162,72 @@ function ZMPanel() {
   );
 }
 
+function IntrastatPanel() {
+  const yr = new Date().getFullYear();
+  const [jahr, setJahr]     = useState(yr);
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    api.get(`/tax/intrastat-status/${jahr}`)
+      .then(r => setData(r.data))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, [jahr]);
+
+  return (
+    <div className="ac-card" style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ fontFamily: "Fraunces,serif", fontSize: "1.05rem", fontWeight: 600 }}>
+          Intrastat — Meldeschwelle (§ 15 IntrastatV)
+        </div>
+        <select className="ac-select" style={{ fontSize: ".82rem" }} value={jahr} onChange={e => setJahr(+e.target.value)}>
+          {[yr - 1, yr].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+
+      {loading && <div className="ac-loading" style={{ padding: 16 }}><span className="ac-spinner" />Prüfe…</div>}
+      {!loading && data && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10, marginBottom: 14 }}>
+            <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "10px 12px" }}>
+              <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>IG-Volumen {data.jahr}</div>
+              <div className="ac-mono" style={{ fontWeight: 700 }}>{fmtEur(data.ig_volumen_eur)}</div>
+            </div>
+            <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "10px 12px" }}>
+              <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>Meldeschwelle</div>
+              <div className="ac-mono" style={{ fontWeight: 700 }}>{fmtEur(data.schwelle_eur)}</div>
+            </div>
+            <div style={{ background: data.schwelle_erreicht ? "rgba(248,113,113,0.08)" : "rgba(52,211,153,0.06)", border: `1px solid ${data.schwelle_erreicht ? "rgba(248,113,113,0.3)" : "rgba(52,211,153,0.25)"}`, borderRadius: 8, padding: "10px 12px" }}>
+              <div style={{ fontSize: ".7rem", color: "var(--ink2)", textTransform: "uppercase", marginBottom: 4 }}>Status</div>
+              <div style={{ fontWeight: 700, color: data.schwelle_erreicht ? "#f87171" : "#34d399", fontSize: ".85rem" }}>
+                {data.schwelle_erreicht ? "Schwelle überschritten" : "Unter Meldeschwelle"}
+              </div>
+            </div>
+          </div>
+          <div style={{
+            padding: "0.7rem 0.9rem",
+            background: data.schwelle_erreicht ? "rgba(248,113,113,0.07)" : "rgba(255,255,255,0.03)",
+            border: `1px solid ${data.schwelle_erreicht ? "rgba(248,113,113,0.25)" : "var(--border)"}`,
+            borderRadius: 8,
+            fontSize: ".78rem",
+            color: data.schwelle_erreicht ? "#fca5a5" : "var(--ink2)",
+            lineHeight: 1.6,
+          }}>
+            {data.hinweis}
+          </div>
+          <div style={{ fontSize: ".72rem", color: "var(--ink2)", marginTop: 8, fontStyle: "italic" }}>
+            NILL stellt keinen Intrastat-Export bereit. Meldungen erfolgen über das DESTATIS-Portal (idev.destatis.de).
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function VerfahrensdokuPanel() {
   const [data, setData]   = useState(null);
   const [loading, setLoading] = useState(false);
@@ -230,6 +296,7 @@ export default function GewerbesteuerTab() {
     <div>
       <GewerbesteuerPanel />
       <ZMPanel />
+      <IntrastatPanel />
       <VerfahrensdokuPanel />
     </div>
   );
