@@ -570,7 +570,7 @@ function ExportTab() {
           steuernummer: steuernummer.trim(),
           finanzamt_id: finanzamtId,
           zeitraum,
-          test_modus: testModus,
+          test_modus: true,  // Produktiv-Modus gesperrt bis valide HerstellerID vorliegt
         },
         { responseType: "blob" },
       );
@@ -672,20 +672,21 @@ function ExportTab() {
 
       {/* ELSTER */}
       <div className="ac-card" style={{borderColor:"rgba(122,92,255,.25)"}}>
-        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:12}}>
           <div className="ac-section-title" style={{marginBottom:0}}>ELSTER UStVA-Export (XML)</div>
-          <span className="ac-badge ac-badge-purple" style={{fontSize:".7rem"}}>Neu</span>
+          <span className="ac-badge ac-badge-gray" style={{fontSize:".7rem"}}>Nur manueller Upload</span>
         </div>
         <div style={{
-          background:"rgba(122,92,255,.07)",border:"1px solid rgba(122,92,255,.18)",
-          borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:".82rem",color:"var(--ink2)",lineHeight:1.6,
+          background:"rgba(255,160,0,.08)",border:"1px solid rgba(255,160,0,.35)",
+          borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:".82rem",color:"var(--ink)",lineHeight:1.6,
         }}>
-          Erzeugt eine ELSTER-XML-Datei, die Sie direkt auf{" "}
-          <strong style={{color:"var(--ink)"}}>elster.de</strong> unter
-          «Formulare → Umsatzsteuervoranmeldung → Datei hochladen» einreichen können.
-          {testModus && <span style={{color:"var(--a2)",marginLeft:6,fontWeight:600}}>
-            [TESTMODUS — kein echter Versand]
-          </span>}
+          <strong>Manueller Upload auf elster.de erforderlich.</strong> Erzeugte XML-Datei bitte unter{" "}
+          <em>Formulare &amp; Leistungen → Umsatzsteuervoranmeldung → Datei hochladen</em> einreichen.
+          <br/>
+          <span style={{color:"var(--ink2)",fontSize:".78rem"}}>
+            Direkte API-Übermittlung (Produktiv-Modus) ist gesperrt — eine gültige, bei ELSTER
+            registrierte HerstellerID (§ 87a Abs. 6 AO) liegt noch nicht vor. <strong>Immer im Testmodus exportieren.</strong>
+          </span>
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col"><label className="ac-label">Von</label><input className="ac-input" type="date" value={elsterVon} onChange={e=>setElsterVon(e.target.value)}/></div>
@@ -708,13 +709,13 @@ function ExportTab() {
               {ELSTER_MONATE.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </div>
-          <div className="ac-form-col" style={{maxWidth:200,justifyContent:"flex-end"}}>
+          <div className="ac-form-col" style={{maxWidth:240,justifyContent:"flex-end"}}>
             <label className="ac-label">Modus</label>
-            <div style={{display:"flex",gap:8}}>
-              <label style={{display:"flex",alignItems:"center",gap:6,fontSize:".85rem",cursor:"pointer"}}>
-                <input type="checkbox" checked={testModus} onChange={e=>setTestModus(e.target.checked)}
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <label style={{display:"flex",alignItems:"center",gap:6,fontSize:".85rem",color:"var(--ink2)"}}>
+                <input type="checkbox" checked={true} disabled
                   style={{accentColor:"var(--a2)"}}/>
-                Testmodus (empfohlen)
+                Testmodus (Produktiv-Modus gesperrt)
               </label>
             </div>
           </div>
@@ -726,8 +727,8 @@ function ExportTab() {
           </div>
         </div>
         <p style={{fontSize:".78rem",color:"var(--ink2)",marginTop:4}}>
-          Steuernummer beim Finanzamt erfragen. Finanzamt-Nr.: die 4-stellige Nummer Ihres zuständigen Finanzamts
-          (Beispiel Bayern Mitte: 9162, Berlin: 1121). Im Testmodus können Sie das XML prüfen, ohne Daten zu übermitteln.
+          Steuernummer beim Finanzamt erfragen. Finanzamt-Nr.: 4-stellige Nummer Ihres Finanzamts
+          (Bsp. Bayern Mitte: 9162, Berlin: 1121). XML prüfen und manuell auf elster.de hochladen.
         </p>
       </div>
     </div>

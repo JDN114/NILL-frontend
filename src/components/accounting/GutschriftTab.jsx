@@ -199,6 +199,18 @@ export default function GutschriftTab() {
     } catch { alert("PDF-Download fehlgeschlagen."); }
   };
 
+  const downloadXrechnung = async (id, nr) => {
+    try {
+      const r = await api.get(`/api/v1/gutschriften/${id}/xrechnung`, { responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "application/xml" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Gutschrift-${nr || id}-XRechnung.xml`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { alert(e.response?.data?.detail || "XRechnung-Download fehlgeschlagen."); }
+  };
+
   if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade Gutschriften…</div>;
 
   return (
@@ -269,12 +281,17 @@ export default function GutschriftTab() {
                             Löschen
                           </button>
                         </>)}
-                        {g.status !== "entwurf" && (
+                        {g.status !== "entwurf" && (<>
                           <button className="ac-btn ac-btn-ghost ac-btn-sm"
                             onClick={() => downloadPdf(g.id, g.gutschriftnummer)}>
                             PDF
                           </button>
-                        )}
+                          <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                            title="XRechnung 3.0 (TypeCode 381 gem. EN 16931)"
+                            onClick={() => downloadXrechnung(g.id, g.gutschriftnummer)}>
+                            XRechnung
+                          </button>
+                        </>)}
                       </div>
                     </td>
                   </tr>
