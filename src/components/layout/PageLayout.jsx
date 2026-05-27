@@ -16,7 +16,7 @@ export default function PageLayout({ children, noScroll }) {
           {children}
         </div>
       ) : noScroll ? (
-        <main className="p-4 sm:p-6 max-w-7xl mx-auto w-full" style={{flex:1,overflow:"auto",boxSizing:"border-box"}}>
+        <main className="p-4 sm:p-6 max-w-7xl mx-auto w-full" style={{flex:1,overflow:"hidden",boxSizing:"border-box"}}>
           {children}
         </main>
       ) : (
