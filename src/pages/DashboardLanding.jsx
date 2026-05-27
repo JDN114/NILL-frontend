@@ -13,8 +13,6 @@ import GuidedTourModal from "../components/GuidedTourModal";
 const S = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-  body { overflow: hidden; }
-
   .nd-root { --bg:#040407; --bg2:#08080c; --ink:#efede7; --ink-dim:rgba(239,237,231,.5); --ink-faint:rgba(239,237,231,.12); --line:rgba(239,237,231,.07); --glass:rgba(255,255,255,.035); --accent:#c6ff3c; --a2:#7a5cff; --a3:#ff4d8d; --a4:#38f5d0; --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",monospace; --r:14px; --r2:20px; }
 
   /* Welcome strip */
@@ -114,6 +112,12 @@ export default function DashboardLanding() {
     localStorage.setItem("nill_accounting_mode", next);
     setAccountingMode(next);
   };
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   useEffect(() => {
     api.get("/me/profile").then(r => setUserName(r.data.name || null)).catch(() => {});
