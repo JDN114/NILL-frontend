@@ -83,6 +83,7 @@ function InactivityGuard() {
 function ConditionalFooter() {
   const location = useLocation();
   if (location.pathname.startsWith("/station")) return null;
+  if (location.pathname.startsWith("/dashboard")) return null;
   return <Footer />;
 }
 
