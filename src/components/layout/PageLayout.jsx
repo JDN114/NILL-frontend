@@ -3,7 +3,7 @@ import Navbar from "./Navbar";
 
 const NO_PADDING_ROUTES = ["/dashboard/emails"];
 
-export default function PageLayout({ children, noScroll }) {
+export default function PageLayout({ children, noScroll, footer }) {
   const { pathname } = useLocation();
   const noPadding = NO_PADDING_ROUTES.some(r => pathname.startsWith(r));
   const fixedHeight = noPadding || noScroll;
@@ -16,9 +16,12 @@ export default function PageLayout({ children, noScroll }) {
           {children}
         </div>
       ) : noScroll ? (
-        <main className="p-4 sm:p-6 max-w-7xl mx-auto w-full" style={{flex:1,overflow:"hidden",boxSizing:"border-box"}}>
-          {children}
-        </main>
+        <>
+          <main className="p-4 sm:p-6 max-w-7xl mx-auto w-full" style={{flex:1,overflow:"hidden",minHeight:0,boxSizing:"border-box"}}>
+            {children}
+          </main>
+          {footer}
+        </>
       ) : (
         <main className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
           {children}

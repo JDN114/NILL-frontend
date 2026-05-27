@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import PageLayout from "../components/layout/PageLayout";
+import Footer from "../components/Footer";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import WelcomeToNILLModal from "../components/WelcomeToNILLModal";
@@ -153,7 +154,7 @@ export default function DashboardLanding() {
       <WelcomeToNILLModal isOpen={showWelcome} onClose={handleWelcomeClose} />
       <GuidedTourModal isOpen={showTour} onFinish={() => setShowTour(false)} />
 
-      <PageLayout noScroll>
+      <PageLayout noScroll footer={<Footer />}>
         <div className="nd-root">
 
           {/* ── Welcome ── */}
