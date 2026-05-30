@@ -41,6 +41,7 @@ import ZahlungsmoralTab     from "../components/accounting/ZahlungsmoralTab";
 import OnboardingWizard     from "../components/accounting/OnboardingWizard";
 import WiderrufSettingsPanel from "../components/accounting/WiderrufSettingsPanel";
 import KostenstellenTab     from "../components/accounting/KostenstellenTab";
+import JahresabschlussTab  from "../components/accounting/JahresabschlussTab";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -1039,15 +1040,17 @@ function SteuernGruppe({ refreshKey }) {
   return (
     <div>
       <SubNav tabs={[
-        {id:"dashboard",    label:"Steuer-Cockpit"},
-        {id:"ustva",        label:"UStVA"},
-        {id:"gewerbesteuer",label:"GewSt / ZM"},
-        {id:"steuerkalender",label:"Steuer-Kalender"},
+        {id:"dashboard",      label:"Steuer-Cockpit"},
+        {id:"ustva",          label:"UStVA"},
+        {id:"gewerbesteuer",  label:"GewSt / ZM"},
+        {id:"jahresabschluss",label:"Jahresabschluss"},
+        {id:"steuerkalender", label:"Steuer-Kalender"},
       ]} active={sub} onChange={setSub}/>
-      {sub==="dashboard"    && <TaxDashboard key={refreshKey}/>}
-      {sub==="ustva"        && <UstVaTab key={refreshKey}/>}
-      {sub==="gewerbesteuer"&& <GewerbesteuerTab key={refreshKey}/>}
-      {sub==="steuerkalender"&&<SteuerkalenderTab key={refreshKey}/>}
+      {sub==="dashboard"       && <TaxDashboard key={refreshKey}/>}
+      {sub==="ustva"           && <UstVaTab key={refreshKey}/>}
+      {sub==="gewerbesteuer"   && <GewerbesteuerTab key={refreshKey}/>}
+      {sub==="jahresabschluss" && <JahresabschlussTab key={refreshKey}/>}
+      {sub==="steuerkalender"  && <SteuerkalenderTab key={refreshKey}/>}
     </div>
   );
 }
