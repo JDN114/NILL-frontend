@@ -42,6 +42,10 @@ import OnboardingWizard     from "../components/accounting/OnboardingWizard";
 import WiderrufSettingsPanel from "../components/accounting/WiderrufSettingsPanel";
 import KostenstellenTab     from "../components/accounting/KostenstellenTab";
 import JahresabschlussTab  from "../components/accounting/JahresabschlussTab";
+import KassenbonTab         from "../components/accounting/KassenbonTab";
+import TrinkgeldTab         from "../components/accounting/TrinkgeldTab";
+import EcClearingTab        from "../components/accounting/EcClearingTab";
+import GutscheinTab         from "../components/accounting/GutscheinTab";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -1121,6 +1125,27 @@ function BerichteExportGruppe({ refreshKey }) {
   );
 }
 
+// ── Kasse / POS ──────────────────────────────────────────────────────────────
+function KasseGruppe({ refreshKey }) {
+  const [sub, setSub] = useState("kassenbons");
+  return (
+    <div>
+      <SubNav tabs={[
+        { id: "kassenbons",    label: "Kassenbons + TSE" },
+        { id: "ec",            label: "EC-Clearing"      },
+        { id: "trinkgeld",     label: "Trinkgeld"        },
+        { id: "gutscheine",    label: "Gutscheine"       },
+        { id: "tagesabschluss",label: "Tagesabschluss"  },
+      ]} active={sub} onChange={setSub} />
+      {sub === "kassenbons"     && <KassenbonTab    key={refreshKey} />}
+      {sub === "ec"             && <EcClearingTab   key={refreshKey} />}
+      {sub === "trinkgeld"      && <TrinkgeldTab    key={refreshKey} />}
+      {sub === "gutscheine"     && <GutscheinTab    key={refreshKey} />}
+      {sub === "tagesabschluss" && <TagesabschlussTab key={refreshKey} />}
+    </div>
+  );
+}
+
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const ALL_TABS = [
   {id:"overview",       label:"Übersicht",          modes:["einfach","doppelt"]},
@@ -1132,6 +1157,7 @@ const ALL_TABS = [
   {id:"belege",         label:"Belege",             modes:["einfach","doppelt"]},
   {id:"partner",        label:"Geschäftspartner",   modes:["einfach","doppelt"]},
   {id:"bank",           label:"Bank",               modes:["doppelt"]},
+  {id:"kasse",          label:"Kasse / POS",        modes:["einfach","doppelt"]},
   {id:"berichte",       label:"Berichte & Export",  modes:["einfach","doppelt"]},
   {id:"import",         label:"Import",             modes:["einfach","doppelt"]},
   {id:"lohnsteuer",     label:"Lohnsteuer",         modes:["doppelt"]},
@@ -1179,6 +1205,7 @@ export default function AccountingPage() {
       case "belege":      return <BelegeGruppe refreshKey={refreshKey}/>;
       case "partner":     return <GeschaeftspartnerGruppe refreshKey={refreshKey}/>;
       case "bank":        return <BankSyncTab key={refreshKey}/>;
+      case "kasse":       return <KasseGruppe refreshKey={refreshKey}/>;
       case "berichte":    return <BerichteExportGruppe refreshKey={refreshKey}/>;
       case "import":      return <ImportTab onDone={triggerRefresh}/>;
       case "lohnsteuer":  return <LohnbuchhaltungContent key={refreshKey} onNavigate={(tabKey) => navigate(`/dashboard/workflow/team?tab=${tabKey}`)} />;
