@@ -221,6 +221,8 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
     const payload = {
       ...form,
       zahlungsziel_tage: parseInt(form.zahlungsziel_tage || 14, 10),
+      skonto_prozent: form.skonto_prozent ? parseFloat(form.skonto_prozent) : null,
+      skonto_tage:    form.skonto_tage    ? parseInt(form.skonto_tage, 10)  : null,
       positionen: pos.map((p, i) => ({
         position:       i + 1,
         beschreibung:   p.beschreibung,
@@ -395,6 +397,31 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
             <input className="ac-input ac-mono" type="number" value={form.zahlungsziel_tage}
               onChange={e => set("zahlungsziel_tage", e.target.value)} />
           </div>
+        </div>
+        {/* Skonto §17 UStG */}
+        <div className="ac-form-row" style={{ marginTop: 10 }}>
+          <div className="ac-form-col" style={{ maxWidth: 130 }}>
+            <label className="ac-label">Skonto %</label>
+            <input className="ac-input ac-mono" type="number" step="0.1" min="0" max="100"
+              value={form.skonto_prozent || ""}
+              onChange={e => set("skonto_prozent", e.target.value || null)}
+              placeholder="z.B. 2" />
+          </div>
+          <div className="ac-form-col" style={{ maxWidth: 130 }}>
+            <label className="ac-label">Skonto-Frist (Tage)</label>
+            <input className="ac-input ac-mono" type="number" min="0"
+              value={form.skonto_tage || ""}
+              onChange={e => set("skonto_tage", e.target.value || null)}
+              placeholder="z.B. 10" />
+          </div>
+          {form.skonto_prozent > 0 && form.skonto_tage > 0 && (
+            <div className="ac-form-col" style={{ display: "flex", alignItems: "flex-end", paddingBottom: 6 }}>
+              <span style={{ fontSize: ".82rem", color: "var(--ink2)" }}>
+                Bei Zahlung binnen {form.skonto_tage} Tagen {form.skonto_prozent}% Skonto
+                {" "}(§17 UStG — erscheint auf PDF)
+              </span>
+            </div>
+          )}
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: 1 }}>

@@ -22,11 +22,16 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
   const [form, setForm] = useState({
     buchungsdatum: today, buchungstext: "", beleg_nummer: "",
     periode_id: perioden[0]?.id || "", buchungstyp: "standard",
+    waehrung: "EUR", betrag_fremd: "", kurs_fremd: "",
   });
   const [zeilen, setZeilen] = useState([
-    { konto_id: "", soll: "", haben: "", ust_kennzeichen: "" },
-    { konto_id: "", soll: "", haben: "", ust_kennzeichen: "" },
+    { konto_id: "", soll: "", haben: "", ust_kennzeichen: "", kostenstelle_id: "" },
+    { konto_id: "", soll: "", haben: "", ust_kennzeichen: "", kostenstelle_id: "" },
   ]);
+  const [kostenstellen, setKostenstellen] = React.useState([]);
+  React.useEffect(() => {
+    api.get("/api/v1/kostenstellen").then(r => setKostenstellen(r.data || [])).catch(() => {});
+  }, []);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +39,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
   const habenSumme = zeilen.reduce((s, z) => s + parseFloat(z.haben || 0), 0);
   const balanced   = Math.abs(sollSumme - habenSumme) < 0.005;
 
-  const addZeile    = () => setZeilen(z => [...z, { konto_id: "", soll: "", haben: "", ust_kennzeichen: "" }]);
+  const addZeile    = () => setZeilen(z => [...z, { konto_id: "", soll: "", haben: "", ust_kennzeichen: "", kostenstelle_id: "" }]);
   const removeZeile = (i) => setZeilen(z => z.filter((_, idx) => idx !== i));
   const setZeile    = (i, key, val) => setZeilen(z => z.map((row, idx) => idx === i ? { ...row, [key]: val } : row));
 
@@ -47,12 +52,16 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
       await api.post("/api/v1/buchhaltung/buchungen", {
         ...form,
         brutto_betrag: sollSumme,
-        periode_id: form.periode_id || null,
+        periode_id:    form.periode_id || null,
+        waehrung:      form.waehrung || "EUR",
+        betrag_fremd:  form.betrag_fremd ? parseFloat(form.betrag_fremd) : null,
+        kurs_fremd:    form.kurs_fremd   ? parseFloat(form.kurs_fremd)   : null,
         zeilen: zeilen.map(z => ({
           konto_id: z.konto_id,
           soll:  parseFloat(z.soll  || 0),
           haben: parseFloat(z.haben || 0),
           ust_kennzeichen: z.ust_kennzeichen || null,
+          kostenstelle_id: z.kostenstelle_id ? parseInt(z.kostenstelle_id) : null,
         })),
       });
       onSaved(); onClose();
@@ -105,7 +114,39 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
               <option value="umbuchung">Umbuchung</option>
             </select>
           </div>
+          <div className="ac-form-col" style={{ maxWidth: 90 }}>
+            <label className="ac-label">Währung</label>
+            <input className="ac-input ac-mono" value={form.waehrung}
+              onChange={e => setForm(f => ({ ...f, waehrung: e.target.value.toUpperCase().slice(0,3) }))}
+              placeholder="EUR" maxLength={3} />
+          </div>
         </div>
+        {form.waehrung && form.waehrung !== "EUR" && (
+          <div className="ac-form-row" style={{ marginBottom: 8 }}>
+            <div className="ac-form-col">
+              <label className="ac-label">Betrag in {form.waehrung}</label>
+              <input className="ac-input ac-mono" type="number" step="0.01"
+                value={form.betrag_fremd}
+                onChange={e => setForm(f => ({ ...f, betrag_fremd: e.target.value }))}
+                placeholder={`Betrag in ${form.waehrung}`} />
+            </div>
+            <div className="ac-form-col">
+              <label className="ac-label">Kurs (1 {form.waehrung} = X EUR)</label>
+              <input className="ac-input ac-mono" type="number" step="0.000001"
+                value={form.kurs_fremd}
+                onChange={e => setForm(f => ({ ...f, kurs_fremd: e.target.value }))}
+                placeholder="z.B. 1.08 für USD" />
+            </div>
+            {form.betrag_fremd && form.kurs_fremd && (
+              <div className="ac-form-col" style={{ display:"flex", alignItems:"flex-end", paddingBottom: 6 }}>
+                <span style={{ fontSize: ".82rem", color: "var(--ink2)" }}>
+                  ≈ {(parseFloat(form.betrag_fremd) * parseFloat(form.kurs_fremd)).toLocaleString("de-DE",
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                </span>
+              </div>
+            )}
+          </div>
+        )}
         <div style={{ marginBottom: 12 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
             <span className="ac-label">Buchungszeilen</span>
@@ -138,6 +179,17 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
                   {UST_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
+              {kostenstellen.length > 0 && (
+                <div className="ac-form-col" style={{ minWidth: 130 }}>
+                  <select className="ac-select" value={z.kostenstelle_id}
+                    onChange={e => setZeile(i, "kostenstelle_id", e.target.value)}>
+                    <option value="">— KST —</option>
+                    {kostenstellen.map(k => (
+                      <option key={k.id} value={k.id}>{k.nummer} {k.bezeichnung}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => removeZeile(i)}
                 disabled={zeilen.length <= 2}>x</button>
             </div>

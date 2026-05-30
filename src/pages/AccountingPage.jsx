@@ -40,6 +40,7 @@ import WechselkurseTab      from "../components/accounting/WechselkurseTab";
 import ZahlungsmoralTab     from "../components/accounting/ZahlungsmoralTab";
 import OnboardingWizard     from "../components/accounting/OnboardingWizard";
 import WiderrufSettingsPanel from "../components/accounting/WiderrufSettingsPanel";
+import KostenstellenTab     from "../components/accounting/KostenstellenTab";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -1055,10 +1056,16 @@ function BuchhaltungGruppe({ refreshKey }) {
   const [sub, setSub] = useState("buchungen");
   return (
     <div>
-      <SubNav tabs={[{id:"buchungen",label:"Journal"},{id:"kontenplan",label:"Kontenplan"},{id:"anlagen",label:"Anlagenbuch"}]} active={sub} onChange={setSub}/>
-      {sub==="buchungen" && <BuchungenTab key={refreshKey}/>}
-      {sub==="kontenplan"&& <KontenplanTab key={refreshKey}/>}
-      {sub==="anlagen"   && <AnlagenTab key={refreshKey}/>}
+      <SubNav tabs={[
+        {id:"buchungen",    label:"Journal"},
+        {id:"kontenplan",   label:"Kontenplan"},
+        {id:"anlagen",      label:"Anlagenbuch"},
+        {id:"kostenstellen",label:"Kostenstellen"},
+      ]} active={sub} onChange={setSub}/>
+      {sub==="buchungen"     && <BuchungenTab key={refreshKey}/>}
+      {sub==="kontenplan"    && <KontenplanTab key={refreshKey}/>}
+      {sub==="anlagen"       && <AnlagenTab key={refreshKey}/>}
+      {sub==="kostenstellen" && <KostenstellenTab key={refreshKey}/>}
     </div>
   );
 }
