@@ -1,6 +1,7 @@
 // src/components/accounting/KassenbonTab.jsx — Kassenbons (POS receipts)
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
+import ArtikelstammTab from "./ArtikelstammTab";
 
 const fmtEur = (n) =>
   `${Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
@@ -53,6 +54,7 @@ function BonModal({ onSaved, onClose }) {
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [showKatalog, setShowKatalog] = useState(false);
 
   const setF = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -94,6 +96,7 @@ function BonModal({ onSaved, onClose }) {
           einheit: p.einheit,
           einzelpreis_brutto: parseFloat(p.einzelpreis_brutto),
           ust_satz: parseInt(p.ust_satz, 10),
+          ...(p.artikel_id ? { artikel_id: p.artikel_id } : {}),
         })),
       };
       await api.post("/api/v1/kassenbon", payload);
@@ -177,7 +180,50 @@ function BonModal({ onSaved, onClose }) {
             </div>
           );
         })}
-        <button className="ac-btn ac-btn-ghost ac-btn-sm" style={{ marginBottom: 16 }} onClick={addPos}>+ Position hinzufügen</button>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={addPos}>
+            + Position hinzufügen
+          </button>
+          <button
+            className="ac-btn ac-btn-ghost ac-btn-sm"
+            onClick={() => setShowKatalog((v) => !v)}
+            style={{
+              borderColor: showKatalog ? "var(--accent)" : undefined,
+              color: showKatalog ? "var(--accent)" : undefined,
+            }}
+          >
+            {showKatalog ? "▲ Katalog schließen" : "📦 Aus Katalog wählen"}
+          </button>
+        </div>
+        {showKatalog && (
+          <div style={{
+            border: "1px solid var(--border)", borderRadius: 10,
+            marginBottom: 16, overflow: "hidden",
+            maxHeight: 380, display: "flex",
+          }}>
+            <ArtikelstammTab
+              mode="auswahl"
+              onArtikelSelect={(a) => {
+                setForm((f) => ({
+                  ...f,
+                  positionen: [
+                    ...f.positionen.filter(
+                      (p) => p.bezeichnung.trim() !== "" || parseFloat(p.einzelpreis_brutto) > 0
+                    ),
+                    {
+                      bezeichnung: a.bezeichnung,
+                      menge: 1,
+                      einheit: a.einheit || "Stk.",
+                      einzelpreis_brutto: String(a.preis_brutto),
+                      ust_satz: a.ust_satz ?? 19,
+                      artikel_id: a.id,
+                    },
+                  ],
+                }));
+              }}
+            />
+          </div>
+        )}
 
         {/* USt-Summary */}
         <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 16px", fontFamily: "monospace", fontSize: ".82rem", color: "var(--ink)", marginBottom: 16 }}>
