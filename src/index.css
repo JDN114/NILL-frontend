@@ -188,14 +188,39 @@ body {
   border-top: 1px solid var(--nill-border);
 }
 .em-provider {
-  font-size: 0.7rem; color: var(--nill-text-dim); text-transform: capitalize;
+  font-size: 0.7rem; color: var(--nill-text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 120px;
 }
 .em-disconnect {
   font-size: 0.7rem; color: var(--nill-text-dim);
   background: none; border: none; cursor: pointer;
-  transition: color 0.15s;
+  transition: color 0.15s; flex-shrink: 0;
 }
 .em-disconnect:hover { color: #f87171; }
+
+/* Provider-Tabs in der Sidebar */
+.em-provider-tabs {
+  display: flex; gap: 4px; margin-bottom: 6px;
+}
+.em-provider-tab {
+  flex: 1; padding: 4px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--nill-border);
+  background: transparent;
+  color: var(--nill-text-dim);
+  font-size: 0.68rem; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  text-align: center; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.em-provider-tab:hover { background: var(--nill-panel-hov); color: var(--nill-text); }
+.em-provider-tab--active {
+  background: var(--nill-gold-dim);
+  border-color: rgba(197,165,114,0.35);
+  color: var(--nill-gold); font-weight: 600;
+}
 
 /* ── Liste ───────────────────────────────────────────────── */
 .em-list-col {

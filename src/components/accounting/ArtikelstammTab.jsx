@@ -529,7 +529,7 @@ export default function ArtikelstammTab({ mode = "verwaltung", onArtikelSelect }
             {search
               ? `Kein Artikel gefunden für „${search}".`
               : isManagement
-                ? "Noch keine Artikel angelegt. Klicke „+ Artikel" um zu starten."
+                ? 'Noch keine Artikel angelegt. Klicke „+ Artikel" um zu starten.'
                 : "Keine Artikel verfügbar."
             }
           </div>

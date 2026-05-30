@@ -478,7 +478,6 @@ export default function EmailsPage() {
 
   const filterLabel = FILTERS.find(f => f.key === activeFilter)?.label;
   const isSearching = search.trim().length > 0;
-  const hasMultipleProviders = (allProviders?.length ?? 0) > 1;
 
   return (
     <>
@@ -490,27 +489,24 @@ export default function EmailsPage() {
             <span className="em-logo-label">NILL</span>
           </a>
 
-          {/* Provider-Switcher (nur bei >1 Provider) */}
-          {hasMultipleProviders && (
-            <div className="px-2 mb-2">
-              <select
-                value={provider ?? ""}
-                onChange={e => setActiveProvider(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-gray-500"
-              >
-                {allProviders.map(p => (
-                  <option key={p.key} value={p.key}>{p.label}</option>
-                ))}
-              </select>
+          {/* Provider-Tabs — immer sichtbar, zeigt alle verbundenen Provider */}
+          {allProviders.length > 0 && (
+            <div className="em-provider-tabs">
+              {allProviders.map(p => (
+                <button
+                  key={p.key}
+                  className={`em-provider-tab${provider === p.key ? " em-provider-tab--active" : ""}`}
+                  onClick={() => setActiveProvider(p.key)}
+                  title={p.label}
+                >
+                  {p.key === "outlook" ? "Outlook" : p.key === "gmail" ? "Gmail" : "IMAP"}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* IMAP-Account-Switcher */}
-          {provider === "imap" && (
-            <div className="px-2 mb-2">
-              <ImapAccountSwitcher />
-            </div>
-          )}
+          {/* IMAP-Account-Switcher (nur wenn IMAP aktiv) */}
+          {provider === "imap" && <ImapAccountSwitcher />}
 
           {/* Reauth-Banner für IMAP */}
           {imapNeedsReauth && (
@@ -561,7 +557,9 @@ export default function EmailsPage() {
           </nav>
 
           <div className="em-sidebar-foot">
-            <span className="em-provider">{provider}</span>
+            <span className="em-provider" title={allProviders.find(p => p.key === provider)?.label}>
+              {allProviders.find(p => p.key === provider)?.label ?? provider}
+            </span>
             <button onClick={handleDisconnect} className="em-disconnect">Trennen</button>
           </div>
         </aside>
