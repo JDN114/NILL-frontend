@@ -607,6 +607,44 @@ function RechnungenList({ onNew, onEdit }) {
     } catch { alert("PDF-Download fehlgeschlagen."); }
   };
 
+  const downloadKleinbetragsrechnung = async (id, nr) => {
+    try {
+      const r = await api.get(`/api/v1/rechnungen/${id}/kleinbetragsrechnung`, { responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([r.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Kleinbetragsbeleg-${nr || id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(e.response?.data?.detail || "Kleinbetragsrechnung-Download fehlgeschlagen.");
+    }
+  };
+
+  const [zahlungslinks, setZahlungslinks] = useState({});
+  const [zlBusy, setZlBusy] = useState({});
+
+  const erstelleZahlungslink = async (id) => {
+    setZlBusy(b => ({ ...b, [id]: true }));
+    try {
+      const r = await api.post(`/api/v1/rechnungen/${id}/zahlungslink`);
+      setZahlungslinks(z => ({ ...z, [id]: r.data }));
+      await navigator.clipboard.writeText(r.data.url);
+      alert("Zahlungslink erstellt und in die Zwischenablage kopiert:\n" + r.data.url);
+    } catch (e) {
+      alert(e.response?.data?.detail || "Zahlungslink konnte nicht erstellt werden.");
+    } finally { setZlBusy(b => ({ ...b, [id]: false })); }
+  };
+
+  const kopierenZahlungslink = async (id) => {
+    const zl = zahlungslinks[id];
+    if (!zl?.url) return;
+    try {
+      await navigator.clipboard.writeText(zl.url);
+      alert("Zahlungslink kopiert: " + zl.url);
+    } catch { prompt("Zahlungslink:", zl.url); }
+  };
+
   const downloadXRechnung = async (id, nr) => {
     try {
       const r = await api.get(`/api/v1/rechnungen/${id}/xrechnung`, { responseType: "blob" });
@@ -714,18 +752,40 @@ function RechnungenList({ onNew, onEdit }) {
                           title="PDF herunterladen">
                           📄 PDF
                         </button>
+                        {Number(r.brutto_summe) <= 250 && (
+                          <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
+                            onClick={() => downloadKleinbetragsrechnung(r.id, r.rechnungsnummer)}
+                            title="Vereinfachter Beleg §33 UStDV (≤ 250 €)">
+                            🧾 §33
+                          </button>
+                        )}
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           onClick={() => downloadXRechnung(r.id, r.rechnungsnummer)}
                           title="XRechnung 3.0 XML (EN 16931) — ab 2025 Pflicht für B2B">
-                          🧾 XML
+                          XML
                         </button>
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           onClick={() => downloadZugferd(r.id, r.rechnungsnummer)}
                           title="ZUGFeRD Hybrid-PDF — PDF mit eingebettetem XML">
-                          ⚡ ZUGFeRD
+                          ZUGFeRD
                         </button>
                       </>)}
                       {r.status === "offen" && (<>
+                        {zahlungslinks[r.id]?.url ? (
+                          <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                            onClick={() => kopierenZahlungslink(r.id)}
+                            title="Zahlungslink in Zwischenablage kopieren"
+                            style={{ color: "var(--accent)" }}>
+                            🔗 Link
+                          </button>
+                        ) : (
+                          <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                            disabled={zlBusy[r.id]}
+                            onClick={() => erstelleZahlungslink(r.id)}
+                            title="Stripe-Zahlungslink erstellen (Kreditkarte, SEPA…)">
+                            {zlBusy[r.id] ? "…" : "💳 Zahlen"}
+                          </button>
+                        )}
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           onClick={() => act(r.id, "bezahlt")}>✓ Bezahlt</button>
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
