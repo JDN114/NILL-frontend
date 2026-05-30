@@ -1,8 +1,7 @@
 import React, { createContext, useState, useCallback, useEffect, useRef, useMemo } from "react";
+import api from "../services/api";
 
 export const GmailContext = createContext();
-
-const API_BASE = "https://api.nillai.de";
 
 export const GmailProvider = ({ children }) => {
   const [connected, setConnected]       = useState(null);
@@ -26,8 +25,8 @@ export const GmailProvider = ({ children }) => {
       if (now - lastStatusFetch.current < 60_000) return;
       lastStatusFetch.current = now;
 
-      const res  = await fetch(`${API_BASE}/gmail/status`, { credentials: "include" });
-      const data = await res.json().catch(() => ({ connected: false }));
+      const res  = await api.get("/gmail/status");
+      const data = res.data || { connected: false };
       setConnected(data);
       if (!data.connected) { setEmails([]); setSentEmails([]); setActiveEmail(null); }
     } catch {
@@ -39,12 +38,13 @@ export const GmailProvider = ({ children }) => {
   }, []);
 
   // ── Connect / Disconnect ─────────────────────────────────────────────────────
-  const connectGmail = () => { window.location.href = `${API_BASE}/gmail/auth-url`; };
+  const connectGmail = () => {
+    window.location.href = `${api.defaults.baseURL}/gmail/auth-url`;
+  };
 
   const disconnectGmail = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/gmail/disconnect`, { method: "POST", credentials: "include" });
-      if (!res.ok) throw new Error("Failed");
+      await api.post("/gmail/disconnect");
       setConnected({ connected: false });
       setEmails([]); setSentEmails([]); setActiveEmail(null);
       setInboxNextToken(null); setSentNextToken(null);
@@ -54,15 +54,11 @@ export const GmailProvider = ({ children }) => {
 
   // ── Fetch helpers ────────────────────────────────────────────────────────────
   const _fetchPage = useCallback(async ({ mailbox, append, token }) => {
-    const url = `${API_BASE}/gmail/emails?mailbox=${mailbox}${token ? `&page_token=${token}` : ""}`;
-    const res  = await fetch(url, { credentials: "include" });
+    const params = { mailbox };
+    if (token) params.page_token = token;
 
-    if (!res.ok) {
-      if (res.status === 401) setConnected({ connected: false });
-      throw new Error(`Fetch failed: ${res.status}`);
-    }
-
-    const data  = await res.json();
+    const res  = await api.get("/gmail/emails", { params });
+    const data = res.data;
     const mails = (data.emails || []).map(m => ({ ...m, mailbox }));
     const next  = data.next_page_token || null;
 
@@ -83,7 +79,6 @@ export const GmailProvider = ({ children }) => {
   const fetchInboxEmails = useCallback(async ({ append = false } = {}) => {
     if (!connected?.connected) return [];
 
-    // Deduplication
     if (!append && fetchInboxPromise.current) return fetchInboxPromise.current;
 
     const token   = append ? inboxNextToken : null;
@@ -110,15 +105,14 @@ export const GmailProvider = ({ children }) => {
     return promise;
   }, [connected, sentNextToken, _fetchPage]);
 
-  // ── Suche (DB-seitig, findet auch alte Emails) ───────────────────────────────
+  // ── Suche ────────────────────────────────────────────────────────────────────
   const searchEmails = useCallback(async (q, mailbox = null) => {
     if (!connected?.connected || !q?.trim()) return [];
     try {
-      const params = new URLSearchParams({ q: q.trim(), limit: "100" });
-      if (mailbox) params.set("mailbox", mailbox);
-      const res  = await fetch(`${API_BASE}/gmail/emails/search?${params}`, { credentials: "include" });
-      if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-      const data = await res.json();
+      const params = { q: q.trim(), limit: "100" };
+      if (mailbox) params.mailbox = mailbox;
+      const res  = await api.get("/gmail/emails/search", { params });
+      const data = res.data;
       return (data.emails || []).map(m => ({ ...m, mailbox: mailbox || m.mailbox || "inbox" }));
     } catch (err) {
       console.error("Search error:", err);
@@ -127,25 +121,21 @@ export const GmailProvider = ({ children }) => {
   }, [connected]);
 
   // ── Email Detail ─────────────────────────────────────────────────────────────
-const openEmail = useCallback(async (id) => {
-  if (!id) return null;
-  try {
-    const res  = await fetch(`${API_BASE}/gmail/emails/${id}`, { credentials: "include" });
-    if (!res.ok) throw new Error("Failed to load email detail");
-    const data = await res.json();
-    // Bail out if only a timestamp changed — prevents polling from forcing re-renders
-    setActiveEmail(prev =>
-      prev?.id === data.id && prev?.ai_status === data.ai_status ? prev : data
-    );
-    if (!data.read) {
-      fetch(`${API_BASE}/gmail/emails/${id}/read`, {
-        method: "PATCH",
-        credentials: "include",
-      }).catch(() => {});
-    }
-    return data;
-  } catch (err) { console.error("Detail fetch error:", err); return null; }
-}, []);
+  const openEmail = useCallback(async (id) => {
+    if (!id) return null;
+    try {
+      const res  = await api.get(`/gmail/emails/${id}`);
+      const data = res.data;
+      // Bail out if only a timestamp changed — prevents polling from forcing re-renders
+      setActiveEmail(prev =>
+        prev?.id === data.id && prev?.ai_status === data.ai_status ? prev : data
+      );
+      if (!data.read) {
+        api.patch(`/gmail/emails/${id}/read`).catch(() => {});
+      }
+      return data;
+    } catch (err) { console.error("Detail fetch error:", err); return null; }
+  }, []);
 
   const closeEmail = useCallback(() => setActiveEmail(null), []);
 
