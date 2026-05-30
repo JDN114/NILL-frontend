@@ -39,6 +39,7 @@ import SteuerkalenderTab    from "../components/accounting/SteuerkalenderTab";
 import WechselkurseTab      from "../components/accounting/WechselkurseTab";
 import ZahlungsmoralTab     from "../components/accounting/ZahlungsmoralTab";
 import OnboardingWizard     from "../components/accounting/OnboardingWizard";
+import WiderrufSettingsPanel from "../components/accounting/WiderrufSettingsPanel";
 import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
 
 // ── design system ─────────────────────────────────────────────────────────────
@@ -1001,6 +1002,7 @@ function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
     {id:"lieferscheine",label:"Lieferscheine"},
     {id:"gutschriften", label:"Gutschriften"},
     {id:"serienrechnung",label:"Serienrechnungen"},
+    {id:"widerruf",     label:"Widerrufsrecht"},
   ];
   return (
     <div>
@@ -1015,6 +1017,7 @@ function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
       {sub==="lieferscheine"&& <LieferscheinTab key={refreshKey}/>}
       {sub==="gutschriften" && <GutschriftTab key={refreshKey}/>}
       {sub==="serienrechnung"&&<SerienrechnungTab key={refreshKey}/>}
+      {sub==="widerruf"     && <WiderrufSettingsPanel key={refreshKey}/>}
     </div>
   );
 }

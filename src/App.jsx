@@ -64,6 +64,7 @@ const ArbeitsStationLieferscheine = React.lazy(() => import("./pages/station/Arb
 const ArbeitsStationInventur   = React.lazy(() => import("./pages/station/ArbeitsStationInventur.jsx"));
 const Widerruf               = React.lazy(() => import("./pages/Widerruf.jsx"));
 const Barrierefreiheit       = React.lazy(() => import("./pages/Barrierefreiheit"));
+const CheckoutPage           = React.lazy(() => import("./pages/CheckoutPage.jsx"));
 
 function PageLoader() {
   return (
@@ -161,6 +162,10 @@ function App() {
                   <Route path="/invite/:token" element={<InviteAcceptPage />} />
                   <Route path="/Widerruf" element={<Widerruf />} />
                   <Route path="/barrierefreiheit" element={<Barrierefreiheit />} />
+
+                  {/* Öffentliche Checkout-Seite für Endkunden (Zahlungslink) */}
+                  <Route path="/zahlen/:token" element={<CheckoutPage />} />
+                  <Route path="/zahlen/:token/erfolg" element={<CheckoutPage />} />
 
                   {/* Upgrade / Access Denied */}
                   <Route path="/upgrade" element={
