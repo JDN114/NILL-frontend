@@ -337,6 +337,9 @@ body {
   border-bottom: 1px solid var(--nill-border);
   transition: background 0.1s;
   position: relative;
+  contain: layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 72px;
 }
 .em-item:hover { background: var(--nill-panel-hov); }
 .em-item--active { background: var(--nill-gold-dim) !important; }

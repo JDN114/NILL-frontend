@@ -133,16 +133,16 @@ const openEmail = useCallback(async (id) => {
     const res  = await fetch(`${API_BASE}/gmail/emails/${id}`, { credentials: "include" });
     if (!res.ok) throw new Error("Failed to load email detail");
     const data = await res.json();
-    setActiveEmail(data);
-
-    // NEU: als gelesen markieren
+    // Bail out if only a timestamp changed — prevents polling from forcing re-renders
+    setActiveEmail(prev =>
+      prev?.id === data.id && prev?.ai_status === data.ai_status ? prev : data
+    );
     if (!data.read) {
       fetch(`${API_BASE}/gmail/emails/${id}/read`, {
         method: "PATCH",
         credentials: "include",
-      }).catch(() => {}); // fire-and-forget, kein await nötig
+      }).catch(() => {});
     }
-
     return data;
   } catch (err) { console.error("Detail fetch error:", err); return null; }
 }, []);

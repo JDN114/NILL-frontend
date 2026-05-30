@@ -13,7 +13,7 @@
 // Alles andere (Filter, Suche, Smart-Folders, Polling, KI-Panel) ist
 // pixelidentisch zur Vorgängerversion.
 
-import { useContext, useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { memo, useContext, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { MailContext } from "../context/MailContext";
@@ -81,16 +81,16 @@ function fmtLong(str) {
   if (!str) return "";
   return new Date(str).toLocaleString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
-function Avatar({ name }) {
+const Avatar = memo(function Avatar({ name }) {
   const letter = (name || "?")[0].toUpperCase();
   const hue = [...(name || "")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
   return <div style={{ background: `hsl(${hue},35%,32%)` }} className="em-avatar">{letter}</div>;
-}
-function Spinner({ sm }) {
+});
+const Spinner = memo(function Spinner({ sm }) {
   return <div className={sm ? "em-spinner em-spinner--sm" : "em-spinner"} />;
-}
+});
 
-function AiPanel({ email }) {
+const AiPanel = memo(function AiPanel({ email }) {
   const s = email.ai_status;
   if (s === "pending" || s === "processing") return (
     <div className="em-ai-panel em-ai-panel--loading">
@@ -142,7 +142,86 @@ function AiPanel({ email }) {
       )}
     </div>
   );
-}
+});
+
+// ── Memoized EmailListItem — re-renders only when its own props change ─────────
+const EmailListItem = memo(function EmailListItem({
+  id, isActive, isUnread, senderName, subject, category, priority, dateStr, onOpen,
+}) {
+  const prio = PRIO[priority];
+  return (
+    <li
+      onClick={() => onOpen(id)}
+      className={`em-item${isActive ? " em-item--active" : ""}${isUnread ? " em-item--unread" : ""}`}
+    >
+      <Avatar name={senderName} />
+      <div className="em-item-body">
+        <div className="em-item-top">
+          <span className="em-item-sender">{senderName}</span>
+          <div className="em-item-top-right">
+            {prio && <span className={`em-dot ${prio.dot}`} title={prio.label} />}
+            <span className="em-item-date">{dateStr}</span>
+          </div>
+        </div>
+        <p className="em-item-subject">{subject || "(Kein Betreff)"}</p>
+        {category && <span className="em-item-category">{category}</span>}
+      </div>
+    </li>
+  );
+});
+
+// ── Memoized EmailDetail — re-renders only when activeEmail content changes ──
+const EmailDetail = memo(function EmailDetail({ email, onClose, onReply }) {
+  if (!email) return <div className="em-detail-empty">Wähle eine E-Mail aus</div>;
+  const s = extractSender(email);
+  return (
+    <div className="em-detail">
+      <div className="em-detail-topbar">
+        <button onClick={onClose} className="em-back">{IC.back} Zurück</button>
+      </div>
+      <div className="em-detail-inner">
+        <h2 className="em-detail-subject">{email.subject || "(Kein Betreff)"}</h2>
+        <div className="em-detail-meta">
+          <Avatar name={s.name} />
+          <div className="em-detail-meta-info">
+            <span className="em-detail-meta-name">{s.name}</span>
+            <span className="em-detail-meta-email">&lt;{s.email}&gt;</span>
+          </div>
+          <span className="em-detail-meta-date">{fmtLong(email.received_at)}</span>
+        </div>
+        <AiPanel email={email} />
+        <div className="em-detail-body">
+          <SafeEmailHtml html={email.body ?? ""} />
+        </div>
+        {email.attachments?.length > 0 && (
+          <div className="em-attachments">
+            <div className="em-attachments-label">Anhänge ({email.attachments.length})</div>
+            <div className="em-attachment-list">
+              {email.attachments.map((att, i) => (
+                <a key={i}
+                  href={attachmentUrl({ email, attachmentId: att.id })}
+                  target="_blank" rel="noreferrer" className="em-attachment-chip"
+                  download={att.filename}>
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                  </svg>
+                  {att.filename}
+                  {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="em-detail-actions">
+          <button onClick={onReply} className="em-reply-btn">
+            {IC.reply} Antworten
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // ── Haupt-Komponente ──────────────────────────────────────────────────────────
 export default function EmailsPage() {
@@ -182,10 +261,12 @@ export default function EmailsPage() {
   const mailboxRef      = useRef(mailbox);
   const activeFolderRef = useRef(activeFolder);
   const fetchEmailsRef  = useRef(fetchEmails);
+  const openEmailRef    = useRef(openEmail);
   useEffect(() => { mailboxRef.current = mailbox; }, [mailbox]);
   useEffect(() => { activeFolderRef.current = activeFolder; }, [activeFolder]);
   useEffect(() => { fetchEmailsRef.current = fetchEmails; }, [fetchEmails]);
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
+  useEffect(() => { openEmailRef.current = openEmail; }, [openEmail]);
 
   // Smart-Folders sind provider-agnostisch (filtern user-level Email-Rows).
   useEffect(() => {
@@ -270,55 +351,75 @@ export default function EmailsPage() {
   // ── Filter ───────────────────────────────────────────────────────────────
   const displayEmails = useMemo(() => {
     const base = searchResults !== null ? searchResults : emails;
-    if (activeFilter === "all") return base;
-    const now = new Date(), sow = new Date(now);
-    sow.setDate(now.getDate() - now.getDay());
-    return base.filter(mail => {
-      switch (activeFilter) {
-        case "unread":  return !mail.read;
-        case "read":    return  mail.read;
-        case "high":    return  mail.priority === "high";
-        case "today":   return new Date(mail.received_at || 0).toDateString() === now.toDateString();
-        case "week":    return new Date(mail.received_at || 0) >= sow;
-        case "withAI":  return ["success", "done"].includes(mail.ai_status);
-        default:        return true;
-      }
+    let filtered = base;
+    if (activeFilter !== "all") {
+      const now = new Date(), sow = new Date(now);
+      sow.setDate(now.getDate() - now.getDay());
+      filtered = base.filter(mail => {
+        switch (activeFilter) {
+          case "unread":  return !mail.read;
+          case "read":    return  mail.read;
+          case "high":    return  mail.priority === "high";
+          case "today":   return new Date(mail.received_at || 0).toDateString() === now.toDateString();
+          case "week":    return new Date(mail.received_at || 0) >= sow;
+          case "withAI":  return ["success", "done"].includes(mail.ai_status);
+          default:        return true;
+        }
+      });
+    }
+    // Pre-compute stable primitive props so EmailListItem.memo can bail out cheaply
+    return filtered.map(mail => {
+      const { name } = extractSender(mail);
+      return { ...mail, _senderName: name, _dateStr: fmtShort(mail.received_at || mail.date) };
     });
   }, [emails, searchResults, activeFilter]);
 
-  const unreadCount = useMemo(() => emails.filter(m => !m.read && m.mailbox !== "sent").length, [emails]);
-  const canLoadMore = searchResults === null && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
+  const unreadCount   = useMemo(() => emails.filter(m => !m.read && m.mailbox !== "sent").length, [emails]);
+  const canLoadMore   = searchResults === null && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
+  const activeEmailId = activeEmail?.id ?? null;
 
   // ── Polling (nur für AI-Status der geöffneten Mail) ─────────────────────
-  const stopPolling  = () => { clearInterval(pollingRef.current); pollingRef.current = null; };
+  // stopPolling/startPolling/handleOpen nutzen Refs statt Context-Werte als Deps
+  // → stabile Referenzen, keine Kaskaden-Re-renders durch openEmail-Änderungen
+  const stopPolling = useCallback(() => {
+    clearInterval(pollingRef.current);
+    pollingRef.current = null;
+  }, []);
+
   const startPolling = useCallback((id) => {
     stopPolling();
     pollingRef.current = setInterval(async () => {
       try {
-        const updated = await openEmail(id);
+        const updated = await openEmailRef.current(id);
         const status = updated?.ai_status ?? activeEmailRef.current?.ai_status;
         if (["done", "success", "failed"].includes(status) || !activeEmailRef.current) {
           stopPolling();
         }
       } catch { stopPolling(); }
     }, 4000);
-  }, [openEmail]);
-  useEffect(() => () => stopPolling(), []);
+  }, [stopPolling]);
 
-  const handleOpen = async (id) => {
+  useEffect(() => () => stopPolling(), [stopPolling]);
+
+  const handleOpen = useCallback(async (id) => {
     if (!id || activeEmailRef.current?.id === id) return;
     stopPolling();
-    await openEmail(id);
+    await openEmailRef.current(id);
     setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e));
     startPolling(id);
-  };
+  }, [stopPolling, startPolling]);
 
-  const handleClose = () => { stopPolling(); setTimeout(closeEmail, 30); };
+  const handleClose = useCallback(() => {
+    stopPolling();
+    setTimeout(closeEmail, 30);
+  }, [stopPolling, closeEmail]);
 
-  const handleDisconnect = async () => {
+  const handleReply = useCallback(() => setReplyOpen(true), []);
+
+  const handleDisconnect = useCallback(async () => {
     if (!window.confirm(`${provider} wirklich trennen?`)) return;
     await disconnectProvider?.();
-  };
+  }, [provider, disconnectProvider]);
 
   // Modal-Auswahl je Provider
   const ComposeModal = provider === "imap" ? ImapComposeModal : EmailComposeModal;
@@ -535,27 +636,20 @@ export default function EmailsPage() {
                 {isSearching ? "Keine Treffer." : activeFilter !== "all" ? "Keine Treffer." : "Keine E-Mails."}
               </li>
             )}
-            {displayEmails.map((mail) => {
-              const s    = extractSender(mail);
-              const prio = PRIO[mail.priority];
-              return (
-                <li key={mail.id} onClick={() => handleOpen(mail.id)}
-                  className={`em-item ${activeEmail?.id === mail.id ? "em-item--active" : ""} ${!mail.read ? "em-item--unread" : ""}`}>
-                  <Avatar name={s.name} />
-                  <div className="em-item-body">
-                    <div className="em-item-top">
-                      <span className="em-item-sender">{s.name}</span>
-                      <div className="em-item-top-right">
-                        {prio && <span className={`em-dot ${prio.dot}`} title={prio.label}/>}
-                        <span className="em-item-date">{fmtShort(mail.received_at || mail.date)}</span>
-                      </div>
-                    </div>
-                    <p className="em-item-subject">{mail.subject || "(Kein Betreff)"}</p>
-                    {mail.category && <span className="em-item-category">{mail.category}</span>}
-                  </div>
-                </li>
-              );
-            })}
+            {displayEmails.map((mail) => (
+              <EmailListItem
+                key={mail.id}
+                id={mail.id}
+                isActive={activeEmailId === mail.id}
+                isUnread={!mail.read}
+                senderName={mail._senderName}
+                subject={mail.subject}
+                category={mail.category}
+                priority={mail.priority}
+                dateStr={mail._dateStr}
+                onOpen={handleOpen}
+              />
+            ))}
             {canLoadMore && (
               <li className="em-load-more">
                 <button onClick={loadMore} disabled={loadingMore} className="em-load-more-btn">
@@ -568,62 +662,7 @@ export default function EmailsPage() {
 
         {/* ── Detail ── */}
         <div className={`em-detail-col ${activeEmail ? "em-detail-col--open" : ""}`}>
-          {!activeEmail ? (
-            <div className="em-detail-empty">Wähle eine E-Mail aus</div>
-          ) : (
-            <div className="em-detail">
-              <div className="em-detail-topbar">
-                <button onClick={handleClose} className="em-back">{IC.back} Zurück</button>
-              </div>
-              <div className="em-detail-inner">
-                <h2 className="em-detail-subject">{activeEmail.subject || "(Kein Betreff)"}</h2>
-                <div className="em-detail-meta">
-                  {(() => {
-                    const s = extractSender(activeEmail);
-                    return (
-                      <>
-                        <Avatar name={s.name}/>
-                        <div className="em-detail-meta-info">
-                          <span className="em-detail-meta-name">{s.name}</span>
-                          <span className="em-detail-meta-email">&lt;{s.email}&gt;</span>
-                        </div>
-                        <span className="em-detail-meta-date">{fmtLong(activeEmail.received_at)}</span>
-                      </>
-                    );
-                  })()}
-                </div>
-                <AiPanel email={activeEmail} />
-                <div className="em-detail-body">
-                  <SafeEmailHtml html={activeEmail.body ?? ""} />
-                </div>
-                {activeEmail.attachments?.length > 0 && (
-                  <div className="em-attachments">
-                    <div className="em-attachments-label">Anhänge ({activeEmail.attachments.length})</div>
-                    <div className="em-attachment-list">
-                      {activeEmail.attachments.map((att, i) => (
-                        <a key={i}
-                          href={attachmentUrl({ email: activeEmail, attachmentId: att.id })}
-                          target="_blank" rel="noreferrer" className="em-attachment-chip"
-                          download={att.filename}>
-                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-                            <polyline points="13 2 13 9 20 9"/>
-                          </svg>
-                          {att.filename}
-                          {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes/1024).toFixed(0)} KB</span>}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="em-detail-actions">
-                  <button onClick={() => setReplyOpen(true)} className="em-reply-btn">
-                    {IC.reply} Antworten
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} />
         </div>
       </div>
 

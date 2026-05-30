@@ -143,10 +143,12 @@ export const ImapProvider = ({ children }) => {
   const openEmail = useCallback(async (id) => {
     if (!id) return null;
     try {
-      const r = await api.get(`/imap/emails/${id}`);
+      const r      = await api.get(`/imap/emails/${id}`);
       const detail = r.data;
-      setActiveEmail(detail);
-      // Mark-Read async — UI hat lokal schon optimistisch markiert.
+      // Bail out if only a timestamp changed — prevents polling from forcing re-renders
+      setActiveEmail(prev =>
+        prev?.id === detail.id && prev?.ai_status === detail.ai_status ? prev : detail
+      );
       if (detail && !detail.read) {
         api.patch(`/imap/emails/${id}/read`).catch(() => {});
       }
