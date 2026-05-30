@@ -29,6 +29,7 @@ import BankSyncTab          from "../components/accounting/BankSyncTab";
 import AngeboteTab          from "../components/accounting/AngeboteTab";
 import ReisekostenTab       from "../components/accounting/ReisekostenTab";
 import KassenbuchTab        from "../components/accounting/KassenbuchTab";
+import TagesabschlussTab   from "../components/accounting/TagesabschlussTab";
 import GewerbesteuerTab     from "../components/accounting/GewerbesteuerTab";
 import BelegEmailTab        from "../components/accounting/BelegEmailTab";
 import ProjektTab           from "../components/accounting/ProjektTab";
@@ -1063,11 +1064,12 @@ function PlanungGruppe({ refreshKey }) {
   const [sub, setSub] = useState("projekte");
   return (
     <div>
-      <SubNav tabs={[{id:"projekte",label:"Projekte & Zeit"},{id:"budget",label:"Budget"},{id:"reisekosten",label:"Reisekosten"},{id:"kassenbuch",label:"Kassenbuch"}]} active={sub} onChange={setSub}/>
-      {sub==="projekte"  && <ProjektTab key={refreshKey}/>}
-      {sub==="budget"    && <BudgetTab key={refreshKey}/>}
-      {sub==="reisekosten"&&<ReisekostenTab key={refreshKey}/>}
-      {sub==="kassenbuch"&& <KassenbuchTab key={refreshKey}/>}
+      <SubNav tabs={[{id:"projekte",label:"Projekte & Zeit"},{id:"budget",label:"Budget"},{id:"reisekosten",label:"Reisekosten"},{id:"kassenbuch",label:"Kassenbuch"},{id:"tagesabschluss",label:"Tagesabschluss"}]} active={sub} onChange={setSub}/>
+      {sub==="projekte"       && <ProjektTab key={refreshKey}/>}
+      {sub==="budget"         && <BudgetTab key={refreshKey}/>}
+      {sub==="reisekosten"    && <ReisekostenTab key={refreshKey}/>}
+      {sub==="kassenbuch"     && <KassenbuchTab key={refreshKey}/>}
+      {sub==="tagesabschluss" && <TagesabschlussTab key={refreshKey}/>}
     </div>
   );
 }

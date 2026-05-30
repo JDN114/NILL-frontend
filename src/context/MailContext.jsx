@@ -60,16 +60,22 @@ export const MailProvider = ({ children }) => {
 
   // ── Initializing-Status zusammenführen ────────────────────────────────
   const initializing = useMemo(() => {
+    // Always wait for ALL three to report before committing to any provider.
+    // Without this, Outlook (whose .initializing defaults to false) resolves
+    // first and triggers email loading before Gmail's status is known — users
+    // never see the full provider list before emails start loading.
+    const allStatusKnown =
+      gmail?.connected !== null &&
+      outlook?.connected !== null &&
+      !imap?.initializing;
+
+    if (!allStatusKnown) return true;
+
+    // All statuses known — defer to the active provider's data-loading state.
     if (provider === "outlook") return outlook?.initializing ?? false;
     if (provider === "gmail")   return gmail?.initializing   ?? false;
     if (provider === "imap")    return imap?.initializing    ?? false;
-    // Keiner aktiv: warte bis alle drei fertig laden
-    const pending = [
-      gmail?.connected   === null,
-      outlook?.connected === null,
-      imap?.initializing === true,
-    ];
-    return pending.some(Boolean);
+    return false;
   }, [
     provider, gmail?.initializing, outlook?.initializing, imap?.initializing,
     gmail?.connected, outlook?.connected,
@@ -182,6 +188,10 @@ export const MailProvider = ({ children }) => {
 
       // Multi-Provider-Switching
       allProviders, setActiveProvider,
+
+      // Connect-Funktionen für Provider-Picker (auch im !connected-Zustand nutzbar)
+      connectGmail:   gmail?.connectGmail   ?? null,
+      connectOutlook: outlook?.connectOutlook ?? null,
 
       // IMAP-spezifisch durchgereicht
       imapAccounts,

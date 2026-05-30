@@ -153,6 +153,7 @@ export default function EmailsPage() {
     fetchEmails, searchEmails, openEmail, closeEmail,
     initializing, disconnectProvider, hasMore,
     allProviders, setActiveProvider,
+    connectGmail, connectOutlook,
     imapNeedsReauth,
   } = useContext(MailContext);
   const imap = useContext(ImapContext);
@@ -327,7 +328,51 @@ export default function EmailsPage() {
     <div className="em-shell em-shell--center"><Spinner /><p className="em-center-label">Prüfe Verbindung…</p></div>
   );
   if (!connected) return (
-    <div className="em-shell em-shell--center"><p className="em-center-label">Kein E-Mail-Konto verbunden.</p></div>
+    <div className="em-shell em-shell--center">
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:24, maxWidth:360, textAlign:"center" }}>
+        <div style={{ fontSize:"1.5rem", fontWeight:600, color:"var(--nill-text, #e8e0d0)" }}>E-Mail verbinden</div>
+        <p style={{ fontSize:".85rem", color:"var(--nill-text-dim, #888)", lineHeight:1.5, margin:0 }}>
+          Verbinde einen E-Mail-Provider, um deine Nachrichten hier zu verwalten.
+        </p>
+        <div style={{ display:"flex", flexDirection:"column", gap:10, width:"100%" }}>
+          <button
+            onClick={() => connectGmail?.()}
+            style={{
+              padding:"10px 20px", borderRadius:8, border:"1px solid rgba(197,165,114,0.35)",
+              background:"rgba(197,165,114,0.08)", color:"#c5a572",
+              fontSize:".85rem", cursor:"pointer", fontFamily:"inherit",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            Gmail verbinden
+          </button>
+          <button
+            onClick={() => connectOutlook?.()}
+            style={{
+              padding:"10px 20px", borderRadius:8, border:"1px solid rgba(100,140,220,0.35)",
+              background:"rgba(100,140,220,0.08)", color:"#7a9de0",
+              fontSize:".85rem", cursor:"pointer", fontFamily:"inherit",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            Outlook verbinden
+          </button>
+          <a
+            href="/dashboard/settings"
+            style={{
+              padding:"10px 20px", borderRadius:8, border:"1px solid rgba(120,120,120,0.25)",
+              background:"transparent", color:"var(--nill-text-dim, #888)",
+              fontSize:".85rem", cursor:"pointer", fontFamily:"inherit", textDecoration:"none",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            }}
+          >
+            IMAP / eigenen Server verbinden → Einstellungen
+          </a>
+        </div>
+      </div>
+    </div>
   );
 
   const filterLabel = FILTERS.find(f => f.key === activeFilter)?.label;
