@@ -526,10 +526,24 @@ export default function TrinkgeldTab() {
   const [loading, setLoading]       = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  const [modalCreate, setModalCreate]   = useState(false);
-  const [modalEdit, setModalEdit]       = useState(null);
+  const [modalCreate, setModalCreate]       = useState(false);
+  const [modalEdit, setModalEdit]           = useState(null);
   const [modalVerteilen, setModalVerteilen] = useState(null);
+  const [loadingDetail, setLoadingDetail]   = useState(false);
   const [msg, setMsg] = useState(null);
+
+  // Always fetch the full protocol (with verteilungen) before opening VerteilungModal
+  const openVerteilen = useCallback(async (proto) => {
+    setLoadingDetail(true);
+    try {
+      const r = await api.get(`/api/v1/trinkgeld/${proto.id}`);
+      setModalVerteilen(r.data);
+    } catch {
+      setModalVerteilen(proto); // fallback to list data
+    } finally {
+      setLoadingDetail(false);
+    }
+  }, []);
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -754,14 +768,20 @@ export default function TrinkgeldTab() {
                           {(p.status === "offen" || p.status === "verteilt") && (
                             <button
                               className="ac-btn ac-btn-ghost ac-btn-sm"
-                              onClick={() => setModalVerteilen(p)}
+                              disabled={loadingDetail}
+                              onClick={() => openVerteilen(p)}
                             >
-                              Verteilen
+                              {loadingDetail ? "…" : "Verteilen"}
                             </button>
                           )}
                           <button
                             className="ac-btn ac-btn-ghost ac-btn-sm"
-                            onClick={() => setModalEdit(p)}
+                            disabled={loadingDetail}
+                            onClick={() =>
+                              p.status === "offen"
+                                ? setModalEdit(p)
+                                : openVerteilen(p)
+                            }
                           >
                             Details
                           </button>

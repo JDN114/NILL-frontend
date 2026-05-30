@@ -11,8 +11,11 @@ export const OutlookProvider = ({ children }) => {
   const [aiLoading, setAiLoading] = useState(false);
 
   const lastStatusFetch = useRef(0);
-  // ✅ Ref speichert den aktuellen connected-Wert, ohne fetchEmails neu zu erzeugen
-  const connectedRef = useRef(false);
+  // Ref speichert den aktuellen connected-Wert, ohne fetchEmails neu zu erzeugen.
+  // Muss mit null initialisiert werden (passend zu useState(null)), damit der
+  // erste fetchStatus-Aufruf setConnected() immer aufruft, auch wenn Outlook
+  // nicht verbunden ist (false !== false wäre sonst false → State bleibt null).
+  const connectedRef = useRef(null);
 
   // =========================
   // Status Check
