@@ -904,8 +904,9 @@ export default function SettingsPage() {
       setAiConsent(val);
       setAiConsentMsg({ type: "ok", text: val ? "KI-Analyse aktiviert." : "KI-Analyse deaktiviert." });
       setTimeout(() => setAiConsentMsg(null), 3000);
-    } catch {
-      setAiConsentMsg({ type: "err", text: "Fehler beim Speichern." });
+    } catch (err) {
+      const detail = err?.response?.data?.detail || err?.response?.data?.error || err?.message || "Unbekannter Fehler";
+      setAiConsentMsg({ type: "err", text: `Fehler: ${detail}` });
     } finally {
       setAiConsentSaving(false);
     }
