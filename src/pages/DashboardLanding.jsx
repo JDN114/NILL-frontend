@@ -79,6 +79,16 @@ const S = `
   .nd-mode-pill-doppelt { background:rgba(198,255,60,.15); color:var(--accent); }
   .nd-mode-pill-einfach { background:rgba(122,92,255,.15); color:var(--a2); }
 
+  /* AI activation banner */
+  .nd-ai-banner { border-radius:var(--r2); border:1px solid rgba(197,165,114,0.28); background:linear-gradient(135deg,rgba(197,165,114,0.07),rgba(197,165,114,0.03)); padding:20px 24px; margin-bottom:24px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .nd-ai-banner-icon { width:40px; height:40px; border-radius:12px; background:rgba(197,165,114,0.12); border:1px solid rgba(197,165,114,0.25); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .nd-ai-banner-body { flex:1; min-width:200px; }
+  .nd-ai-banner-title { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--ink); margin:0 0 4px; }
+  .nd-ai-banner-desc { font-size:12px; color:var(--ink-dim); margin:0; line-height:1.5; }
+  .nd-ai-banner-cta { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; background:rgba(197,165,114,0.15); border:1px solid rgba(197,165,114,0.35); color:#c5a572; border-radius:99px; padding:7px 16px; white-space:nowrap; text-decoration:none; cursor:pointer; transition:background .2s,border-color .2s; flex-shrink:0; }
+  .nd-ai-banner-cta:hover { background:rgba(197,165,114,0.25); border-color:rgba(197,165,114,0.55); }
+  .nd-ai-banner-tag { font-family:var(--mono); font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:rgba(197,165,114,0.6); background:rgba(197,165,114,0.08); border:1px solid rgba(197,165,114,0.18); border-radius:99px; padding:2px 8px; display:inline-block; margin-bottom:6px; }
+
   @media(max-width:600px) {
     .nd-welcome { padding:24px 20px; }
     .nd-grid { grid-template-columns:1fr 1fr; }
@@ -96,10 +106,11 @@ const ICONS = {
 
 
 export default function DashboardLanding() {
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [showTour, setShowTour]       = useState(false);
-  const [userName, setUserName]       = useState(null);
-  const [notifications, setNotifications] = useState([]);
+  const [showWelcome, setShowWelcome]       = useState(false);
+  const [showTour, setShowTour]             = useState(false);
+  const [userName, setUserName]             = useState(null);
+  const [notifications, setNotifications]   = useState([]);
+  const [aiConsentDone, setAiConsentDone]   = useState(null); // null=loading, true/false
   const [accountingMode, setAccountingMode] = useState(
     () => localStorage.getItem("nill_accounting_mode") || "doppelt"
   );
@@ -124,7 +135,8 @@ export default function DashboardLanding() {
     api.get("/me/profile").then(r => setUserName(r.data.name || null)).catch(() => {});
     api.get("/me/onboarding-status").then(r => {
       if (r.data.is_subscription_active && !r.data.has_seen_onboarding) setShowWelcome(true);
-    }).catch(() => {});
+      setAiConsentDone(r.data.ai_email_processing_consent === true);
+    }).catch(() => { setAiConsentDone(true); }); // on error: don't show banner
     api.get("/me/notifications").then(r => setNotifications(r.data || [])).catch(() => {});
   }, []);
 
@@ -182,6 +194,29 @@ export default function DashboardLanding() {
               </div>
             )}
           </motion.div>
+
+          {/* ── KI-Aktivierungs-Banner ── */}
+          {aiConsentDone === false && isCompanyAdmin() && (
+            <motion.div
+              className="nd-ai-banner"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: .45 }}
+            >
+              <div className="nd-ai-banner-icon">◈</div>
+              <div className="nd-ai-banner-body">
+                <div className="nd-ai-banner-tag">EU AI Act · Deine Zustimmung erforderlich</div>
+                <div className="nd-ai-banner-title">KI E-Mail-Analyse noch nicht aktiviert</div>
+                <p className="nd-ai-banner-desc">
+                  NILL kann eingehende E-Mails automatisch zusammenfassen, priorisieren und kategorisieren —
+                  aber nur mit deiner ausdrücklichen Zustimmung. Aktiviere die Funktion in den Einstellungen.
+                </p>
+              </div>
+              <Link to="/dashboard/settings?tab=integrationen" className="nd-ai-banner-cta">
+                Jetzt aktivieren →
+              </Link>
+            </motion.div>
+          )}
 
           {/* ── Module ── */}
           <div className="nd-section-label">Module</div>

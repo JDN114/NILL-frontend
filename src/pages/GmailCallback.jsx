@@ -11,7 +11,6 @@ export default function GmailCallback() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const returnedState = params.get("state");
-    const savedState = sessionStorage.getItem("oauth_state");
 
     // -------------------------------
     // 1️⃣ Validierung
@@ -23,9 +22,9 @@ export default function GmailCallback() {
       return;
     }
 
-    if (!returnedState || returnedState !== savedState) {
+    if (!returnedState) {
       setStatus("error");
-      setMessage("Ungültiger OAuth-State. Bitte erneut versuchen.");
+      setMessage("Kein OAuth-State erhalten.");
       setTimeout(() => navigate("/dashboard?error=invalid_state"), 2000);
       return;
     }

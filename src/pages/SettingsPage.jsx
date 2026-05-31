@@ -754,6 +754,11 @@ export default function SettingsPage() {
   const [orgSuccess, setOrgSuccess] = useState(false);
   const [orgError,   setOrgError]   = useState("");
 
+  // ── KI E-Mail-Analyse Einwilligung ───────────────────────────────────────
+  const [aiConsent,       setAiConsent]       = useState(null);
+  const [aiConsentSaving, setAiConsentSaving] = useState(false);
+  const [aiConsentMsg,    setAiConsentMsg]    = useState(null); // { type: "ok"|"err", text }
+
   // ── Notification prefs (localStorage + backend) ─────────────────────────
   const [notifs, setNotifs] = useState({
     invoices:  true, tasks:  true,
@@ -842,6 +847,12 @@ export default function SettingsPage() {
   }, [activeTab, billingInvoices]);
 
   useEffect(() => {
+    api.get("/me/onboarding-status")
+      .then(r => setAiConsent(r.data?.ai_email_processing_consent ?? null))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     const saved = localStorage.getItem("nill_notif_prefs");
     if (saved) { try { setNotifs(JSON.parse(saved)); } catch {} }
   }, []);
@@ -882,6 +893,21 @@ export default function SettingsPage() {
       setOrgError("Fehler beim Speichern. Bitte versuche es erneut.");
     } finally {
       setOrgSaving(false);
+    }
+  };
+
+  const handleAiConsentToggle = async (val) => {
+    setAiConsentSaving(true);
+    setAiConsentMsg(null);
+    try {
+      await api.post("/me/consent", { ai_email_processing: val });
+      setAiConsent(val);
+      setAiConsentMsg({ type: "ok", text: val ? "KI-Analyse aktiviert." : "KI-Analyse deaktiviert." });
+      setTimeout(() => setAiConsentMsg(null), 3000);
+    } catch {
+      setAiConsentMsg({ type: "err", text: "Fehler beim Speichern." });
+    } finally {
+      setAiConsentSaving(false);
     }
   };
 
@@ -1542,6 +1568,42 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* KI E-Mail-Analyse */}
+                <div style={panelStyle}>
+                  <SectionHead title="KI E-Mail-Analyse" />
+                  <Toggle
+                    on={aiConsent === true}
+                    onChange={handleAiConsentToggle}
+                    label="Automatische KI-Analyse aktivieren"
+                    description="E-Mails werden automatisch zusammengefasst, priorisiert und kategorisiert."
+                  />
+                  <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+                    <div style={{
+                      background: "rgba(59,130,246,0.05)",
+                      border: "1px solid rgba(59,130,246,0.18)",
+                      borderRadius: 10, padding: "0.85rem 1rem",
+                    }}>
+                      <div style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.12em",
+                        textTransform: "uppercase", color: "rgba(96,165,250,0.7)", marginBottom: 6 }}>
+                        EU AI Act · DSGVO Art. 6(1)(a)
+                      </div>
+                      <p style={{ margin: 0, fontSize: "0.79rem", color: dim, lineHeight: 1.6 }}>
+                        Gemäß dem EU AI Act und der DSGVO musst du der automatischen KI-Verarbeitung
+                        deiner E-Mails ausdrücklich zustimmen. Die KI liest Betreff und Inhalt
+                        eingehender E-Mails und erstellt Zusammenfassungen, Prioritäten und Kategorien.
+                        Du kannst diese Einwilligung jederzeit widerrufen — bereits analysierte E-Mails
+                        bleiben gespeichert, neue werden dann nicht mehr verarbeitet.
+                      </p>
+                    </div>
+                    {aiConsentSaving && <span style={{ fontSize: "0.78rem", color: dim }}>Wird gespeichert…</span>}
+                    {aiConsentMsg && (
+                      <span style={{ fontSize: "0.78rem", color: aiConsentMsg.type === "ok" ? green : red }}>
+                        {aiConsentMsg.type === "ok" ? "✓ " : "✗ "}{aiConsentMsg.text}
+                      </span>
+                    )}
                   </div>
                 </div>
 

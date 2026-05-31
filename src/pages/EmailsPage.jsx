@@ -90,7 +90,8 @@ const Spinner = memo(function Spinner({ sm }) {
   return <div className={sm ? "em-spinner em-spinner--sm" : "em-spinner"} />;
 });
 
-const AiPanel = memo(function AiPanel({ email }) {
+const AiPanel = memo(function AiPanel({ email, aiEnabled }) {
+  if (!aiEnabled) return null;
   const s = email.ai_status;
   if (s === "pending" || s === "processing") return (
     <div className="em-ai-panel em-ai-panel--loading">
@@ -146,9 +147,9 @@ const AiPanel = memo(function AiPanel({ email }) {
 
 // ── Memoized EmailListItem — re-renders only when its own props change ─────────
 const EmailListItem = memo(function EmailListItem({
-  id, isActive, isUnread, senderName, subject, category, priority, dateStr, onOpen,
+  id, isActive, isUnread, senderName, subject, category, priority, dateStr, onOpen, aiEnabled,
 }) {
-  const prio = PRIO[priority];
+  const prio = aiEnabled ? PRIO[priority] : null;
   return (
     <li
       onClick={() => onOpen(id)}
@@ -164,14 +165,14 @@ const EmailListItem = memo(function EmailListItem({
           </div>
         </div>
         <p className="em-item-subject">{subject || "(Kein Betreff)"}</p>
-        {category && <span className="em-item-category">{category}</span>}
+        {aiEnabled && category && <span className="em-item-category">{category}</span>}
       </div>
     </li>
   );
 });
 
 // ── Memoized EmailDetail — re-renders only when activeEmail content changes ──
-const EmailDetail = memo(function EmailDetail({ email, onClose, onReply }) {
+const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabled }) {
   if (!email) return <div className="em-detail-empty">Wähle eine E-Mail aus</div>;
   const s = extractSender(email);
   return (
@@ -189,7 +190,7 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply }) {
           </div>
           <span className="em-detail-meta-date">{fmtLong(email.received_at)}</span>
         </div>
-        <AiPanel email={email} />
+        <AiPanel email={email} aiEnabled={aiEnabled} />
         <div className="em-detail-body">
           <SafeEmailHtml html={email.body ?? ""} />
         </div>
@@ -237,6 +238,7 @@ export default function EmailsPage() {
   } = useContext(MailContext);
   const imap = useContext(ImapContext);
 
+  const [aiEnabled, setAiEnabled]       = useState(false);
   const [mailbox, setMailbox]           = useState("inbox");
   const [activeFolder, setActiveFolder] = useState(null);
   const [folders, setFolders]           = useState([]);
@@ -276,6 +278,12 @@ export default function EmailsPage() {
   }, [connected]);
 
   useEffect(() => { if (!user) navigate("/login", { replace: true }); }, [user, navigate]);
+
+  useEffect(() => {
+    api.get("/me/onboarding-status")
+      .then(r => setAiEnabled(r.data?.ai_email_processing_consent === true))
+      .catch(() => {});
+  }, []);
 
   // ── Initiales Laden ───────────────────────────────────────────────────────
   const loadEmails = useCallback(async () => {
@@ -401,12 +409,18 @@ export default function EmailsPage() {
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
+  const aiEnabledRef = useRef(aiEnabled);
+  useEffect(() => { aiEnabledRef.current = aiEnabled; }, [aiEnabled]);
+
   const handleOpen = useCallback(async (id) => {
     if (!id || activeEmailRef.current?.id === id) return;
     stopPolling();
-    await openEmailRef.current(id);
+    const email = await openEmailRef.current(id);
     setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e));
-    startPolling(id);
+    const status = email?.ai_status ?? "skipped";
+    if (aiEnabledRef.current && !["done", "success", "failed", "skipped"].includes(status)) {
+      startPolling(id);
+    }
   }, [stopPolling, startPolling]);
 
   const handleClose = useCallback(() => {
@@ -603,7 +617,7 @@ export default function EmailsPage() {
             </button>
             {filterOpen && (
               <div className="em-filter-dropdown">
-                {FILTERS.map(f => (
+                {FILTERS.filter(f => aiEnabled || f.key !== "withAI").map(f => (
                   <button key={f.key} onClick={() => { setActiveFilter(f.key); setFilterOpen(false); }}
                     className={`em-filter-option ${activeFilter === f.key ? "em-filter-option--active" : ""}`}>
                     {f.label}
@@ -646,6 +660,7 @@ export default function EmailsPage() {
                 priority={mail.priority}
                 dateStr={mail._dateStr}
                 onOpen={handleOpen}
+                aiEnabled={aiEnabled}
               />
             ))}
             {canLoadMore && (
@@ -660,7 +675,7 @@ export default function EmailsPage() {
 
         {/* ── Detail ── */}
         <div className={`em-detail-col ${activeEmail ? "em-detail-col--open" : ""}`}>
-          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} />
+          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} aiEnabled={aiEnabled} />
         </div>
       </div>
 
