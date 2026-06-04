@@ -51,11 +51,9 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
       .then(stream => {
         if (!alive) { stream.getTracks().forEach(t => t.stop()); return; }
         streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          // Ensure playback starts on iOS/Safari
-          videoRef.current.play().catch(() => {});
-        }
+        // Don't assign to videoRef here — the <video> element is only rendered
+        // after setCamState("active") triggers a re-render. The stream is attached
+        // in the separate useEffect below that runs once camState becomes "active".
         setCamState("active");
       })
       .catch(() => { if (alive) setCamState("denied"); });
@@ -66,6 +64,15 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
       cancelAnimationFrame(rafRef.current);
     };
   }, [disabled]);
+
+  // Attach the stream to the <video> element once it's in the DOM.
+  // This runs after React renders the video element (camState === "active"),
+  // which is why it can't be done inside the camera-start effect above.
+  useEffect(() => {
+    if (camState !== "active" || !videoRef.current || !streamRef.current) return;
+    videoRef.current.srcObject = streamRef.current;
+    videoRef.current.play().catch(() => {});
+  }, [camState]);
 
   // RAF scan loop — runs at ~30 fps to keep CPU reasonable.
   // inversionAttempts: "attemptBoth" catches inverted QR codes (white on dark background,
