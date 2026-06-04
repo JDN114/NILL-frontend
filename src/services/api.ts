@@ -1,19 +1,24 @@
 import axios from "axios";
 
+const apiUrl = (import.meta as any).env?.VITE_API_URL;
+if (!apiUrl) {
+  throw new Error("VITE_API_URL ist nicht gesetzt – Abbruch aus Sicherheitsgründen");
+}
+
 const api = axios.create({
-  baseURL: (import.meta as any).env?.VITE_API_URL || "https://api.nillai.de",
+  baseURL: apiUrl,
   withCredentials: true,
 });
 
-// src/services/api.ts (weiter unten hinzufügen)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
       const status = error.response.status;
       if (status === 401) {
-        console.error("Nicht authentifiziert, bitte neu einloggen.");
-        // hier könnte ein Redirect oder Logout erfolgen
+        // Clear any stale state and force re-login
+        document.cookie = "csrf_t=; Max-Age=0; path=/";
+        window.location.href = "/login";
       } else if (status === 403) {
         console.error("Zugriff verweigert.");
       } else {
