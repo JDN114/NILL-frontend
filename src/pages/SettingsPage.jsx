@@ -736,6 +736,14 @@ export default function SettingsPage() {
   const [cancelDone,        setCancelDone]        = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
+  // ── AI Usage ────────────────────────────────────────────────────────────
+  const [aiUsage,     setAiUsage]     = useState(null);
+  const [aiUsageLoad, setAiUsageLoad] = useState(false);
+
+  // ── Org Capacity ────────────────────────────────────────────────────────
+  const [orgCapacity,     setOrgCapacity]     = useState(null);
+  const [orgCapacityLoad, setOrgCapacityLoad] = useState(false);
+
   // ── DSGVO Export ────────────────────────────────────────────────────────
   const [gdprExporting,      setGdprExporting]      = useState(false);
   const [gdprCsvExporting,   setGdprCsvExporting]   = useState(false);
@@ -835,6 +843,26 @@ export default function SettingsPage() {
       .then(r => setRefundEligibility(r.data))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "team" && isAdmin) {
+      setOrgCapacityLoad(true);
+      api.get("/team/members/capacity")
+        .then(r => setOrgCapacity(r.data))
+        .catch(() => setOrgCapacity(null))
+        .finally(() => setOrgCapacityLoad(false));
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "nutzung") {
+      setAiUsageLoad(true);
+      api.get("/api/v1/ai-usage")
+        .then(r => setAiUsage(r.data))
+        .catch(() => setAiUsage(null))
+        .finally(() => setAiUsageLoad(false));
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === "abonnement" && billingInvoices === null) {
@@ -1160,6 +1188,7 @@ export default function SettingsPage() {
       { id: "email_vorlagen", label: "E-Mail Vorlagen",   icon: svgMail },
       { id: "station_guide",  label: "ArbeitsStation",     icon: svgStation },
     ] : []),
+    { id: "nutzung",         label: "Nutzung",            icon: svgChart },
     { id: "hilfe",           label: "Hilfe",              icon: svgHelp },
   ];
 
@@ -1935,7 +1964,7 @@ export default function SettingsPage() {
               <>
                 <div style={panelStyle}>
                   <SectionHead title="Organisation" />
-                  <div style={{ padding: "1.25rem" }}>
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                     <div className="sp-grid-3" style={{
                       display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
                       padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
@@ -1953,6 +1982,58 @@ export default function SettingsPage() {
                         </div>
                       ))}
                     </div>
+
+                    {/* ── Seats indicator (admin only) ──────────────────── */}
+                    {isAdmin && (() => {
+                      if (orgCapacityLoad) return (
+                        <p style={{ fontSize: "0.78rem", color: mute, margin: 0 }}>Lade Plätze…</p>
+                      );
+                      if (!orgCapacity) return null;
+                      const { active, pending, max, slots_left, at_capacity, plan } = orgCapacity;
+                      const used = active + pending;
+                      const pct  = Math.min(100, Math.round((used / max) * 100));
+                      const barColor = at_capacity ? red : pct >= 80 ? amber : gold;
+                      const planLabel = plan === "solo" ? "Solo (max. 2)" : plan === "team" ? "Team (max. 10)" : "Business";
+                      return (
+                        <div style={{
+                          padding: "0.9rem 1rem", borderRadius: 10,
+                          background: "rgba(255,255,255,0.03)",
+                          border: `1px solid ${at_capacity ? "rgba(248,113,113,0.25)" : border}`,
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: text }}>
+                              Plätze belegt
+                            </span>
+                            <span style={{
+                              fontSize: "0.75rem", fontWeight: 700,
+                              color: at_capacity ? red : slots_left <= 1 ? amber : dim,
+                              background: at_capacity ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.05)",
+                              padding: "2px 9px", borderRadius: 20,
+                            }}>
+                              {at_capacity
+                                ? "Voll — kein Platz mehr"
+                                : `${slots_left} Platz${slots_left !== 1 ? "e" : ""} frei`}
+                            </span>
+                          </div>
+
+                          {/* progress bar */}
+                          <div style={{ height: 6, borderRadius: 6, background: "rgba(255,255,255,0.07)", overflow: "hidden", marginBottom: 6 }}>
+                            <div style={{ height: "100%", borderRadius: 6, width: `${pct}%`, background: barColor, transition: "width 0.4s ease" }} />
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "0.72rem", color: mute }}>
+                              {active} aktiv{pending > 0 ? ` · ${pending} eingeladen` : ""} · max {max} ({planLabel})
+                            </span>
+                            {at_capacity && (
+                              <a href="/pricing" style={{ fontSize: "0.72rem", color: gold, fontWeight: 600, textDecoration: "none" }}>
+                                Upgrade →
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -2411,6 +2492,125 @@ export default function SettingsPage() {
               <MitarbeiterAusweis />
             )}
 
+            {/* ══ NUTZUNG ════════════════════════════════════════════════ */}
+            {activeTab === "nutzung" && (
+              <>
+                <div style={panelStyle}>
+                  <SectionHead title="KI-Nutzung heute" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
+                    {aiUsageLoad && (
+                      <p style={{ fontSize: "0.83rem", color: dim }}>Lade Nutzungsdaten…</p>
+                    )}
+
+                    {!aiUsageLoad && !aiUsage && (
+                      <p style={{ fontSize: "0.83rem", color: dim }}>Nutzungsdaten konnten nicht geladen werden.</p>
+                    )}
+
+                    {!aiUsageLoad && aiUsage && (() => {
+                      const planLabel = org?.plan === "solo" ? "Solo" : org?.plan === "team" ? "Team" : org?.plan === "business" ? "Business" : "Enterprise";
+                      const UsageBar = ({ label, icon, used, cap, unlimited, available = true }) => {
+                        if (!available) return (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: text, display: "flex", gap: 6, alignItems: "center" }}>{icon} {label}</span>
+                              <span style={{ fontSize: "0.75rem", color: mute, background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 20 }}>Nicht verfügbar im Solo-Plan</span>
+                            </div>
+                          </div>
+                        );
+                        const pct = unlimited ? 0 : Math.min(100, Math.round((used / cap) * 100));
+                        const barColor = unlimited ? gold : pct >= 90 ? "#f87171" : pct >= 70 ? "#fbbf24" : gold;
+                        return (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: text, display: "flex", gap: 6, alignItems: "center" }}>{icon} {label}</span>
+                              <span style={{ fontSize: "0.8rem", color: unlimited ? gold : pct >= 90 ? red : dim, fontWeight: 600 }}>
+                                {unlimited ? "Unbegrenzt" : `${used} / ${cap} heute`}
+                              </span>
+                            </div>
+                            {!unlimited && (
+                              <div style={{ height: 6, borderRadius: 6, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                                <div style={{
+                                  height: "100%", borderRadius: 6,
+                                  width: `${pct}%`,
+                                  background: barColor,
+                                  transition: "width 0.4s ease",
+                                }} />
+                              </div>
+                            )}
+                            {!unlimited && pct >= 90 && (
+                              <p style={{ fontSize: "0.75rem", color: pct >= 100 ? red : amber, margin: 0 }}>
+                                {pct >= 100 ? "Tageslimit erreicht. Lädt um Mitternacht wieder auf." : "Fast aufgebraucht."}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      };
+                      return (
+                        <>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                            padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                            <span style={{ fontSize: "0.78rem", color: dim }}>Aktueller Plan</span>
+                            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: gold }}>{planLabel}</span>
+                          </div>
+                          <UsageBar
+                            label="E-Mail KI (Antwort-Assistent)"
+                            icon="📧"
+                            used={aiUsage.email_ai.used}
+                            cap={aiUsage.email_ai.cap}
+                            unlimited={aiUsage.email_ai.unlimited}
+                          />
+                          <UsageBar
+                            label="NILL Sekretärin"
+                            icon="🤖"
+                            used={aiUsage.nill_secretary.used}
+                            cap={aiUsage.nill_secretary.cap}
+                            unlimited={aiUsage.nill_secretary.unlimited}
+                            available={aiUsage.nill_secretary.available}
+                          />
+                          <p style={{ fontSize: "0.75rem", color: mute, margin: 0, borderTop: `1px solid ${border}`, paddingTop: "0.75rem" }}>
+                            Tägliche Zusammenfassungen (NILL Sekretärin) werden nicht auf das Limit angerechnet.
+                            Alle Limits laden täglich um Mitternacht neu auf.
+                          </p>
+                        </>
+                      );
+                    })()}
+
+                  </div>
+                </div>
+
+                <div style={panelStyle}>
+                  <SectionHead title="Übersicht Tages-Limits" />
+                  <div style={{ padding: "1.25rem" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${border}` }}>
+                          <th style={{ textAlign: "left", color: dim, fontWeight: 600, paddingBottom: "0.5rem" }}>Funktion</th>
+                          <th style={{ textAlign: "center", color: dim, fontWeight: 600, paddingBottom: "0.5rem" }}>Solo</th>
+                          <th style={{ textAlign: "center", color: dim, fontWeight: 600, paddingBottom: "0.5rem" }}>Team</th>
+                          <th style={{ textAlign: "center", color: dim, fontWeight: 600, paddingBottom: "0.5rem" }}>Business</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          ["E-Mail KI (Antwort)", "10/Tag", "30/Tag", "100/Tag"],
+                          ["NILL Sekretärin", "—", "10/Tag", "25/Tag"],
+                          ["Tägliche Zusammenfassung", "—", "Immer", "Immer"],
+                        ].map(([fn, solo, team, biz]) => (
+                          <tr key={fn} style={{ borderBottom: `1px solid ${border}` }}>
+                            <td style={{ padding: "0.6rem 0", color: text }}>{fn}</td>
+                            <td style={{ textAlign: "center", color: solo === "—" ? mute : dim }}>{solo}</td>
+                            <td style={{ textAlign: "center", color: dim }}>{team}</td>
+                            <td style={{ textAlign: "center", color: dim }}>{biz}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* ══ HILFE ══════════════════════════════════════════════════ */}
             {activeTab === "hilfe" && (
               <>
@@ -2606,6 +2806,12 @@ const svgStation = (
 const svgContact = (
   <svg {...iconProps}>
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+const svgChart = (
+  <svg {...iconProps}>
+    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="14"/>
   </svg>
 );
 const svgBadge = (

@@ -64,20 +64,34 @@ function ScanScreen({ onResult }) {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{
-          width: 320, height: 160,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Spinner />
-        </div>
-      ) : (
+      {/* Camera stays visible during loading — spinner overlays it so user keeps the frame centred */}
+      <div style={{ position: "relative", width: "100%", maxWidth: 480 }}>
         <QrScannerStation
           onScan={handleScan}
           accent={ACCENT}
           label="Mitarbeiterausweis vor die Kamera halten"
+          disabled={loading}
         />
-      )}
+        {loading && (
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 12,
+            background: "rgba(4,4,15,0.6)",
+            borderRadius: 20,
+          }}>
+            <Spinner />
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.65rem", letterSpacing: "0.15em",
+              color: "rgba(239,237,231,0.5)",
+              textTransform: "uppercase",
+            }}>
+              Prüfe Ausweis…
+            </span>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div style={{

@@ -29,8 +29,8 @@ const PLANS = [
     monthlyPrice: 25,
     yearlyPrice: 240,
     features: [
-      "NILL KI-Sekretärin (unbegrenzte Anfragen)",
       "E-Mail-Integration: Gmail, Outlook & IMAP",
+      "E-Mail KI-Assistent: 10 Antworten / Tag",
       "Intelligenter Kalender & Aufgaben",
       "Buchhaltung mit OCR-Belegerfassung",
       "Automatische Steuer- & Kategorieextraktion",
@@ -47,11 +47,11 @@ const PLANS = [
     pop: true,
     features: [
       "Alles aus Solo — für bis zu 10 Nutzer",
+      "NILL Sekretärin: 10 KI-Anfragen / Tag",
+      "E-Mail KI-Assistent: 30 Antworten / Tag",
+      "Tägliche KI-Zusammenfassung (immer inklusive)",
       "Lohnbuchhaltung & Mitarbeiterverwaltung",
-      "Arbeitszeiterfassung & digitale Stempeluhr",
-      "Urlaubs- & Abwesenheitsverwaltung",
-      "Team-Aufgaben mit Deadline-Erinnerungen",
-      "HR-Dokumente & automatische Lohnabrechnungen",
+      "Arbeitszeiterfassung & HR-Dokumente",
     ],
   },
   {
@@ -63,8 +63,9 @@ const PLANS = [
     yearlyPrice: 864,
     features: [
       "Alles aus Team — unbegrenzte Nutzerzahl",
+      "NILL Sekretärin: 25 KI-Anfragen / Tag",
+      "E-Mail KI-Assistent: 100 Antworten / Tag",
       "API-Zugang & Webhooks (folgt Q4 2026)",
-      "Erweiterte KI-Automatisierungen",
       "Priorisierter Support mit SLA-Garantie",
       "Nutzungsanalysen & individuelle Berichte (folgt Q4 2026)",
     ],

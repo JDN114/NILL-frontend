@@ -77,7 +77,11 @@ function PageLoader() {
 
 function InactivityGuard() {
   const { user } = useAuth();
-  useInactivityLogout(!!user);
+  const location = useLocation();
+  // ArbeitsStation is a kiosk — a shared, always-on display. Never log out due to
+  // inactivity while on any /station route.
+  const isStation = location.pathname.startsWith("/station");
+  useInactivityLogout(!!user && !isStation);
   return null;
 }
 

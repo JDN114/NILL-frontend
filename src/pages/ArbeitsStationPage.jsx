@@ -6,16 +6,17 @@ import api from "../services/api";
 import StationExitModal from "../components/StationExitModal";
 
 // ─── Module registry ─────────────────────────────────────────────────────────
+// E-Mails and Buchhaltung are intentionally excluded from the ArbeitsStation.
+// The station is a shared kiosk display — email access and accounting are
+// personal/admin workflows that must only be used from authenticated personal sessions.
 const MODULE_META = {
-  emails:       { label: "E-Mails",       icon: "✉",  color: "#7a5cff", route: "/dashboard/emails",        desc: "Postfach & Nachrichten" },
-  accounting:   { label: "Buchhaltung",   icon: "◎",  color: "#c5a572", route: "/dashboard/accounting",    desc: "Rechnungen & Ausgaben" },
-  calendar:     { label: "Kalender",      icon: "▦",  color: "#38f5d0", route: "/station/calendar",         desc: "Termine & Planung" },
-  workflow:     { label: "Aufgaben",      icon: "⌘",  color: "#c6ff3c", route: "/station/tasks",            desc: "Tasks & Prozesse" },
-  time:         { label: "Zeiterfassung", icon: "⏱",  color: "#ff4d8d", route: "/station/time",             desc: "Arbeitszeiten" },
-  hr_docs:      { label: "HR & Listen",   icon: "📄",  color: "#fbbf24", route: "/station/hr-documents",    desc: "Dokumente, Listen & Lieferscheine" },
-  shift_plan:   { label: "Schichtplan",   icon: "⬡",  color: "#38f5d0", route: "/station/schichtplan",      desc: "Wochenschichten & Team" },
-  delivery:     { label: "Lieferscheine", icon: "📦",  color: "#fb923c", route: "/station/lieferscheine",   desc: "Lieferungen & Bestätigung" },
-  inventory:    { label: "Inventur",      icon: "◫",  color: "#a78bfa", route: "/station/inventur",         desc: "Bestand & Lager" },
+  calendar:     { label: "Kalender",      icon: "▦",  color: "#38f5d0", route: "/station/calendar",        desc: "Termine & Planung" },
+  workflow:     { label: "Aufgaben",      icon: "⌘",  color: "#c6ff3c", route: "/station/tasks",           desc: "Tasks & Prozesse" },
+  time:         { label: "Zeiterfassung", icon: "⏱",  color: "#ff4d8d", route: "/station/time",            desc: "Arbeitszeiten" },
+  hr_docs:      { label: "HR & Listen",   icon: "📄",  color: "#fbbf24", route: "/station/hr-documents",   desc: "Dokumente, Listen & Lieferscheine" },
+  shift_plan:   { label: "Schichtplan",   icon: "⬡",  color: "#38f5d0", route: "/station/schichtplan",     desc: "Wochenschichten & Team" },
+  delivery:     { label: "Lieferscheine", icon: "📦",  color: "#fb923c", route: "/station/lieferscheine",  desc: "Lieferungen & Bestätigung" },
+  inventory:    { label: "Inventur",      icon: "◫",  color: "#a78bfa", route: "/station/inventur",        desc: "Bestand & Lager" },
 };
 
 // ─── Clock component ─────────────────────────────────────────────────────────
@@ -174,8 +175,9 @@ export default function ArbeitsStationPage() {
   const greeting = hour < 12 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
   const displayName = org?.name ?? userName ?? null;
 
-  // Compute grid columns based on module count
-  const count = stationModules.length;
+  // Only count modules that are actually renderable (emails/accounting excluded from MODULE_META)
+  const visibleModules = stationModules.filter(k => MODULE_META[k]);
+  const count = visibleModules.length;
   const cols = count <= 2 ? count : count <= 4 ? 2 : count <= 6 ? 3 : count <= 9 ? 3 : 4;
 
   return (
