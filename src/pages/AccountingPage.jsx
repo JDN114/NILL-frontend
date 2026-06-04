@@ -1172,13 +1172,18 @@ export default function AccountingPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sessionReady, setSessionReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const accountingMode = localStorage.getItem("nill_accounting_mode") || "doppelt";
+  const [accountingMode, setAccountingMode] = useState(
+    () => localStorage.getItem("nill_accounting_mode") || "einfach"
+  );
   const TABS = useMemo(
     () => ALL_TABS.filter(t => t.modes.includes(accountingMode)),
     [accountingMode]
   );
 
   useEffect(() => {
+    if (!localStorage.getItem("nill_onboarding_done")) {
+      setShowOnboarding(true);
+    }
     api.post("/api/v1/buchhaltung/kontenrahmen/init")
       .catch(() => {})
       .finally(() => setSessionReady(true));
@@ -1252,6 +1257,9 @@ export default function AccountingPage() {
             >
               {t.label}
               {t.comingSoon && <span style={{marginLeft:5,fontSize:"9px",opacity:.6,fontFamily:"monospace",verticalAlign:"middle"}}>soon</span>}
+              {t.id === "rechnungen" && !localStorage.getItem("nill_first_invoice") && (
+                <span style={{marginLeft:4,fontSize:"9px",background:"var(--accent)",color:"var(--surface)",borderRadius:20,padding:"1px 5px",verticalAlign:"middle",fontWeight:700}}>Start</span>
+              )}
             </button>
           ))}
         </div>
@@ -1268,8 +1276,9 @@ export default function AccountingPage() {
           <OnboardingWizard
             onClose={() => setShowOnboarding(false)}
             onComplete={(mode) => {
+              setAccountingMode(mode);
               setShowOnboarding(false);
-              window.location.reload();
+              setTab("rechnungen");
             }}
           />
         )}

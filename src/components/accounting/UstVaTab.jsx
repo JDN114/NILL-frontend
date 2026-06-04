@@ -100,14 +100,16 @@ function SchnellElster({ von, bis }) {
     if (!steuernr.trim()) { setMsg({ type:"err", text:"Steuernummer eingeben." }); return; }
     setLoading(true); setMsg(null);
     try {
+      // test_modus: true — ERiC-Direktübermittlung ist WIP (keine registrierte HerstellerID).
+      // XML wird für manuellen Upload auf elster.de generiert.
       const resp = await api.post("/api/v1/buchhaltung/export/elster", {
         von, bis, steuernummer: steuernr.trim(), finanzamt_id: "9300",
-        zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: false,
+        zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: true,
       }, { responseType: "blob" });
       const url = URL.createObjectURL(resp.data);
       const a = document.createElement("a"); a.href=url; a.download=`ELSTER_UStVA_${von.slice(0,7)}.xml`; a.click();
       URL.revokeObjectURL(url);
-      setMsg({ type:"ok", text:"ELSTER XML heruntergeladen. Auf elster.de hochladen." });
+      setMsg({ type:"ok", text:"ELSTER XML heruntergeladen. Auf elster.de hochladen: Formulare → UStVA → Datei hochladen." });
     } catch { setMsg({ type:"err", text:"Export fehlgeschlagen. Steuernummer prüfen." }); }
     finally { setLoading(false); }
   };
@@ -117,9 +119,19 @@ function SchnellElster({ von, bis }) {
       background:"rgba(198,255,60,.06)", border:"1px solid rgba(198,255,60,.25)",
       borderRadius:10, padding:"14px 18px", marginBottom:16,
     }}>
-      <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:10 }}>
-        <div style={{ fontWeight:700, fontSize:".9rem" }}>UStVA in 2 Klicks einreichen</div>
-        <span style={{ fontSize:".72rem", padding:"2px 8px", borderRadius:10, background:"rgba(198,255,60,.15)", color:"var(--accent)" }}>D Feature</span>
+      <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:10, flexWrap:"wrap" }}>
+        <div style={{ fontWeight:700, fontSize:".9rem" }}>UStVA XML-Export</div>
+        <span style={{ fontSize:".72rem", padding:"2px 8px", borderRadius:10, background:"rgba(198,255,60,.15)", color:"var(--accent)" }}>
+          inkl. §13b KZ 46/47/52/67
+        </span>
+        <span style={{ fontSize:".72rem", padding:"2px 8px", borderRadius:10, background:"rgba(255,160,0,.15)", color:"#ffa000", border:"1px solid rgba(255,160,0,.3)" }}>
+          ⚙ ERiC-Direktübermittlung: WIP
+        </span>
+      </div>
+      <div style={{ fontSize:".78rem", color:"var(--ink2)", marginBottom:10, lineHeight:1.5 }}>
+        XML-Download für manuellen Upload auf{" "}
+        <a href="https://www.elster.de" target="_blank" rel="noopener noreferrer" style={{color:"var(--accent)"}}>elster.de</a>
+        {" "}(Formulare → UStVA → Datei hochladen). Automatische ERiC-Übermittlung folgt nach HerstellerID-Registrierung.
       </div>
       {msg && <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`} style={{marginBottom:10,cursor:"pointer"}} onClick={()=>setMsg(null)}>{msg.text}</div>}
       <div style={{ display:"flex", gap:8, alignItems:"flex-end", flexWrap:"wrap" }}>
@@ -131,9 +143,6 @@ function SchnellElster({ von, bis }) {
         <button className="ac-btn ac-btn-primary" onClick={einreichen} disabled={loading} style={{background:"var(--accent)",color:"#000"}}>
           {loading ? "…" : "ELSTER XML herunterladen"}
         </button>
-      </div>
-      <div style={{fontSize:".74rem",color:"var(--ink2)",marginTop:8}}>
-        Für Zeitraum {von} – {bis}. XML auf <strong style={{color:"var(--ink)"}}>elster.de</strong> unter Formulare → UStVA → Datei hochladen einreichen.
       </div>
     </div>
   );

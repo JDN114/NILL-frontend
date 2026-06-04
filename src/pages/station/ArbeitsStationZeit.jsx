@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import QrScannerStation from "../../components/QrScannerStation";
-import api from "../../lib/api";
+import api from "../../services/api";
 
 const ACCENT = "#ff4d8d";
 

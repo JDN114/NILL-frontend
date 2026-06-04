@@ -769,7 +769,7 @@ function RechnungenList({ onNew, onEdit }) {
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           onClick={() => onEdit(r)}>Bearb.</button>
                         <button className="ac-btn ac-btn-primary ac-btn-sm" disabled={b}
-                          onClick={() => act(r.id, "finalisieren")}>Finalisieren</button>
+                          onClick={() => act(r.id, "finalisieren", "Rechnung jetzt finalisieren?\n\nDamit wird eine rechtsgültige Rechnungsnummer (GoBD §146) vergeben und die Rechnung kann nicht mehr bearbeitet oder gelöscht werden.\n\nDieser Schritt ist unwiderruflich.")}>Finalisieren</button>
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           style={{ color: "var(--a3)" }} onClick={() => del(r.id)}>Löschen</button>
                       </>)}

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import { useAuth } from "../context/AuthContext";
-import api from "../lib/api";
+import api from "../services/api";
 
 /* ── Shared styles ─────────────────────────────────────── */
 const panelStyle = {

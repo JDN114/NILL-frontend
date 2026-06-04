@@ -34,6 +34,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
   }, []);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [kontoSearch, setKontoSearch] = useState("");
 
   const sollSumme  = zeilen.reduce((s, z) => s + parseFloat(z.soll  || 0), 0);
   const habenSumme = zeilen.reduce((s, z) => s + parseFloat(z.haben || 0), 0);
@@ -45,7 +46,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
 
   const save = async () => {
     setError("");
-    if (!balanced) { setError("Soll != Haben - Buchungssatz nicht ausgeglichen."); return; }
+    if (!balanced) { setError("Debet und Kredit sind nicht ausgeglichen. Die Summe aller Soll-Beträge muss gleich der Summe aller Haben-Beträge sein. Bitte prüfen Sie die eingegebenen Beträge."); return; }
     if (zeilen.some(z => !z.konto_id)) { setError("Alle Zeilen brauchen ein Konto."); return; }
     setLoading(true);
     try {
@@ -148,21 +149,65 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
           </div>
         )}
         <div style={{ marginBottom: 12 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
             <span className="ac-label">Buchungszeilen</span>
             <span style={{ fontSize:".8rem", color: balanced ? "var(--accent)" : "var(--a3)" }}>
-              Soll: {fmt(sollSumme)} | Haben: {fmt(habenSumme)} {balanced ? "OK" : "X"}
+              Soll: {fmt(sollSumme)} | Haben: {fmt(habenSumme)}{" "}
+              {balanced ? "✓ Ausgeglichen" : "⚠ Nicht ausgeglichen"}
             </span>
           </div>
-          {zeilen.map((z, i) => (
+          <div style={{ fontSize:".78rem", color:"var(--ink2)", marginBottom:8, lineHeight:1.5 }}>
+            <strong style={{color:"var(--ink)"}}>Soll</strong> = ausgehende Beträge (z.B. Bankabgang, Aufwand) ·{" "}
+            <strong style={{color:"var(--ink)"}}>Haben</strong> = eingehende Beträge (z.B. Einnahme, Verbindlichkeit). Beide Summen müssen gleich sein.
+          </div>
+          <input
+            className="ac-input"
+            placeholder="Konto suchen (Nr. oder Name)…"
+            value={kontoSearch}
+            onChange={e => setKontoSearch(e.target.value)}
+            style={{ marginBottom: 8, fontSize: ".83rem" }}
+          />
+          {zeilen.map((z, i) => {
+            const SKR03_GRUPPEN = [
+              { prefix: "0", label: "Klasse 0 – Anlage- & Kapitalkonten" },
+              { prefix: "1", label: "Klasse 1 – Finanz- & Privatkonten" },
+              { prefix: "2", label: "Klasse 2 – Abgrenzungskonten" },
+              { prefix: "3", label: "Klasse 3 – Waren & Bestände" },
+              { prefix: "4", label: "Klasse 4 – Betriebliche Aufwendungen (Kosten)" },
+              { prefix: "5", label: "Klasse 5 – Diverse" },
+              { prefix: "6", label: "Klasse 6 – Diverse" },
+              { prefix: "7", label: "Klasse 7 – Bestände & Eigenleistungen" },
+              { prefix: "8", label: "Klasse 8 – Erlöse (Einnahmen)" },
+              { prefix: "9", label: "Klasse 9 – Vortrags- & Abschlusskonten" },
+            ];
+            const searchLow = kontoSearch.toLowerCase();
+            const filtered = konten.filter(k =>
+              !kontoSearch ||
+              String(k.kontonummer).includes(kontoSearch) ||
+              k.bezeichnung.toLowerCase().includes(searchLow)
+            );
+            return (
             <div key={i} className="ac-form-row" style={{ marginBottom: 8 }}>
               <div className="ac-form-col" style={{ flex: 3 }}>
                 <select className="ac-select" value={z.konto_id}
                   onChange={e => setZeile(i, "konto_id", e.target.value)}>
                   <option value="">-- Konto wählen --</option>
-                  {konten.map(k => (
-                    <option key={k.id} value={k.id}>{k.kontonummer} - {k.bezeichnung}</option>
-                  ))}
+                  {kontoSearch
+                    ? filtered.map(k => (
+                        <option key={k.id} value={k.id}>{k.kontonummer} – {k.bezeichnung}</option>
+                      ))
+                    : SKR03_GRUPPEN.map(g => {
+                        const gruppe = konten.filter(k => String(k.kontonummer).startsWith(g.prefix));
+                        if (!gruppe.length) return null;
+                        return (
+                          <optgroup key={g.prefix} label={g.label}>
+                            {gruppe.map(k => (
+                              <option key={k.id} value={k.id}>{k.kontonummer} – {k.bezeichnung}</option>
+                            ))}
+                          </optgroup>
+                        );
+                      })
+                  }
                 </select>
               </div>
               <div className="ac-form-col">
@@ -193,7 +238,8 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
               <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => removeZeile(i)}
                 disabled={zeilen.length <= 2}>x</button>
             </div>
-          ))}
+            );
+          })}
           <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={addZeile}>+ Zeile</button>
         </div>
         <div className="ac-modal-footer">
@@ -209,22 +255,32 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
 
 export default function BuchungenTab() {
   const today = new Date();
-  const [buchungen, setBuchungen]   = useState([]);
-  const [konten, setKonten]         = useState([]);
-  const [perioden, setPerioden]     = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [showModal, setShowModal]   = useState(false);
-  const [expanded, setExpanded]     = useState({});
-  const [filter, setFilter]         = useState("");
+  const [buchungen, setBuchungen]     = useState([]);
+  const [konten, setKonten]           = useState([]);
+  const [perioden, setPerioden]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [showModal, setShowModal]     = useState(false);
+  const [expanded, setExpanded]       = useState({});
+  const [filter, setFilter]           = useState("");
+  const [debouncedFilter, setDebouncedFilter] = useState("");
   const [kontoFilter, setKontoFilter] = useState("");
-  const [msg, setMsg]               = useState(null);
+  const [msg, setMsg]                 = useState(null);
   const [von, setVon]               = useState(`${today.getFullYear()}-01-01`);
   const [bis, setBis]               = useState(today.toISOString().slice(0, 10));
 
+  // Debounce text filter: wait 300 ms after last keystroke before firing request
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedFilter(filter), 300);
+    return () => clearTimeout(t);
+  }, [filter]);
+
   const load = useCallback(() => {
     setLoading(true);
+    const params = { von, bis, limit: 200 };
+    if (debouncedFilter) params.q = debouncedFilter;
+    if (kontoFilter)     params.konto_id = kontoFilter;
     Promise.all([
-      api.get("/api/v1/buchhaltung/buchungen", { params: { von, bis, limit: 500 } }),
+      api.get("/api/v1/buchhaltung/buchungen", { params }),
       api.get("/api/v1/buchhaltung/konten"),
       api.get("/api/v1/buchhaltung/perioden"),
     ]).then(([b, k, p]) => {
@@ -232,7 +288,7 @@ export default function BuchungenTab() {
       setKonten(k.data || []);
       setPerioden(p.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [von, bis]);
+  }, [von, bis, debouncedFilter, kontoFilter]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -250,14 +306,8 @@ export default function BuchungenTab() {
     }
   };
 
-  const filtered = buchungen.filter(b => {
-    if (filter && !(
-      (b.buchungstext || "").toLowerCase().includes(filter.toLowerCase()) ||
-      (b.beleg_nummer || "").toLowerCase().includes(filter.toLowerCase())
-    )) return false;
-    if (kontoFilter && !(b.zeilen || []).some(z => String(z.konto_id) === kontoFilter)) return false;
-    return true;
-  });
+  // Filtering is now server-side; buchungen already matches current filter state
+  const filtered = buchungen;
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Journal...</div>;
 

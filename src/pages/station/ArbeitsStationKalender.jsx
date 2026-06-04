@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
-import api from "../../lib/api";
+import api from "../../services/api";
 
 const ACCENT = "#38f5d0";
 

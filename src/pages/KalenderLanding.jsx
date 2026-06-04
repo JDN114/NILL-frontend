@@ -4,7 +4,7 @@ import CalendarWrapper from "../components/Calendar/CalendarWrapper";
 import EventList from "../components/Calendar/EventList";
 import EventModal from "../components/Calendar/EventModal";
 import CreateEventModal from "../components/Calendar/CreateEventModal";
-import api from "../lib/api";
+import api from "../services/api";
 import { AnimatePresence, motion } from "framer-motion";
 
 /* ─── kleine Hilfs-Komponenten ─────────────────────────── */

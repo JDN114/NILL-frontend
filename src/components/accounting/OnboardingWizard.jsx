@@ -37,6 +37,12 @@ export default function OnboardingWizard({ onClose, onComplete }) {
   const next = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep(s => Math.max(s - 1, 0));
 
+  const skip = () => {
+    localStorage.setItem("nill_accounting_mode", "einfach");
+    localStorage.setItem("nill_onboarding_done", "skipped");
+    onClose();
+  };
+
   const finish = async () => {
     setSaving(true);
     try {
@@ -219,12 +225,13 @@ export default function OnboardingWizard({ onClose, onComplete }) {
             }}>
               <strong style={{ color: "var(--ink)" }}>Nächste Schritte:</strong>
               <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-                <li>Firmenstammdaten unter <em>Steuern → Profil bearbeiten</em> vervollständigen</li>
-                <li>Erste Ausgangsrechnung unter <em>Rechnungen → Ausgehend</em> erstellen</li>
+                <li>Erste Rechnung über den Tab <em>Rechnungen</em> erstellen</li>
+                <li>Firmenstammdaten unter <em>Steuern → Steuer-Cockpit</em> vervollständigen</li>
                 {form.rechtsform !== "einzelunternehmen" && (
-                  <li>Geschäftspartner unter <em>Geschäftspartner</em> anlegen</li>
+                  <li>Geschäftspartner unter dem Tab <em>Geschäftspartner</em> anlegen</li>
                 )}
-                <li>Belege per Foto oder PDF unter <em>+ Beleg</em> hochladen</li>
+                <li>Belege über den <em>„+ Beleg"-Button</em> oben rechts hochladen</li>
+                <li>Setup jederzeit über den <em>„Setup"-Button</em> oben rechts erneut aufrufen</li>
               </ul>
             </div>
           </div>
@@ -235,7 +242,7 @@ export default function OnboardingWizard({ onClose, onComplete }) {
           {step > 0 && (
             <button className="ac-btn ac-btn-ghost" onClick={back}>← Zurück</button>
           )}
-          <button className="ac-btn ac-btn-ghost" onClick={onClose} style={{ marginRight: "auto" }}>
+          <button className="ac-btn ac-btn-ghost" onClick={skip} style={{ marginRight: "auto" }}>
             Überspringen
           </button>
           {step < STEPS.length - 1 ? (

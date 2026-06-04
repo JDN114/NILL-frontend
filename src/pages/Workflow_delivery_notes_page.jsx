@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const statusLabel = { pending:"Ausstehend", confirmed:"Bestätigt", rejected:"Abgelehnt" };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../lib/api";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 

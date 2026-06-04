@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
-import api from "../../lib/api";
+import api from "../../services/api";
 
 const ACCENT   = "#38f5d0";
 const DAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];

@@ -60,7 +60,7 @@ export default function AccountingSettings() {
       const link = document.createElement("a");
 
       link.href = url;
-      link.setAttribute("download", "invoices_export.xlsx");
+      link.setAttribute("download", "datev_export.csv");
 
       document.body.appendChild(link);
       link.click();
@@ -126,21 +126,15 @@ export default function AccountingSettings() {
       <div>
         <button
           onClick={handleExport}
-          disabled={exportLoading || !connected}
-          className={`px-4 py-2 rounded-xl text-white transition ${
-            connected
-              ? "bg-green-600 hover:bg-green-500"
-              : "bg-gray-600 cursor-not-allowed"
-          }`}
+          disabled={exportLoading}
+          className="px-4 py-2 rounded-xl text-white transition bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {exportLoading ? "Export läuft..." : "Export / Steuer-Vorbereitung"}
+          {exportLoading ? "Export läuft..." : "DATEV-Export / Steuer-Vorbereitung"}
         </button>
-
-        {!connected && (
-          <p className="text-xs text-gray-500 mt-1">
-            Bitte zuerst ein Bankkonto verbinden.
-          </p>
-        )}
+        <p className="text-xs text-gray-500 mt-1">
+          Exportiert alle Buchungen als DATEV-CSV für Ihren Steuerberater.
+          {!connected && " (Tipp: Bankkonto verbinden für vollständige Kontoumsätze.)"}
+        </p>
       </div>
     </Card>
   );

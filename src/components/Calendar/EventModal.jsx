@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import api from "../../lib/api";
+import api from "../../services/api";
 import { useState, useEffect } from "react";
 
 export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
