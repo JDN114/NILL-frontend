@@ -375,9 +375,9 @@ function KontaktModal({ onClose }) {
 }
 
 // ─── ArbeitsStation Tab ───────────────────────────────────────────────────────
+// E-Mails and Buchhaltung are intentionally excluded — the station is a shared
+// kiosk display; email access and accounting are personal/admin workflows.
 const STATION_MODULES = [
-  { key: "emails",      label: "E-Mails",              icon: "✉",  desc: "Postfach & Nachrichten" },
-  { key: "accounting",  label: "Buchhaltung",          icon: "◎",  desc: "Rechnungen & Ausgaben" },
   { key: "calendar",    label: "Kalender",             icon: "▦",  desc: "Termine & Events" },
   { key: "workflow",    label: "Aufgaben",             icon: "⌘",  desc: "Tasks & Prozesse" },
   { key: "time",        label: "Zeiterfassung",        icon: "⏱",  desc: "Arbeitszeiten erfassen" },
