@@ -132,6 +132,10 @@ function Schritt2({ data, jahr, onDone }) {
   return (
     <div>
       <div style={{ fontWeight: 700, marginBottom: 8 }}>Schritt 2 — Körperschaftsteuer / Gewerbesteuer</div>
+      <div style={{ background:"rgba(255,160,0,.07)", border:"1px solid rgba(255,160,0,.25)", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:".82rem", color:"var(--ink2)", lineHeight:1.55 }}>
+        <strong style={{ color:"var(--ink)" }}>Nur für GmbH, UG und AG relevant.</strong> Einzelunternehmer und Freiberufler zahlen Einkommensteuer auf den Gewinn — kein KSt/GewSt. In dem Fall diesen Schritt überspringen.<br/>
+        <span style={{ color:"var(--ink)" }}>z.v.E.</span> = zu versteuerndes Einkommen (steuerlicher Gewinn nach Hinzurechnungen und Kürzungen).
+      </div>
       <p style={{ color: "var(--ink2)", fontSize: ".88rem", marginBottom: 16 }}>
         Vereinfachte Berechnung nach §23 KStG (15% KSt + 5,5% SolZ) und §11 GewStG.
         Bitte durch Steuerberater vor Abgabe prüfen lassen.
@@ -139,7 +143,7 @@ function Schritt2({ data, jahr, onDone }) {
       {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
       <div className="ac-form-row">
         <div className="ac-form-col">
-          <label className="ac-label">Steuerlicher Gewinn (z.v.E.-Basis) €</label>
+          <label className="ac-label">Steuerlicher Gewinn (zu versteuerndes Einkommen, z.v.E.) €</label>
           <input className="ac-input ac-mono" type="number" step="0.01" value={form.gewinn}
             onChange={e => set("gewinn", e.target.value)} />
         </div>

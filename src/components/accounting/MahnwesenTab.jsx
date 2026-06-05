@@ -90,6 +90,7 @@ export default function MahnwesenTab() {
   };
 
   const runAuto = async () => {
+    if (!window.confirm(`Auto-Mahnlauf jetzt starten?\n\nAlle überfälligen Rechnungen (${ueberfaellig.length} Stück) erhalten automatisch die nächste Mahnstufe. Mahnbriefe werden erzeugt.\n\nBitte zuerst die Liste „Überfällige Rechnungen" prüfen.`)) return;
     setBusy(b => ({ ...b, auto: true }));
     setAutoMsg(null);
     try {
@@ -262,7 +263,8 @@ export default function MahnwesenTab() {
         borderRadius: 10, fontSize: ".8rem", color: "var(--ink2)", lineHeight: 1.6,
       }}>
         <strong style={{ color: "var(--ink)" }}>§ 288 BGB</strong> Verzugszinsen: 8,62 % p.a.
-        (5 % über Basiszinssatz 3,62 %). Mahngebühren: Stufe 1 = 0 €, Stufe 2 = 5 €, Stufe 3 = 15 €.
+        (5 % über Basiszinssatz 3,62 %). Mahngebühren: Stufe 1 = 0 €, Stufe 2 = 5 €, Stufe 3 = 15 €.{" "}
+        <span style={{ color:"var(--a2)" }}>⚠ Basiszinssatz wird von der Deutschen Bundesbank zum 1. Jan. und 1. Jul. angepasst — bitte ggf. in den Einstellungen aktualisieren.</span>
       </div>
     </div>
   );

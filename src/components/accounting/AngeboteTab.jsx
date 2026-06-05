@@ -361,9 +361,11 @@ export default function AngeboteTab() {
     setMsg({ type: "ok", text: "Angebot gespeichert." });
   };
 
-  const patchStatus = async (id, status) => {
+  const patchStatus = async (id, newStatus) => {
+    const labels = { entwurf:"Entwurf", gesendet:"Gesendet", angenommen:"Angenommen", abgelehnt:"Abgelehnt" };
+    if (!window.confirm(`Status auf „${labels[newStatus] || newStatus}" ändern?`)) return;
     try {
-      await api.patch(`/api/v1/angebote/${id}/status`, { status });
+      await api.patch(`/api/v1/angebote/${id}/status`, { status: newStatus });
       load();
     } catch (e) {
       setMsg({ type: "err", text: e.response?.data?.detail || "Fehler beim Status-Update." });

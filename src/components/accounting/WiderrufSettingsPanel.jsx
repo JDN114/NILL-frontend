@@ -97,7 +97,7 @@ export default function WiderrufSettingsPanel() {
           {saved && <div className="ac-alert ac-alert-ok" style={{ marginBottom: 14 }}>Gespeichert.</div>}
 
           {/* Hinweis */}
-          <div style={{ background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: ".82rem", color: "#78350f", lineHeight: 1.5 }}>
+          <div style={{ background: "rgba(255,200,0,.08)", border: "1px solid rgba(255,200,0,.3)", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: ".82rem", color: "var(--ink)", lineHeight: 1.5 }}>
             <strong>§§ 312g, 355 BGB — Widerrufsrecht im Online-Handel:</strong> Wenn du Zahlungslinks an Endkunden (B2C) sendest, muss die Checkout-Seite AGB und Widerrufsbelehrung anzeigen. Der Kunde muss aktiv zustimmen. Die Zustimmung wird mit Zeitstempel + IP protokolliert (§ 312f BGB).
           </div>
 
@@ -220,7 +220,7 @@ export default function WiderrufSettingsPanel() {
                           a.status === "abgelehnt"     ? "ac-badge-pink"   :
                           "ac-badge-gray"
                         }`} style={{ fontSize: ".72rem" }}>
-                          {a.status}
+                          {{ eingegangen:"Eingegangen", stattgegeben:"Stattgegeben", abgelehnt:"Abgelehnt" }[a.status] || a.status}
                         </span>
                       </td>
                       <td>

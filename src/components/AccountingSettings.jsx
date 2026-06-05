@@ -16,8 +16,8 @@ export default function AccountingSettings() {
 
     try {
       const [settingsRes, bankRes] = await Promise.all([
-        api.get("/bank/settings"),
-        api.get("/bank/status"),
+        api.get("/api/v1/bank/settings"),
+        api.get("/api/v1/bank/status"),
       ]);
 
       setStandardCurrency(settingsRes.data.standardCurrency || "EUR");
@@ -35,12 +35,12 @@ export default function AccountingSettings() {
   }, []);
 
   const handleConnectBank = () => {
-    window.location.href = `${api.defaults.baseURL}/bank/connect`;
+    window.location.href = `${api.defaults.baseURL}/api/v1/bank/connect`;
   };
 
   const handleDisconnectBank = async () => {
     try {
-      await api.post("/bank/disconnect");
+      await api.post("/api/v1/bank/disconnect");
       setConnected(false);
     } catch (err) {
       console.error("Bank disconnect failed", err);
@@ -52,7 +52,7 @@ export default function AccountingSettings() {
     try {
       setExportLoading(true);
 
-      const res = await api.get("/tax/export/datev", {
+      const res = await api.get("/api/v1/buchhaltung/export/datev", {
         responseType: "blob",
       });
 

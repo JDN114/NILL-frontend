@@ -488,10 +488,10 @@ export default function TagesabschlussTab() {
         <div className="ac-loading"><span className="ac-spinner" />Lade Tagesabschlüsse…</div>
       ) : rows.length === 0 ? (
         <div className="ac-empty">
-          <div style={{ fontSize: "2rem", marginBottom: 12 }}>🏪</div>
+          <div style={{ fontSize: "2rem", marginBottom: 12 }}>📋</div>
           <div style={{ marginBottom: 8 }}>Noch keine Tagesabschlüsse erfasst.</div>
           <div style={{ fontSize: ".82rem", color: "var(--ink2)" }}>
-            Erstelle den ersten Abschluss oder importiere eine CSV-Datei aus deinem Kassensystem.
+            Erstelle den ersten Abschluss oder importiere eine CSV-Datei. Der Tagesabschluss eignet sich für Handel, Gastronomie und Dienstleister mit täglicher Kassenführung.
           </div>
         </div>
       ) : (

@@ -72,7 +72,7 @@ export default function KassenbuchTab() {
   useEffect(() => { load(); }, [load]);
 
   const del = async (id) => {
-    if (!confirm("Kasseneintrag löschen?")) return;
+    if (!window.confirm("Kasseneintrag wirklich löschen?\n\nHinweis: Das Kassenbuch unterliegt der GoBD (§ 146 AO). Einträge sollten in der Regel storniert statt gelöscht werden. Nur Testeinträge und Fehleingaben vor der Tagesabrechnung löschen.")) return;
     try { await api.delete(`/api/v1/kassenbuch/${id}`); load(); }
     catch (e) { setMsg({ type: "err", text: "Löschen fehlgeschlagen." }); }
   };

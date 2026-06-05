@@ -17,9 +17,11 @@ function NeuPartnerModal({ onClose, onSaved }) {
     strasse: "", plz: "", ort: "", land: "DE", email: "", ust_id: "",
   });
   const [loading, setLoading] = useState(false);
+  const [nummerErr, setNummerErr] = useState("");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const save = async () => {
-    if (!form.nummer) return;
+    if (!form.nummer.trim()) { setNummerErr("Nummer ist Pflichtfeld."); return; }
+    setNummerErr("");
     setLoading(true);
     try { await api.post("/api/v1/buchhaltung/geschaeftspartner", form); onSaved(); onClose(); }
     catch(e) { alert(e.response?.data?.detail || "Fehler"); }
@@ -28,9 +30,13 @@ function NeuPartnerModal({ onClose, onSaved }) {
   return (
     <div className="ac-modal-backdrop">
       <div className="ac-modal">
-        <div className="ac-modal-title">Geschaftspartner anlegen</div>
+        <div className="ac-modal-title">Geschäftspartner anlegen</div>
         <div className="ac-form-row">
-          <div className="ac-form-col" style={{ maxWidth:130 }}><label className="ac-label">Nummer *</label><input className="ac-input ac-mono" value={form.nummer} placeholder="KD-001" onChange={e => set("nummer", e.target.value)} /></div>
+          <div className="ac-form-col" style={{ maxWidth:130 }}>
+            <label className="ac-label">Nummer *</label>
+            <input className="ac-input ac-mono" value={form.nummer} placeholder="KD-001" onChange={e => { set("nummer", e.target.value); setNummerErr(""); }} />
+            {nummerErr && <div style={{ color:"var(--a3)", fontSize:".75rem", marginTop:3 }}>{nummerErr}</div>}
+          </div>
           <div className="ac-form-col" style={{ flex:2 }}><label className="ac-label">Firmenname</label><input className="ac-input" value={form.firmenname} onChange={e => set("firmenname", e.target.value)} /></div>
         </div>
         <div className="ac-form-row" style={{ gap:24 }}>
@@ -44,7 +50,7 @@ function NeuPartnerModal({ onClose, onSaved }) {
           </label>
         </div>
         <div className="ac-form-row">
-          <div className="ac-form-col" style={{ flex:2 }}><label className="ac-label">Strasse</label><input className="ac-input" value={form.strasse} onChange={e => set("strasse", e.target.value)} /></div>
+          <div className="ac-form-col" style={{ flex:2 }}><label className="ac-label">Straße</label><input className="ac-input" value={form.strasse} onChange={e => set("strasse", e.target.value)} /></div>
           <div className="ac-form-col" style={{ maxWidth:100 }}><label className="ac-label">PLZ</label><input className="ac-input" value={form.plz} onChange={e => set("plz", e.target.value)} maxLength={10} /></div>
           <div className="ac-form-col"><label className="ac-label">Ort</label><input className="ac-input" value={form.ort} onChange={e => set("ort", e.target.value)} /></div>
         </div>
@@ -104,8 +110,8 @@ function MahnungModal({ partner, onClose, onSaved }) {
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col"><label className="ac-label">Mahndatum</label><input className="ac-input" type="date" value={form.mahnungsdatum} onChange={e => setForm(f => ({...f, mahnungsdatum: e.target.value}))} /></div>
-          <div className="ac-form-col"><label className="ac-label">Falligkeitsdatum</label><input className="ac-input" type="date" value={form.faelligkeitsdatum} onChange={e => setForm(f => ({...f, faelligkeitsdatum: e.target.value}))} /></div>
-          <div className="ac-form-col"><label className="ac-label">Mahngebuhr (EUR)</label><input className="ac-input ac-mono" type="number" step="0.01" value={form.mahngebuehr} onChange={e => setForm(f => ({...f, mahngebuehr: e.target.value}))} /></div>
+          <div className="ac-form-col"><label className="ac-label">Fälligkeitsdatum</label><input className="ac-input" type="date" value={form.faelligkeitsdatum} onChange={e => setForm(f => ({...f, faelligkeitsdatum: e.target.value}))} /></div>
+          <div className="ac-form-col"><label className="ac-label">Mahngebühr (EUR)</label><input className="ac-input ac-mono" type="number" step="0.01" value={form.mahngebuehr} onChange={e => setForm(f => ({...f, mahngebuehr: e.target.value}))} /></div>
         </div>
         <div className="ac-modal-footer">
           <button className="ac-btn ac-btn-ghost" onClick={onClose}>Abbrechen</button>
@@ -149,14 +155,14 @@ export default function GeschaeftspartnerTab() {
 
   const filtered = partner.filter(p => !filter || (p.firmenname || "").toLowerCase().includes(filter.toLowerCase()) || (p.nummer || "").toLowerCase().includes(filter.toLowerCase()) || (p.ort || "").toLowerCase().includes(filter.toLowerCase()));
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Geschaftspartner...</div>;
+  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Geschäftspartner...</div>;
 
   return (
     <div>
       <div style={{ display:"flex", gap:4, marginBottom:16 }}>
         {["partner","mahnwesen"].map(s => (
           <button key={s} className={`ac-btn ${subtab===s?"ac-btn-primary":"ac-btn-ghost"}`} onClick={() => setSubtab(s)}>
-            {s==="partner" ? "Geschaftspartner" : `Mahnwesen (${mahnungen.length})`}
+            {s==="partner" ? "Geschäftspartner" : `Mahnwesen (${mahnungen.length})`}
           </button>
         ))}
       </div>
@@ -171,7 +177,7 @@ export default function GeschaeftspartnerTab() {
             <table className="ac-table">
               <thead><tr><th>Name / Firma</th><th>Typ</th><th>Ort</th><th>Land</th><th>USt-ID</th><th>E-Mail</th><th></th></tr></thead>
               <tbody>
-                {filtered.length === 0 && <tr><td colSpan={7} className="ac-empty">Noch keine Geschaftspartner angelegt.</td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={7} className="ac-empty">Noch keine Geschäftspartner angelegt.</td></tr>}
                 {filtered.map(p => {
                   const typ = p.ist_debitor && p.ist_kreditor ? "beide" : p.ist_debitor ? "debitor" : "kreditor";
                   return (
@@ -186,7 +192,7 @@ export default function GeschaeftspartnerTab() {
                       {p.ist_debitor && (
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setMahnPartner(p)}>Mahnen</button>
                       )}
-                      <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => deactivate(p.id)}>Deaktivieren</button>
+                      <button className="ac-btn ac-btn-danger ac-btn-sm" title="Geschäftspartner deaktivieren — erscheint nicht mehr in Auswahllisten. Vorhandene Buchungen bleiben erhalten." onClick={() => deactivate(p.id)}>Deaktivieren</button>
                     </td>
                   </tr>
                   );
@@ -199,7 +205,7 @@ export default function GeschaeftspartnerTab() {
       {subtab === "mahnwesen" && (
         <div className="ac-card" style={{ padding:0 }}>
           <table className="ac-table">
-            <thead><tr><th>Geschaftspartner</th><th>Mahnstufe</th><th>Mahndatum</th><th>Falligkeit</th><th style={{textAlign:"right"}}>Betrag</th><th style={{textAlign:"right"}}>Gebuhr</th><th>Status</th></tr></thead>
+            <thead><tr><th>Geschäftspartner</th><th>Mahnstufe</th><th>Mahndatum</th><th>Fälligkeit</th><th style={{textAlign:"right"}}>Betrag</th><th style={{textAlign:"right"}}>Gebühr</th><th>Status</th></tr></thead>
             <tbody>
               {mahnungen.length === 0 && <tr><td colSpan={7} className="ac-empty">Keine Mahnungen vorhanden.</td></tr>}
               {mahnungen.map(m => {

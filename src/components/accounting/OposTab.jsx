@@ -42,6 +42,7 @@ export default function OposTab({ onNavigate }) {
   useEffect(() => { load(); }, [load]);
 
   const markBezahlt = async (id) => {
+    if (!window.confirm("Rechnung als bezahlt markieren?\n\nDas Bezahldatum wird auf heute gesetzt. Dieser Schritt kann über den Rechnungs-Tab rückgängig gemacht werden.")) return;
     setBusy(b => ({ ...b, [id]: true }));
     try {
       await api.patch(`/api/v1/rechnungen/${id}/`, { status: "bezahlt", bezahlt_am: new Date().toISOString().slice(0, 10) });

@@ -517,7 +517,9 @@ export default function KontenplanTab() {
           borderRadius:10, padding:3,
         }}>
           {[["einfach","Übersicht"],["profi","Vollansicht"]].map(([m, label]) => (
-            <button key={m} onClick={() => switchModus(m)} style={{
+            <button key={m} onClick={() => switchModus(m)}
+              title={m==="einfach" ? "Vereinfachte Gruppenansicht — ideal für den Alltag" : "Vollständiger SKR03-Kontenplan mit allen Kontonummern, Salden und Buchungen"}
+              style={{
               padding:"5px 16px", borderRadius:8, border:"none", cursor:"pointer",
               fontFamily:"Inter,sans-serif", fontSize:".8rem", fontWeight: modus===m ? 600 : 400,
               background: modus===m ? "#c6ff3c" : "transparent",

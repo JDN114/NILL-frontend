@@ -55,20 +55,35 @@ export default function ReceiptUploadModal({ open, onClose, onCreated }) {
       )}
 
       {!invoice ? (
-        <div className="flex flex-col gap-4 items-center">
-          {/* Datei-Auswahl Button */}
-          <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer">
-            Datei auswählen
+        <div style={{ display:"flex", flexDirection:"column", gap:16, alignItems:"center" }}>
+          <label
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => {
+              e.preventDefault();
+              const f = e.dataTransfer.files?.[0];
+              if (f) { handleFileChange({ target: { files: [f] } }); }
+            }}
+            style={{
+              border:"2px dashed var(--border)", borderRadius:12,
+              padding:"28px 40px", textAlign:"center", cursor:"pointer",
+              width:"100%", boxSizing:"border-box",
+            }}
+          >
+            <div style={{ fontSize:"1.8rem", marginBottom:8 }}>📁</div>
+            <div style={{ fontWeight:600, marginBottom:4 }}>
+              {loading ? "Analysiere Beleg…" : "Datei auswählen oder hierher ziehen"}
+            </div>
+            <div style={{ fontSize:".8rem", color:"var(--ink2)" }}>
+              JPG, PNG, WEBP oder PDF · max. 20 MB
+            </div>
             <input
               type="file"
               accept="image/*,application/pdf"
-              className="hidden"
+              style={{ display:"none" }}
               onChange={handleFileChange}
               disabled={loading}
             />
           </label>
-
-          <p className="text-gray-400 text-sm">oder ziehe die Datei hierher</p>
         </div>
       ) : (
         <ReceiptForm

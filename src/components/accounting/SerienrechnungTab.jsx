@@ -248,8 +248,12 @@ export default function SerienrechnungTab() {
   return (
     <div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
-        <div style={{ color: "var(--ink2)", fontSize: ".85rem" }}>
-          Automatisch wiederkehrende Rechnungen — Scheduler läuft täglich.
+        <div style={{ color: "var(--ink2)", fontSize: ".85rem", display:"flex", alignItems:"center", gap:8 }}>
+          Automatisch wiederkehrende Rechnungen
+          <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:".75rem", color:"var(--accent)" }}>
+            <span style={{ width:6, height:6, borderRadius:"50%", background:"var(--accent)", display:"inline-block" }}/>
+            Scheduler aktiv · täglich 02:00 Uhr
+          </span>
         </div>
         <button className="ac-btn ac-btn-primary ac-btn-sm" style={{ marginLeft: "auto" }}
           onClick={() => { setEditItem(null); setShowForm(true); }}>
@@ -273,7 +277,12 @@ export default function SerienrechnungTab() {
       )}
 
       {list.length === 0 && !showForm && !editItem ? (
-        <div className="ac-card"><div className="ac-empty">Noch keine Serienrechnungen konfiguriert.</div></div>
+        <div className="ac-card" style={{ padding:"20px 24px" }}>
+          <div style={{ marginBottom:8, fontWeight:600 }}>Noch keine Serienrechnungen konfiguriert.</div>
+          <p style={{ fontSize:".85rem", color:"var(--ink2)", lineHeight:1.6, marginBottom:0 }}>
+            Eine <strong>Serienrechnung</strong> ist eine wiederkehrende Rechnung, die automatisch in einem festen Intervall (täglich, monatlich, jährlich) erstellt wird — zum Beispiel für Abonnements, Mieten oder monatliche Dienstleistungen. Klicke auf „+ Neue Serienrechnung" um loszulegen.
+          </p>
+        </div>
       ) : list.length > 0 && (
         <div className="ac-card" style={{ padding: 0, overflowX: "auto" }}>
           <table className="ac-table">

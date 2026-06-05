@@ -133,16 +133,36 @@ export default function InvoiceCreateModal({ open, onClose, onCreated }) {
         <p className="text-xs text-gray-500">JPG, PNG, WEBP oder PDF – max. 10MB</p>
       </div>
 
-      <input placeholder="Titel" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white mb-2" />
-      <input placeholder="Anbieter" value={vendor} onChange={e => setVendor(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white mb-2" />
-      <input placeholder="Kategorie" value={category} onChange={e => setCategory(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white mb-2" />
-      <input type="number" placeholder="Betrag (€)" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white mb-2" />
-      <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white mb-2" />
-      <textarea placeholder="Notizen" value={notes} onChange={e => setNotes(e.target.value)} className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white mb-2" />
+      <div className="ac-form-col" style={{ marginBottom:8 }}>
+        <label className="ac-label">Titel *</label>
+        <input className="ac-input" placeholder="z.B. Rechnung Druckerei GmbH" value={title} onChange={e => setTitle(e.target.value)} />
+      </div>
+      <div className="ac-form-col" style={{ marginBottom:8 }}>
+        <label className="ac-label">Anbieter / Lieferant</label>
+        <input className="ac-input" placeholder="Firmenname" value={vendor} onChange={e => setVendor(e.target.value)} />
+      </div>
+      <div className="ac-form-row" style={{ marginBottom:8 }}>
+        <div className="ac-form-col">
+          <label className="ac-label">Betrag (€) *</label>
+          <input type="number" className="ac-input ac-mono" placeholder="0,00" value={amount} onChange={e => setAmount(e.target.value)} />
+        </div>
+        <div className="ac-form-col">
+          <label className="ac-label">Kategorie</label>
+          <input className="ac-input" placeholder="z.B. Bürobedarf" value={category} onChange={e => setCategory(e.target.value)} />
+        </div>
+      </div>
+      <div className="ac-form-col" style={{ marginBottom:8 }}>
+        <label className="ac-label">Zahlungsziel</label>
+        <input type="date" className="ac-input" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+      </div>
+      <div className="ac-form-col" style={{ marginBottom:8 }}>
+        <label className="ac-label">Notizen</label>
+        <textarea className="ac-input" placeholder="Optionale Anmerkungen" value={notes} onChange={e => setNotes(e.target.value)} style={{ resize:"vertical", minHeight:64 }} />
+      </div>
 
-      <div className="flex justify-end gap-2 mt-2">
-        <button type="button" onClick={() => { reset(); onClose?.(); }} className="bg-gray-700 px-4 py-2 rounded">Abbrechen</button>
-        <button type="button" onClick={handleCreateInvoice} disabled={loading} className="bg-blue-600 px-4 py-2 rounded text-white">
+      <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>
+        <button type="button" className="ac-btn ac-btn-ghost" onClick={() => { reset(); onClose?.(); }}>Abbrechen</button>
+        <button type="button" className="ac-btn ac-btn-primary" onClick={handleCreateInvoice} disabled={loading}>
           {loading ? "Erstelle…" : "Erstellen"}
         </button>
       </div>

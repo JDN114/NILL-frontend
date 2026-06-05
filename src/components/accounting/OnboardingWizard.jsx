@@ -3,12 +3,12 @@ import React, { useState } from "react";
 import api from "../../services/api";
 
 const RECHTSFORMEN = [
-  { value: "einzelunternehmen",  label: "Einzelunternehmen / Freiberufler",     desc: "EkSt, EÜR möglich, §19 UStG" },
-  { value: "gbr",                label: "GbR (Gesellschaft bürgerl. Rechts)",   desc: "Personengesellschaft, EkSt" },
-  { value: "kg",                 label: "KG / OHG",                             desc: "Personenhandelsgesellschaft" },
-  { value: "gmbh",               label: "GmbH",                                 desc: "KöSt 15% + GewSt, Bilanzpflicht" },
-  { value: "ug",                 label: "UG (haftungsbeschränkt)",              desc: "Wie GmbH, Mindestkapital 1 €" },
-  { value: "ag",                 label: "AG",                                   desc: "KöSt + GewSt, strenge Berichtspflicht" },
+  { value: "einzelunternehmen",  label: "Einzelunternehmen / Freiberufler",     desc: "Einkommensteuer (EkSt), Einnahmen-Überschuss-Rechnung (EÜR) möglich, §19 UStG" },
+  { value: "gbr",                label: "GbR (Gesellschaft bürgerl. Rechts)",   desc: "Personengesellschaft, Einkommensteuer (EkSt) bei den Gesellschaftern" },
+  { value: "kg",                 label: "KG / OHG",                             desc: "Personenhandelsgesellschaft, §238 HGB – Buchführungspflicht" },
+  { value: "gmbh",               label: "GmbH",                                 desc: "Körperschaftsteuer (KöSt) 15% + Gewerbesteuer (GewSt), Bilanzpflicht §242 HGB" },
+  { value: "ug",                 label: "UG (haftungsbeschränkt)",               desc: "Wie GmbH, Körperschaftsteuer (KöSt), Mindestkapital 1 €" },
+  { value: "ag",                 label: "AG",                                    desc: "Körperschaftsteuer (KöSt) + Gewerbesteuer (GewSt), strenge Berichtspflicht §267 HGB" },
 ];
 
 const UMSATZ_KLASSEN = [
@@ -43,15 +43,21 @@ export default function OnboardingWizard({ onClose, onComplete }) {
     onClose();
   };
 
+  const [finishError, setFinishError] = useState("");
+
   const finish = async () => {
     setSaving(true);
+    setFinishError("");
     try {
       await api.patch("/api/v1/buchhaltung/unternehmensprofil", {
         rechtsform: form.rechtsform,
         ist_freiberufler: form.ist_freiberufler,
         ist_kleinunternehmer: form.ist_kleinunternehmer,
       });
-    } catch { /* profile update best-effort */ }
+    } catch (e) {
+      const msg = e?.response?.data?.detail || "Profil konnte nicht gespeichert werden.";
+      setFinishError(`Hinweis: ${msg} Ihre Einstellungen wurden lokal gespeichert und können in den Einstellungen ergänzt werden.`);
+    }
     localStorage.setItem("nill_accounting_mode", form.accounting_mode);
     localStorage.setItem("nill_onboarding_done", "1");
     setSaving(false);
@@ -166,9 +172,13 @@ export default function OnboardingWizard({ onClose, onComplete }) {
         {step === 2 && (
           <div>
             <div className="ac-modal-title">Welcher Buchhaltungsmodus?</div>
-            <p style={{ fontSize: ".85rem", color: "var(--ink2)", marginBottom: 16 }}>
+            <p style={{ fontSize: ".85rem", color: "var(--ink2)", marginBottom: 12 }}>
               Sie können den Modus jederzeit wechseln. Der Modus beeinflusst nur die sichtbaren Tabs.
             </p>
+            <div style={{ background:"rgba(255,200,0,.07)", border:"1px solid rgba(255,200,0,.25)", borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:".82rem", color:"var(--ink2)", lineHeight:1.55 }}>
+              <strong style={{ color:"var(--ink)" }}>Wann ist doppelte Buchführung gesetzlich Pflicht?</strong><br/>
+              Nach §141 AO ab Umsatz &gt; 600.000 € oder Gewinn &gt; 60.000 € pro Jahr. Freiberufler (§18 EStG) sind grundsätzlich von der Bilanzierungspflicht ausgenommen.
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 {
@@ -251,7 +261,7 @@ export default function OnboardingWizard({ onClose, onComplete }) {
             </button>
           ) : (
             <button className="ac-btn ac-btn-primary" onClick={finish} disabled={saving}>
-              {saving ? "…" : "Starten"}
+              {saving ? "…" : "Fertig →"}
             </button>
           )}
         </div>

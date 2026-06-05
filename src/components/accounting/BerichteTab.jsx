@@ -144,7 +144,7 @@ function EueR({ jahr }) {
     api.get("/api/v1/buchhaltung/berichte/euer", { params: { jahr } })
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade EUR...</div>;
+  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade EÜR…</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>EÜR {jahr} laden</button></div></div>;
   const gewinn = (data.betriebseinnahmen || 0) - (data.betriebsausgaben || 0);
   return (
@@ -233,6 +233,15 @@ export default function BerichteTab() {
 
   return (
     <div>
+      <div style={{ background:"rgba(198,255,60,.05)", border:"1px solid rgba(198,255,60,.15)", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:".82rem", color:"var(--ink2)", lineHeight:1.6 }}>
+        <strong style={{ color:"var(--ink)" }}>Welcher Bericht passt zu meiner Rechtsform?</strong>
+        <span style={{ display:"block", marginTop:4 }}>
+          <strong style={{ color:"var(--ink)" }}>EÜR</strong> – für Einzelunternehmer, Freiberufler und Kleingewerbe ohne Bilanzierungspflicht (§4 Abs. 3 EStG, bis 600.000 € Umsatz bzw. 60.000 € Gewinn).
+          {" "}<strong style={{ color:"var(--ink)" }}>Bilanz + GuV</strong> – für GmbH, AG, UG und alle buchführungspflichtigen Unternehmen (§242 HGB).
+          {" "}<strong style={{ color:"var(--ink)" }}>BWA</strong> – Betriebswirtschaftliche Auswertung; aktuelle Übersicht für laufendes Geschäftsjahr, für alle Rechtsformen.
+          {" "}<strong style={{ color:"var(--ink)" }}>Saldenliste</strong> – alle Buchungskonten mit Saldo; für Selbstkontrolle und Steuerberater-Übergabe.
+        </span>
+      </div>
       <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:16 }}>
         {BERICHT_TABS.map(t => (
           <button key={t.id} className={`ac-btn ${bericht===t.id ? "ac-btn-primary" : "ac-btn-ghost"}`} onClick={() => setBericht(t.id)}>{t.label}</button>
@@ -252,7 +261,7 @@ export default function BerichteTab() {
       {bericht==="euer" && (
         <div className="ac-form-row" style={{ marginBottom:16 }}>
           <div className="ac-form-col" style={{ maxWidth:160 }}>
-            <label className="ac-label">Geschaftsjahr</label>
+            <label className="ac-label">Geschäftsjahr</label>
             <select className="ac-select" value={jahr} onChange={e => setJahr(Number(e.target.value))}>
               {Array.from({length: 5}, (_, i) => new Date().getFullYear() - 3 + i).map(y => <option key={y} value={y}>{y}</option>)}
             </select>

@@ -174,8 +174,9 @@ export default function SteuerkalenderTab() {
       <div className="ac-card" style={{ marginTop: 20, borderColor: "rgba(198,255,60,.1)" }}>
         <div style={{ fontSize: ".8rem", color: "var(--ink2)", lineHeight: 1.6 }}>
           <strong style={{ color: "var(--ink)" }}>Hinweis:</strong>{" "}
-          Fälligkeitsdaten nach Standardterminen (§ 18 UStG, §§ 5/6 GewStG). Dauerfristverlängerungen, Wochenend-Verschiebungen
-          und Sonderfälle bitte mit Steuerberater abstimmen. Der Kalender dient als Erinnerungshilfe, nicht als Rechtsauskunft.
+          Fälligkeitsdaten nach Standardterminen (§ 18 UStG, §§ 5/6 GewStG).
+          <strong style={{ color:"var(--ink)" }}> Dauerfristverlängerung</strong> = Verlängerung der USt-Voranmeldungs-Abgabefrist um 1 Monat auf Antrag beim Finanzamt (§ 46 UStDV) — verschieben alle UStVA-Fristen entsprechend.
+          Wochenend-Verschiebungen und Sonderfälle bitte mit Steuerberater abstimmen. Der Kalender dient als Erinnerungshilfe, nicht als Rechtsauskunft.
         </div>
       </div>
     </div>

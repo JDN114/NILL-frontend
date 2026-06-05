@@ -1,3 +1,6 @@
+const fmtEur = (v) =>
+  Number(v || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+
 export default function StatsCards({ stats }) {
   const items = [
     { label: "Einnahmen", value: stats.income },
@@ -14,7 +17,7 @@ export default function StatsCards({ stats }) {
           className="bg-gray-900 p-4 rounded-lg border border-gray-700"
         >
           <div className="text-sm text-gray-400">{i.label}</div>
-          <div className="text-xl font-bold text-white">{i.value} €</div>
+          <div className="text-xl font-bold text-white">{fmtEur(i.value)}</div>
         </div>
       ))}
     </div>

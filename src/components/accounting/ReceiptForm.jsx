@@ -13,10 +13,7 @@ export default function ReceiptForm({ invoice, onSaved, onCancel }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await api.patch(
-        `/accounting/invoices/${form.id}`,
-        form
-      );
+      const res = await api.patch(`/accounting/invoices/${form.id}`, form);
       onSaved(res.data);
     } catch (err) {
       console.error("Save failed", err);
@@ -26,59 +23,36 @@ export default function ReceiptForm({ invoice, onSaved, onCancel }) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <input
-        className="bg-gray-800 p-2 rounded"
-        value={form.title || ""}
-        onChange={(e) => handleChange("title", e.target.value)}
-        placeholder="Titel"
-      />
-
-      <input
-        className="bg-gray-800 p-2 rounded"
-        value={form.vendor || ""}
-        onChange={(e) => handleChange("vendor", e.target.value)}
-        placeholder="Anbieter"
-      />
-
-      <input
-        type="number"
-        className="bg-gray-800 p-2 rounded"
-        value={form.amount || ""}
-        onChange={(e) => handleChange("amount", e.target.value)}
-        placeholder="Betrag"
-      />
-
-      <input
-        type="date"
-        className="bg-gray-800 p-2 rounded"
-        value={form.payment_deadline || ""}
-        onChange={(e) =>
-          handleChange("payment_deadline", e.target.value)
-        }
-      />
-
-      <input
-        className="bg-gray-800 p-2 rounded"
-        value={form.category || ""}
-        onChange={(e) => handleChange("category", e.target.value)}
-        placeholder="Kategorie"
-      />
-
-      <div className="flex justify-end gap-2 mt-4">
-        <button
-          onClick={onCancel}
-          className="px-4 py-2 bg-gray-700 rounded"
-        >
-          Abbrechen
-        </button>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
-        >
-          {saving ? "Speichern…" : "Speichern"}
+    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+      <div className="ac-form-col">
+        <label className="ac-label">Titel</label>
+        <input className="ac-input" value={form.title || ""} placeholder="z.B. Rechnung Druckerei GmbH"
+          onChange={e => handleChange("title", e.target.value)} />
+      </div>
+      <div className="ac-form-col">
+        <label className="ac-label">Anbieter / Lieferant</label>
+        <input className="ac-input" value={form.vendor || ""} placeholder="Firmenname des Absenders"
+          onChange={e => handleChange("vendor", e.target.value)} />
+      </div>
+      <div className="ac-form-col">
+        <label className="ac-label">Betrag (€)</label>
+        <input type="number" className="ac-input ac-mono" value={form.amount || ""} placeholder="0,00"
+          onChange={e => handleChange("amount", e.target.value)} />
+      </div>
+      <div className="ac-form-col">
+        <label className="ac-label">Zahlungsziel</label>
+        <input type="date" className="ac-input" value={form.payment_deadline || ""}
+          onChange={e => handleChange("payment_deadline", e.target.value)} />
+      </div>
+      <div className="ac-form-col">
+        <label className="ac-label">Kategorie</label>
+        <input className="ac-input" value={form.category || ""} placeholder="z.B. Bürobedarf, Reise, Software"
+          onChange={e => handleChange("category", e.target.value)} />
+      </div>
+      <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>
+        <button className="ac-btn ac-btn-ghost" onClick={onCancel}>Abbrechen</button>
+        <button className="ac-btn ac-btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? "Speichere…" : "Speichern"}
         </button>
       </div>
     </div>

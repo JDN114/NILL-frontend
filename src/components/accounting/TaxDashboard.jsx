@@ -212,15 +212,15 @@ export default function TaxDashboard() {
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <span style={{ fontFamily:"Fraunces,serif", fontSize:"1.1rem", fontWeight:600 }}>Steuer-Ubersicht</span>
+        <span style={{ fontFamily:"Fraunces,serif", fontSize:"1.1rem", fontWeight:600 }}>Steuer-Übersicht</span>
         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowProfile(true)}>Unternehmensprofil</button>
       </div>
       <div className="ac-kpi-grid" style={{ marginBottom:20 }}>
         <div className="ac-kpi"><div className="ac-kpi-label">Einnahmen (lfd. Jahr)</div><div className="ac-kpi-value green">{fmtEur(einnahmen)}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">Ausgaben (lfd. Jahr)</div><div className="ac-kpi-value pink">{fmtEur(ausgaben)}</div></div>
         <div className="ac-kpi"><div className="ac-kpi-label">Gewinn / Verlust</div><div className={`ac-kpi-value ${gewinn >= 0 ? "green" : "pink"}`}>{fmtEur(gewinn)}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">Geschatzte Steuerlast</div><div className="ac-kpi-value pink">{fmtEur(est)}</div></div>
-        <div className="ac-kpi"><div className="ac-kpi-label">MwSt (nicht abgefuhrt)</div><div className="ac-kpi-value">{fmtEur(mwst)}</div></div>
+        <div className="ac-kpi"><div className="ac-kpi-label">Geschätzte Steuerlast</div><div className="ac-kpi-value pink">{fmtEur(est)}</div></div>
+        <div className="ac-kpi"><div className="ac-kpi-label">MwSt (nicht abgeführt)</div><div className="ac-kpi-value">{fmtEur(mwst)}</div></div>
       </div>
       {ust && (
         <div className="ac-card">
@@ -243,7 +243,7 @@ export default function TaxDashboard() {
         </div>
       )}
       <div className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
-        Steuerliche Angaben ohne Gewahr. Bitte mit Steuerberater abstimmen.
+        Steuerliche Angaben ohne Gewähr. Für offizielle Steuererklärungen: ELSTER.de nutzen (Tab „Steuern → UStVA") oder Steuerberater beauftragen.
       </div>
 
       {/* GoBD Betriebsprüfungsexport */}

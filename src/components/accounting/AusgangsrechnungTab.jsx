@@ -182,8 +182,9 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
         }))
       : [DEFAULT_POS()]
   );
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState("");
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState("");
+  const [warning, setWarning] = useState("");
   const [picker, setPicker] = useState(false);
 
   const set    = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -213,9 +214,16 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
   };
 
   const save = async () => {
-    if (!form.absender_name.trim()) { setError("Absendername ist Pflicht (§14 UStG)."); return; }
-    if (!form.empfaenger_name.trim()) { setError("Empfängername ist Pflicht."); return; }
-    if (pos.length === 0) { setError("Mindestens eine Position erforderlich."); return; }
+    if (!form.absender_name.trim()) { setError("Absendername ist Pflicht (§14 Abs. 4 Nr. 1 UStG)."); return; }
+    if (!form.empfaenger_name.trim()) { setError("Empfängername ist Pflicht (§14 Abs. 4 Nr. 1 UStG)."); return; }
+    if (pos.length === 0) { setError("Mindestens eine Position erforderlich (§14 Abs. 4 Nr. 5 UStG)."); return; }
+    // §14 UStG non-blocking hints
+    const ust14Hints = [];
+    if (!form.absender_strasse?.trim()) ust14Hints.push("Absenderadresse (§14 Abs. 4 Nr. 1 UStG)");
+    if (!form.absender_steuernummer?.trim() && !form.absender_ustid?.trim()) ust14Hints.push("Steuernummer oder USt-ID (§14 Abs. 4 Nr. 2 UStG)");
+    setWarning(ust14Hints.length > 0
+      ? `Hinweis: Für eine rechtsgültige Rechnung fehlen noch: ${ust14Hints.join(", ")}. Bitte ergänzen, bevor Sie die Rechnung versenden.`
+      : "");
     setSaving(true);
     setError("");
     const payload = {
@@ -269,7 +277,8 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
         </div>
       </div>
 
-      {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 16 }}>{error}</div>}
+      {error   && <div className="ac-alert ac-alert-err"  style={{ marginBottom: 16 }}>{error}</div>}
+      {warning && <div className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>{warning}</div>}
 
       {/* Absender */}
       <div className="ac-card" style={{ marginBottom: 16 }}>
@@ -478,8 +487,8 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
                 <th>Beschreibung / Leistung</th>
                 <th style={{ width: 80 }}>Menge</th>
                 <th style={{ width: 68 }}>Einheit</th>
-                <th style={{ width: 98 }}>EP (€)</th>
-                <th style={{ width: 70 }}>Rab. %</th>
+                <th style={{ width: 98 }}>Einzelpreis (€)</th>
+                <th style={{ width: 70 }} title="Rabatt in Prozent vom Einzelpreis">Rab. %</th>
                 <th style={{ width: 80 }}>MwSt</th>
                 <th style={{ width: 112, textAlign: "right" }}>Netto</th>
                 <th style={{ width: 36 }}></th>
@@ -615,7 +624,7 @@ function RechnungenList({ onNew, onEdit }) {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Entwurf wirklich löschen?")) return;
+    if (!window.confirm("Entwurf wirklich löschen?\n\nDieser Entwurf wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.")) return;
     setBusy(b => ({ ...b, [id]: true }));
     try { await api.delete(`/api/v1/rechnungen/${id}`); load(); }
     catch (e) { alert(e.response?.data?.detail || "Fehler."); }
@@ -721,6 +730,13 @@ function RechnungenList({ onNew, onEdit }) {
         <button className="ac-btn ac-btn-primary" onClick={onNew}>+ Neue Rechnung</button>
       </div>
 
+      <div style={{ fontSize:".78rem", color:"var(--ink2)", marginBottom:10, lineHeight:1.5 }}>
+        <strong style={{ color:"var(--ink)" }}>Exportformate:</strong>{" "}
+        <span title="PDF herunterladen">📄 PDF</span> – Standard-Rechnung als PDF.{" "}
+        <span title="XRechnung 3.0 XML (EN 16931) — ab 2025 Pflicht für B2B">XML</span> – XRechnung (ab 2025 Pflicht für öffentliche Auftraggeber und B2B).{" "}
+        <span title="ZUGFeRD Hybrid-PDF — PDF mit eingebettetem XML">ZUGFeRD</span> – Hybrid-PDF mit eingebettetem XML (für automatische Buchhaltung beim Empfänger).{" "}
+        <span title="Vereinfachter Beleg §33 UStDV (≤ 250 €)">🧾 §33</span> – Vereinfachter Beleg nach §33 UStDV (nur für Beträge ≤ 250 €).
+      </div>
       <div className="ac-card" style={{ padding: 0 }}>
         <table className="ac-table">
           <thead>
@@ -818,7 +834,7 @@ function RechnungenList({ onNew, onEdit }) {
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" disabled={b}
                           style={{ color: "var(--a3)" }}
                           onClick={() => act(r.id, "stornieren",
-                            "Rechnung wirklich stornieren? Dies kann nicht rückgängig gemacht werden.")}>
+                            "Rechnung wirklich stornieren?\n\nLaut GoBD §146 und §14 UStG muss die ursprüngliche Rechnungsnummer erhalten bleiben. Es wird automatisch eine Stornorechnung mit negativen Beträgen erstellt.\n\nDieser Schritt kann nicht rückgängig gemacht werden.")}>
                           Stornieren
                         </button>
                       </>)}

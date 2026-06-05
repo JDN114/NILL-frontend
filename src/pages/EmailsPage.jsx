@@ -198,19 +198,23 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabl
           <div className="em-attachments">
             <div className="em-attachments-label">Anhänge ({email.attachments.length})</div>
             <div className="em-attachment-list">
-              {email.attachments.map((att, i) => (
-                <a key={i}
-                  href={attachmentUrl({ email, attachmentId: att.id })}
-                  target="_blank" rel="noreferrer" className="em-attachment-chip"
-                  download={att.filename}>
-                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-                    <polyline points="13 2 13 9 20 9"/>
-                  </svg>
-                  {att.filename}
-                  {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
-                </a>
-              ))}
+              {email.attachments.map((att, i) => {
+                const inlineTypes = ["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp"];
+                const isInline = inlineTypes.includes(att.content_type);
+                return (
+                  <a key={i}
+                    href={attachmentUrl({ email, attachmentId: att.id })}
+                    target="_blank" rel="noreferrer" className="em-attachment-chip"
+                    {...(!isInline && { download: att.filename })}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                      <polyline points="13 2 13 9 20 9"/>
+                    </svg>
+                    {att.filename}
+                    {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}

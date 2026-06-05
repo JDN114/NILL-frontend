@@ -218,6 +218,9 @@ function NillLoader({ text = "Wird geladen…" }) {
       }}>
         {text}
       </div>
+      <div style={{ color:"rgba(155,152,144,.35)", fontSize:".72rem", marginTop:8, fontFamily:"Inter,sans-serif" }}>
+        Normalerweise unter 3 Sekunden
+      </div>
     </div>
   );
 }
@@ -268,15 +271,17 @@ const CustomTooltip = ({ active, payload, label }) => {
 function OverviewTab({ onNavigate, onUpload }) {
   const [dash,      setDash]      = useState(null);
   const [loading,   setLoading]   = useState(true);
+  const [dashError, setDashError] = useState(false);
   const [periode,   setPeriode]   = useState("12");
   const [activeIdx, setActiveIdx] = useState(null);
   const [activeKat, setActiveKat] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
+    setDashError(false);
     api.get("/api/v1/buchhaltung/dashboard")
       .then(r => setDash(r.data))
-      .catch(() => {})
+      .catch(() => setDashError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -303,7 +308,21 @@ function OverviewTab({ onNavigate, onUpload }) {
   [dash]);
 
   if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Dashboard…</div>;
-  if (!dash)   return <div className="ac-empty">Dashboard nicht verfügbar.</div>;
+  if (dashError) return (
+    <div className="ac-alert ac-alert-err" style={{ display:"flex", alignItems:"center", gap:12 }}>
+      Dashboard konnte nicht geladen werden.
+      <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={load}>Erneut versuchen</button>
+    </div>
+  );
+  if (!dash) return (
+    <div className="ac-empty" style={{ padding:40 }}>
+      <div style={{ marginBottom:12 }}>Noch keine Buchungsdaten vorhanden.</div>
+      <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
+        <button className="ac-btn ac-btn-primary" onClick={() => onNavigate("rechnungen")}>Erste Rechnung erstellen →</button>
+        <button className="ac-btn ac-btn-ghost" onClick={load}>↺ Erneut laden</button>
+      </div>
+    </div>
+  );
 
   const gewinn = (dash.einnahmen || 0) - (dash.ausgaben || 0);
   const perioden = [
@@ -358,7 +377,7 @@ function OverviewTab({ onNavigate, onUpload }) {
         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("posten")}>
           Offene Posten
         </button>
-        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("steuern")}>
+        <button className="ac-btn ac-btn-ghost ac-btn-sm" title="Umsatzsteuer-Voranmeldung berechnen und als ELSTER-XML exportieren" onClick={() => onNavigate?.("steuern")}>
           UStVA
         </button>
       </div>
@@ -417,7 +436,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                   animationDuration={600} animationEasing="ease-out" animationBegin={100}/>
               </AreaChart>
             </ResponsiveContainer>
-          ) : <div className="ac-empty" style={{padding:40}}>Noch keine Verlaufsdaten</div>}
+          ) : <div className="ac-empty" style={{padding:40}}>Noch keine Verlaufsdaten — erstelle deine ersten Rechnungen und Buchungen, um den Cashflow-Verlauf zu sehen.</div>}
           {areaData.length > 0 && (
             <div style={{display:"flex",gap:16,marginTop:8,justifyContent:"center"}}>
               {[["Einnahmen","#c6ff3c"],["Ausgaben","#7a5cff"]].map(([l,col]) => (
@@ -606,7 +625,6 @@ function ExportTab() {
       <div className="ac-card" style={{marginBottom:16,borderColor:"rgba(198,255,60,.35)",background:"rgba(198,255,60,.03)"}}>
         <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
           <div className="ac-section-title" style={{marginBottom:0}}>🗂️ Steuerberater-Übergabe mit 1 Klick</div>
-          <span className="ac-badge ac-badge-green" style={{fontSize:".7rem"}}>Verkaufsschlager</span>
         </div>
         <p style={{fontSize:".85rem",color:"var(--ink2)",marginBottom:14,lineHeight:1.6}}>
           DATEV Buchungsstapel + Stammdaten + Anleitung — alles in einem ZIP. Direkt an Ihren Steuerberater schicken.
@@ -888,7 +906,7 @@ function ComingSoonTab({ title = "Dieses Feature", desc = "Demnächst verfügbar
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:320, gap:16, opacity:.7 }}>
       <div style={{ fontSize:36 }}></div>
-      <div style={{ fontFamily:"var(--mono,monospace)", fontSize:11, letterSpacing:".15em", textTransform:"uppercase", color:"var(--ink-dim,rgba(255,255,255,.4))" }}>Work in Progress</div>
+      <div style={{ fontFamily:"var(--mono,monospace)", fontSize:11, letterSpacing:".15em", textTransform:"uppercase", color:"var(--ink-dim,rgba(255,255,255,.4))" }}>In Entwicklung</div>
       <div style={{ fontFamily:"var(--serif,serif)", fontSize:22, color:"var(--ink,#efede7)" }}>{title}</div>
       <p style={{ fontSize:13, color:"var(--ink-dim,rgba(255,255,255,.5))", textAlign:"center", maxWidth:340 }}>{desc}</p>
     </div>
@@ -1149,6 +1167,7 @@ function KasseGruppe({ refreshKey }) {
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const ALL_TABS = [
   {id:"overview",       label:"Übersicht",          modes:["einfach","doppelt"]},
+  {id:"hilfe",          label:"❓ Hilfe",             modes:["einfach","doppelt"]},
   {id:"rechnungen",     label:"Rechnungen",         modes:["einfach","doppelt"]},
   {id:"posten",         label:"Posten & Mahnwesen", modes:["einfach","doppelt"]},
   {id:"planung",        label:"Planung",            modes:["einfach","doppelt"]},
@@ -1161,7 +1180,6 @@ const ALL_TABS = [
   {id:"berichte",       label:"Berichte & Export",  modes:["einfach","doppelt"]},
   {id:"import",         label:"Import",             modes:["einfach","doppelt"]},
   {id:"lohnsteuer",     label:"Lohnsteuer",         modes:["doppelt"]},
-  {id:"hilfe",          label:"Hilfe",               modes:["einfach","doppelt"]},
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -1192,6 +1210,12 @@ export default function AccountingPage() {
   const triggerRefresh = useCallback(() => {
     setRefreshKey(k => k + 1);
   }, []);
+
+  useEffect(() => {
+    const tabLabel = TABS.find(t => t.id === tab)?.label?.replace(/^❓\s*/, "") || "Buchhaltung";
+    document.title = `${tabLabel} – NILL Buchhaltung`;
+    return () => { document.title = "NILL"; };
+  }, [tab, TABS]);
 
   const goTo = (tabId) => setTab(tabId);
 

@@ -13,15 +13,15 @@ const faelligkeitsDatum = (periode_bis) => {
 };
 
 const KZ_BESCHREIBUNG = {
-  kz_21_umsaetze_19:          { kz:"21", label:"Steuerpfl. Umsatze 19%",           typ:"umsatz" },
-  kz_35_umsaetze_7:           { kz:"35", label:"Steuerpfl. Umsatze 7%",            typ:"umsatz" },
-  kz_86_ig_lieferungen:       { kz:"86", label:"Innergemeinschaftliche Lieferungen", typ:"umsatz" },
-  kz_81_steuerfreie_umsaetze: { kz:"81", label:"Steuerfreie Umsatze",              typ:"umsatz" },
-  kz_41_ust_19:               { kz:"41", label:"Umsatzsteuer 19%",                 typ:"steuer" },
-  kz_44_ust_7:                { kz:"44", label:"Umsatzsteuer 7%",                  typ:"steuer" },
-  kz_59_vorsteuer_allgemein:  { kz:"59", label:"Vorsteuer (allgemein)",             typ:"vorsteuer" },
-  kz_61_vorsteuer_ig_erwerb:  { kz:"61", label:"Vorsteuer ig-Erwerb",              typ:"vorsteuer" },
-  kz_65_zahllast:             { kz:"65", label:"Zahllast / Erstattung",             typ:"zahllast" },
+  kz_21_umsaetze_19:          { kz:"21", label:"Steuerpflichtige Umsätze 19%",            typ:"umsatz" },
+  kz_35_umsaetze_7:           { kz:"35", label:"Steuerpflichtige Umsätze 7%",             typ:"umsatz" },
+  kz_86_ig_lieferungen:       { kz:"86", label:"Innergemeinschaftliche Lieferungen (§4 Nr. 1b UStG)", typ:"umsatz" },
+  kz_81_steuerfreie_umsaetze: { kz:"81", label:"Steuerfreie Umsätze",                     typ:"umsatz" },
+  kz_41_ust_19:               { kz:"41", label:"Umsatzsteuer 19%",                        typ:"steuer" },
+  kz_44_ust_7:                { kz:"44", label:"Umsatzsteuer 7%",                         typ:"steuer" },
+  kz_59_vorsteuer_allgemein:  { kz:"59", label:"Vorsteuer allgemein (§15 UStG)",           typ:"vorsteuer" },
+  kz_61_vorsteuer_ig_erwerb:  { kz:"61", label:"Vorsteuer innergemeinschaftl. Erwerb",    typ:"vorsteuer" },
+  kz_65_zahllast:             { kz:"65", label:"Zahllast / Erstattung (KZ 65)",            typ:"zahllast" },
 };
 
 function PeriodStatus({ perioden, onReload }) {
@@ -94,6 +94,7 @@ function PeriodStatus({ perioden, onReload }) {
 function SchnellElster({ von, bis }) {
   const [loading, setLoading] = useState(false);
   const [steuernr, setSteuernr] = useState("");
+  const [finanzamtId, setFinanzamtId] = useState("9300");
   const [msg, setMsg] = useState(null);
 
   const einreichen = async () => {
@@ -103,7 +104,7 @@ function SchnellElster({ von, bis }) {
       // test_modus: true — ERiC-Direktübermittlung ist WIP (keine registrierte HerstellerID).
       // XML wird für manuellen Upload auf elster.de generiert.
       const resp = await api.post("/api/v1/buchhaltung/export/elster", {
-        von, bis, steuernummer: steuernr.trim(), finanzamt_id: "9300",
+        von, bis, steuernummer: steuernr.trim(), finanzamt_id: finanzamtId.trim() || "9300",
         zeitraum: String(new Date(von).getMonth()+1).padStart(2,"0"), test_modus: true,
       }, { responseType: "blob" });
       const url = URL.createObjectURL(resp.data);
@@ -139,6 +140,13 @@ function SchnellElster({ von, bis }) {
           <label className="ac-label">Steuernummer</label>
           <input className="ac-input ac-mono" value={steuernr} placeholder="21/815/08150"
             onChange={e=>setSteuernr(e.target.value)} />
+        </div>
+        <div className="ac-form-col" style={{ maxWidth:110 }}>
+          <label className="ac-label" title="4-stellige Finanzamtsnummer — Standard: 9300 (Bayern Mitte). Bitte auf Ihr Finanzamt ändern.">Finanzamt-Nr. *</label>
+          <input className="ac-input ac-mono" value={finanzamtId || "9300"} placeholder="9300"
+            maxLength={4}
+            onChange={e=>setFinanzamtId?.(e.target.value)}
+            title="Finanzamt-Nr. 9300 = Bayern Mitte. Bitte auf Ihr Finanzamt anpassen." />
         </div>
         <button className="ac-btn ac-btn-primary" onClick={einreichen} disabled={loading} style={{background:"var(--accent)",color:"#000"}}>
           {loading ? "…" : "ELSTER XML herunterladen"}
@@ -218,7 +226,7 @@ export default function UstVaTab() {
             <div className="ac-kpi"><div className="ac-kpi-label">Zahllast / Erstattung (KZ 65)</div><div className={`ac-kpi-value ${zahllast >= 0 ? "pink" : "green"}`}>{fmtEur(zahllast)}</div></div>
           </div>
           <div className="ac-card" style={{ padding:0 }}>
-            <div style={{ padding:"16px 20px" }}><span className="ac-section-title">Kennzahlen-Ubersicht</span></div>
+            <div style={{ padding:"16px 20px" }}><span className="ac-section-title">Kennzahlen-Übersicht</span><span style={{ fontSize:".75rem", color:"var(--ink2)", marginLeft:10 }}>KZ = Kennzahl aus dem UStVA-Formular</span></div>
             <table className="ac-table">
               <thead><tr><th style={{width:60}}>KZ</th><th>Beschreibung</th><th style={{textAlign:"right"}}>Betrag</th></tr></thead>
               <tbody>

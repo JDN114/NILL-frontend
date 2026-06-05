@@ -68,9 +68,18 @@ function FileUploadSection({ label, endpoint, vorlage, vorlageName, hinweise, on
   const [loading,  setLoading]  = useState(false);
   const [result,   setResult]   = useState(null);
 
+  const MAX_CSV_PREVIEW_MB = 5;
+
   const onFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (f.size / 1024 / 1024 > MAX_CSV_PREVIEW_MB) {
+      alert(`CSV-Datei ist zu groß für die Vorschau (max. ${MAX_CSV_PREVIEW_MB} MB). Die Datei kann trotzdem importiert werden.`);
+      setFile(f);
+      setPreview(null);
+      setResult(null);
+      return;
+    }
     setFile(f);
     setResult(null);
     const reader = new FileReader();
@@ -263,7 +272,7 @@ export default function ImportTab({ onDone }) {
           hinweise={[
             "konto_soll / konto_haben: SKR03-Kontonummer (z. B. 4930, 1200, 8400)",
             "betrag: Bruttobetrag in EUR, Dezimaltrennzeichen Punkt (z. B. 119.00)",
-            "ust_kennzeichen: " + UST_KZ_HINWEIS.join(" | ").slice(0, 80) + "…",
+            "ust_kennzeichen: " + UST_KZ_HINWEIS.join(" | "),
           ]}
           onDone={onDone}
         />
@@ -308,7 +317,7 @@ export default function ImportTab({ onDone }) {
               <li>Vorlage als Referenz verwenden — eigene Spaltenreihenfolge wird erkannt, Spaltennamen müssen stimmen.</li>
               <li>Buchungen-Import: Jede Zeile erzeugt einen einfachen Buchungssatz (eine Soll-, eine Haben-Zeile).</li>
               <li>Für komplexere Buchungssätze (mehr als 2 Zeilen) nutzen Sie das Journal direkt.</li>
-              <li>Bereits importierte Buchungen werden nicht doppelt geprüft — bei Bedarf vorher filtern.</li>
+              <li><strong style={{ color:"var(--a2)" }}>⚠ Keine Duplikatsprüfung:</strong> Bereits importierte Buchungen werden nicht erkannt — dieselbe Datei zweimal importieren erzeugt doppelte Buchungen. Vor dem Import sicherstellen, dass die Datei noch nicht importiert wurde.</li>
               <li>Nach dem Import erscheinen Buchungen sofort im Journal und in allen Berichten.</li>
             </ul>
           </div>
