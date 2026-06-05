@@ -201,18 +201,38 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabl
               {email.attachments.map((att, i) => {
                 const inlineTypes = ["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp"];
                 const isInline = inlineTypes.includes(att.content_type);
+                const handleAttachmentClick = async (e) => {
+                  e.preventDefault();
+                  const url = attachmentUrl({ email, attachmentId: att.id });
+                  try {
+                    const res = await fetch(url, { credentials: "include" });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const blob = await res.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    if (isInline) {
+                      window.open(blobUrl, "_blank", "noreferrer");
+                    } else {
+                      const a = document.createElement("a");
+                      a.href = blobUrl;
+                      a.download = att.filename || "attachment";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                  } catch {
+                    window.open(url, "_blank", "noreferrer");
+                  }
+                };
                 return (
-                  <a key={i}
-                    href={attachmentUrl({ email, attachmentId: att.id })}
-                    target="_blank" rel="noreferrer" className="em-attachment-chip"
-                    {...(!isInline && { download: att.filename })}>
+                  <button key={i} onClick={handleAttachmentClick} className="em-attachment-chip">
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
                       <polyline points="13 2 13 9 20 9"/>
                     </svg>
                     {att.filename}
                     {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
-                  </a>
+                  </button>
                 );
               })}
             </div>
