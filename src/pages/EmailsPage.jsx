@@ -172,7 +172,17 @@ const EmailListItem = memo(function EmailListItem({
 });
 
 // ── Attachment preview modal ──────────────────────────────────────────────────
-const PREVIEW_TYPES = new Set(["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"]);
+const IMG_EXTS  = new Set(["jpg","jpeg","png","gif","webp","svg","bmp"]);
+const PDF_EXTS  = new Set(["pdf"]);
+
+function previewKind(att) {
+  // Normalise the stored content_type (may contain params or be octet-stream)
+  const ct  = (att.content_type || "").split(";")[0].trim().toLowerCase();
+  const ext = (att.filename || "").split(".").pop().toLowerCase();
+  if (ct === "application/pdf"  || PDF_EXTS.has(ext))  return "pdf";
+  if (ct.startsWith("image/")   || IMG_EXTS.has(ext))  return "image";
+  return null;
+}
 
 function AttachmentPreview({ att, email, onClose }) {
   const [blobUrl, setBlobUrl] = useState(null);
@@ -186,7 +196,15 @@ function AttachmentPreview({ att, email, onClose }) {
     fetch(url, { credentials: "include" })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.blob(); })
       .then(blob => {
-        const u = URL.createObjectURL(blob);
+        // Use the correct MIME type so the browser renders PDF / images properly.
+        const kind = previewKind(att);
+        const mime = kind === "pdf" ? "application/pdf"
+                   : kind === "image" ? (att.content_type?.startsWith("image/") ? att.content_type : "image/jpeg")
+                   : blob.type || "application/octet-stream";
+        const typed = blob.type && blob.type !== "application/octet-stream"
+          ? blob
+          : blob.slice(0, blob.size, mime);
+        const u = URL.createObjectURL(typed);
         revoke = u;
         setBlobUrl(u);
       })
@@ -202,8 +220,9 @@ function AttachmentPreview({ att, email, onClose }) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
-  const isPreviewable = PREVIEW_TYPES.has(att.content_type);
-  const isImage = att.content_type?.startsWith("image/");
+  const kind = previewKind(att);
+  const isPreviewable = kind !== null;
+  const isImage = kind === "image";
 
   return (
     <div className="em-preview-backdrop" onClick={onClose}>
