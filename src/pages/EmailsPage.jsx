@@ -171,12 +171,126 @@ const EmailListItem = memo(function EmailListItem({
   );
 });
 
+// ── Attachment preview modal ──────────────────────────────────────────────────
+const PREVIEW_TYPES = new Set(["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"]);
+
+function AttachmentPreview({ att, email, onClose }) {
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState(null);
+
+  useEffect(() => {
+    let revoke;
+    setLoading(true); setError(null); setBlobUrl(null);
+    const url = attachmentUrl({ email, attachmentId: att.id });
+    fetch(url, { credentials: "include" })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.blob(); })
+      .then(blob => {
+        const u = URL.createObjectURL(blob);
+        revoke = u;
+        setBlobUrl(u);
+      })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [att.id]);
+
+  const download = () => {
+    if (!blobUrl) return;
+    const a = document.createElement("a");
+    a.href = blobUrl; a.download = att.filename || "attachment";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+
+  const isPreviewable = PREVIEW_TYPES.has(att.content_type);
+  const isImage = att.content_type?.startsWith("image/");
+
+  return (
+    <div className="em-preview-backdrop" onClick={onClose}>
+      <div className="em-preview-modal" onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="em-preview-header">
+          <div className="em-preview-filename">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+            <span>{att.filename}</span>
+            {att.size_bytes && <span className="em-preview-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
+          </div>
+          <div className="em-preview-actions">
+            <button className="em-preview-dl-btn" onClick={download} disabled={!blobUrl} title="Herunterladen">
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Herunterladen
+            </button>
+            <button className="em-preview-close" onClick={onClose} title="Schließen">
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="em-preview-body">
+          {loading && <div className="em-preview-state"><Spinner /></div>}
+
+          {!loading && error && (
+            <div className="em-preview-state">
+              <p style={{ color: "#f87171", marginBottom: "1rem" }}>Fehler beim Laden: {error}</p>
+            </div>
+          )}
+
+          {!loading && !error && isPreviewable && isImage && (
+            <img src={blobUrl} alt={att.filename} className="em-preview-img" />
+          )}
+
+          {!loading && !error && isPreviewable && !isImage && (
+            <iframe src={blobUrl} title={att.filename} className="em-preview-iframe" />
+          )}
+
+          {!loading && !error && !isPreviewable && (
+            <div className="em-preview-state">
+              <div className="em-preview-nopreview">
+                <svg width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" style={{ opacity: 0.35 }}>
+                  <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                  <polyline points="13 2 13 9 20 9"/>
+                </svg>
+                <p style={{ margin: "0.75rem 0 0.25rem" }}>Vorschau nicht verfügbar</p>
+                <p style={{ fontSize: "0.78rem", opacity: 0.5, margin: 0 }}>{att.content_type || "Unbekannter Dateityp"}</p>
+                <button className="em-preview-dl-btn" style={{ marginTop: "1.25rem" }} onClick={download}>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Herunterladen
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Memoized EmailDetail — re-renders only when activeEmail content changes ──
 const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabled }) {
+  const [preview, setPreview] = useState(null); // att object or null
+
   if (!email) return <div className="em-detail-empty">Wähle eine E-Mail aus</div>;
   const s = extractSender(email);
   return (
     <div className="em-detail">
+      {preview && (
+        <AttachmentPreview
+          att={preview}
+          email={email}
+          onClose={() => setPreview(null)}
+        />
+      )}
       <div className="em-detail-topbar">
         <button onClick={onClose} className="em-back">{IC.back} Zurück</button>
       </div>
@@ -198,43 +312,16 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabl
           <div className="em-attachments">
             <div className="em-attachments-label">Anhänge ({email.attachments.length})</div>
             <div className="em-attachment-list">
-              {email.attachments.map((att, i) => {
-                const inlineTypes = ["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp"];
-                const isInline = inlineTypes.includes(att.content_type);
-                const handleAttachmentClick = async (e) => {
-                  e.preventDefault();
-                  const url = attachmentUrl({ email, attachmentId: att.id });
-                  try {
-                    const res = await fetch(url, { credentials: "include" });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const blob = await res.blob();
-                    const blobUrl = URL.createObjectURL(blob);
-                    if (isInline) {
-                      window.open(blobUrl, "_blank", "noreferrer");
-                    } else {
-                      const a = document.createElement("a");
-                      a.href = blobUrl;
-                      a.download = att.filename || "attachment";
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }
-                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-                  } catch {
-                    window.open(url, "_blank", "noreferrer");
-                  }
-                };
-                return (
-                  <button key={i} onClick={handleAttachmentClick} className="em-attachment-chip">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-                      <polyline points="13 2 13 9 20 9"/>
-                    </svg>
-                    {att.filename}
-                    {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
-                  </button>
-                );
-              })}
+              {email.attachments.map((att, i) => (
+                <button key={i} onClick={() => setPreview(att)} className="em-attachment-chip">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                  </svg>
+                  {att.filename}
+                  {att.size_bytes && <span className="em-attachment-size">{(att.size_bytes / 1024).toFixed(0)} KB</span>}
+                </button>
+              ))}
             </div>
           </div>
         )}
