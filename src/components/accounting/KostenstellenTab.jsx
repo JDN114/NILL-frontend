@@ -39,16 +39,16 @@ function KstForm({ initial, onSaved, onCancel }) {
     <div className="ac-modal-backdrop" onClick={e => e.target === e.currentTarget && onCancel()}>
       <div className="ac-modal" style={{ maxWidth: 480 }}>
         <div className="ac-modal-title">{initial?.id ? "Kostenstelle bearbeiten" : "Kostenstelle anlegen"}</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: "0 0 120px" }}>
             <label className="ac-label">Nummer *</label>
-            <input className="ac-input" value={form.nummer} onChange={e => set("nummer", e.target.value)}
+            <input aria-required="true" className="ac-input" value={form.nummer} onChange={e => set("nummer", e.target.value)}
               placeholder="z.B. KST-100" disabled={!!initial?.id} />
           </div>
           <div className="ac-form-col">
             <label className="ac-label">Bezeichnung *</label>
-            <input className="ac-input" value={form.bezeichnung} onChange={e => set("bezeichnung", e.target.value)}
+            <input aria-required="true" className="ac-input" value={form.bezeichnung} onChange={e => set("bezeichnung", e.target.value)}
               placeholder="z.B. Marketing" />
           </div>
         </div>
@@ -102,7 +102,7 @@ function KstAuswertung({ kst, onClose }) {
         </div>
 
         {loading ? (
-          <div className="ac-loading"><span className="ac-spinner" /> Lade…</div>
+          <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" /> Lade…</div>
         ) : data ? (
           <>
             {/* KPIs */}
@@ -122,11 +122,11 @@ function KstAuswertung({ kst, onClose }) {
             {/* Zeilen */}
             {data.zeilen.length > 0 ? (
               <div className="ac-table-wrap">
-                <table className="ac-table">
+                <table aria-label="Kostenstellen" className="ac-table">
                   <thead><tr>
-                    <th>Datum</th><th>Text</th><th>Beleg</th><th>Konto</th>
-                    <th style={{ textAlign: "right" }}>Soll</th>
-                    <th style={{ textAlign: "right" }}>Haben</th>
+                    <th scope="col">Datum</th><th scope="col">Text</th><th scope="col">Beleg</th><th scope="col">Konto</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Soll</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Haben</th>
                   </tr></thead>
                   <tbody>
                     {data.zeilen.map((z, i) => (
@@ -192,11 +192,11 @@ export default function KostenstellenTab() {
     load();
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" /> Laden…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" /> Laden…</div>;
 
   return (
     <div>
-      {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{err}</div>}
+      {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{err}</div>}
 
       {/* Gesamtübersicht */}
       {gesamt && gesamt.length > 0 && (
@@ -213,12 +213,12 @@ export default function KostenstellenTab() {
             </div>
           </div>
           <div className="ac-table-wrap">
-            <table className="ac-table">
+            <table aria-label="Kostenstellen" className="ac-table">
               <thead><tr>
-                <th>Nr.</th><th>Bezeichnung</th>
-                <th style={{ textAlign: "right" }}>Soll</th>
-                <th style={{ textAlign: "right" }}>Haben</th>
-                <th style={{ textAlign: "right" }}>Saldo</th>
+                <th scope="col">Nr.</th><th scope="col">Bezeichnung</th>
+                <th scope="col" style={{ textAlign: "right" }}>Soll</th>
+                <th scope="col" style={{ textAlign: "right" }}>Haben</th>
+                <th scope="col" style={{ textAlign: "right" }}>Saldo</th>
               </tr></thead>
               <tbody>
                 {gesamt.map(k => (
@@ -258,10 +258,10 @@ export default function KostenstellenTab() {
         </div>
       ) : (
         <div className="ac-table-wrap">
-          <table className="ac-table">
+          <table aria-label="Kostenstellen" className="ac-table">
             <thead><tr>
-              <th>Nummer</th><th>Bezeichnung</th><th>Beschreibung</th>
-              <th>Status</th><th>Aktionen</th>
+              <th scope="col">Nummer</th><th scope="col">Bezeichnung</th><th scope="col">Beschreibung</th>
+              <th scope="col">Status</th><th scope="col">Aktionen</th>
             </tr></thead>
             <tbody>
               {list.map(k => (

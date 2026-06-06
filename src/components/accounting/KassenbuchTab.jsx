@@ -32,7 +32,7 @@ function EintragForm({ initial, onSaved, onClose }) {
     <div className="ac-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 480 }}>
         <div className="ac-modal-title">{initial?.id ? "Kasseneintrag bearbeiten" : "Kasseneintrag erfassen"}</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
         <div className="ac-form-row">
           <div className="ac-form-col"><label className="ac-label">Datum *</label>
             <input className="ac-input" type="date" value={form.datum} onChange={e => set("datum", e.target.value)} /></div>
@@ -88,7 +88,7 @@ export default function KassenbuchTab() {
 
   return (
     <div>
-      {msg && <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+      {msg && <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
         style={{ cursor: "pointer", marginBottom: 16 }} onClick={() => setMsg(null)}>{msg.text}</div>}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -129,13 +129,13 @@ export default function KassenbuchTab() {
       </div>
 
       {kassenstand < 0 && (
-        <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>
+        <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>
           Kassenstand ist negativ — bitte prüfen!
         </div>
       )}
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Kassenbuch…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Kassenbuch…</div>
       ) : data.eintraege.length === 0 ? (
         <div className="ac-empty">
           <div style={{ fontSize: "2rem", marginBottom: 12 }}></div>
@@ -144,14 +144,14 @@ export default function KassenbuchTab() {
       ) : (
         <div className="ac-card" style={{ padding: 0, overflow: "hidden" }}>
           <div className="ac-table-wrap">
-            <table className="ac-table">
+            <table aria-label="Kassenbucheinträge" className="ac-table">
               <thead>
                 <tr>
-                  <th>Datum</th><th>Beleg-Nr.</th><th>Beschreibung</th>
-                  <th style={{ textAlign: "right" }}>Einnahme</th>
-                  <th style={{ textAlign: "right" }}>Ausgabe</th>
-                  <th style={{ textAlign: "right" }}>Kassenstand</th>
-                  <th />
+                  <th scope="col">Datum</th><th scope="col">Beleg-Nr.</th><th scope="col">Beschreibung</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Einnahme</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Ausgabe</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Kassenstand</th>
+                  <th scope="col" />
                 </tr>
               </thead>
               <tbody>

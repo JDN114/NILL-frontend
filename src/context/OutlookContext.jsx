@@ -114,6 +114,8 @@ export const OutlookProvider = ({ children }) => {
         action_items: mail.action_items ?? [],
         detected_dates: mail.detected_dates ?? [],
         read: mail.read ?? false,
+        provider: mail.provider ?? "outlook",
+        attachments: mail.attachments ?? [],
       };
       setActiveEmail(active);
       setAiLoading(active.ai_status === "pending");

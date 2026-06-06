@@ -184,10 +184,10 @@ function KontoVorschlagPanel({ invoice, onAccept, onOverride }) {
             <table style={{ width:"100%", borderCollapse:"collapse", fontSize:".73rem", marginBottom:8 }}>
               <thead>
                 <tr style={{ color:"var(--ink3)", textAlign:"left" }}>
-                  <th style={{ padding:"2px 6px" }}>Konto</th>
-                  <th style={{ padding:"2px 6px" }}>Bezeichnung</th>
-                  <th style={{ padding:"2px 6px", textAlign:"right" }}>Soll</th>
-                  <th style={{ padding:"2px 6px", textAlign:"right" }}>Haben</th>
+                  <th scope="col" style={{ padding:"2px 6px" }}>Konto</th>
+                  <th scope="col" style={{ padding:"2px 6px" }}>Bezeichnung</th>
+                  <th scope="col" style={{ padding:"2px 6px", textAlign:"right" }}>Soll</th>
+                  <th scope="col" style={{ padding:"2px 6px", textAlign:"right" }}>Haben</th>
                 </tr>
               </thead>
               <tbody>
@@ -393,7 +393,7 @@ function BookingConfirmModal({ invoice, onClose, onBooked, setMsg }) {
 
         {err && (
           <>
-            <div className="ac-alert ac-alert-err" style={{ marginBottom:4 }}>{err}</div>
+            <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom:4 }}>{err}</div>
             <BookingErrorHelp error={err} />
             <div style={{ marginBottom:14 }} />
           </>
@@ -482,6 +482,8 @@ function BookingInfoTooltip({ open, onToggle }) {
     <div style={{ position:"relative", display:"inline-flex" }}>
       <button
         onClick={onToggle}
+        aria-expanded={open}
+        aria-controls="booking-info-popup"
         style={{
           width:20, height:20, borderRadius:"50%", border:"1px solid var(--border)",
           background:"var(--surface2)", color:"var(--ink2)", fontSize:11,
@@ -494,7 +496,12 @@ function BookingInfoTooltip({ open, onToggle }) {
       </button>
       {open && (
         <div
+          id="booking-info-popup"
+          role="dialog"
+          aria-modal="false"
+          aria-label="Was bedeutet Buchen?"
           onClick={onToggle}
+          onKeyDown={(e) => { if (e.key === "Escape") onToggle(); }}
           style={{
             position:"absolute", top:26, left:0, zIndex:100,
             width:300, background:"var(--surface)", border:"1px solid var(--border)",
@@ -599,7 +606,7 @@ export default function InvoiceList() {
   };
 
   const th = (key, label, right) => (
-    <th
+    <th scope="col"
       style={{ cursor:"pointer", userSelect:"none", textAlign: right ? "right" : "left" }}
       onClick={() => toggleSort(key)}
     >
@@ -610,7 +617,7 @@ export default function InvoiceList() {
     </th>
   );
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Rechnungen…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Rechnungen…</div>;
 
   const totalOpen = invoices
     .filter(i => i.status !== "paid")
@@ -619,23 +626,23 @@ export default function InvoiceList() {
   return (
     <div>
       {msg && (
-        <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+        <div role={msg.type==="ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
           style={{cursor:"pointer"}} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
       )}
 
       <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
-        <input className="ac-input" style={{ maxWidth:240 }} placeholder="Suche (Lieferant, Nr.)…"
+        <input className="ac-input" style={{ maxWidth:240 }} aria-label="Rechnungen suchen" placeholder="Suche (Lieferant, Nr.)…"
           value={filter} onChange={e => setFilter(e.target.value)} />
-        <select className="ac-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+        <select aria-label="Zahlungsstatus filtern" className="ac-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="all">Alle Zahlungsstatus</option>
           <option value="open">Offen</option>
           <option value="paid">Bezahlt</option>
           <option value="overdue">Überfällig</option>
           <option value="draft">Entwurf</option>
         </select>
-        <select className="ac-select" value={bookingFilter} onChange={e => setBookingFilter(e.target.value)}>
+        <select aria-label="Buchungsstatus filtern" className="ac-select" value={bookingFilter} onChange={e => setBookingFilter(e.target.value)}>
           <option value="all">Alle Buchungsstatus</option>
           <option value="booked">Gebucht</option>
           <option value="unbooked">Nicht gebucht</option>
@@ -647,7 +654,7 @@ export default function InvoiceList() {
       </div>
 
       <div className="ac-card" style={{ padding:0 }}>
-        <table className="ac-table">
+        <table aria-label="Rechnungen" className="ac-table">
           <thead>
             <tr>
               {th("invoice_number","Nr.")}
@@ -657,8 +664,8 @@ export default function InvoiceList() {
               {th("vat_rate","MwSt", true)}
               {th("amount","Brutto", true)}
               {th("status","Status")}
-              <th>Buchung</th>
-              <th>Aktionen</th>
+              <th scope="col">Buchung</th>
+              <th scope="col">Aktionen</th>
             </tr>
           </thead>
           <tbody>

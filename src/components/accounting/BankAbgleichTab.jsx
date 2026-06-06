@@ -21,16 +21,21 @@ const FILTERS = ["offen", "abgeglichen", "gecleared", ""];
 function KonfidenzBar({ score = 0 }) {
   const pct = Math.min(100, Math.max(0, score));
   const col = pct >= 70 ? "#44cc66" : pct >= 40 ? "#ffb400" : "#ff6655";
+  const label = pct >= 70 ? "hoch" : pct >= 40 ? "mittel" : "niedrig";
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}
+         aria-label={`Konfidenz: ${pct}% (${label})`}>
       <div style={{
         flex: 1, height: 5, background: "rgba(255,255,255,.08)",
         borderRadius: 3, overflow: "hidden",
-      }}>
+      }} aria-hidden="true">
         <div style={{ width: `${pct}%`, height: "100%", background: col, borderRadius: 3 }} />
       </div>
-      <span style={{ fontSize: ".7rem", color: col, fontFamily: "JetBrains Mono,monospace",
-                     minWidth: 28, textAlign: "right" }}>{pct}%</span>
+      <span style={{ fontSize: ".7rem", fontFamily: "JetBrains Mono,monospace",
+                     minWidth: 28, textAlign: "right" }} aria-hidden="true">
+        <span style={{ color: col }}>{pct}%</span>
+        {" "}<span style={{ color: "var(--ink2)", fontSize: ".65rem" }}>({label})</span>
+      </span>
     </div>
   );
 }
@@ -290,7 +295,12 @@ export default function BankAbgleichTab() {
             }}>
               {/* Row */}
               <div
+                role="button"
+                tabIndex={0}
+                aria-expanded={expanded}
+                aria-label={`Transaktion ${tx.vendor_name || tx.description || "—"} ${EUR(tx.amount)} – ${expanded ? "zuklappen" : "aufklappen"}`}
                 onClick={() => setExpandedId(expanded ? null : tx.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedId(expanded ? null : tx.id); } }}
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
                   padding: "10px 14px", cursor: "pointer",

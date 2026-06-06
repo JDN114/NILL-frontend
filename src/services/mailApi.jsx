@@ -91,11 +91,10 @@ export async function markRead({ provider, emailId }) {
 
 /** Attachment-Download-URL für <a href=…> — provider-aware. */
 export function attachmentUrl({ email, attachmentId }) {
-  // Wenn die Email einen imap_account_id-Marker hat, ist sie via IMAP gekommen.
-  const isImap = !!(email?.imap_account_id);
-  const path = isImap
-    ? `/imap/attachments/${attachmentId}`
-    : `/gmail/attachments/${attachmentId}`;
+  const provider = detectProvider(email) || email?.provider;
+  const path = provider === "imap"    ? `/imap/attachments/${attachmentId}`
+             : provider === "outlook" ? `/outlook/attachments/${attachmentId}`
+             :                          `/gmail/attachments/${attachmentId}`;
   return `${API_BASE}${path}`;
 }
 

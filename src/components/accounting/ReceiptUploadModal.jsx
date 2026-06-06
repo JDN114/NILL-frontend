@@ -1,5 +1,5 @@
 // src/components/accounting/ReceiptUploadModal.jsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import api from "../../services/api";
 
 const fmtEur = (n) =>
@@ -16,6 +16,35 @@ export default function ReceiptUploadModal({ onClose }) {
   const [booked,    setBooked]    = useState(false);
   const [error,     setError]     = useState("");
   const inputRef = useRef();
+  const modalRef = useRef();
+  const triggerRef = useRef(typeof document !== "undefined" ? document.activeElement : null);
+
+  useEffect(() => {
+    const prev = triggerRef.current;
+    const focusable = modalRef.current?.querySelectorAll(
+      'button:not(:disabled),[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable?.length) focusable[0].focus();
+
+    const trapFocus = (e) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key !== "Tab" || !modalRef.current) return;
+      const all = [...modalRef.current.querySelectorAll(
+        'button:not(:disabled),[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])'
+      )];
+      if (!all.length) return;
+      if (e.shiftKey && document.activeElement === all[0]) {
+        e.preventDefault(); all[all.length - 1].focus();
+      } else if (!e.shiftKey && document.activeElement === all[all.length - 1]) {
+        e.preventDefault(); all[0].focus();
+      }
+    };
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      document.removeEventListener("keydown", trapFocus);
+      prev?.focus();
+    };
+  }, [onClose]);
 
   const onFile = (f) => {
     if (!f) return;
@@ -65,11 +94,17 @@ export default function ReceiptUploadModal({ onClose }) {
   };
 
   return (
-    <div className="ac-modal-backdrop">
-      <div className="ac-modal">
-        <div className="ac-modal-title">Beleg hochladen &amp; analysieren</div>
+    <div className="ac-modal-backdrop" aria-hidden="false">
+      <div
+        ref={modalRef}
+        className="ac-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="receipt-modal-title"
+      >
+        <div id="receipt-modal-title" className="ac-modal-title">Beleg hochladen &amp; analysieren</div>
         {error && (
-          <div className="ac-alert ac-alert-err" style={{ cursor: "pointer" }} onClick={() => setError("")}>
+          <div role="alert" className="ac-alert ac-alert-err" style={{ cursor: "pointer" }} onClick={() => setError("")}>
             {error}
           </div>
         )}
@@ -143,7 +178,7 @@ export default function ReceiptUploadModal({ onClose }) {
                 border: "1px solid rgba(197,165,114,0.2)",
                 borderRadius: 8, fontSize: ".84rem", color: "var(--ink2)",
               }}>
-                <span className="ac-spinner" />
+                <span className="ac-spinner" aria-hidden="true" />
                 <span>◈ KI analysiert den Beleg…</span>
                 <span style={{fontSize:".75rem", opacity:.6}}>(bis zu 30 Sek.)</span>
               </div>
@@ -160,7 +195,7 @@ export default function ReceiptUploadModal({ onClose }) {
           </>
         ) : (
           <>
-            <div className="ac-alert ac-alert-ok" style={{ marginBottom: 16, display:"flex", alignItems:"center", gap:10 }}>
+            <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ marginBottom: 16, display:"flex", alignItems:"center", gap:10 }}>
               <span>Beleg erfolgreich erkannt und gespeichert.</span>
               <span style={{
                 display:"inline-flex", alignItems:"center", gap:3,
@@ -199,7 +234,7 @@ export default function ReceiptUploadModal({ onClose }) {
 
             {/* Auto-book prompt */}
             {booked ? (
-              <div className="ac-alert ac-alert-ok">
+              <div role="status" aria-live="polite" className="ac-alert ac-alert-ok">
                 Buchungssatz wurde automatisch in die doppelte Buchführung übernommen.
               </div>
             ) : (

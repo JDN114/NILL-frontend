@@ -35,11 +35,11 @@ function ProjektForm({ initial, onSaved, onClose }) {
     <div className="ac-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 520 }}>
         <div className="ac-modal-title">{initial?.id ? "Projekt bearbeiten" : "Neues Projekt"}</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: 3 }}>
             <label className="ac-label">Projektname *</label>
-            <input className="ac-input" value={form.name} onChange={e => set("name", e.target.value)} />
+            <input aria-required="true" className="ac-input" value={form.name} onChange={e => set("name", e.target.value)} />
           </div>
           <div className="ac-form-col" style={{ maxWidth: 56 }}>
             <label className="ac-label">Farbe</label>
@@ -117,7 +117,7 @@ function ZeitForm({ projekte, initial, onSaved, onClose }) {
     <div className="ac-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 500 }}>
         <div className="ac-modal-title">{initial?.id ? "Zeiteintrag bearbeiten" : "Zeit erfassen"}</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
         <div className="ac-form-row">
           <div className="ac-form-col"><label className="ac-label">Datum</label>
             <input className="ac-input" type="date" value={form.datum} onChange={e => set("datum", e.target.value)} /></div>
@@ -204,7 +204,7 @@ export default function ProjektTab() {
 
   return (
     <div>
-      {msg && <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+      {msg && <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
         style={{ cursor: "pointer", marginBottom: 16 }} onClick={() => setMsg(null)}>{msg.text}</div>}
 
       <div style={{ display: "flex", gap: 4, background: "var(--surface)", borderRadius: 10, padding: 4, marginBottom: 20, width: "fit-content" }}>
@@ -220,7 +220,7 @@ export default function ProjektTab() {
             <span style={{ fontFamily: "Fraunces,serif", fontSize: "1.1rem", fontWeight: 600 }}>Projekte</span>
             <button className="ac-btn ac-btn-primary" onClick={() => setModal({ type: "projekt" })}>+ Neues Projekt</button>
           </div>
-          {loading ? <div className="ac-loading"><span className="ac-spinner" /></div> :
+          {loading ? <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" /></div> :
             projekte.length === 0 ? <div className="ac-empty"><div style={{ fontSize: "2rem" }}>📁</div><div>Noch keine Projekte.</div></div> :
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 12 }}>
               {projekte.map(p => {
@@ -245,8 +245,8 @@ export default function ProjektTab() {
                       </div>
                     )}
                     <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-                      <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal({ type: "projekt", ...p })}>✏️</button>
-                      <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del("projekt", p.id)}>🗑</button>
+                      <button className="ac-btn ac-btn-ghost ac-btn-sm" aria-label="Projekt bearbeiten" onClick={() => setModal({ type: "projekt", ...p })}>✏️</button>
+                      <button className="ac-btn ac-btn-danger ac-btn-sm" aria-label="Projekt löschen" onClick={() => del("projekt", p.id)}>🗑</button>
                     </div>
                   </div>
                 );
@@ -282,21 +282,21 @@ export default function ProjektTab() {
           ) : (
             <div className="ac-card" style={{ padding: 0, overflow: "hidden" }}>
               <div className="ac-table-wrap">
-                <table className="ac-table">
+                <table aria-label="Projekte" className="ac-table">
                   <thead>
                     <tr>
-                      <th><input type="checkbox" onChange={e => setSelected(e.target.checked ? zeiten.eintraege.map(z => z.id) : [])} /></th>
-                      <th>Datum</th><th>Tätigkeit</th><th>Projekt</th>
-                      <th style={{ textAlign: "right" }}>Stunden</th>
-                      <th style={{ textAlign: "right" }}>Stundensatz</th>
-                      <th style={{ textAlign: "right" }}>Betrag</th>
-                      <th />
+                      <th scope="col"><input type="checkbox" aria-label="Alle Einträge auswählen" onChange={e => setSelected(e.target.checked ? zeiten.eintraege.map(z => z.id) : [])} /></th>
+                      <th scope="col">Datum</th><th scope="col">Tätigkeit</th><th scope="col">Projekt</th>
+                      <th scope="col" style={{ textAlign: "right" }}>Stunden</th>
+                      <th scope="col" style={{ textAlign: "right" }}>Stundensatz</th>
+                      <th scope="col" style={{ textAlign: "right" }}>Betrag</th>
+                      <th scope="col" />
                     </tr>
                   </thead>
                   <tbody>
                     {zeiten.eintraege.map(z => (
                       <tr key={z.id}>
-                        <td><input type="checkbox" checked={selected?.includes(z.id) || false}
+                        <td><input type="checkbox" aria-label={`Zeiteintrag ${z.datum} auswählen`} checked={selected?.includes(z.id) || false}
                           onChange={e => setSelected(prev => e.target.checked ? [...(prev||[]), z.id] : (prev||[]).filter(id => id !== z.id))} /></td>
                         <td className="ac-mono" style={{ fontSize: ".82rem" }}>{z.datum}</td>
                         <td>{z.beschreibung}</td>
@@ -306,8 +306,8 @@ export default function ProjektTab() {
                         <td className="ac-mono" style={{ textAlign: "right", color: "var(--accent)", fontWeight: 700 }}>{fmtEur(z.betrag)}</td>
                         <td>
                           <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
-                            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal({ type: "zeit", ...z })}>✏️</button>
-                            <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del("zeit", z.id)}>🗑</button>
+                            <button className="ac-btn ac-btn-ghost ac-btn-sm" aria-label="Zeiteintrag bearbeiten" onClick={() => setModal({ type: "zeit", ...z })}>✏️</button>
+                            <button className="ac-btn ac-btn-danger ac-btn-sm" aria-label="Zeiteintrag löschen" onClick={() => del("zeit", z.id)}>🗑</button>
                           </div>
                         </td>
                       </tr>

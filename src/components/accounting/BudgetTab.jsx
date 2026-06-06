@@ -78,10 +78,10 @@ export default function BudgetTab() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
         <span style={{ fontFamily: "Fraunces,serif", fontSize: "1.1rem", fontWeight: 600 }}>Budget-Planung</span>
         <div style={{ display: "flex", gap: 8 }}>
-          <select className="ac-select" value={monat} onChange={e => setMonat(+e.target.value)}>
+          <select aria-label="Monat auswählen" className="ac-select" value={monat} onChange={e => setMonat(+e.target.value)}>
             {MONATE.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
           </select>
-          <select className="ac-select" value={jahr} onChange={e => setJahr(+e.target.value)}>
+          <select aria-label="Jahr auswählen" className="ac-select" value={jahr} onChange={e => setJahr(+e.target.value)}>
             {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
@@ -111,9 +111,9 @@ export default function BudgetTab() {
       <div className="ac-grid-2">
         <div className="ac-card">
           <div className="ac-section-title" style={{ color: "var(--accent)" }}>Einnahmen — Plan</div>
-          {loading ? <div className="ac-spinner" /> : (
-            <table className="ac-table">
-              <thead><tr><th>Kategorie</th><th style={{ textAlign: "right" }}>Geplant</th></tr></thead>
+          {loading ? <div className="ac-spinner" aria-hidden="true" /> : (
+            <table aria-label="Budgets" className="ac-table">
+              <thead><tr><th scope="col">Kategorie</th><th scope="col" style={{ textAlign: "right" }}>Geplant</th></tr></thead>
               <tbody>
                 {KATEGORIEN_EINNAHMEN.map(k => <BudgetRow key={k} kat={k} typ="einnahme" />)}
               </tbody>
@@ -129,9 +129,9 @@ export default function BudgetTab() {
 
         <div className="ac-card">
           <div className="ac-section-title" style={{ color: "var(--a3)" }}>Ausgaben — Plan</div>
-          {loading ? <div className="ac-spinner" /> : (
-            <table className="ac-table">
-              <thead><tr><th>Kategorie</th><th style={{ textAlign: "right" }}>Geplant</th></tr></thead>
+          {loading ? <div className="ac-spinner" aria-hidden="true" /> : (
+            <table aria-label="Budgets" className="ac-table">
+              <thead><tr><th scope="col">Kategorie</th><th scope="col" style={{ textAlign: "right" }}>Geplant</th></tr></thead>
               <tbody>
                 {KATEGORIEN_AUSGABEN.map(k => <BudgetRow key={k} kat={k} typ="ausgabe" />)}
               </tbody>

@@ -43,17 +43,17 @@ function PeriodStatus({ perioden, onReload }) {
     <div className="ac-card" style={{ marginBottom:16 }}>
       <div className="ac-section-title">USt-Voranmeldungen</div>
       {msg && (
-        <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+        <div role={msg.type==="ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
           style={{cursor:"pointer",marginBottom:12}} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
       )}
-      <table className="ac-table">
+      <table aria-label="Umsatzsteuer-Voranmeldungen" className="ac-table">
         <thead>
           <tr>
-            <th>Periode</th><th>Typ</th><th>Status</th>
-            <th style={{textAlign:"right"}}>Zahllast</th>
-            <th>Fälligkeit</th><th></th>
+            <th scope="col">Periode</th><th scope="col">Typ</th><th scope="col">Status</th>
+            <th scope="col" style={{textAlign:"right"}}>Zahllast</th>
+            <th scope="col">Fälligkeit</th><th scope="col"></th>
           </tr>
         </thead>
         <tbody>
@@ -134,7 +134,7 @@ function SchnellElster({ von, bis }) {
         <a href="https://www.elster.de" target="_blank" rel="noopener noreferrer" style={{color:"var(--accent)"}}>elster.de</a>
         {" "}(Formulare → UStVA → Datei hochladen). Automatische ERiC-Übermittlung folgt nach HerstellerID-Registrierung.
       </div>
-      {msg && <div className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`} style={{marginBottom:10,cursor:"pointer"}} onClick={()=>setMsg(null)}>{msg.text}</div>}
+      {msg && <div role={msg.type==="ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`} style={{marginBottom:10,cursor:"pointer"}} onClick={()=>setMsg(null)}>{msg.text}</div>}
       <div style={{ display:"flex", gap:8, alignItems:"flex-end", flexWrap:"wrap" }}>
         <div className="ac-form-col" style={{ flex:2, minWidth:160 }}>
           <label className="ac-label">Steuernummer</label>
@@ -204,7 +204,7 @@ export default function UstVaTab() {
           <div className="ac-section-title" style={{ marginBottom:0 }}>UStVA berechnen</div>
         </div>
         {periodMsg && (
-          <div className={`ac-alert ${periodMsg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+          <div role={periodMsg.type==="ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${periodMsg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
             style={{cursor:"pointer",marginBottom:12}} onClick={() => setPeriodMsg(null)}>
             {periodMsg.text}
           </div>
@@ -227,8 +227,8 @@ export default function UstVaTab() {
           </div>
           <div className="ac-card" style={{ padding:0 }}>
             <div style={{ padding:"16px 20px" }}><span className="ac-section-title">Kennzahlen-Übersicht</span><span style={{ fontSize:".75rem", color:"var(--ink2)", marginLeft:10 }}>KZ = Kennzahl aus dem UStVA-Formular</span></div>
-            <table className="ac-table">
-              <thead><tr><th style={{width:60}}>KZ</th><th>Beschreibung</th><th style={{textAlign:"right"}}>Betrag</th></tr></thead>
+            <table aria-label="Umsatzsteuer-Voranmeldungen" className="ac-table">
+              <thead><tr><th scope="col" style={{width:60}}>KZ</th><th scope="col">Beschreibung</th><th scope="col" style={{textAlign:"right"}}>Betrag</th></tr></thead>
               <tbody>
                 {Object.entries(KZ_BESCHREIBUNG).map(([key, meta]) => {
                   const wert = berechnung[key] || 0;
@@ -244,7 +244,7 @@ export default function UstVaTab() {
               </tbody>
             </table>
           </div>
-          <div className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
+          <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
             Diese Berechnung dient als Vorbereitung. Bitte mit Steuerberater abstimmen und uber ELSTER einreichen.
           </div>
         </>

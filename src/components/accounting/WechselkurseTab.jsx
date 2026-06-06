@@ -67,7 +67,7 @@ export default function WechselkurseTab() {
         </button>
       </div>
 
-      {err && <div className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>{err}</div>}
+      {err && <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>{err}</div>}
 
       {/* Currency Converter */}
       <div className="ac-card" style={{ marginBottom: 20, borderColor: "rgba(198,255,60,.2)" }}>
@@ -79,15 +79,15 @@ export default function WechselkurseTab() {
               onChange={e => { setBetrag(e.target.value); setErgebnis(null); }} />
           </div>
           <div className="ac-form-col" style={{ maxWidth: 120 }}>
-            <label className="ac-label">Von</label>
-            <select className="ac-select" value={von} onChange={e => { setVon(e.target.value); setErgebnis(null); }}>
+            <label className="ac-label" htmlFor="wk-von">Von</label>
+            <select id="wk-von" className="ac-select" value={von} onChange={e => { setVon(e.target.value); setErgebnis(null); }}>
               {allCurrencies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div style={{ paddingBottom: 8, fontSize: "1.2rem", color: "var(--ink2)" }}>→</div>
           <div className="ac-form-col" style={{ maxWidth: 120 }}>
-            <label className="ac-label">Nach</label>
-            <select className="ac-select" value={nach} onChange={e => { setNach(e.target.value); setErgebnis(null); }}>
+            <label className="ac-label" htmlFor="wk-nach">Nach</label>
+            <select id="wk-nach" className="ac-select" value={nach} onChange={e => { setNach(e.target.value); setErgebnis(null); }}>
               {allCurrencies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
@@ -114,7 +114,7 @@ export default function WechselkurseTab() {
 
       {/* Rate Table */}
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Kurse…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Kurse…</div>
       ) : displayRates.length > 0 ? (
         <div className="ac-card" style={{ padding: 0 }}>
           <div style={{ padding: "16px 20px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -125,13 +125,13 @@ export default function WechselkurseTab() {
               </span>
             )}
           </div>
-          <table className="ac-table">
+          <table aria-label="Wechselkurse" className="ac-table">
             <thead>
               <tr>
-                <th>Währung</th>
-                <th style={{ textAlign: "right" }}>Kurs (1 {base} = X)</th>
-                <th style={{ textAlign: "right" }}>100 {base} in Fremdwährung</th>
-                <th style={{ textAlign: "right" }}>1 FW → {base}</th>
+                <th scope="col">Währung</th>
+                <th scope="col" style={{ textAlign: "right" }}>Kurs (1 {base} = X)</th>
+                <th scope="col" style={{ textAlign: "right" }}>100 {base} in Fremdwährung</th>
+                <th scope="col" style={{ textAlign: "right" }}>1 FW → {base}</th>
               </tr>
             </thead>
             <tbody>

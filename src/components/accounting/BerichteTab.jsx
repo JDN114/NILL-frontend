@@ -13,13 +13,13 @@ function Saldenliste({ von, bis }) {
     api.get("/api/v1/buchhaltung/berichte/saldenliste", { params: { von, bis } })
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Saldenliste...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Saldenliste...</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>Saldenliste laden</button></div></div>;
   return (
     <div className="ac-card" style={{ padding:0 }}>
       <div style={{ padding:"16px 20px" }}><span className="ac-section-title">Saldenliste {von} - {bis}</span></div>
-      <table className="ac-table" style={{ fontSize:".82rem" }}>
-        <thead><tr><th>Kontonr.</th><th>Bezeichnung</th><th style={{textAlign:"right"}}>Soll</th><th style={{textAlign:"right"}}>Haben</th><th style={{textAlign:"right"}}>Saldo</th></tr></thead>
+      <table aria-label="Berichte" className="ac-table" style={{ fontSize:".82rem" }}>
+        <thead><tr><th scope="col">Kontonr.</th><th scope="col">Bezeichnung</th><th scope="col" style={{textAlign:"right"}}>Soll</th><th scope="col" style={{textAlign:"right"}}>Haben</th><th scope="col" style={{textAlign:"right"}}>Saldo</th></tr></thead>
         <tbody>
           {(data.positionen || []).map(k => {
             const saldo = (k.saldo_soll || 0) - (k.saldo_haben || 0);
@@ -41,6 +41,9 @@ function Saldenliste({ von, bis }) {
             <td className="ac-mono" style={{textAlign:"right", padding:"12px 14px", fontWeight:600}}>{fmtEur(data.summe_haben)}</td>
             <td className="ac-mono" style={{textAlign:"right", padding:"12px 14px", fontWeight:600, color: Math.abs(data.summe_soll - data.summe_haben) < 0.01 ? "var(--accent)" : "var(--a3)"}}>
               {fmtEur((data.summe_soll || 0) - (data.summe_haben || 0))}
+              {" "}<span style={{fontSize:".7rem",fontWeight:400}}>
+                {Math.abs(data.summe_soll - data.summe_haben) < 0.01 ? "✓ ausgeglichen" : "⚠ nicht ausgeglichen"}
+              </span>
             </td>
           </tr>
         </tfoot>
@@ -57,7 +60,7 @@ function Bilanz({ stichtag }) {
     api.get("/api/v1/buchhaltung/berichte/bilanz", { params: { stichtag } })
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Bilanz...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Bilanz...</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>Bilanz laden (Stichtag: {stichtag})</button></div></div>;
 
   const renderSection = (title, items, color) => (
@@ -101,7 +104,7 @@ function GuV({ von, bis }) {
     api.get("/api/v1/buchhaltung/berichte/guv", { params: { von, bis } })
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade GuV...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade GuV...</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>GuV laden</button></div></div>;
   const gesamtkosten = (data.materialaufwand || 0) + (data.personalaufwand || 0) + (data.abschreibungen || 0) + (data.sonstige_aufwendungen || 0);
   const gewinn = data.jahresueberschuss ?? ((data.gesamtleistung || 0) - gesamtkosten);
@@ -144,7 +147,7 @@ function EueR({ jahr }) {
     api.get("/api/v1/buchhaltung/berichte/euer", { params: { jahr } })
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade EÜR…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade EÜR…</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>EÜR {jahr} laden</button></div></div>;
   const gewinn = (data.betriebseinnahmen || 0) - (data.betriebsausgaben || 0);
   return (
@@ -194,13 +197,13 @@ function BWA({ von, bis }) {
     api.get("/api/v1/buchhaltung/berichte/bwa", { params: { von, bis } })
       .then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade BWA...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade BWA...</div>;
   if (!data) return <div className="ac-card"><div className="ac-empty"><button className="ac-btn ac-btn-primary" onClick={load}>BWA laden</button></div></div>;
   return (
     <div className="ac-card">
       <div className="ac-section-title">BWA {von} - {bis}</div>
-      <table className="ac-table" style={{ fontSize:".85rem" }}>
-        <thead><tr><th>Position</th><th style={{textAlign:"right"}}>Betrag</th><th style={{textAlign:"right"}}>%</th></tr></thead>
+      <table aria-label="Berichte" className="ac-table" style={{ fontSize:".85rem" }}>
+        <thead><tr><th scope="col">Position</th><th scope="col" style={{textAlign:"right"}}>Betrag</th><th scope="col" style={{textAlign:"right"}}>%</th></tr></thead>
         <tbody>
           {(data.positionen || []).map((p, i) => (
             <tr key={i} style={{ fontWeight: p.summe ? 600 : 400 }}>

@@ -65,7 +65,7 @@ export default function BankInsights() {
     setActionLoading(false);
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Bankdaten…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Bankdaten…</div>;
 
   if (error) return (
     <div className="ac-card" style={{ textAlign:"center", padding:40, color:"var(--ink2)" }}>
@@ -194,14 +194,14 @@ export default function BankInsights() {
 
       {/* Tabelle */}
       <div className="ac-card" style={{ padding:0 }}>
-        <table className="ac-table">
+        <table aria-label="Bankanalyse" className="ac-table">
           <thead>
             <tr>
-              <th>Datum</th>
-              <th>Vendor</th>
-              <th>Beschreibung</th>
-              <th>Status</th>
-              <th style={{textAlign:"right"}}>Betrag</th>
+              <th scope="col">Datum</th>
+              <th scope="col">Vendor</th>
+              <th scope="col">Beschreibung</th>
+              <th scope="col">Status</th>
+              <th scope="col" style={{textAlign:"right"}}>Betrag</th>
             </tr>
           </thead>
           <tbody>

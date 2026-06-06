@@ -56,6 +56,9 @@ export default function ReceiptDropzone({ onFileSelected, loading }) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Beleg hochladen – Datei hierher ziehen oder Enter drücken"
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
@@ -66,6 +69,9 @@ export default function ReceiptDropzone({ onFileSelected, loading }) {
         ${dragOver ? "border-blue-500 bg-gray-800" : "border-gray-600 bg-gray-900"}
       `}
       onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputRef.current?.click(); }
+      }}
     >
       {/* Unsichtbares Input für Button/Click */}
       <input

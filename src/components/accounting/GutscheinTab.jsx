@@ -58,7 +58,7 @@ function AusstellenModal({ onClose, onSaved }) {
     <div className="ac-modal-backdrop" onClick={onClose}>
       <div className="ac-modal" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
         <div className="ac-modal-title">Gutschein ausstellen</div>
-        {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col">
@@ -123,7 +123,7 @@ function AusstellenModal({ onClose, onSaved }) {
           </div>
         </div>
 
-        <div className="ac-alert ac-alert-warn" style={{ fontSize: ".8rem", marginBottom: 16 }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ fontSize: ".8rem", marginBottom: 16 }}>
           💡 Beim Ausstellen wird Konto 3711 (Gutscheinverbindlichkeiten) als Haben gebucht.
         </div>
 
@@ -180,7 +180,7 @@ function EinloesungModal({ gutschein, onClose, onSaved }) {
           </span>
         </div>
 
-        {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col">
@@ -209,7 +209,7 @@ function EinloesungModal({ gutschein, onClose, onSaved }) {
           </div>
         </div>
 
-        <div className="ac-alert ac-alert-warn" style={{ fontSize: ".8rem", marginBottom: 16 }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ fontSize: ".8rem", marginBottom: 16 }}>
           💡 Bei Einlösung wird Konto 3711 belastet und Umsatz auf Konto 8000/8300/8120 realisiert.
         </div>
 
@@ -273,8 +273,8 @@ function DetailModal({ gutschein, onClose }) {
           <>
             <div className="ac-section-title" style={{ marginBottom: 8 }}>Einlösungshistorie</div>
             <div className="ac-table-wrap">
-              <table className="ac-table">
-                <thead><tr><th>Datum</th><th>Betrag</th><th>Notiz</th></tr></thead>
+              <table aria-label="Gutschein" className="ac-table">
+                <thead><tr><th scope="col">Datum</th><th scope="col">Betrag</th><th scope="col">Notiz</th></tr></thead>
                 <tbody>
                   {gutschein.einloesungen.map((e, i) => (
                     <tr key={i}>
@@ -389,7 +389,7 @@ export default function GutscheinTab() {
             {checking ? "Prüfe…" : "Einlösen prüfen"}
           </button>
           {checkResult && checkResult.ok && (
-            <div className="ac-alert ac-alert-ok" style={{ flex: "1 1 auto", display: "flex", alignItems: "center", gap: 12 }}>
+            <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ flex: "1 1 auto", display: "flex", alignItems: "center", gap: 12 }}>
               <span>
                 <span className="ac-mono" style={{ fontWeight: 700 }}>{checkResult.data.code}</span>:
                 {" "}{fmtEur(checkResult.data.verbleibend)} verfügbar
@@ -401,7 +401,7 @@ export default function GutscheinTab() {
             </div>
           )}
           {checkResult && !checkResult.ok && (
-            <div className="ac-alert ac-alert-err" style={{ flex: "1 1 auto" }}>Gutschein nicht gefunden</div>
+            <div role="alert" className="ac-alert ac-alert-err" style={{ flex: "1 1 auto" }}>Gutschein nicht gefunden</div>
           )}
         </div>
       </div>
@@ -441,26 +441,26 @@ export default function GutscheinTab() {
         </button>
       </div>
 
-      {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
 
       {/* Table */}
       {loading ? (
-        <div className="ac-loading"><div className="ac-spinner" /></div>
+        <div role="status" aria-live="polite" className="ac-loading"><div className="ac-spinner" aria-hidden="true" /></div>
       ) : gutscheine.length === 0 ? (
         <div className="ac-empty">Keine Gutscheine gefunden.</div>
       ) : (
         <div className="ac-table-wrap">
-          <table className="ac-table">
+          <table aria-label="Gutschein" className="ac-table">
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Bezeichnung</th>
-                <th>Ausgestellt</th>
-                <th>Gültig bis</th>
-                <th>Nennwert</th>
-                <th>Verbleibend</th>
-                <th>Status</th>
-                <th>Aktionen</th>
+                <th scope="col">Code</th>
+                <th scope="col">Bezeichnung</th>
+                <th scope="col">Ausgestellt</th>
+                <th scope="col">Gültig bis</th>
+                <th scope="col">Nennwert</th>
+                <th scope="col">Verbleibend</th>
+                <th scope="col">Status</th>
+                <th scope="col">Aktionen</th>
               </tr>
             </thead>
             <tbody>

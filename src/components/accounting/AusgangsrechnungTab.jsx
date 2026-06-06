@@ -100,6 +100,7 @@ function PosRow({ pos, idx, onChange, onRemove }) {
       <td style={{ width: 36, textAlign: "center" }}>
         <button
           className="ac-btn ac-btn-ghost ac-btn-sm"
+          aria-label="Position entfernen"
           style={{ color: "var(--a3)", padding: "2px 6px" }}
           onClick={onRemove}
         >✕</button>
@@ -277,8 +278,8 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
         </div>
       </div>
 
-      {error   && <div className="ac-alert ac-alert-err"  style={{ marginBottom: 16 }}>{error}</div>}
-      {warning && <div className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>{warning}</div>}
+      {error   && <div role="alert" className="ac-alert ac-alert-err"  style={{ marginBottom: 16 }}>{error}</div>}
+      {warning && <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>{warning}</div>}
 
       {/* Absender */}
       <div className="ac-card" style={{ marginBottom: 16 }}>
@@ -480,18 +481,18 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
           <span className="ac-section-title">Positionen (§14 Abs. 4 Nr. 5 UStG)</span>
         </div>
         <div style={{ overflowX: "auto" }}>
-          <table className="ac-table" style={{ minWidth: 760 }}>
+          <table aria-label="Ausgangsrechnungen" className="ac-table" style={{ minWidth: 760 }}>
             <thead>
               <tr>
-                <th style={{ width: 32 }}>#</th>
-                <th>Beschreibung / Leistung</th>
-                <th style={{ width: 80 }}>Menge</th>
-                <th style={{ width: 68 }}>Einheit</th>
-                <th style={{ width: 98 }}>Einzelpreis (€)</th>
-                <th style={{ width: 70 }} title="Rabatt in Prozent vom Einzelpreis">Rab. %</th>
-                <th style={{ width: 80 }}>MwSt</th>
-                <th style={{ width: 112, textAlign: "right" }}>Netto</th>
-                <th style={{ width: 36 }}></th>
+                <th scope="col" style={{ width: 32 }}>#</th>
+                <th scope="col">Beschreibung / Leistung</th>
+                <th scope="col" style={{ width: 80 }}>Menge</th>
+                <th scope="col" style={{ width: 68 }}>Einheit</th>
+                <th scope="col" style={{ width: 98 }}>Einzelpreis (€)</th>
+                <th scope="col" style={{ width: 70 }} title="Rabatt in Prozent vom Einzelpreis">Rab. %</th>
+                <th scope="col" style={{ width: 80 }}>MwSt</th>
+                <th scope="col" style={{ width: 112, textAlign: "right" }}>Netto</th>
+                <th scope="col" style={{ width: 36 }}></th>
               </tr>
             </thead>
             <tbody>
@@ -529,14 +530,16 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
       {/* Template picker modal */}
       {picker && (
         <div className="ac-modal-backdrop">
-          <div className="ac-modal">
-            <div className="ac-modal-title">Vorlage auswählen</div>
+          <div className="ac-modal" role="dialog" aria-modal="true" aria-labelledby="picker-modal-title">
+            <div id="picker-modal-title" className="ac-modal-title">Vorlage auswählen</div>
             <div style={{ maxHeight: 320, overflowY: "auto", marginBottom: 16 }}>
               {vorlagen.map(v => (
-                <div key={v.id} onClick={() => applyVorlage(v)} style={{
-                  padding: "12px 16px", borderRadius: 8, cursor: "pointer", marginBottom: 8,
-                  background: "var(--surface2)", border: "1px solid var(--border)",
-                }}>
+                <button key={v.id}
+                  onClick={() => applyVorlage(v)}
+                  style={{
+                    width: "100%", textAlign: "left", padding: "12px 16px", borderRadius: 8, cursor: "pointer", marginBottom: 8,
+                    background: "var(--surface2)", border: "1px solid var(--border)",
+                  }}>
                   <div style={{ fontWeight: 600 }}>{v.name}</div>
                   {v.beschreibung && (
                     <div style={{ fontSize: ".82rem", color: "var(--ink2)", marginTop: 3 }}>{v.beschreibung}</div>
@@ -546,7 +549,7 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
                       Absender: {v.vorlage_data.absender_name}
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
             <div className="ac-modal-footer">
@@ -585,7 +588,7 @@ function RechnungenList({ onNew, onEdit }) {
   };
 
   const SortTh = ({ col, label, right }) => (
-    <th
+    <th scope="col"
       onClick={() => toggleSort(col)}
       style={{ cursor: "pointer", userSelect: "none", textAlign: right ? "right" : "left" }}
     >
@@ -709,15 +712,15 @@ function RechnungenList({ onNew, onEdit }) {
     .filter(r => r.status === "offen")
     .reduce((s, r) => s + Number(r.brutto_summe || 0), 0);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade Rechnungen…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Rechnungen…</div>;
 
   return (
     <div>
       <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
         <input className="ac-input" style={{ maxWidth: 260 }}
-          placeholder="Suche nach Nr. oder Empfänger…"
+          aria-label="Rechnungen suchen" placeholder="Suche nach Nr. oder Empfänger…"
           value={filter} onChange={e => setFilter(e.target.value)} />
-        <select className="ac-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+        <select aria-label="Rechnungsstatus filtern" className="ac-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="all">Alle Status</option>
           <option value="entwurf">Entwurf</option>
           <option value="offen">Offen</option>
@@ -738,7 +741,7 @@ function RechnungenList({ onNew, onEdit }) {
         <span title="Vereinfachter Beleg §33 UStDV (≤ 250 €)">🧾 §33</span> – Vereinfachter Beleg nach §33 UStDV (nur für Beträge ≤ 250 €).
       </div>
       <div className="ac-card" style={{ padding: 0 }}>
-        <table className="ac-table">
+        <table aria-label="Ausgangsrechnungen" className="ac-table">
           <thead>
             <tr>
               <SortTh col="rechnungsnummer" label="Rechnungsnr." />
@@ -747,7 +750,7 @@ function RechnungenList({ onNew, onEdit }) {
               <SortTh col="status"          label="Status" />
               <SortTh col="netto_summe"     label="Netto"   right />
               <SortTh col="brutto_summe"    label="Brutto"  right />
-              <th>Aktionen</th>
+              <th scope="col">Aktionen</th>
             </tr>
           </thead>
           <tbody>
@@ -870,11 +873,11 @@ function VorlagenTab() {
     catch (e) { alert(e.response?.data?.detail || "Fehler."); }
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade Vorlagen…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Vorlagen…</div>;
 
   return (
     <div>
-      <div className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>
+      <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>
         💡 Vorlagen erstellst du im Rechnungsformular über "Als Vorlage speichern".
         Sie enthalten deine Absender-Stammdaten und können für jede neue Rechnung wiederverwendet werden.
       </div>
@@ -901,7 +904,7 @@ function VorlagenTab() {
                     </span>
                   )}
                 </div>
-                <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                <button className="ac-btn ac-btn-ghost ac-btn-sm" aria-label="Vorlage löschen"
                   style={{ color: "var(--a3)", marginLeft: 8 }} onClick={() => del(v.id)}>✕</button>
               </div>
             </div>

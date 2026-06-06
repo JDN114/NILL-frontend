@@ -27,7 +27,7 @@ function PositionenEditor({ positionen, onChange }) {
             value={p.einheit} onChange={e => update(i, "einheit", e.target.value)} />
           <input className="ac-input" type="number" placeholder="Preis" style={{ width: 100 }}
             value={p.einzelpreis} onChange={e => update(i, "einzelpreis", e.target.value)} />
-          <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => remove(i)}>✕</button>
+          <button className="ac-btn ac-btn-danger ac-btn-sm" aria-label="Position entfernen" onClick={() => remove(i)}>✕</button>
         </div>
       ))}
       <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={add} style={{ marginTop: 4 }}>+ Position</button>
@@ -71,7 +71,7 @@ function LieferscheinModal({ onClose, onSaved }) {
     <div className="ac-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 680 }}>
         <div className="ac-modal-title">Neuer Lieferschein</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col">
@@ -180,7 +180,7 @@ export default function LieferscheinTab() {
   return (
     <div>
       {msg && (
-        <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ marginBottom: 16, cursor: "pointer" }} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
@@ -196,21 +196,21 @@ export default function LieferscheinTab() {
       </p>
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Lieferscheine…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Lieferscheine…</div>
       ) : items.length === 0 ? (
         <div className="ac-empty">Noch keine Lieferscheine. Erstellen Sie Ihren ersten.</div>
       ) : (
         <div className="ac-card" style={{ padding: 0 }}>
-          <table className="ac-table">
+          <table aria-label="Lieferscheine" className="ac-table">
             <thead>
               <tr>
-                <th>Nr.</th>
-                <th>Empfänger</th>
-                <th>Lieferdatum</th>
-                <th>Betreff</th>
-                <th style={{ textAlign: "right" }}>Warenwert</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Aktionen</th>
+                <th scope="col">Nr.</th>
+                <th scope="col">Empfänger</th>
+                <th scope="col">Lieferdatum</th>
+                <th scope="col">Betreff</th>
+                <th scope="col" style={{ textAlign: "right" }}>Warenwert</th>
+                <th scope="col">Status</th>
+                <th scope="col" style={{ textAlign: "right" }}>Aktionen</th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +236,7 @@ export default function LieferscheinTab() {
                               onClick={() => zuRechnung(ls.id)}>
                               {converting === ls.id ? "…" : "→ Rechnung"}
                             </button>
-                            <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(ls.id)}>✕</button>
+                            <button className="ac-btn ac-btn-danger ac-btn-sm" aria-label="Lieferschein löschen" onClick={() => del(ls.id)}>✕</button>
                           </>
                         )}
                         {ls.status === "konvertiert" && ls.rechnung_id && (
@@ -253,11 +253,11 @@ export default function LieferscheinTab() {
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".82rem", marginTop: 8 }}>
                           <thead>
                             <tr>
-                              <th style={{ textAlign: "left", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Beschreibung</th>
-                              <th style={{ textAlign: "right", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Menge</th>
-                              <th style={{ textAlign: "left", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Einheit</th>
-                              <th style={{ textAlign: "right", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Einzelpreis</th>
-                              <th style={{ textAlign: "right", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Gesamt</th>
+                              <th scope="col" style={{ textAlign: "left", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Beschreibung</th>
+                              <th scope="col" style={{ textAlign: "right", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Menge</th>
+                              <th scope="col" style={{ textAlign: "left", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Einheit</th>
+                              <th scope="col" style={{ textAlign: "right", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Einzelpreis</th>
+                              <th scope="col" style={{ textAlign: "right", color: "var(--ink2)", padding: "4px 8px", fontWeight: 400 }}>Gesamt</th>
                             </tr>
                           </thead>
                           <tbody>

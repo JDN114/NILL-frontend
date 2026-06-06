@@ -75,7 +75,7 @@ function NeuBuchungModal({ konten, perioden, onClose, onSaved }) {
     <div className="ac-modal-backdrop">
       <div className="ac-modal" style={{ maxWidth: 680 }}>
         <div className="ac-modal-title">Neuer Buchungssatz</div>
-        {error && <div className="ac-alert ac-alert-err">{error}</div>}
+        {error && <div role="alert" className="ac-alert ac-alert-err">{error}</div>}
         <div className="ac-form-row">
           <div className="ac-form-col">
             <label className="ac-label">Buchungsdatum</label>
@@ -309,7 +309,7 @@ export default function BuchungenTab() {
   // Filtering is now server-side; buchungen already matches current filter state
   const filtered = buchungen;
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Journal...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Journal...</div>;
 
   return (
     <div>
@@ -322,7 +322,7 @@ export default function BuchungenTab() {
           <label className="ac-label">Bis</label>
           <input className="ac-input" type="date" value={bis} onChange={e => setBis(e.target.value)} style={{ width:140 }} />
         </div>
-        <input className="ac-input" style={{ flex:1, minWidth:180 }} placeholder="Suche (Text, Belegnr.)..."
+        <input className="ac-input" style={{ flex:1, minWidth:180 }} aria-label="Buchungen suchen" placeholder="Suche (Text, Belegnr.)..."
           value={filter} onChange={e => setFilter(e.target.value)} />
         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
           <label className="ac-label">Konto</label>
@@ -337,13 +337,13 @@ export default function BuchungenTab() {
         <button className="ac-btn ac-btn-primary" onClick={() => setShowModal(true)}>+ Buchungssatz</button>
       </div>
       {msg && (
-        <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ cursor:"pointer" }} onClick={() => setMsg(null)}>{msg.text}</div>
       )}
       <div className="ac-card" style={{ padding: 0 }}>
-        <table className="ac-table">
+        <table aria-label="Buchungen" className="ac-table">
           <thead>
-            <tr><th>Datum</th><th>Beleg</th><th>Text</th><th>Typ</th><th style={{textAlign:"right"}}>Betrag</th><th>Status</th><th></th></tr>
+            <tr><th scope="col">Datum</th><th scope="col">Beleg</th><th scope="col">Text</th><th scope="col">Typ</th><th scope="col" style={{textAlign:"right"}}>Betrag</th><th scope="col">Status</th><th scope="col"></th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
@@ -351,7 +351,13 @@ export default function BuchungenTab() {
             )}
             {filtered.map(b => (
               <React.Fragment key={b.id}>
-                <tr style={{ cursor:"pointer" }} onClick={() => setExpanded(e => ({ ...e, [b.id]: !e[b.id] }))}>
+                <tr
+                  tabIndex={0}
+                  style={{ cursor:"pointer" }}
+                  aria-expanded={!!expanded[b.id]}
+                  onClick={() => setExpanded(e => ({ ...e, [b.id]: !e[b.id] }))}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(ex => ({ ...ex, [b.id]: !ex[b.id] })); } }}
+                >
                   <td className="ac-mono">{b.buchungsdatum}</td>
                   <td className="ac-mono" style={{ color:"var(--ink2)" }}>{b.beleg_nummer || "--"}</td>
                   <td>{b.buchungstext || "--"}</td>
@@ -375,8 +381,8 @@ export default function BuchungenTab() {
                 {expanded[b.id] && b.zeilen?.length > 0 && (
                   <tr>
                     <td colSpan={7} style={{ padding: "0 0 0 32px" }}>
-                      <table className="ac-table" style={{ fontSize:".8rem", margin:"8px 0" }}>
-                        <thead><tr><th>Konto</th><th style={{textAlign:"right"}}>Soll</th><th style={{textAlign:"right"}}>Haben</th><th>USt-Kennzeichen</th></tr></thead>
+                      <table aria-label="Buchungen" className="ac-table" style={{ fontSize:".8rem", margin:"8px 0" }}>
+                        <thead><tr><th scope="col">Konto</th><th scope="col" style={{textAlign:"right"}}>Soll</th><th scope="col" style={{textAlign:"right"}}>Haben</th><th scope="col">USt-Kennzeichen</th></tr></thead>
                         <tbody>
                           {b.zeilen.map(z => (
                             <tr key={z.id}>

@@ -71,13 +71,13 @@ function ParsedPreview({ parsed, onImport, importing }) {
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: ".72rem", color: "var(--ink2)", textTransform: "uppercase",
             letterSpacing: ".04em", marginBottom: 8 }}>Positionen</div>
-          <table className="ac-table" style={{ fontSize: ".8rem" }}>
+          <table aria-label="E-Rechnungen" className="ac-table" style={{ fontSize: ".8rem" }}>
             <thead>
               <tr>
-                <th>Beschreibung</th>
-                <th style={{ textAlign: "right" }}>Menge</th>
-                <th style={{ textAlign: "right" }}>Einzelpreis</th>
-                <th style={{ textAlign: "right" }}>Betrag</th>
+                <th scope="col">Beschreibung</th>
+                <th scope="col" style={{ textAlign: "right" }}>Menge</th>
+                <th scope="col" style={{ textAlign: "right" }}>Einzelpreis</th>
+                <th scope="col" style={{ textAlign: "right" }}>Betrag</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +174,7 @@ export default function ErechnungTab() {
       </div>
 
       {msg && (
-        <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ marginBottom: 14, cursor: "pointer" }} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
@@ -183,8 +183,8 @@ export default function ErechnungTab() {
       <DropZone onFile={handleFile} />
 
       {uploading && (
-        <div className="ac-loading" style={{ marginTop: 16 }}>
-          <span className="ac-spinner" />Datei wird analysiert…
+        <div role="status" aria-live="polite" className="ac-loading" style={{ marginTop: 16 }}>
+          <span className="ac-spinner" aria-hidden="true" />Datei wird analysiert…
         </div>
       )}
 
@@ -197,19 +197,19 @@ export default function ErechnungTab() {
           Importierte E-Rechnungen ({imported.length})
         </div>
         {loadingList
-          ? <div className="ac-loading"><span className="ac-spinner" />Lade…</div>
+          ? <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade…</div>
           : imported.length === 0
           ? <div className="ac-card"><div className="ac-empty">Noch keine E-Rechnungen importiert.</div></div>
           : (
             <div className="ac-card" style={{ padding: 0, overflowX: "auto" }}>
-              <table className="ac-table">
+              <table aria-label="E-Rechnungen" className="ac-table">
                 <thead>
                   <tr>
-                    <th>Aussteller</th>
-                    <th>Rechnungsnr.</th>
-                    <th>Datum</th>
-                    <th style={{ textAlign: "right" }}>Brutto</th>
-                    <th>Status</th>
+                    <th scope="col">Aussteller</th>
+                    <th scope="col">Rechnungsnr.</th>
+                    <th scope="col">Datum</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Brutto</th>
+                    <th scope="col">Status</th>
                   </tr>
                 </thead>
                 <tbody>

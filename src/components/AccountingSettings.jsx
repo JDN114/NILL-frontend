@@ -90,7 +90,7 @@ export default function AccountingSettings() {
 
         {connected ? (
           <div className="flex justify-between items-center p-4 bg-gray-800 rounded-xl">
-            <span className="text-green-400">Bank verbunden</span>
+            <span className="text-green-400">✓ Bank verbunden</span>
 
             <button
               onClick={handleDisconnectBank}
@@ -110,9 +110,10 @@ export default function AccountingSettings() {
       </div>
 
       <div>
-        <p className="text-sm text-gray-400">Standardwährung</p>
+        <label htmlFor="currency-select" className="text-sm text-gray-400">Standardwährung</label>
 
         <select
+          id="currency-select"
           value={standardCurrency}
           onChange={(e) => setStandardCurrency(e.target.value)}
           className="mt-2 p-2 rounded-xl bg-gray-800 text-white w-full"

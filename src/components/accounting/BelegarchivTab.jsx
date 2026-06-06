@@ -99,11 +99,11 @@ export default function BelegarchivTab() {
       </div>
 
       {error && (
-        <div className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{error}</div>
+        <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{error}</div>
       )}
 
       {loading && (
-        <div className="ac-loading"><span className="ac-spinner" />Suche läuft…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Suche läuft…</div>
       )}
 
       {!loading && results === null && (
@@ -130,15 +130,15 @@ export default function BelegarchivTab() {
             {results.length} Ergebnis{results.length !== 1 ? "se" : ""}
           </div>
           <div className="ac-card" style={{ padding: 0, overflowX: "auto" }}>
-            <table className="ac-table">
+            <table aria-label="Belegarchiv" className="ac-table">
               <thead>
                 <tr>
-                  <th>Typ</th>
-                  <th>Nummer / ID</th>
-                  <th>Aussteller / Empfänger</th>
-                  <th>Datum</th>
-                  <th style={{ textAlign: "right" }}>Betrag</th>
-                  <th>Treffer</th>
+                  <th scope="col">Typ</th>
+                  <th scope="col">Nummer / ID</th>
+                  <th scope="col">Aussteller / Empfänger</th>
+                  <th scope="col">Datum</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Betrag</th>
+                  <th scope="col">Treffer</th>
                 </tr>
               </thead>
               <tbody>

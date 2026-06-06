@@ -181,12 +181,12 @@ function ArtikelModal({ initial, warengruppen, onSave, onClose }) {
     <div className="ac-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 580, overflowY: "auto", maxHeight: "90vh" }}>
         <div className="ac-modal-title">{initial?.id ? "Artikel bearbeiten" : "Neuer Artikel"}</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 10 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 10 }}>{err}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: 3 }}>
             <label className="ac-label">Bezeichnung *</label>
-            <input className="ac-input" value={form.bezeichnung}
+            <input aria-required="true" className="ac-input" value={form.bezeichnung}
               onChange={(e) => set("bezeichnung", e.target.value)} autoFocus />
           </div>
           <div className="ac-form-col" style={{ flex: 1 }}>

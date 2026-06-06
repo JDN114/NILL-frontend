@@ -4,11 +4,11 @@ export default function AccountingTable({ invoices }) {
       <table className="w-full text-sm text-white">
         <thead>
           <tr className="border-b border-gray-700">
-            <th className="p-2 text-left">Datum</th>
-            <th className="p-2">Partner</th>
-            <th className="p-2">Kategorie</th>
-            <th className="p-2">Betrag</th>
-            <th className="p-2">Status</th>
+            <th scope="col" className="p-2 text-left">Datum</th>
+            <th scope="col" className="p-2">Partner</th>
+            <th scope="col" className="p-2">Kategorie</th>
+            <th scope="col" className="p-2">Betrag</th>
+            <th scope="col" className="p-2">Status</th>
           </tr>
         </thead>
         <tbody>

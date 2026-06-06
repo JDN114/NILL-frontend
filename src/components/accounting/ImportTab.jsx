@@ -179,10 +179,10 @@ function FileUploadSection({ label, endpoint, vorlage, vorlageName, hinweise, on
               <div style={{ fontSize:".75rem", color:"var(--ink2)", marginBottom:6 }}>
                 Vorschau (erste 5 Zeilen):
               </div>
-              <table className="ac-table" style={{ fontSize:".78rem", minWidth:500 }}>
+              <table aria-label="Import-Vorschau" className="ac-table" style={{ fontSize:".78rem", minWidth:500 }}>
                 <thead>
                   <tr>
-                    {preview.header.map((h, i) => <th key={i}>{h}</th>)}
+                    {preview.header.map((h, i) => <th scope="col" key={i}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -197,7 +197,7 @@ function FileUploadSection({ label, endpoint, vorlage, vorlageName, hinweise, on
           )}
 
           {result && (
-            <div className={`ac-alert ${result.ok ? "ac-alert-ok" : "ac-alert-err"}`} style={{ marginBottom:12 }}>
+            <div role={result.ok ? "status" : "alert"} aria-live="polite" className={`ac-alert ${result.ok ? "ac-alert-ok" : "ac-alert-err"}`} style={{ marginBottom:12 }}>
               {result.ok
                 ? `${result.imported} von ${result.total} Einträgen erfolgreich importiert.`
                 : result.msg}

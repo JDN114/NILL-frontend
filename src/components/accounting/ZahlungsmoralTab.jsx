@@ -80,7 +80,7 @@ export default function ZahlungsmoralTab() {
       </p>
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Analysiere Zahlungshistorie…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Analysiere Zahlungshistorie…</div>
       ) : kunden.length === 0 ? (
         <div className="ac-empty">Noch keine Rechnungsdaten für Bewertung vorhanden.</div>
       ) : (

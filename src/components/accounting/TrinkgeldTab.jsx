@@ -79,7 +79,7 @@ function ProtokolModal({ initial, onSaved, onClose }) {
           <span style={{ fontSize: ".75rem", color: "var(--ink2)", marginLeft: 10 }}>§3 Nr. 51 EStG</span>
         </div>
 
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col">
@@ -128,7 +128,7 @@ function ProtokolModal({ initial, onSaved, onClose }) {
             ))}
           </div>
           {form.modus === "pool" && (
-            <div className="ac-alert ac-alert-warn" style={{ marginTop: 10, fontSize: ".8rem" }}>
+            <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginTop: 10, fontSize: ".8rem" }}>
               Achtung: Pool-Trinkgelder müssen über die Lohnbuchhaltung abgerechnet werden
               und sind sozialversicherungs- und lohnsteuerpflichtig.
             </div>
@@ -321,12 +321,12 @@ function VerteilungModal({ protokol, onSaved, onClose }) {
         </div>
 
         {/* DSGVO hint */}
-        <div className="ac-alert ac-alert-warn" style={{ fontSize: ".78rem", marginBottom: 14 }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ fontSize: ".78rem", marginBottom: 14 }}>
           Datenschutz: Bitte nur Kürzel verwenden — keine vollständigen Namen erfassen.
         </div>
 
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
-        {msg && <div className="ac-alert ac-alert-ok" style={{ marginBottom: 12 }}>{msg}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {msg && <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ marginBottom: 12 }}>{msg}</div>}
 
         {/* Split mode toggle */}
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -386,6 +386,7 @@ function VerteilungModal({ protokol, onSaved, onClose }) {
                 </div>
                 <button
                   className="ac-btn ac-btn-danger ac-btn-sm"
+                  aria-label="Zeile entfernen"
                   onClick={() => removeRow(i)}
                   disabled={rows.length <= 1}
                   style={{ padding: "6px 10px" }}
@@ -434,13 +435,13 @@ function VerteilungModal({ protokol, onSaved, onClose }) {
               Quittierungen
             </div>
             <div className="ac-table-wrap">
-              <table className="ac-table">
+              <table aria-label="Trinkgeld" className="ac-table">
                 <thead>
                   <tr>
-                    <th>Kürzel</th>
-                    <th>Betrag</th>
-                    <th>Quittiert</th>
-                    <th></th>
+                    <th scope="col">Kürzel</th>
+                    <th scope="col">Betrag</th>
+                    <th scope="col">Quittiert</th>
+                    <th scope="col"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -598,7 +599,7 @@ export default function TrinkgeldTab() {
     <div>
       {/* Legal banner */}
       {!bannerDismissed && (
-        <div className="ac-alert ac-alert-warn" style={{
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{
           display: "flex", justifyContent: "space-between", alignItems: "flex-start",
           gap: 12, marginBottom: 20, lineHeight: 1.6,
         }}>
@@ -612,6 +613,7 @@ export default function TrinkgeldTab() {
           </div>
           <button
             onClick={() => setBannerDismissed(true)}
+            aria-label="Hinweis schließen"
             style={{
               background: "none", border: "none", color: "#ffb347",
               cursor: "pointer", fontSize: "1rem", flexShrink: 0, padding: 0,
@@ -622,7 +624,7 @@ export default function TrinkgeldTab() {
 
       {/* Messages */}
       {msg && (
-        <div className={`ac-alert ${msg.type === "err" ? "ac-alert-err" : "ac-alert-ok"}`}
+        <div role={msg.type === "err" ? "alert" : "status"} aria-live="polite" className={`ac-alert ${msg.type === "err" ? "ac-alert-err" : "ac-alert-ok"}`}
           style={{ marginBottom: 16 }}>
           {msg.text}
         </div>
@@ -702,29 +704,29 @@ export default function TrinkgeldTab() {
       <div className="ac-card" style={{ marginBottom: 20 }}>
         <div className="ac-section-title">Protokolle</div>
         {loading ? (
-          <div className="ac-loading"><div className="ac-spinner" /> Wird geladen…</div>
+          <div role="status" aria-live="polite" className="ac-loading"><div className="ac-spinner" aria-hidden="true" /> Wird geladen…</div>
         ) : protokolle.length === 0 ? (
           <div className="ac-empty">Keine Protokolle für diesen Zeitraum.</div>
         ) : (
           <>
             {/* EC tip warning */}
             {protokolle.some(p => (p.ec_trinkgeld || 0) > 0 && p.status === "offen") && (
-              <div className="ac-alert ac-alert-warn" style={{ fontSize: ".8rem", marginBottom: 12 }}>
+              <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ fontSize: ".8rem", marginBottom: 12 }}>
                 EC-Trinkgeld noch nicht verteilt — bitte dokumentieren.
               </div>
             )}
             <div className="ac-table-wrap">
-              <table className="ac-table">
+              <table aria-label="Trinkgeld" className="ac-table">
                 <thead>
                   <tr>
-                    <th>Datum</th>
-                    <th>Schicht</th>
-                    <th>Bar</th>
-                    <th>EC/App</th>
-                    <th>Gesamt</th>
-                    <th>Modus</th>
-                    <th>Status</th>
-                    <th>Aktionen</th>
+                    <th scope="col">Datum</th>
+                    <th scope="col">Schicht</th>
+                    <th scope="col">Bar</th>
+                    <th scope="col">EC/App</th>
+                    <th scope="col">Gesamt</th>
+                    <th scope="col">Modus</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -847,13 +849,13 @@ export default function TrinkgeldTab() {
             </div>
             {statistik.per_mitarbeiter?.length > 0 ? (
               <div className="ac-table-wrap">
-                <table className="ac-table">
+                <table aria-label="Trinkgeld" className="ac-table">
                   <thead>
                     <tr>
-                      <th>Kürzel</th>
-                      <th>Gesamt (€)</th>
-                      <th>Tage</th>
-                      <th>Ø/Tag</th>
+                      <th scope="col">Kürzel</th>
+                      <th scope="col">Gesamt (€)</th>
+                      <th scope="col">Tage</th>
+                      <th scope="col">Ø/Tag</th>
                     </tr>
                   </thead>
                   <tbody>

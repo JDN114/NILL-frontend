@@ -97,7 +97,7 @@ function PositionenEditor({ positionen, onChange }) {
               </select>
             </div>
             <button onClick={() => remove(idx)} className="ac-btn ac-btn-danger ac-btn-sm"
-              style={{ flexShrink: 0, alignSelf: "flex-end" }} title="Position entfernen">✕</button>
+              aria-label="Position entfernen" style={{ flexShrink: 0, alignSelf: "flex-end" }} title="Position entfernen">✕</button>
           </div>
         </div>
       ))}
@@ -189,7 +189,7 @@ function AngebotModal({ initial, onSaved, onClose }) {
         <div className="ac-modal-title">
           {initial?.id ? `Angebot ${initial.angebotsnummer} bearbeiten` : "Neues Angebot"}
         </div>
-        {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Absender */}
@@ -396,7 +396,7 @@ export default function AngeboteTab() {
   return (
     <div>
       {msg && (
-        <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ cursor: "pointer", marginBottom: 16 }} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
@@ -417,7 +417,7 @@ export default function AngeboteTab() {
       </div>
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Angebote…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Angebote…</div>
       ) : angebote.length === 0 ? (
         <div className="ac-empty">
           <div style={{ fontSize: "2rem", marginBottom: 12 }}></div>
@@ -429,17 +429,17 @@ export default function AngeboteTab() {
       ) : (
         <div className="ac-card" style={{ padding: 0, overflow: "hidden" }}>
           <div className="ac-table-wrap">
-            <table className="ac-table">
+            <table aria-label="Angebote" className="ac-table">
               <thead>
                 <tr>
-                  <th>Nummer</th>
-                  <th>Empfänger</th>
-                  <th>Datum</th>
-                  <th>Gültig bis</th>
-                  <th style={{ textAlign: "right" }}>Netto</th>
-                  <th style={{ textAlign: "right" }}>Brutto</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: "right" }}>Aktionen</th>
+                  <th scope="col">Nummer</th>
+                  <th scope="col">Empfänger</th>
+                  <th scope="col">Datum</th>
+                  <th scope="col">Gültig bis</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Netto</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Brutto</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Aktionen</th>
                 </tr>
               </thead>
               <tbody>
@@ -496,7 +496,7 @@ export default function AngeboteTab() {
                               {converting === a.id ? "…" : "→ Rechnung"}
                             </button>
                             <button className="ac-btn ac-btn-danger ac-btn-sm"
-                              onClick={() => del(a.id)} title="Löschen">🗑</button>
+                              aria-label="Angebot löschen" onClick={() => del(a.id)} title="Löschen">🗑</button>
                           </>
                         )}
                         {a.status === "konvertiert" && a.konvertiert_zu_rechnung_id && (

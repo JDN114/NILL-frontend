@@ -84,12 +84,12 @@ function SerienForm({ initial, onSaved, onCancel }) {
   return (
     <div className="ac-card" style={{ marginBottom: 16 }}>
       <div className="ac-section-title">{initial?.id ? "Serienrechnung bearbeiten" : "Neue Serienrechnung"}</div>
-      {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
 
       <div className="ac-form-row">
         <div className="ac-form-col" style={{ flex: 2 }}>
           <label className="ac-label">Name der Serienrechnung *</label>
-          <input className="ac-input" value={form.name}
+          <input aria-required="true" className="ac-input" value={form.name}
             onChange={e => set("name", e.target.value)} placeholder="z.B. Retainer Max Mustermann" />
         </div>
         <div className="ac-form-col">
@@ -127,7 +127,7 @@ function SerienForm({ initial, onSaved, onCancel }) {
       <div className="ac-form-row">
         <div className="ac-form-col" style={{ flex: 2 }}>
           <label className="ac-label">Empfänger *</label>
-          <input className="ac-input" value={form.empfaenger_name}
+          <input aria-required="true" className="ac-input" value={form.empfaenger_name}
             onChange={e => set("empfaenger_name", e.target.value)} placeholder="Firmenname / Kunde" />
         </div>
         <div className="ac-form-col">
@@ -150,7 +150,7 @@ function SerienForm({ initial, onSaved, onCancel }) {
         </div>
         <div className="ac-form-col">
           <label className="ac-label">Betrag netto (€) *</label>
-          <input className="ac-input ac-mono" type="number" step="0.01" value={form.betrag_netto}
+          <input aria-required="true" className="ac-input ac-mono" type="number" step="0.01" value={form.betrag_netto}
             onChange={e => set("betrag_netto", e.target.value)} placeholder="0,00" />
         </div>
         <div className="ac-form-col" style={{ maxWidth: 110 }}>
@@ -243,7 +243,7 @@ export default function SerienrechnungTab() {
     finally { setBusy(b => ({ ...b, [id]: false })); }
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade Serienrechnungen…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Serienrechnungen…</div>;
 
   return (
     <div>
@@ -262,7 +262,7 @@ export default function SerienrechnungTab() {
       </div>
 
       {msg && (
-        <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ marginBottom: 14, cursor: "pointer" }} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
@@ -285,15 +285,15 @@ export default function SerienrechnungTab() {
         </div>
       ) : list.length > 0 && (
         <div className="ac-card" style={{ padding: 0, overflowX: "auto" }}>
-          <table className="ac-table">
+          <table aria-label="Serienrechnungen" className="ac-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Intervall</th>
-                <th>Nächste Ausführung</th>
-                <th>Erstellt</th>
-                <th>Status</th>
-                <th>Aktionen</th>
+                <th scope="col">Name</th>
+                <th scope="col">Intervall</th>
+                <th scope="col">Nächste Ausführung</th>
+                <th scope="col">Erstellt</th>
+                <th scope="col">Status</th>
+                <th scope="col">Aktionen</th>
               </tr>
             </thead>
             <tbody>

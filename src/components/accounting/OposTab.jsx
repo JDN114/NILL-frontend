@@ -57,7 +57,7 @@ export default function OposTab({ onNavigate }) {
     : filter === "60"  ? rows.filter(r => r.tage_offen >= 60)
     : rows.filter(r => r.mahnstufe && r.mahnstufe > 0);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade offene Posten…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade offene Posten…</div>;
 
   return (
     <div>
@@ -122,16 +122,16 @@ export default function OposTab({ onNavigate }) {
         </div>
       ) : (
         <div className="ac-card" style={{ padding: 0, overflowX: "auto" }}>
-          <table className="ac-table">
+          <table aria-label="Offene Posten" className="ac-table">
             <thead>
               <tr>
-                <th>Rechnungsnr.</th>
-                <th>Empfänger</th>
-                <th>Fällig</th>
-                <th>Überfällig</th>
-                <th>Mahnstufe</th>
-                <th style={{ textAlign: "right" }}>Betrag</th>
-                <th>Aktionen</th>
+                <th scope="col">Rechnungsnr.</th>
+                <th scope="col">Empfänger</th>
+                <th scope="col">Fällig</th>
+                <th scope="col">Überfällig</th>
+                <th scope="col">Mahnstufe</th>
+                <th scope="col" style={{ textAlign: "right" }}>Betrag</th>
+                <th scope="col">Aktionen</th>
               </tr>
             </thead>
             <tbody>

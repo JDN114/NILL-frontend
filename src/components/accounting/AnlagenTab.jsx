@@ -57,7 +57,7 @@ function NeuAnlageModal({ onClose, onSaved }) {
     <div className="ac-modal-backdrop">
       <div className="ac-modal">
         <div className="ac-modal-title">Neue Anlage erfassen</div>
-        {error && <div className="ac-alert ac-alert-err">{error}</div>}
+        {error && <div role="alert" className="ac-alert ac-alert-err">{error}</div>}
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ maxWidth: 140 }}>
             <label className="ac-label">Anlagennummer *</label>
@@ -66,7 +66,7 @@ function NeuAnlageModal({ onClose, onSaved }) {
           </div>
           <div className="ac-form-col" style={{ flex: 2 }}>
             <label className="ac-label">Bezeichnung *</label>
-            <input className="ac-input" value={form.bezeichnung} placeholder="z.B. MacBook Pro M3"
+            <input aria-required="true" className="ac-input" value={form.bezeichnung} placeholder="z.B. MacBook Pro M3"
               onChange={e => set("bezeichnung", e.target.value)} />
           </div>
         </div>
@@ -158,10 +158,10 @@ function AfaVorschau({ anlage }) {
         </select>
       </div>
       {buchungMsg && (
-        <div className={`ac-alert ${buchungMsg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
+        <div role={buchungMsg.type==="ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${buchungMsg.type==="ok"?"ac-alert-ok":"ac-alert-err"}`}
           style={{cursor:"pointer"}} onClick={() => setBuchungMsg(null)}>{buchungMsg.text}</div>
       )}
-      {loading ? <div className="ac-loading"><span className="ac-spinner"/>Lade...</div> : vorschau && (
+      {loading ? <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade...</div> : vorschau && (
         <div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:10, marginBottom:16 }}>
             {[
@@ -212,7 +212,7 @@ export default function AnlagenTab() {
   const totalAHK  = anlagen.reduce((s,a) => s + Number(a.anschaffungskosten || 0), 0);
   const totalRest = anlagen.reduce((s,a) => s + Number(a.buchwert_aktuell || 0), 0);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Anlagebuch...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Anlagebuch...</div>;
 
   return (
     <div>
@@ -242,8 +242,8 @@ export default function AnlagenTab() {
         <button className="ac-btn ac-btn-primary" onClick={() => setShowModal(true)}>+ Anlage erfassen</button>
       </div>
       <div className="ac-card" style={{ padding:0 }}>
-        <table className="ac-table">
-          <thead><tr><th>Bezeichnung</th><th>Datum</th><th>Kategorie</th><th style={{textAlign:"right"}}>AHK</th><th style={{textAlign:"right"}}>Restwert</th><th>ND</th><th>Methode</th><th></th></tr></thead>
+        <table aria-label="Anlagenbuch" className="ac-table">
+          <thead><tr><th scope="col">Bezeichnung</th><th scope="col">Datum</th><th scope="col">Kategorie</th><th scope="col" style={{textAlign:"right"}}>AHK</th><th scope="col" style={{textAlign:"right"}}>Restwert</th><th scope="col">ND</th><th scope="col">Methode</th><th scope="col"></th></tr></thead>
           <tbody>
             {anlagen.length === 0 && <tr><td colSpan={8} className="ac-empty">Noch keine Anlagen erfasst.</td></tr>}
             {anlagen.map(a => (

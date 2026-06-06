@@ -69,7 +69,7 @@ export default function WiderrufSettingsPanel() {
     } catch { /* silent */ }
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" /> Lade…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" /> Lade…</div>;
 
   return (
     <div>
@@ -93,8 +93,8 @@ export default function WiderrufSettingsPanel() {
 
       {!antragTab && (
         <div>
-          {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{err}</div>}
-          {saved && <div className="ac-alert ac-alert-ok" style={{ marginBottom: 14 }}>Gespeichert.</div>}
+          {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{err}</div>}
+          {saved && <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ marginBottom: 14 }}>Gespeichert.</div>}
 
           {/* Hinweis */}
           <div style={{ background: "rgba(255,200,0,.08)", border: "1px solid rgba(255,200,0,.3)", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: ".82rem", color: "var(--ink)", lineHeight: 1.5 }}>
@@ -195,15 +195,15 @@ export default function WiderrufSettingsPanel() {
             <div className="ac-empty">Noch keine Widerruf-Anträge eingegangen.</div>
           ) : (
             <div className="ac-table-wrap">
-              <table className="ac-table">
+              <table aria-label="Einstellungen" className="ac-table">
                 <thead>
                   <tr>
-                    <th>Datum</th>
-                    <th>Rechnung-ID</th>
-                    <th>Kunde</th>
-                    <th>E-Mail</th>
-                    <th>Status</th>
-                    <th>Aktionen</th>
+                    <th scope="col">Datum</th>
+                    <th scope="col">Rechnung-ID</th>
+                    <th scope="col">Kunde</th>
+                    <th scope="col">E-Mail</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>

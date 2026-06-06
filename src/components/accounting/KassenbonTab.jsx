@@ -110,7 +110,7 @@ function BonModal({ onSaved, onClose }) {
     <div className="ac-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 760, overflowY: "auto", maxHeight: "90vh" }}>
         <div className="ac-modal-title">Kassenbon erfassen</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
         {/* Section 1: Bon-Details */}
         <div className="ac-section-title" style={{ marginBottom: 8 }}>Bon-Details</div>
@@ -176,7 +176,7 @@ function BonModal({ onSaved, onClose }) {
                   {fmtEur(gp)}
                 </div>
               </div>
-              <button className="ac-btn ac-btn-ghost ac-btn-sm" style={{ marginBottom: 0 }} onClick={() => removePos(i)} title="Entfernen">×</button>
+              <button className="ac-btn ac-btn-ghost ac-btn-sm" aria-label="Position entfernen" style={{ marginBottom: 0 }} onClick={() => removePos(i)} title="Entfernen">×</button>
             </div>
           );
         })}
@@ -283,15 +283,15 @@ function DetailModal({ bon, firmenname, firmenadresse, onClose }) {
           </div>
         </div>
         {bon.beschreibung && <div style={{ marginBottom: 8, color: "var(--ink2)", fontSize: ".88rem" }}>{bon.beschreibung}</div>}
-        {bon.storno_von && <div className="ac-alert ac-alert-warn" style={{ marginBottom: 8 }}>Storniert Bon-Nr. {bon.storno_von}</div>}
+        {bon.storno_von && <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 8 }}>Storniert Bon-Nr. {bon.storno_von}</div>}
 
         <div className="ac-section-title" style={{ margin: "12px 0 6px" }}>Positionen</div>
         <div className="ac-table-wrap" style={{ marginBottom: 12 }}>
-          <table className="ac-table">
+          <table aria-label="Kassenbons" className="ac-table">
             <thead><tr>
-              <th>Bezeichnung</th><th style={{ textAlign: "right" }}>Menge</th>
-              <th>Einheit</th><th style={{ textAlign: "right" }}>EP Brutto</th>
-              <th style={{ textAlign: "right" }}>USt</th><th style={{ textAlign: "right" }}>GP</th>
+              <th scope="col">Bezeichnung</th><th scope="col" style={{ textAlign: "right" }}>Menge</th>
+              <th scope="col">Einheit</th><th scope="col" style={{ textAlign: "right" }}>EP Brutto</th>
+              <th scope="col" style={{ textAlign: "right" }}>USt</th><th scope="col" style={{ textAlign: "right" }}>GP</th>
             </tr></thead>
             <tbody>
               {(bon.positionen || []).map((p, i) => (
@@ -440,7 +440,7 @@ function TseStatusPanel({ filter }) {
       </div>
 
       {msg && (
-        <div className="ac-alert" style={{ marginTop: 8, padding: "6px 10px", fontSize: ".8rem" }}>{msg}</div>
+        <div role="status" aria-live="polite" className="ac-alert" style={{ marginTop: 8, padding: "6px 10px", fontSize: ".8rem" }}>{msg}</div>
       )}
     </div>
   );
@@ -564,18 +564,18 @@ export default function KassenbonTab() {
         </button>
       </div>
 
-      {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+      {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" /> Laden…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" /> Laden…</div>
       ) : bons.length === 0 ? (
         <div className="ac-empty">Keine Kassenbons gefunden.</div>
       ) : (
         <div className="ac-table-wrap">
-          <table className="ac-table">
+          <table aria-label="Kassenbons" className="ac-table">
             <thead><tr>
-              <th>Bon-Nr.</th><th>Datum</th><th>Zeit</th><th>Zahlungsart</th>
-              <th style={{ textAlign: "right" }}>Betrag</th><th>Status</th><th>TSE</th><th>Aktionen</th>
+              <th scope="col">Bon-Nr.</th><th scope="col">Datum</th><th scope="col">Zeit</th><th scope="col">Zahlungsart</th>
+              <th scope="col" style={{ textAlign: "right" }}>Betrag</th><th scope="col">Status</th><th scope="col">TSE</th><th scope="col">Aktionen</th>
             </tr></thead>
             <tbody>
               {bons.map((b) => {

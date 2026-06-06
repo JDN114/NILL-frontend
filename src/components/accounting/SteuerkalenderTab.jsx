@@ -110,7 +110,7 @@ export default function SteuerkalenderTab() {
       </div>
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Kalender…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Kalender…</div>
       ) : filtered.length === 0 ? (
         <div className="ac-empty">Keine Termine für diesen Filter.</div>
       ) : (

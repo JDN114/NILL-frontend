@@ -73,6 +73,10 @@ const S = `
   .ac-tab{padding:7px 14px;border-radius:8px;border:none;background:transparent;color:var(--ink2);font-size:.82rem;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0;}
   .ac-tab:hover{color:var(--ink);background:var(--surface2);}
   .ac-tab.active{background:var(--accent);color:#000;font-weight:600;}
+  .ac-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .ac-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .ac-skip-link{position:absolute;top:-48px;left:16px;background:var(--accent);color:#000;padding:6px 14px;border-radius:0 0 8px 8px;font-size:.85rem;font-weight:600;z-index:10000;text-decoration:none;transition:top .15s;}
+  .ac-skip-link:focus{top:0;outline:2px solid #000;outline-offset:2px;}
   .ac-tab-soon{opacity:.5;}
   .ac-tab-soon:hover{opacity:.7;}
 
@@ -120,10 +124,12 @@ const S = `
   .ac-table tr:hover td{background:rgba(255,255,255,.02);}
 
   .ac-mono{font-family:JetBrains Mono,monospace;}
-  .ac-input{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:9px 12px;border-radius:8px;font-family:Inter,sans-serif;font-size:.85rem;outline:none;width:100%;}
-  .ac-input:focus{border-color:var(--accent);}
-  .ac-select{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:9px 12px;border-radius:8px;font-family:Inter,sans-serif;font-size:.85rem;outline:none;cursor:pointer;}
-  .ac-select:focus{border-color:var(--accent);}
+  .ac-input{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:9px 12px;border-radius:8px;font-family:Inter,sans-serif;font-size:.85rem;width:100%;}
+  .ac-input:focus{border-color:var(--accent);outline:none;}
+  .ac-input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .ac-select{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:9px 12px;border-radius:8px;font-family:Inter,sans-serif;font-size:.85rem;cursor:pointer;}
+  .ac-select:focus{border-color:var(--accent);outline:none;}
+  .ac-select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .recharts-wrapper,.recharts-surface{outline:none !important;}
   svg:focus{outline:none;}
   .ac-form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}
@@ -163,13 +169,18 @@ const S = `
 // ── Session Loading Screen ─────────────────────────────────────────────────
 function NillLoader({ text = "Wird geladen…" }) {
   return (
-    <div style={{
-      position:"fixed", inset:0,
-      background:"#040407",
-      display:"flex", flexDirection:"column",
-      alignItems:"center", justifyContent:"center",
-      zIndex:9999,
-    }}>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={text}
+      style={{
+        position:"fixed", inset:0,
+        background:"#040407",
+        display:"flex", flexDirection:"column",
+        alignItems:"center", justifyContent:"center",
+        zIndex:9999,
+      }}
+    >
       <style>{`
         @keyframes nill-pulse {
           0%,100% { opacity:1; }
@@ -307,7 +318,7 @@ function OverviewTab({ onNavigate, onUpload }) {
     (dash?.ausgaben_kategorien || []).map(k => ({ name: k.kategorie, value: k.betrag })),
   [dash]);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Dashboard…</div>;
+  if (loading) return <div role="status" aria-label="Dashboard wird geladen" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Dashboard…</div>;
   if (dashError) return (
     <div className="ac-alert ac-alert-err" style={{ display:"flex", alignItems:"center", gap:12 }}>
       Dashboard konnte nicht geladen werden.
@@ -345,6 +356,9 @@ function OverviewTab({ onNavigate, onUpload }) {
           </div>
           <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"2.2rem",fontWeight:800,color:gewinn>=0?"var(--accent)":"var(--a3)",letterSpacing:"-.02em"}}>
             {fmtEur(gewinn)}
+          </div>
+          <div style={{fontSize:".75rem",fontWeight:600,color:gewinn>=0?"var(--accent)":"var(--a3)",marginTop:2}}>
+            {gewinn>=0 ? "▲ Gewinn" : "▼ Verlust"}
           </div>
         </div>
         <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
@@ -399,7 +413,7 @@ function OverviewTab({ onNavigate, onUpload }) {
             </div>
           </div>
           {areaData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={220} aria-label="Cashflow-Verlauf: Einnahmen und Ausgaben nach Monat">
               <AreaChart data={areaData} margin={{top:4,right:4,left:0,bottom:0}}>
                 <defs>
                   <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1">
@@ -461,7 +475,7 @@ function OverviewTab({ onNavigate, onUpload }) {
           </div>
           {allPie.length > 0 ? (
             <>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={200} aria-label="Ausgaben nach Kategorie – Tortendiagramm">
                 <PieChart>
                   <Pie data={allPie} dataKey="value" nameKey="name"
                     cx="50%" cy="50%" innerRadius={50} outerRadius={80}
@@ -500,20 +514,21 @@ function OverviewTab({ onNavigate, onUpload }) {
                     contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{display:"flex",flexWrap:"wrap",gap:"5px 12px",marginTop:6,justifyContent:"center"}}>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px 12px",marginTop:6,justifyContent:"center"}} role="group" aria-label="Kategorien filtern">
                 {allPie.slice(0,7).map((p,i) => (
-                  <div key={p.name}
+                  <button key={p.name}
                     onClick={() => setActiveKat(prev => prev===p.name ? null : p.name)}
+                    aria-pressed={activeKat===p.name}
                     style={{
                       display:"flex", alignItems:"center", gap:5, fontSize:".72rem",
-                      cursor:"pointer",
+                      cursor:"pointer", background:"transparent", border:"none", padding:"2px 4px", borderRadius:4,
                       color: activeKat===p.name ? "var(--ink)" : "var(--ink2)",
                       opacity: activeKat && activeKat!==p.name ? 0.3 : 1,
                       transition:"all .15s",
                     }}>
-                    <div style={{width:7,height:7,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}}/>
+                    <div style={{width:7,height:7,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}} aria-hidden="true"/>
                     {p.name}
-                  </div>
+                  </button>
                 ))}
               </div>
             </>
@@ -1249,9 +1264,10 @@ export default function AccountingPage() {
     <>
       <style>{S}</style>
       <div className="ac-page">
+        <a href="#ac-main-content" className="ac-skip-link">Zum Hauptinhalt springen</a>
 
         <div className="ac-header">
-          <a className="ac-logo" onClick={goToDashboard} title="Zurück zum Dashboard">
+          <a className="ac-logo" href="/dashboard" title="Zurück zum Dashboard">
             NILL<span>.</span>
           </a>
           <div className="ac-header-divider"/>
@@ -1271,24 +1287,32 @@ export default function AccountingPage() {
           </div>
         </div>
 
-        <div className="ac-tabs">
+        <nav aria-label="Buchhaltungs-Navigation">
+        <div className="ac-tabs" role="tablist">
           {TABS.map(t => (
             <button
               key={t.id}
+              id={`ac-tab-${t.id}`}
+              role="tab"
+              aria-selected={tab===t.id}
+              aria-controls="ac-main-content"
               className={`ac-tab${tab===t.id?" active":""}${t.comingSoon?" ac-tab-soon":""}`}
               onClick={()=>setTab(t.id)}
               title={t.comingSoon ? "Demnächst verfügbar" : undefined}
             >
               {t.label}
-              {t.comingSoon && <span style={{marginLeft:5,fontSize:"9px",opacity:.6,fontFamily:"monospace",verticalAlign:"middle"}}>soon</span>}
+              {t.comingSoon && <span aria-hidden="true" style={{marginLeft:5,fontSize:"9px",opacity:.6,fontFamily:"monospace",verticalAlign:"middle"}}>soon</span>}
               {t.id === "rechnungen" && !localStorage.getItem("nill_first_invoice") && (
-                <span style={{marginLeft:4,fontSize:"9px",background:"var(--accent)",color:"var(--surface)",borderRadius:20,padding:"1px 5px",verticalAlign:"middle",fontWeight:700}}>Start</span>
+                <span aria-hidden="true" style={{marginLeft:4,fontSize:"9px",background:"var(--accent)",color:"var(--surface)",borderRadius:20,padding:"1px 5px",verticalAlign:"middle",fontWeight:700}}>Start</span>
               )}
             </button>
           ))}
         </div>
+        </nav>
 
+        <main id="ac-main-content" role="tabpanel" aria-labelledby={`ac-tab-${tab}`}>
         {renderTab()}
+        </main>
 
         {uploadOpen && (
           <ReceiptUploadModal

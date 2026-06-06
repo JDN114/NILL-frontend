@@ -1,15 +1,37 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 export default function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }) {
+  const modalRef = useRef(null);
+  const triggerRef = useRef(null);
+
   useEffect(() => {
-    const handleEsc = (e) => { if (e.key === "Escape") onClose?.(); };
-    if (open) {
-      window.addEventListener("keydown", handleEsc);
-      document.body.style.overflow = "hidden";
-    }
+    if (!open) return;
+    triggerRef.current = document.activeElement;
+    document.body.style.overflow = "hidden";
+
+    const focusable = modalRef.current?.querySelectorAll(
+      'button:not(:disabled),[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable?.length) focusable[0].focus();
+
+    const handleKey = (e) => {
+      if (e.key === "Escape") { onClose?.(); return; }
+      if (e.key !== "Tab" || !modalRef.current) return;
+      const all = [...modalRef.current.querySelectorAll(
+        'button:not(:disabled),[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])'
+      )];
+      if (!all.length) return;
+      if (e.shiftKey && document.activeElement === all[0]) {
+        e.preventDefault(); all[all.length - 1].focus();
+      } else if (!e.shiftKey && document.activeElement === all[all.length - 1]) {
+        e.preventDefault(); all[0].focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
     return () => {
-      window.removeEventListener("keydown", handleEsc);
+      document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
+      triggerRef.current?.focus();
     };
   }, [open, onClose]);
 
@@ -22,6 +44,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className={`bg-gray-900 border border-white/10 rounded-xl w-full ${maxWidth} relative shadow-2xl flex flex-col`}
         style={{ maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}

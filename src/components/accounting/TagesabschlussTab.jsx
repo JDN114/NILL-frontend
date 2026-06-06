@@ -84,7 +84,7 @@ function AbschlussModal({ initial, onSaved, onClose }) {
     <div className="ac-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ac-modal" style={{ maxWidth: 620 }}>
         <div className="ac-modal-title">{initial?.id ? "Tagesabschluss bearbeiten" : "Neuer Tagesabschluss (Z-Bon)"}</div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col">
@@ -153,7 +153,7 @@ function AbschlussModal({ initial, onSaved, onClose }) {
         )}
 
         {calc.diff !== null && (
-          <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>
+          <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>
             Differenz zwischen Zahlungsarten ({EUR(calc.gesamt)}) und
             USt-Brutto-Summe ({EUR(calc.ustSum)}): <strong>{EUR(Math.abs(calc.diff))}</strong>.
             Bitte prüfen — beide Summen müssen übereinstimmen.
@@ -244,7 +244,7 @@ function ImportModal({ onDone, onClose }) {
       <div className="ac-modal" style={{ maxWidth: 640 }}>
         <div className="ac-modal-title">CSV-Import — Tagesabschlüsse</div>
 
-        <div className="ac-alert ac-alert-warn" style={{ marginBottom: 16, fontSize: ".82rem" }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 16, fontSize: ".82rem" }}>
           <strong>Unterstützte Formate:</strong> NILL-Standard (Semikolon) oder SumUp-Export (Komma).
           <br />Pro Tag und User darf nur ein Eintrag existieren — bestehende Daten werden nicht überschrieben.
         </div>
@@ -278,10 +278,10 @@ function ImportModal({ onDone, onClose }) {
           </div>
         )}
 
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
         {result && (
-          <div className={`ac-alert ${result.imported > 0 ? "ac-alert-ok" : "ac-alert-warn"}`}
+          <div role="status" aria-live="polite" className={`ac-alert ${result.imported > 0 ? "ac-alert-ok" : "ac-alert-warn"}`}
             style={{ marginBottom: 12 }}>
             <strong>Ergebnis:</strong> {result.imported} importiert, {result.skipped} übersprungen.
             {result.errors?.length > 0 && (
@@ -334,7 +334,7 @@ function DetailModal({ ta, onClose }) {
       <div className="ac-modal" style={{ maxWidth: 480 }}>
         <div className="ac-modal-title">Tagesabschluss {ta.datum}</div>
         <div className="ac-card" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
-          <table className="ac-table">
+          <table aria-label="Tagesabschlüsse" className="ac-table">
             <tbody>
               {rows.map(([k, v]) => (
                 <tr key={k}>
@@ -427,7 +427,7 @@ export default function TagesabschlussTab() {
   return (
     <div>
       {msg && (
-        <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ cursor: "pointer", marginBottom: 16 }} onClick={() => setMsg(null)}>
           {msg.text}
         </div>
@@ -477,7 +477,7 @@ export default function TagesabschlussTab() {
       </div>
 
       {entwuerfe > 0 && (
-        <div className="ac-alert ac-alert-warn" style={{ marginBottom: 12 }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 12 }}>
           {entwuerfe} Entwurf{entwuerfe > 1 ? "e" : ""} noch nicht gebucht —
           bitte „Buchen" klicken, um den Buchungssatz zu erzeugen.
         </div>
@@ -485,7 +485,7 @@ export default function TagesabschlussTab() {
 
       {/* Tabelle */}
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Tagesabschlüsse…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Tagesabschlüsse…</div>
       ) : rows.length === 0 ? (
         <div className="ac-empty">
           <div style={{ fontSize: "2rem", marginBottom: 12 }}>📋</div>
@@ -497,19 +497,19 @@ export default function TagesabschlussTab() {
       ) : (
         <div className="ac-card" style={{ padding: 0, overflow: "hidden" }}>
           <div className="ac-table-wrap">
-            <table className="ac-table">
+            <table aria-label="Tagesabschlüsse" className="ac-table">
               <thead>
                 <tr>
-                  <th>Datum</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: "right" }}>Gesamt</th>
-                  <th style={{ textAlign: "right" }}>Bargeld</th>
-                  <th style={{ textAlign: "right" }}>EC/Karte</th>
-                  <th style={{ textAlign: "right" }}>USt 19 %</th>
-                  <th style={{ textAlign: "right" }}>USt 7 %</th>
-                  <th style={{ textAlign: "right" }}>Kassendiff.</th>
-                  <th>Quelle</th>
-                  <th />
+                  <th scope="col">Datum</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Gesamt</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Bargeld</th>
+                  <th scope="col" style={{ textAlign: "right" }}>EC/Karte</th>
+                  <th scope="col" style={{ textAlign: "right" }}>USt 19 %</th>
+                  <th scope="col" style={{ textAlign: "right" }}>USt 7 %</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Kassendiff.</th>
+                  <th scope="col">Quelle</th>
+                  <th scope="col" />
                 </tr>
               </thead>
               <tbody>
@@ -579,7 +579,7 @@ export default function TagesabschlussTab() {
 
       {/* Hinweis EC-Abgleich */}
       {gebucht.some(r => (r.ec_betrag || 0) + (r.kreditkarte_betrag || 0) > 0) && (
-        <div className="ac-alert ac-alert-warn" style={{ marginTop: 16, fontSize: ".8rem" }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginTop: 16, fontSize: ".8rem" }}>
           EC-/Kartenumsätze werden auf Konto 1460 gebucht (Durchlaufkonto).
           Sie erscheinen als offene Forderung, bis der Bankeingang im Bank-Abgleich
           mit dem Konto 1460 verrechnet wird.

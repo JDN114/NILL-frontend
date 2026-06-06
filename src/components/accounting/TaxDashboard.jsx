@@ -77,7 +77,7 @@ function SteuerrueckstellungPanel() {
 
   if (loading) return (
     <div className="ac-card" style={{ marginTop: 16 }}>
-      <div className="ac-loading" style={{ padding: 20 }}><span className="ac-spinner" />Steuerrückstellung berechnen…</div>
+      <div role="status" aria-live="polite" className="ac-loading" style={{ padding: 20 }}><span className="ac-spinner" aria-hidden="true" />Steuerrückstellung berechnen…</div>
     </div>
   );
   if (err || !data) return null;
@@ -201,7 +201,7 @@ export default function TaxDashboard() {
     }).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Steuerdaten...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Steuerdaten...</div>;
 
   const einnahmen = summary?.income    ?? 0;
   const ausgaben  = summary?.expenses  ?? 0;
@@ -242,7 +242,7 @@ export default function TaxDashboard() {
           </div>
         </div>
       )}
-      <div className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
+      <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
         Steuerliche Angaben ohne Gewähr. Für offizielle Steuererklärungen: ELSTER.de nutzen (Tab „Steuern → UStVA") oder Steuerberater beauftragen.
       </div>
 

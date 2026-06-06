@@ -37,7 +37,7 @@ function SendModal({ mahnung, onClose, onSent }) {
     <div className="ac-modal-backdrop" onClick={onClose}>
       <div className="ac-modal" onClick={e => e.stopPropagation()}>
         <div className="ac-modal-title">Mahnbrief versenden</div>
-        {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{error}</div>}
+        {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 14 }}>{error}</div>}
         <div className="ac-form-col" style={{ marginBottom: 16 }}>
           <label className="ac-label">E-Mail-Adresse *</label>
           <input className="ac-input" type="email" value={email}
@@ -114,7 +114,7 @@ export default function MahnwesenTab() {
     } catch { alert("PDF-Download fehlgeschlagen."); }
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade Mahnwesen…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Mahnwesen…</div>;
 
   return (
     <div>
@@ -132,7 +132,7 @@ export default function MahnwesenTab() {
       </div>
 
       {autoMsg && (
-        <div className={`ac-alert ${autoMsg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+        <div role={autoMsg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${autoMsg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
           style={{ marginBottom: 14, cursor: "pointer" }} onClick={() => setAutoMsg(null)}>
           {autoMsg.text}
         </div>
@@ -143,16 +143,16 @@ export default function MahnwesenTab() {
           {ueberfaellig.length === 0
             ? <div className="ac-empty">Keine überfälligen Rechnungen.</div>
             : (
-              <table className="ac-table">
+              <table aria-label="Mahnwesen" className="ac-table">
                 <thead>
                   <tr>
-                    <th>Rechnungsnr.</th>
-                    <th>Empfänger</th>
-                    <th>Fällig</th>
-                    <th>Überfällig</th>
-                    <th>Mahnstufe</th>
-                    <th style={{ textAlign: "right" }}>Betrag</th>
-                    <th>Aktion</th>
+                    <th scope="col">Rechnungsnr.</th>
+                    <th scope="col">Empfänger</th>
+                    <th scope="col">Fällig</th>
+                    <th scope="col">Überfällig</th>
+                    <th scope="col">Mahnstufe</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Betrag</th>
+                    <th scope="col">Aktion</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -196,17 +196,17 @@ export default function MahnwesenTab() {
           {mahnungen.length === 0
             ? <div className="ac-empty">Noch keine Mahnungen erstellt.</div>
             : (
-              <table className="ac-table">
+              <table aria-label="Mahnwesen" className="ac-table">
                 <thead>
                   <tr>
-                    <th>Datum</th>
-                    <th>Stufe</th>
-                    <th>Status</th>
-                    <th>Rechnungs-ID</th>
-                    <th style={{ textAlign: "right" }}>Mahngebühr</th>
-                    <th style={{ textAlign: "right" }}>Zinsen</th>
-                    <th style={{ textAlign: "right" }}>Gesamt</th>
-                    <th>Aktionen</th>
+                    <th scope="col">Datum</th>
+                    <th scope="col">Stufe</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Rechnungs-ID</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Mahngebühr</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Zinsen</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Gesamt</th>
+                    <th scope="col">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>

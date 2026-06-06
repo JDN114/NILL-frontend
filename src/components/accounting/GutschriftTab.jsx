@@ -61,7 +61,7 @@ function GutschriftForm({ initial, onSaved, onCancel }) {
         {initial?.id ? "Gutschrift bearbeiten" : "Neue Gutschrift"}{" "}
         <span style={{ fontSize: ".75rem", color: "var(--ink2)", fontFamily: "monospace" }}>§14 Abs. 2 UStG</span>
       </div>
-      {error && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{error}</div>}
 
       <div className="ac-form-row">
         <div className="ac-form-col" style={{ flex: 2 }}>
@@ -211,7 +211,7 @@ export default function GutschriftTab() {
     } catch (e) { alert(e.response?.data?.detail || "XRechnung-Download fehlgeschlagen."); }
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" />Lade Gutschriften…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Gutschriften…</div>;
 
   return (
     <div>
@@ -238,15 +238,15 @@ export default function GutschriftTab() {
         <div className="ac-card"><div className="ac-empty">Noch keine Gutschriften.</div></div>
       ) : (
         <div className="ac-card" style={{ padding: 0, overflowX: "auto" }}>
-          <table className="ac-table">
+          <table aria-label="Gutschriften" className="ac-table">
             <thead>
               <tr>
-                <th>Nr.</th>
-                <th>Empfänger</th>
-                <th>Datum</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Brutto</th>
-                <th>Aktionen</th>
+                <th scope="col">Nr.</th>
+                <th scope="col">Empfänger</th>
+                <th scope="col">Datum</th>
+                <th scope="col">Status</th>
+                <th scope="col" style={{ textAlign: "right" }}>Brutto</th>
+                <th scope="col">Aktionen</th>
               </tr>
             </thead>
             <tbody>

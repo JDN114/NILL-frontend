@@ -31,14 +31,14 @@ function KontoBuchungenPanel({ kontoId, kontoNr }) {
 
   return (
     <div style={{ borderTop:"1px solid var(--border)", background:"var(--surface2)" }}>
-      <table className="ac-table" style={{ fontSize:".8rem" }}>
+      <table aria-label="Kontenplan" className="ac-table" style={{ fontSize:".8rem" }}>
         <thead>
           <tr style={{ background:"rgba(0,0,0,.15)" }}>
-            <th>Datum</th>
-            <th>Beleg</th>
-            <th>Text</th>
-            <th style={{ textAlign:"right" }}>Soll</th>
-            <th style={{ textAlign:"right" }}>Haben</th>
+            <th scope="col">Datum</th>
+            <th scope="col">Beleg</th>
+            <th scope="col">Text</th>
+            <th scope="col" style={{ textAlign:"right" }}>Soll</th>
+            <th scope="col" style={{ textAlign:"right" }}>Haben</th>
           </tr>
         </thead>
         <tbody>
@@ -225,6 +225,8 @@ function InfoPill({ konto }) {
     <span ref={ref} style={{ position:"relative", display:"inline-flex" }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        aria-expanded={open}
+        aria-label={`Kontoinfo für ${konto.name || konto.nummer || "Konto"} ${open ? "schließen" : "öffnen"}`}
         style={{
           width:18, height:18, borderRadius:"50%", border:"1px solid rgba(239,237,231,.25)",
           background: open ? "rgba(198,255,60,.15)" : "transparent",
@@ -301,7 +303,7 @@ function Kontofinder({ saldoMap }) {
           onFocus={e => e.target.style.borderColor = "#c6ff3c"}
           onBlur={e => e.target.style.borderColor = "rgba(239,237,231,.1)"}
         />
-        {q && <button onClick={() => setQ("")} style={{
+        {q && <button onClick={() => setQ("")} aria-label="Suche leeren" style={{
           background:"transparent", border:"none", color:"rgba(239,237,231,.4)",
           cursor:"pointer", fontSize:".9rem", padding:4,
         }}>✕</button>}
@@ -355,17 +357,18 @@ function EinfachAnsicht({ saldoMap, kontenIdMap }) {
         <div key={g.id} style={{ marginBottom:12 }}>
           <button
             onClick={() => setOffeneGruppe(s => ({ ...s, [g.id]: !s[g.id] }))}
+            aria-expanded={!!offeneGruppe[g.id]}
             style={{
               width:"100%", display:"flex", alignItems:"center", gap:10, padding:"13px 18px",
               background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12,
               cursor:"pointer", textAlign:"left", transition:"border-color .15s",
               borderColor: offeneGruppe[g.id] ? "rgba(239,237,231,.14)" : "var(--border)",
             }}>
-            <span style={{ width:8, height:8, borderRadius:"50%", background:g.farbe, flexShrink:0 }} />
+            <span style={{ width:8, height:8, borderRadius:"50%", background:g.farbe, flexShrink:0 }} aria-hidden="true" />
             <span style={{ fontFamily:"Fraunces,serif", fontWeight:600, color:"#efede7", fontSize:"1rem", flex:1 }}>
               {g.label}
             </span>
-            <span style={{ fontSize:".78rem", color:"rgba(239,237,231,.35)" }}>
+            <span style={{ fontSize:".78rem", color:"rgba(239,237,231,.35)" }} aria-hidden="true">
               {g.konten.length} Konten {offeneGruppe[g.id] ? "▲" : "▼"}
             </span>
           </button>
@@ -506,7 +509,7 @@ export default function KontenplanTab() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Kontenplan…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Kontenplan…</div>;
 
   return (
     <div>
@@ -540,7 +543,7 @@ export default function KontenplanTab() {
       ) : (
         <div>
           <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
-            <input className="ac-input" style={{ maxWidth:300 }} placeholder="Suche (Nr. oder Bezeichnung)…"
+            <input className="ac-input" style={{ maxWidth:300 }} aria-label="Kontenplan durchsuchen" placeholder="Suche (Nr. oder Bezeichnung)…"
               value={filter} onChange={e => setFilter(e.target.value)} />
             <span style={{ color:"var(--ink2)", fontSize:".85rem" }}>{konten.length} Konten</span>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setExpanded(e => {
@@ -554,20 +557,25 @@ export default function KontenplanTab() {
           </div>
           {Object.keys(grouped).sort().map(cls => (
             <div key={cls} className="ac-card" style={{ marginBottom:12, padding:0 }}>
-              <div style={{ padding:"14px 20px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center" }}
+              <button
+                style={{ padding:"14px 20px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", width:"100%", background:"transparent", border:"none", textAlign:"left" }}
+                aria-expanded={!!expanded[cls]}
                 onClick={() => setExpanded(e => ({ ...e, [cls]: !e[cls] }))}>
                 <span style={{ fontFamily:"Fraunces,serif", fontWeight:600 }}>{KLASSEN[cls] || `Klasse ${cls}`}</span>
-                <span style={{ color:"var(--ink2)", fontSize:".8rem" }}>{grouped[cls].length} Konten {expanded[cls] ? "▲" : "▼"}</span>
-              </div>
+                <span style={{ color:"var(--ink2)", fontSize:".8rem" }} aria-hidden="true">{grouped[cls].length} Konten {expanded[cls] ? "▲" : "▼"}</span>
+              </button>
               {expanded[cls] && (
-                <table className="ac-table">
-                  <thead><tr><th style={{width:100}}>Nr.</th><th>Bezeichnung</th><th>Art</th><th style={{textAlign:"right"}}>Saldo</th><th>USt</th><th style={{width:32}}></th></tr></thead>
+                <table aria-label="Kontenplan" className="ac-table">
+                  <thead><tr><th scope="col" style={{width:100}}>Nr.</th><th scope="col">Bezeichnung</th><th scope="col">Art</th><th scope="col" style={{textAlign:"right"}}>Saldo</th><th scope="col">USt</th><th scope="col" style={{width:32}}></th></tr></thead>
                   <tbody>
                     {grouped[cls].map(k => (
                       <React.Fragment key={k.id}>
                         <tr
+                          tabIndex={0}
                           style={{ cursor:"pointer" }}
+                          aria-expanded={!!kontoDetail[k.id]}
                           onClick={() => setKontoDetail(d => ({ ...d, [k.id]: !d[k.id] }))}
+                          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setKontoDetail(d => ({ ...d, [k.id]: !d[k.id] })); } }}
                           title="Buchungen aufklappen"
                         >
                           <td className="ac-mono" style={{ color:"var(--accent)" }}>{k.kontonummer}</td>

@@ -51,10 +51,10 @@ function GewerbesteuerPanel() {
         </div>
       </div>
 
-      {loading && <div className="ac-loading" style={{ padding: 20 }}><span className="ac-spinner" />Berechne…</div>}
+      {loading && <div role="status" aria-live="polite" className="ac-loading" style={{ padding: 20 }}><span className="ac-spinner" aria-hidden="true" />Berechne…</div>}
       {!loading && data && (
         data.gewerbesteuerpflichtig === false ? (
-          <div className="ac-alert ac-alert-warn">{data.hinweis}</div>
+          <div role="status" aria-live="polite" className="ac-alert ac-alert-warn">{data.hinweis}</div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10, marginBottom: 14 }}>
@@ -123,22 +123,22 @@ function ZMPanel() {
         </div>
       </div>
 
-      {loading && <div className="ac-loading" style={{ padding: 16 }}><span className="ac-spinner" />Lade…</div>}
+      {loading && <div role="status" aria-live="polite" className="ac-loading" style={{ padding: 16 }}><span className="ac-spinner" aria-hidden="true" />Lade…</div>}
       {!loading && data && (
         <>
           {!data.meldepflichtig ? (
-            <div className="ac-alert ac-alert-ok" style={{ marginBottom: 8 }}>
+            <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ marginBottom: 8 }}>
               Kein ZM-Meldebedarf für {MONATE[monat - 1]} {jahr} — keine IG-Lieferungen erkannt.
             </div>
           ) : (
             <>
-              <div className="ac-alert ac-alert-warn" style={{ marginBottom: 12 }}>
+              <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 12 }}>
                 ZM-Meldepflicht! {data.anzahl} IG-Lieferung{data.anzahl !== 1 ? "en" : ""} · Gesamt {fmtEur(data.gesamt_betrag)} · Fälligkeit: {data.faelligkeit}
               </div>
               <div className="ac-table-wrap">
-                <table className="ac-table">
+                <table aria-label="Gewerbesteuer" className="ac-table">
                   <thead>
-                    <tr><th>Empfänger</th><th>USt-IdNr.</th><th>Land</th><th>Rechnung</th><th style={{ textAlign: "right" }}>Betrag netto</th></tr>
+                    <tr><th scope="col">Empfänger</th><th scope="col">USt-IdNr.</th><th scope="col">Land</th><th scope="col">Rechnung</th><th scope="col" style={{ textAlign: "right" }}>Betrag netto</th></tr>
                   </thead>
                   <tbody>
                     {data.ig_positionen.map((p, i) => (
@@ -189,7 +189,7 @@ function IntrastatPanel() {
         </select>
       </div>
 
-      {loading && <div className="ac-loading" style={{ padding: 16 }}><span className="ac-spinner" />Prüfe…</div>}
+      {loading && <div role="status" aria-live="polite" className="ac-loading" style={{ padding: 16 }}><span className="ac-spinner" aria-hidden="true" />Prüfe…</div>}
       {!loading && data && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10, marginBottom: 14 }}>

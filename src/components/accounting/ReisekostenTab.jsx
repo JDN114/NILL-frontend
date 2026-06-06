@@ -50,7 +50,7 @@ function ReisekostenForm({ initial, onSaved, onClose }) {
           {initial?.id ? "Reisekosten bearbeiten" : "Reisekosten erfassen"}
           <span style={{ fontSize: ".75rem", color: "var(--ink2)", marginLeft: 10 }}>§ 4 Abs. 5 EStG</span>
         </div>
-        {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+        {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
 
         <div className="ac-form-row">
           <div className="ac-form-col"><label className="ac-label">Datum *</label>
@@ -156,7 +156,7 @@ export default function ReisekostenTab() {
 
   return (
     <div>
-      {msg && <div className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
+      {msg && <div role={msg.type === "ok" ? "status" : "alert"} aria-live="polite" className={`ac-alert ${msg.type === "ok" ? "ac-alert-ok" : "ac-alert-err"}`}
         style={{ cursor: "pointer", marginBottom: 16 }} onClick={() => setMsg(null)}>{msg.text}</div>}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -176,12 +176,12 @@ export default function ReisekostenTab() {
         </div>
       </div>
 
-      <div className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>
+      <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>
         Km-Pauschale PKW: 0,30 €/km · Tagegeld Inland 24h+: 28 € · 8–24h: 14 € · Übernachtungspauschale: 20 €
       </div>
 
       {loading ? (
-        <div className="ac-loading"><span className="ac-spinner" />Lade Reisekosten…</div>
+        <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" />Lade Reisekosten…</div>
       ) : data.eintraege.length === 0 ? (
         <div className="ac-empty">
           <div style={{ fontSize: "2rem", marginBottom: 12 }}></div>
@@ -190,15 +190,15 @@ export default function ReisekostenTab() {
       ) : (
         <div className="ac-card" style={{ padding: 0, overflow: "hidden" }}>
           <div className="ac-table-wrap">
-            <table className="ac-table">
+            <table aria-label="Reisekostenabrechnungen" className="ac-table">
               <thead>
                 <tr>
-                  <th>Datum</th><th>Reisezweck</th><th>Reiseziel</th>
-                  <th style={{ textAlign: "right" }}>Km</th>
-                  <th style={{ textAlign: "right" }}>Tagegeld</th>
-                  <th style={{ textAlign: "right" }}>Übernachtung</th>
-                  <th style={{ textAlign: "right" }}>Gesamt</th>
-                  <th />
+                  <th scope="col">Datum</th><th scope="col">Reisezweck</th><th scope="col">Reiseziel</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Km</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Tagegeld</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Übernachtung</th>
+                  <th scope="col" style={{ textAlign: "right" }}>Gesamt</th>
+                  <th scope="col" />
                 </tr>
               </thead>
               <tbody>

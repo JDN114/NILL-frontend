@@ -137,13 +137,13 @@ function ClearingModal({ onSaved, onClose }) {
             {loadingVorschau ? "Lade…" : "Vorschau berechnen"}
           </button>
           {vorschau && (
-            <div className="ac-alert ac-alert-ok" style={{ marginTop: 10 }}>
+            <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ marginTop: 10 }}>
               Erwarteter EC-Betrag: <strong>{EUR(vorschau.erwarteter_betrag)}</strong>
               {" "}({vorschau.tage_count} {vorschau.tage_count === 1 ? "Tag" : "Tage"})
             </div>
           )}
           {vorschauErr && (
-            <div className="ac-alert ac-alert-err" style={{ marginTop: 10 }}>{vorschauErr}</div>
+            <div role="alert" className="ac-alert ac-alert-err" style={{ marginTop: 10 }}>{vorschauErr}</div>
           )}
         </div>
 
@@ -219,7 +219,7 @@ function ClearingModal({ onSaved, onClose }) {
         </div>
 
         {err && (
-          <div className="ac-alert ac-alert-err" style={{ marginTop: 12 }}>{err}</div>
+          <div role="alert" className="ac-alert ac-alert-err" style={{ marginTop: 12 }}>{err}</div>
         )}
 
         <div className="ac-modal-footer">
@@ -363,32 +363,32 @@ export default function EcClearingTab() {
       </div>
 
       {actionErr && (
-        <div className="ac-alert ac-alert-err">{actionErr}</div>
+        <div role="alert" className="ac-alert ac-alert-err">{actionErr}</div>
       )}
 
       {/* Tabelle */}
       <div className="ac-card">
         {loading ? (
-          <div className="ac-loading">
-            <div className="ac-spinner" />
+          <div role="status" aria-live="polite" className="ac-loading">
+            <div className="ac-spinner" aria-hidden="true" />
           </div>
         ) : err ? (
-          <div className="ac-alert ac-alert-err">{err}</div>
+          <div role="alert" className="ac-alert ac-alert-err">{err}</div>
         ) : batches.length === 0 ? (
           <div className="ac-empty">Noch keine EC-Clearing-Einträge vorhanden.</div>
         ) : (
           <div className="ac-table-wrap">
-            <table className="ac-table">
+            <table aria-label="EC-Buchungen" className="ac-table">
               <thead>
                 <tr>
-                  <th>Valuta</th>
-                  <th>Zeitraum</th>
-                  <th>Bank-Betrag</th>
-                  <th>Erwartet</th>
-                  <th>Differenz</th>
-                  <th>Referenz</th>
-                  <th>Status</th>
-                  <th>Aktionen</th>
+                  <th scope="col">Valuta</th>
+                  <th scope="col">Zeitraum</th>
+                  <th scope="col">Bank-Betrag</th>
+                  <th scope="col">Erwartet</th>
+                  <th scope="col">Differenz</th>
+                  <th scope="col">Referenz</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Aktionen</th>
                 </tr>
               </thead>
               <tbody>

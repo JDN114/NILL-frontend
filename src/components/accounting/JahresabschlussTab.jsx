@@ -72,7 +72,7 @@ function Schritt1({ data, jahr, onDone }) {
         EÜR (§4 Abs. 3 EStG), GuV (§275 HGB) und Bilanz (§266 HGB) werden aus den
         gebuchten Buchungssätzen des Jahres berechnet.
       </p>
-      {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+      {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
       {hasData && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 10, marginBottom: 16 }}>
           {[
@@ -140,7 +140,7 @@ function Schritt2({ data, jahr, onDone }) {
         Vereinfachte Berechnung nach §23 KStG (15% KSt + 5,5% SolZ) und §11 GewStG.
         Bitte durch Steuerberater vor Abgabe prüfen lassen.
       </p>
-      {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+      {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
       <div className="ac-form-row">
         <div className="ac-form-col">
           <label className="ac-label">Steuerlicher Gewinn (zu versteuerndes Einkommen, z.v.E.) €</label>
@@ -220,12 +220,12 @@ function Schritt3({ data }) {
         ))}
       </div>
       {!allDone && (
-        <div className="ac-alert ac-alert-warn">
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-warn">
           Nicht alle Schritte abgeschlossen. Bitte Schritt 1 und 2 vollständig ausführen.
         </div>
       )}
       {allDone && (
-        <div className="ac-alert ac-alert-ok">
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-ok">
           ✓ Alle Berechnungen vollständig. Weiter zu Schritt 4: Feststellungsbeschluss.
         </div>
       )}
@@ -247,7 +247,7 @@ function Schritt4({ data, jahr, onDone }) {
     return (
       <div>
         <div style={{ fontWeight: 700, marginBottom: 8 }}>Schritt 4 — Feststellungsbeschluss</div>
-        <div className="ac-alert ac-alert-ok">
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-ok">
           ✓ Festgestellt am {data.festgestellt_am?.slice(0,10)} von <strong>{data.festgestellt_von}</strong>
           {data.feststellungs_notiz && <div style={{ marginTop: 6 }}>{data.feststellungs_notiz}</div>}
         </div>
@@ -275,7 +275,7 @@ function Schritt4({ data, jahr, onDone }) {
         Mit der Feststellung wird der Jahresabschluss verbindlich (§42a GmbHG / §316 HGB).
         Eine nachträgliche Neuberechnung ist dann nicht mehr möglich.
       </p>
-      {err && <div className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
+      {err && <div role="alert" className="ac-alert ac-alert-err" style={{ marginBottom: 12 }}>{err}</div>}
       <div className="ac-form-row">
         <div className="ac-form-col">
           <label className="ac-label">Festgestellt von (Name) *</label>
@@ -343,7 +343,7 @@ function Schritt5({ data, jahr, onRefresh }) {
         )}
       </div>
       {data?.status === "eingereicht" && (
-        <div className="ac-alert ac-alert-ok" style={{ marginTop: 14 }}>
+        <div role="status" aria-live="polite" className="ac-alert ac-alert-ok" style={{ marginTop: 14 }}>
           ✓ Eingereicht am {data.eingereicht_am?.slice(0,10)}
         </div>
       )}
@@ -378,7 +378,7 @@ export default function JahresabschlussTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner" /> Lade…</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true" /> Lade…</div>;
 
   const meta = STATUS_META[data?.status || "entwurf"];
 
@@ -435,19 +435,24 @@ export default function JahresabschlussTab() {
           <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
             <span className="ac-section-title">Alle Jahresabschlüsse</span>
           </div>
-          <table className="ac-table">
+          <table aria-label="Jahresabschluss" className="ac-table">
             <thead><tr>
-              <th>Jahr</th><th>Status</th>
-              <th style={{ textAlign: "right" }}>Gewinn</th>
-              <th style={{ textAlign: "right" }}>Steuerlast</th>
-              <th>Festgestellt</th>
+              <th scope="col">Jahr</th><th scope="col">Status</th>
+              <th scope="col" style={{ textAlign: "right" }}>Gewinn</th>
+              <th scope="col" style={{ textAlign: "right" }}>Steuerlast</th>
+              <th scope="col">Festgestellt</th>
             </tr></thead>
             <tbody>
               {liste.map(a => {
                 const m = STATUS_META[a.status] || STATUS_META.entwurf;
                 const gewinn = a.eur_gewinn_verlust ?? a.guv_jahresueberschuss;
                 return (
-                  <tr key={a.id} onClick={() => setJahr(a.jahr)} style={{ cursor: "pointer" }}>
+                  <tr key={a.id}
+                    tabIndex={0}
+                    onClick={() => setJahr(a.jahr)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setJahr(a.jahr); } }}
+                    style={{ cursor: "pointer" }}
+                  >
                     <td className="ac-mono" style={{ fontWeight: 600 }}>{a.jahr}</td>
                     <td><span className={`ac-badge ${m.color}`} style={{ fontSize: ".72rem" }}>{m.label}</span></td>
                     <td className="ac-mono" style={{ textAlign: "right" }}>{gewinn != null ? fmtEur(gewinn) : "—"}</td>

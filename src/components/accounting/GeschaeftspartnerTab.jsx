@@ -34,7 +34,7 @@ function NeuPartnerModal({ onClose, onSaved }) {
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ maxWidth:130 }}>
             <label className="ac-label">Nummer *</label>
-            <input className="ac-input ac-mono" value={form.nummer} placeholder="KD-001" onChange={e => { set("nummer", e.target.value); setNummerErr(""); }} />
+            <input aria-required="true" className="ac-input ac-mono" value={form.nummer} placeholder="KD-001" onChange={e => { set("nummer", e.target.value); setNummerErr(""); }} />
             {nummerErr && <div style={{ color:"var(--a3)", fontSize:".75rem", marginTop:3 }}>{nummerErr}</div>}
           </div>
           <div className="ac-form-col" style={{ flex:2 }}><label className="ac-label">Firmenname</label><input className="ac-input" value={form.firmenname} onChange={e => set("firmenname", e.target.value)} /></div>
@@ -155,7 +155,7 @@ export default function GeschaeftspartnerTab() {
 
   const filtered = partner.filter(p => !filter || (p.firmenname || "").toLowerCase().includes(filter.toLowerCase()) || (p.nummer || "").toLowerCase().includes(filter.toLowerCase()) || (p.ort || "").toLowerCase().includes(filter.toLowerCase()));
 
-  if (loading) return <div className="ac-loading"><span className="ac-spinner"/>Lade Geschäftspartner...</div>;
+  if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Geschäftspartner...</div>;
 
   return (
     <div>
@@ -169,13 +169,13 @@ export default function GeschaeftspartnerTab() {
       {subtab === "partner" && (
         <>
           <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center" }}>
-            <input className="ac-input" style={{ maxWidth:300 }} placeholder="Suche..." value={filter} onChange={e => setFilter(e.target.value)} />
+            <input className="ac-input" style={{ maxWidth:300 }} aria-label="Geschäftspartner suchen" placeholder="Suche..." value={filter} onChange={e => setFilter(e.target.value)} />
             <div style={{ flex:1 }} />
             <button className="ac-btn ac-btn-primary" onClick={() => setShowNew(true)}>+ Partner</button>
           </div>
           <div className="ac-card" style={{ padding:0 }}>
-            <table className="ac-table">
-              <thead><tr><th>Name / Firma</th><th>Typ</th><th>Ort</th><th>Land</th><th>USt-ID</th><th>E-Mail</th><th></th></tr></thead>
+            <table aria-label="Geschäftspartner" className="ac-table">
+              <thead><tr><th scope="col">Name / Firma</th><th scope="col">Typ</th><th scope="col">Ort</th><th scope="col">Land</th><th scope="col">USt-ID</th><th scope="col">E-Mail</th><th scope="col"></th></tr></thead>
               <tbody>
                 {filtered.length === 0 && <tr><td colSpan={7} className="ac-empty">Noch keine Geschäftspartner angelegt.</td></tr>}
                 {filtered.map(p => {
@@ -204,8 +204,8 @@ export default function GeschaeftspartnerTab() {
       )}
       {subtab === "mahnwesen" && (
         <div className="ac-card" style={{ padding:0 }}>
-          <table className="ac-table">
-            <thead><tr><th>Geschäftspartner</th><th>Mahnstufe</th><th>Mahndatum</th><th>Fälligkeit</th><th style={{textAlign:"right"}}>Betrag</th><th style={{textAlign:"right"}}>Gebühr</th><th>Status</th></tr></thead>
+          <table aria-label="Geschäftspartner" className="ac-table">
+            <thead><tr><th scope="col">Geschäftspartner</th><th scope="col">Mahnstufe</th><th scope="col">Mahndatum</th><th scope="col">Fälligkeit</th><th scope="col" style={{textAlign:"right"}}>Betrag</th><th scope="col" style={{textAlign:"right"}}>Gebühr</th><th scope="col">Status</th></tr></thead>
             <tbody>
               {mahnungen.length === 0 && <tr><td colSpan={7} className="ac-empty">Keine Mahnungen vorhanden.</td></tr>}
               {mahnungen.map(m => {

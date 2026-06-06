@@ -135,7 +135,7 @@ export default function InvoiceCreateModal({ open, onClose, onCreated }) {
 
       <div className="ac-form-col" style={{ marginBottom:8 }}>
         <label className="ac-label">Titel *</label>
-        <input className="ac-input" placeholder="z.B. Rechnung Druckerei GmbH" value={title} onChange={e => setTitle(e.target.value)} />
+        <input aria-required="true" className="ac-input" placeholder="z.B. Rechnung Druckerei GmbH" value={title} onChange={e => setTitle(e.target.value)} />
       </div>
       <div className="ac-form-col" style={{ marginBottom:8 }}>
         <label className="ac-label">Anbieter / Lieferant</label>
@@ -144,7 +144,7 @@ export default function InvoiceCreateModal({ open, onClose, onCreated }) {
       <div className="ac-form-row" style={{ marginBottom:8 }}>
         <div className="ac-form-col">
           <label className="ac-label">Betrag (€) *</label>
-          <input type="number" className="ac-input ac-mono" placeholder="0,00" value={amount} onChange={e => setAmount(e.target.value)} />
+          <input aria-required="true" type="number" className="ac-input ac-mono" placeholder="0,00" value={amount} onChange={e => setAmount(e.target.value)} />
         </div>
         <div className="ac-form-col">
           <label className="ac-label">Kategorie</label>
