@@ -278,13 +278,21 @@ function AttachmentPreview({ att, email, onClose }) {
                   <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
                   <polyline points="13 2 13 9 20 9"/>
                 </svg>
-                <p style={{ margin: "0.75rem 0 0.25rem" }}>Vorschau nicht verfügbar</p>
-                <p style={{ fontSize: "0.78rem", opacity: 0.5, margin: 0 }}>{att.content_type || "Unbekannter Dateityp"}</p>
-                <button className="em-preview-dl-btn" style={{ marginTop: "1.25rem" }} onClick={download}>
+                <p style={{ margin: "0.75rem 0 0.25rem", fontWeight: 600 }}>Vorschau nicht verfügbar</p>
+                <p style={{ fontSize: "0.82rem", opacity: 0.65, margin: "0 0 0.25rem" }}>
+                  {(() => {
+                    const ext = (att.filename || "").split(".").pop().toUpperCase();
+                    return ext ? `${ext}-Dateien können nicht in der App angezeigt werden.` : "Dieser Dateityp kann nicht angezeigt werden.";
+                  })()}
+                </p>
+                <p style={{ fontSize: "0.72rem", opacity: 0.4, margin: 0 }}>
+                  {att.content_type && att.content_type !== "application/octet-stream" ? att.content_type : ""}
+                </p>
+                <button className="em-preview-dl-btn" style={{ marginTop: "1.5rem" }} onClick={download} disabled={!blobUrl}>
                   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
-                  Herunterladen
+                  Datei herunterladen
                 </button>
               </div>
             </div>
