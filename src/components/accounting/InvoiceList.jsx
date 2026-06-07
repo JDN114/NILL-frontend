@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import api from "../../services/api";
 
+const PAGE_SIZE = 25;
+
 const fmtEur = (n) => `${Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 
 const AI_BADGE_STYLE = {
@@ -540,6 +542,7 @@ export default function InvoiceList() {
   const [msg,           setMsg]           = useState(null);
   const [bookingInv,    setBookingInv]    = useState(null);
   const [infoOpen,      setInfoOpen]      = useState(false);
+  const [page,          setPage]          = useState(1);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -604,6 +607,11 @@ export default function InvoiceList() {
     if (sortKey === key) setSortAsc(a => !a);
     else { setSortKey(key); setSortAsc(true); }
   };
+
+  useEffect(() => { setPage(1); }, [filter, statusFilter, bookingFilter, sortKey, sortAsc]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const th = (key, label, right) => (
     <th scope="col"
@@ -672,7 +680,7 @@ export default function InvoiceList() {
             {sorted.length === 0 && (
               <tr><td colSpan={9} className="ac-empty">Keine Rechnungen gefunden.</td></tr>
             )}
-            {sorted.map(inv => {
+            {paged.map(inv => {
               const meta = STATUS_META[inv.status] || STATUS_META.open;
               return (
                 <tr key={inv.id}>
@@ -739,6 +747,20 @@ export default function InvoiceList() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12, padding:"0 4px" }}>
+          <span style={{ fontSize:".82rem", color:"var(--ink2)" }}>
+            {sorted.length} Einträge — Seite {page} / {totalPages}
+          </span>
+          <div style={{ display:"flex", gap:6 }}>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(1)} disabled={page===1}>«</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1}>‹</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page===totalPages}>›</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(totalPages)} disabled={page===totalPages}>»</button>
+          </div>
+        </div>
+      )}
 
       {bookingInv && (
         <BookingConfirmModal

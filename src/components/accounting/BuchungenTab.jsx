@@ -267,6 +267,7 @@ export default function BuchungenTab() {
   const [msg, setMsg]                 = useState(null);
   const [von, setVon]               = useState(`${today.getFullYear()}-01-01`);
   const [bis, setBis]               = useState(today.toISOString().slice(0, 10));
+  const [page, setPage]             = useState(1);
 
   // Debounce text filter: wait 300 ms after last keystroke before firing request
   useEffect(() => {
@@ -291,6 +292,7 @@ export default function BuchungenTab() {
   }, [von, bis, debouncedFilter, kontoFilter]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [von, bis, debouncedFilter, kontoFilter]);
 
   const storno = async (id) => {
     if (!window.confirm("Buchungssatz stornieren?")) return;
@@ -306,8 +308,11 @@ export default function BuchungenTab() {
     }
   };
 
-  // Filtering is now server-side; buchungen already matches current filter state
+  // Filtering is server-side; buchungen already matches current filter state
   const filtered = buchungen;
+  const PAGE_BUCH = 50;
+  const totalPagesBuch = Math.max(1, Math.ceil(filtered.length / PAGE_BUCH));
+  const paged = filtered.slice((page - 1) * PAGE_BUCH, page * PAGE_BUCH);
 
   if (loading) return <div role="status" aria-live="polite" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Journal...</div>;
 
@@ -349,7 +354,7 @@ export default function BuchungenTab() {
             {filtered.length === 0 && (
               <tr><td colSpan={7} className="ac-empty">Keine Buchungen gefunden.</td></tr>
             )}
-            {filtered.map(b => (
+            {paged.map(b => (
               <React.Fragment key={b.id}>
                 <tr
                   tabIndex={0}
@@ -406,6 +411,19 @@ export default function BuchungenTab() {
           </tbody>
         </table>
       </div>
+      {totalPagesBuch > 1 && (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12, padding:"0 4px" }}>
+          <span style={{ fontSize:".82rem", color:"var(--ink2)" }}>
+            {filtered.length} Buchungen — Seite {page} / {totalPagesBuch}
+          </span>
+          <div style={{ display:"flex", gap:6 }}>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(1)} disabled={page===1}>«</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1}>‹</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(p => Math.min(totalPagesBuch, p+1))} disabled={page===totalPagesBuch}>›</button>
+            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setPage(totalPagesBuch)} disabled={page===totalPagesBuch}>»</button>
+          </div>
+        </div>
+      )}
       {showModal && (
         <NeuBuchungModal konten={konten} perioden={perioden}
           onClose={() => setShowModal(false)} onSaved={load} />

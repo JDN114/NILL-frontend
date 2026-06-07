@@ -28,7 +28,7 @@ export default function BelegarchivTab() {
     setLoading(true);
     setError("");
     try {
-      const r = await api.get("/api/v1/accounting/belegarchiv/suche", {
+      const r = await api.get("/api/v1/buchhaltung/belegarchiv/suche", {
         params: {
           q:   query || undefined,
           typ: typVal || undefined,

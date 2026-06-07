@@ -1014,8 +1014,51 @@ function HilfeTab({ onNavigate }) {
   );
 }
 
+// ── Sub-nav tab data (stable refs prevent unnecessary SubNav re-renders) ──────
+const RECHNUNGEN_SUBS = [
+  {id:"eingehend",     label:"Eingehend"},
+  {id:"ausgehend",     label:"Ausgehend"},
+  {id:"erechnung",     label:"E-Rechnung"},
+  {id:"angebote",      label:"Angebote"},
+  {id:"lieferscheine", label:"Lieferscheine"},
+  {id:"gutschriften",  label:"Gutschriften"},
+  {id:"serienrechnung",label:"Serienrechnungen"},
+  {id:"widerruf",      label:"Widerrufsrecht"},
+];
+const POSTEN_SUBS    = [{id:"opos",label:"Offene Posten"},{id:"mahnwesen",label:"Mahnwesen"}];
+const STEUERN_SUBS   = [
+  {id:"dashboard",       label:"Steuer-Cockpit"},
+  {id:"ustva",           label:"UStVA"},
+  {id:"gewerbesteuer",   label:"GewSt / ZM"},
+  {id:"jahresabschluss", label:"Jahresabschluss"},
+  {id:"steuerkalender",  label:"Steuer-Kalender"},
+];
+const BUCHHALTUNG_SUBS = [
+  {id:"buchungen",     label:"Journal"},
+  {id:"kontenplan",    label:"Kontenplan"},
+  {id:"anlagen",       label:"Anlagenbuch"},
+  {id:"kostenstellen", label:"Kostenstellen"},
+];
+const PLANUNG_SUBS = [
+  {id:"projekte",       label:"Projekte & Zeit"},
+  {id:"budget",         label:"Budget"},
+  {id:"reisekosten",    label:"Reisekosten"},
+  {id:"kassenbuch",     label:"Kassenbuch"},
+  {id:"tagesabschluss", label:"Tagesabschluss"},
+];
+const BELEGE_SUBS   = [{id:"archiv",label:"Belegarchiv"},{id:"email",label:"Belege per E-Mail"}];
+const PARTNER_SUBS  = [{id:"partner",label:"Partner"},{id:"zahlungsmoral",label:"Zahlungsmoral"},{id:"waehrungen",label:"Währungen"}];
+const BERICHTE_SUBS = [{id:"berichte",label:"Berichte"},{id:"export",label:"Export & DATEV"}];
+const KASSE_SUBS = [
+  {id:"kassenbons",     label:"Kassenbons + TSE"},
+  {id:"ec",             label:"EC-Clearing"},
+  {id:"trinkgeld",      label:"Trinkgeld"},
+  {id:"gutscheine",     label:"Gutscheine"},
+  {id:"tagesabschluss", label:"Tagesabschluss"},
+];
+
 // ── Sub-tab nav helper ────────────────────────────────────────────────────────
-function SubNav({ tabs, active, onChange }) {
+const SubNav = React.memo(function SubNav({ tabs, active, onChange }) {
   return (
     <div style={{display:"flex",gap:4,background:"var(--surface2)",borderRadius:10,padding:4,marginBottom:20,overflowX:"auto",scrollbarWidth:"none",flexWrap:"nowrap"}}>
       {tabs.map(t => (
@@ -1030,25 +1073,15 @@ function SubNav({ tabs, active, onChange }) {
       ))}
     </div>
   );
-}
+});
 
 // ── Mega-tab wrapper components ───────────────────────────────────────────────
-function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
+const RechnungenGruppe = React.memo(function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
   const [sub, setSub] = useState("eingehend");
-  const SUBS = [
-    {id:"eingehend",    label:"Eingehend"},
-    {id:"ausgehend",    label:"Ausgehend"},
-    {id:"erechnung",    label:"E-Rechnung"},
-    {id:"angebote",     label:"Angebote"},
-    {id:"lieferscheine",label:"Lieferscheine"},
-    {id:"gutschriften", label:"Gutschriften"},
-    {id:"serienrechnung",label:"Serienrechnungen"},
-    {id:"widerruf",     label:"Widerrufsrecht"},
-  ];
   return (
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-        <SubNav tabs={SUBS} active={sub} onChange={setSub}/>
+        <SubNav tabs={RECHNUNGEN_SUBS} active={sub} onChange={setSub}/>
         {sub==="eingehend" && <button className="ac-btn ac-btn-primary ac-btn-sm" style={{marginBottom:20,marginLeft:8}} onClick={onUpload}>+ Beleg</button>}
       </div>
       {sub==="eingehend"    && <InvoiceList key={refreshKey} onRefresh={onRefresh}/>}
@@ -1061,30 +1094,24 @@ function RechnungenGruppe({ onUpload, onRefresh, refreshKey }) {
       {sub==="widerruf"     && <WiderrufSettingsPanel key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function PostenGruppe({ refreshKey, onNavigate }) {
+const PostenGruppe = React.memo(function PostenGruppe({ refreshKey, onNavigate }) {
   const [sub, setSub] = useState("opos");
   return (
     <div>
-      <SubNav tabs={[{id:"opos",label:"Offene Posten"},{id:"mahnwesen",label:"Mahnwesen"}]} active={sub} onChange={setSub}/>
+      <SubNav tabs={POSTEN_SUBS} active={sub} onChange={setSub}/>
       {sub==="opos"     && <OposTab key={refreshKey} onNavigate={onNavigate}/>}
       {sub==="mahnwesen"&& <MahnwesenTab key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function SteuernGruppe({ refreshKey }) {
+const SteuernGruppe = React.memo(function SteuernGruppe({ refreshKey }) {
   const [sub, setSub] = useState("dashboard");
   return (
     <div>
-      <SubNav tabs={[
-        {id:"dashboard",      label:"Steuer-Cockpit"},
-        {id:"ustva",          label:"UStVA"},
-        {id:"gewerbesteuer",  label:"GewSt / ZM"},
-        {id:"jahresabschluss",label:"Jahresabschluss"},
-        {id:"steuerkalender", label:"Steuer-Kalender"},
-      ]} active={sub} onChange={setSub}/>
+      <SubNav tabs={STEUERN_SUBS} active={sub} onChange={setSub}/>
       {sub==="dashboard"       && <TaxDashboard key={refreshKey}/>}
       {sub==="ustva"           && <UstVaTab key={refreshKey}/>}
       {sub==="gewerbesteuer"   && <GewerbesteuerTab key={refreshKey}/>}
@@ -1092,31 +1119,26 @@ function SteuernGruppe({ refreshKey }) {
       {sub==="steuerkalender"  && <SteuerkalenderTab key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function BuchhaltungGruppe({ refreshKey }) {
+const BuchhaltungGruppe = React.memo(function BuchhaltungGruppe({ refreshKey }) {
   const [sub, setSub] = useState("buchungen");
   return (
     <div>
-      <SubNav tabs={[
-        {id:"buchungen",    label:"Journal"},
-        {id:"kontenplan",   label:"Kontenplan"},
-        {id:"anlagen",      label:"Anlagenbuch"},
-        {id:"kostenstellen",label:"Kostenstellen"},
-      ]} active={sub} onChange={setSub}/>
+      <SubNav tabs={BUCHHALTUNG_SUBS} active={sub} onChange={setSub}/>
       {sub==="buchungen"     && <BuchungenTab key={refreshKey}/>}
       {sub==="kontenplan"    && <KontenplanTab key={refreshKey}/>}
       {sub==="anlagen"       && <AnlagenTab key={refreshKey}/>}
       {sub==="kostenstellen" && <KostenstellenTab key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function PlanungGruppe({ refreshKey }) {
+const PlanungGruppe = React.memo(function PlanungGruppe({ refreshKey }) {
   const [sub, setSub] = useState("projekte");
   return (
     <div>
-      <SubNav tabs={[{id:"projekte",label:"Projekte & Zeit"},{id:"budget",label:"Budget"},{id:"reisekosten",label:"Reisekosten"},{id:"kassenbuch",label:"Kassenbuch"},{id:"tagesabschluss",label:"Tagesabschluss"}]} active={sub} onChange={setSub}/>
+      <SubNav tabs={PLANUNG_SUBS} active={sub} onChange={setSub}/>
       {sub==="projekte"       && <ProjektTab key={refreshKey}/>}
       {sub==="budget"         && <BudgetTab key={refreshKey}/>}
       {sub==="reisekosten"    && <ReisekostenTab key={refreshKey}/>}
@@ -1124,54 +1146,48 @@ function PlanungGruppe({ refreshKey }) {
       {sub==="tagesabschluss" && <TagesabschlussTab key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function BelegeGruppe({ refreshKey }) {
+const BelegeGruppe = React.memo(function BelegeGruppe({ refreshKey }) {
   const [sub, setSub] = useState("archiv");
   return (
     <div>
-      <SubNav tabs={[{id:"archiv",label:"Belegarchiv"},{id:"email",label:"Belege per E-Mail"}]} active={sub} onChange={setSub}/>
+      <SubNav tabs={BELEGE_SUBS} active={sub} onChange={setSub}/>
       {sub==="archiv"&& <BelegarchivTab key={refreshKey}/>}
       {sub==="email" && <BelegEmailTab key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function GeschaeftspartnerGruppe({ refreshKey }) {
+const GeschaeftspartnerGruppe = React.memo(function GeschaeftspartnerGruppe({ refreshKey }) {
   const [sub, setSub] = useState("partner");
   return (
     <div>
-      <SubNav tabs={[{id:"partner",label:"Partner"},{id:"zahlungsmoral",label:"Zahlungsmoral"},{id:"waehrungen",label:"Währungen"}]} active={sub} onChange={setSub}/>
+      <SubNav tabs={PARTNER_SUBS} active={sub} onChange={setSub}/>
       {sub==="partner"      && <GeschaeftspartnerTab key={refreshKey}/>}
       {sub==="zahlungsmoral"&& <ZahlungsmoralTab key={refreshKey}/>}
       {sub==="waehrungen"   && <WechselkurseTab key={refreshKey}/>}
     </div>
   );
-}
+});
 
-function BerichteExportGruppe({ refreshKey }) {
+const BerichteExportGruppe = React.memo(function BerichteExportGruppe({ refreshKey }) {
   const [sub, setSub] = useState("berichte");
   return (
     <div>
-      <SubNav tabs={[{id:"berichte",label:"Berichte"},{id:"export",label:"Export & DATEV"}]} active={sub} onChange={setSub}/>
+      <SubNav tabs={BERICHTE_SUBS} active={sub} onChange={setSub}/>
       {sub==="berichte"&& <BerichteTab key={refreshKey}/>}
       {sub==="export"  && <ExportTab/>}
     </div>
   );
-}
+});
 
 // ── Kasse / POS ──────────────────────────────────────────────────────────────
-function KasseGruppe({ refreshKey }) {
+const KasseGruppe = React.memo(function KasseGruppe({ refreshKey }) {
   const [sub, setSub] = useState("kassenbons");
   return (
     <div>
-      <SubNav tabs={[
-        { id: "kassenbons",    label: "Kassenbons + TSE" },
-        { id: "ec",            label: "EC-Clearing"      },
-        { id: "trinkgeld",     label: "Trinkgeld"        },
-        { id: "gutscheine",    label: "Gutscheine"       },
-        { id: "tagesabschluss",label: "Tagesabschluss"  },
-      ]} active={sub} onChange={setSub} />
+      <SubNav tabs={KASSE_SUBS} active={sub} onChange={setSub} />
       {sub === "kassenbons"     && <KassenbonTab    key={refreshKey} />}
       {sub === "ec"             && <EcClearingTab   key={refreshKey} />}
       {sub === "trinkgeld"      && <TrinkgeldTab    key={refreshKey} />}
@@ -1179,7 +1195,7 @@ function KasseGruppe({ refreshKey }) {
       {sub === "tagesabschluss" && <TagesabschlussTab key={refreshKey} />}
     </div>
   );
-}
+});
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const ALL_TABS = [
@@ -1234,16 +1250,17 @@ export default function AccountingPage() {
     return () => { document.title = "NILL"; };
   }, [tab, TABS]);
 
-  const goTo = (tabId) => setTab(tabId);
+  const goTo = useCallback((tabId) => setTab(tabId), []);
+  const openUpload = useCallback(() => setUploadOpen(true), []);
 
   const goToDashboard = () => {
     window.location.href = "/dashboard";
   };
 
-  const renderTab = () => {
+  const renderedTab = useMemo(() => {
     switch(tab) {
-      case "overview":    return <OverviewTab key={refreshKey} onNavigate={goTo} onUpload={() => setUploadOpen(true)}/>;
-      case "rechnungen":  return <RechnungenGruppe onUpload={() => setUploadOpen(true)} onRefresh={triggerRefresh} refreshKey={refreshKey}/>;
+      case "overview":    return <OverviewTab key={refreshKey} onNavigate={goTo} onUpload={openUpload}/>;
+      case "rechnungen":  return <RechnungenGruppe onUpload={openUpload} onRefresh={triggerRefresh} refreshKey={refreshKey}/>;
       case "posten":      return <PostenGruppe refreshKey={refreshKey} onNavigate={goTo}/>;
       case "planung":     return <PlanungGruppe refreshKey={refreshKey}/>;
       case "steuern":     return <SteuernGruppe refreshKey={refreshKey}/>;
@@ -1258,7 +1275,7 @@ export default function AccountingPage() {
       case "hilfe":       return <HilfeTab onNavigate={goTo}/>;
       default:            return null;
     }
-  };
+  }, [tab, refreshKey, triggerRefresh, openUpload, goTo, navigate]);
 
   if (!sessionReady) return <NillLoader text="Buchhaltung wird initialisiert…" />;
 
@@ -1285,7 +1302,7 @@ export default function AccountingPage() {
             </div>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup</button>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>Hilfe</button>
-            <button className="ac-btn ac-btn-primary" onClick={()=>setUploadOpen(true)}>+ Beleg</button>
+            <button className="ac-btn ac-btn-primary" onClick={openUpload}>+ Beleg</button>
           </div>
         </div>
 
@@ -1314,7 +1331,7 @@ export default function AccountingPage() {
 
         <main id="ac-main-content" role="tabpanel" aria-labelledby={`ac-tab-${tab}`}>
         <Suspense fallback={<div className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Wird geladen…</div>}>
-          {renderTab()}
+          {renderedTab}
         </Suspense>
         </main>
 
