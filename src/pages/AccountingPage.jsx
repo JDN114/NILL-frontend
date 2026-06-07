@@ -281,274 +281,426 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 // ── Übersicht ─────────────────────────────────────────────────────────────────────────────────
 
+const DASH_MODES = [
+  { key:"universal", label:"Universal", desc:"Ausgewogene Ansicht für alle Unternehmenstypen" },
+  { key:"b2b",       label:"B2B",       desc:"Fokus auf Forderungen, Angebote und Zahlungsmoral" },
+  { key:"b2c",       label:"B2C",       desc:"Fokus auf Tagesumsatz, Kasse und Zahlungsarten" },
+];
+
+const WIDGET_META = {
+  cashflow:      { label:"Cashflow-Verlauf",        desc:"Einnahmen/Ausgaben pro Monat" },
+  categories:    { label:"Ausgaben-Kategorien",     desc:"Tortendiagramm nach Kostenstelle" },
+  recent:        { label:"Letzte Buchungen",         desc:"Die 8 neuesten Journaleinträge" },
+  ar:            { label:"Offene Forderungen",       desc:"Summe offener & überfälliger Rechnungen" },
+  overdue:       { label:"Überfällige Rechnungen",  desc:"Anzahl und Betrag der fälligen Rechnungen" },
+  proposals:     { label:"Offene Angebote",          desc:"Angebote im Status Gesendet" },
+  today:         { label:"Heutiger Umsatz",          desc:"Kassenbons heute — Summe & Anzahl" },
+  kassenstand:   { label:"Kassenbestand",            desc:"Laufender Saldo des Kassenbuchs" },
+  payment_split: { label:"Zahlungsarten heute",      desc:"Bar / EC / Kreditkarte-Aufteilung" },
+};
+
+const MODE_DEFAULTS = {
+  universal: ["cashflow","categories","recent"],
+  b2b:       ["ar","overdue","proposals","cashflow","categories","recent"],
+  b2c:       ["today","kassenstand","payment_split","cashflow","recent"],
+};
+
+const ZAHLART_LABELS = { bar:"Bar", ec:"EC", kreditkarte:"Kreditkarte", gutschein:"Gutschein", sepa:"SEPA" };
+
+function useLStorage(key, fallback) {
+  const [val, setVal] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
+  });
+  const save = (v) => { setVal(v); try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
+  return [val, save];
+}
+
 function OverviewTab({ onNavigate, onUpload }) {
-  const [dash,      setDash]      = useState(null);
-  const [loading,   setLoading]   = useState(true);
-  const [dashError, setDashError] = useState(false);
-  const [periode,   setPeriode]   = useState("12");
-  const [activeIdx, setActiveIdx] = useState(null);
-  const [activeKat, setActiveKat] = useState(null);
+  const [dash,        setDash]        = useState(null);
+  const [loading,     setLoading]     = useState(true);
+  const [dashError,   setDashError]   = useState(false);
+  const [opos,        setOpos]        = useState(null);
+  const [todayBons,   setTodayBons]   = useState([]);
+  const [kassenstand, setKassenstand] = useState(null);
+  const [proposals,   setProposals]   = useState(null);
+  const [periode,     setPeriode]     = useState("12");
+  const [activeIdx,   setActiveIdx]   = useState(null);
+  const [activeKat,   setActiveKat]   = useState(null);
+  const [showCustom,  setShowCustom]  = useState(false);
+  const [mode,        setMode]        = useLStorage("nill_dash_mode", "universal");
+  const [widgetPrefs, setWidgetPrefs] = useLStorage("nill_dash_widgets", {});
+
+  const activeWidgets = widgetPrefs[mode] ?? MODE_DEFAULTS[mode] ?? MODE_DEFAULTS.universal;
+  const has = (id) => activeWidgets.includes(id);
+
+  const toggleWidget = (id) => {
+    const next = has(id) ? activeWidgets.filter(w => w !== id) : [...activeWidgets, id];
+    setWidgetPrefs({ ...widgetPrefs, [mode]: next });
+  };
+  const resetWidgets = () => {
+    const next = { ...widgetPrefs }; delete next[mode]; setWidgetPrefs(next);
+  };
+
+  const todayStr = useMemo(() => new Date().toISOString().slice(0,10), []);
 
   const load = useCallback(() => {
-    setLoading(true);
-    setDashError(false);
+    setLoading(true); setDashError(false);
     api.get("/api/v1/buchhaltung/dashboard")
-      .then(r => setDash(r.data))
-      .catch(() => setDashError(true))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(r => setDash(r.data)).catch(() => setDashError(true)).finally(() => setLoading(false));
+    api.get("/api/v1/opos/summary").then(r => setOpos(r.data)).catch(() => {});
+    api.get("/api/v1/kassenbon", { params:{ datum_von:todayStr, datum_bis:todayStr } })
+      .then(r => setTodayBons((r.data||[]).filter(b => b.status !== "storniert"))).catch(() => {});
+    api.get("/api/v1/kassenbuch")
+      .then(r => { const rows=r.data||[]; if(rows.length) setKassenstand(rows[rows.length-1].kassenstand??null); })
+      .catch(() => {});
+    api.get("/api/v1/angebote")
+      .then(r => setProposals((r.data||[]).filter(a => a.status==="gesendet").length)).catch(() => {});
+  }, [todayStr]);
 
   useEffect(() => { load(); }, [load]);
 
   const fmtMonat = (iso) => {
-    const [y, mo] = iso.split("-");
-    return new Date(parseInt(y), parseInt(mo) - 1).toLocaleDateString("de-DE", { month: "short", year: "2-digit" });
+    const [y,mo] = iso.split("-");
+    return new Date(parseInt(y),parseInt(mo)-1).toLocaleDateString("de-DE",{month:"short",year:"2-digit"});
   };
 
   const allArea = useMemo(() =>
-    (dash?.monatsverlauf || []).map(m => ({
-      name: fmtMonat(m.monat), Einnahmen: m.einnahmen, Ausgaben: m.ausgaben,
-    })), [dash]);
+    (dash?.monatsverlauf||[]).map(m => ({ name:fmtMonat(m.monat), Einnahmen:m.einnahmen, Ausgaben:m.ausgaben }))
+  ,[dash]);
 
-  const areaData = useMemo(() => {
-    if (periode === "all") return allArea;
-    const n = parseInt(periode, 10);
-    return allArea.slice(-n);
-  }, [allArea, periode]);
+  const areaData = useMemo(() =>
+    periode==="all" ? allArea : allArea.slice(-parseInt(periode,10))
+  ,[allArea, periode]);
 
   const allPie = useMemo(() =>
-    (dash?.ausgaben_kategorien || []).map(k => ({ name: k.kategorie, value: k.betrag })),
-  [dash]);
+    (dash?.ausgaben_kategorien||[]).map(k => ({ name:k.kategorie, value:k.betrag }))
+  ,[dash]);
 
-  if (loading) return <div role="status" aria-label="Dashboard wird geladen" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Dashboard…</div>;
-  if (dashError) return (
-    <div className="ac-alert ac-alert-err" style={{ display:"flex", alignItems:"center", gap:12 }}>
+  const todayUmsatz = todayBons.reduce((s,b) => s+(b.betrag_brutto||0), 0);
+  const avgBon = todayBons.length ? todayUmsatz/todayBons.length : 0;
+  const paymentSplit = useMemo(() => {
+    const m = {};
+    for(const b of todayBons) { const z=b.zahlungsart||"bar"; m[z]=(m[z]||0)+(b.betrag_brutto||0); }
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  }, [todayBons]);
+
+  const perioden = [{key:"3",label:"3M"},{key:"6",label:"6M"},{key:"12",label:"12M"},{key:"all",label:"Alle"}];
+
+  if(loading) return <div role="status" aria-label="Dashboard wird geladen" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Dashboard…</div>;
+  if(dashError) return (
+    <div className="ac-alert ac-alert-err" style={{display:"flex",alignItems:"center",gap:12}}>
       Dashboard konnte nicht geladen werden.
       <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={load}>Erneut versuchen</button>
     </div>
   );
-  if (!dash) return (
-    <div className="ac-empty" style={{ padding:40 }}>
-      <div style={{ marginBottom:12 }}>Noch keine Buchungsdaten vorhanden.</div>
-      <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
+  if(!dash) return (
+    <div className="ac-empty" style={{padding:40}}>
+      <div style={{marginBottom:12}}>Noch keine Buchungsdaten vorhanden.</div>
+      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
         <button className="ac-btn ac-btn-primary" onClick={() => onNavigate("rechnungen")}>Erste Rechnung erstellen →</button>
         <button className="ac-btn ac-btn-ghost" onClick={load}>↺ Erneut laden</button>
       </div>
     </div>
   );
 
-  const gewinn = (dash.einnahmen || 0) - (dash.ausgaben || 0);
-  const perioden = [
-    { key:"3", label:"3M" }, { key:"6", label:"6M" },
-    { key:"12", label:"12M" }, { key:"all", label:"Alle" },
-  ];
+  const gewinn = (dash.einnahmen||0)-(dash.ausgaben||0);
 
   return (
     <div>
-      {/* I — Echtzeit-Gewinnübersicht Hero */}
-      <div style={{
-        display:"flex", gap:24, alignItems:"center",
-        background: gewinn>=0 ? "rgba(198,255,60,.06)" : "rgba(255,77,141,.06)",
-        border: `1px solid ${gewinn>=0?"rgba(198,255,60,.2)":"rgba(255,77,141,.2)"}`,
-        borderRadius:12, padding:"16px 24px", marginBottom:20, flexWrap:"wrap",
-      }}>
-        <div>
-          <div style={{fontSize:".72rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>
-            Gewinn lfd. Jahr — Echtzeit
-          </div>
-          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"2.2rem",fontWeight:800,color:gewinn>=0?"var(--accent)":"var(--a3)",letterSpacing:"-.02em"}}>
-            {fmtEur(gewinn)}
-          </div>
-          <div style={{fontSize:".75rem",fontWeight:600,color:gewinn>=0?"var(--accent)":"var(--a3)",marginTop:2}}>
-            {gewinn>=0 ? "▲ Gewinn" : "▼ Verlust"}
-          </div>
+      {/* ─── Mode bar + Customize ─── */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:2,background:"var(--surface)",borderRadius:8,padding:3}}
+          role="group" aria-label="Dashboard-Modus wählen">
+          {DASH_MODES.map(m => (
+            <button key={m.key} onClick={() => setMode(m.key)}
+              aria-pressed={mode===m.key} title={m.desc}
+              style={{
+                padding:"4px 14px",borderRadius:6,border:"none",
+                background:mode===m.key?"var(--accent)":"transparent",
+                color:mode===m.key?"#000":"var(--ink2)",
+                fontSize:".78rem",fontWeight:mode===m.key?700:400,
+                cursor:"pointer",transition:"all .15s",
+              }}>{m.label}</button>
+          ))}
         </div>
-        <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-          <div>
-            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>Einnahmen</div>
-            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:"var(--accent)"}}>{fmtEur(dash.einnahmen)}</div>
-          </div>
-          <div>
-            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>Ausgaben</div>
-            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:"var(--a3)"}}>{fmtEur(dash.ausgaben)}</div>
-          </div>
-          <div>
-            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>USt-Zahllast</div>
-            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{fmtEur(dash.ust_zahllast)}</div>
-          </div>
-          <div>
-            <div style={{fontSize:".7rem",color:"var(--ink2)"}}>Buchungen</div>
-            <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{dash.buchungen_gesamt ?? 0}</div>
-          </div>
-        </div>
-      </div>
-      {/* Quick actions */}
-      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
-        <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => onNavigate?.("rechnungen")}>
-          + Rechnung
-        </button>
-        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={onUpload}>
-          + Beleg hochladen
-        </button>
-        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("posten")}>
-          Offene Posten
-        </button>
-        <button className="ac-btn ac-btn-ghost ac-btn-sm" title="Umsatzsteuer-Voranmeldung berechnen und als ELSTER-XML exportieren" onClick={() => onNavigate?.("steuern")}>
-          UStVA
-        </button>
+        <button onClick={() => setShowCustom(v=>!v)} aria-expanded={showCustom}
+          style={{
+            marginLeft:"auto",padding:"4px 12px",borderRadius:6,
+            border:"1px solid var(--border)",background:"transparent",
+            color:"var(--ink2)",fontSize:".78rem",cursor:"pointer",
+          }}>⚙ Anpassen</button>
       </div>
 
-      <div className="ac-grid-2" style={{marginBottom:16}}>
-        <div className="ac-card">
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            <div className="ac-section-title" style={{marginBottom:0}}>Cashflow</div>
-            <div style={{display:"flex",gap:4}}>
-              {perioden.map(p => (
-                <button key={p.key} onClick={() => setPeriode(p.key)} style={{
-                  padding:"3px 10px", borderRadius:6, border:"1px solid var(--border)",
-                  background: periode===p.key ? "var(--accent)" : "transparent",
-                  color: periode===p.key ? "#000" : "var(--ink2)",
-                  fontSize:".72rem", cursor:"pointer",
-                  fontWeight: periode===p.key ? 600 : 400, transition:"all .15s",
-                }}>{p.label}</button>
-              ))}
-            </div>
+      {/* ─── Customization panel ─── */}
+      {showCustom && (
+        <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10,padding:"16px 20px",marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontWeight:600,fontSize:".88rem"}}>Widgets für Modus „{DASH_MODES.find(m2=>m2.key===mode)?.label}"</div>
+            <button onClick={resetWidgets}
+              style={{fontSize:".75rem",padding:"3px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--ink2)",cursor:"pointer"}}>
+              Zurücksetzen
+            </button>
           </div>
-          {areaData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220} aria-label="Cashflow-Verlauf: Einnahmen und Ausgaben nach Monat">
-              <AreaChart data={areaData} margin={{top:4,right:4,left:0,bottom:0}}>
-                <defs>
-                  <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#c6ff3c" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#c6ff3c" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#7a5cff" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#7a5cff" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
-                <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
-                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}/>
-                <Tooltip content={({active,payload,label}) => {
-                  if (!active || !payload?.length) return null;
-                  return (
-                    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
-                      <div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>
-                      {payload.map((p,i) => (
-                        <div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>
-                          {p.name}: {fmtEur(p.value)}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }}/>
-                <Area type="monotone" dataKey="Einnahmen" stroke="#c6ff3c" fill="url(#gE)"
-                  strokeWidth={2} dot={false} activeDot={{r:5,fill:"#c6ff3c",strokeWidth:0}}
-                  animationDuration={600} animationEasing="ease-out"/>
-                <Area type="monotone" dataKey="Ausgaben" stroke="#7a5cff" fill="url(#gA)"
-                  strokeWidth={2} dot={false} activeDot={{r:5,fill:"#7a5cff",strokeWidth:0}}
-                  animationDuration={600} animationEasing="ease-out" animationBegin={100}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : <div className="ac-empty" style={{padding:40}}>Noch keine Verlaufsdaten — erstelle deine ersten Rechnungen und Buchungen, um den Cashflow-Verlauf zu sehen.</div>}
-          {areaData.length > 0 && (
-            <div style={{display:"flex",gap:16,marginTop:8,justifyContent:"center"}}>
-              {[["Einnahmen","#c6ff3c"],["Ausgaben","#7a5cff"]].map(([l,col]) => (
-                <div key={l} style={{display:"flex",alignItems:"center",gap:6,fontSize:".75rem",color:"var(--ink2)"}}>
-                  <div style={{width:12,height:2,background:col,borderRadius:2}}/>{l}
-                </div>
-              ))}
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {Object.entries(WIDGET_META).map(([id, meta]) => (
+              <label key={id} style={{
+                display:"flex",alignItems:"center",gap:7,padding:"6px 12px",
+                borderRadius:8,border:`1px solid ${has(id)?"var(--accent)":"var(--border)"}`,
+                background:has(id)?"rgba(198,255,60,.06)":"transparent",
+                cursor:"pointer",userSelect:"none",transition:"all .15s",
+              }}>
+                <input type="checkbox" checked={has(id)} onChange={() => toggleWidget(id)}
+                  style={{accentColor:"var(--accent)"}} aria-label={meta.label}/>
+                <span style={{fontSize:".82rem"}}>{meta.label}</span>
+                <span style={{fontSize:".7rem",color:"var(--ink2)"}}>{meta.desc}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Hero ─── */}
+      <div style={{
+        display:"flex",gap:24,alignItems:"center",flexWrap:"wrap",
+        background:gewinn>=0?"rgba(198,255,60,.06)":"rgba(255,77,141,.06)",
+        border:`1px solid ${gewinn>=0?"rgba(198,255,60,.2)":"rgba(255,77,141,.2)"}`,
+        borderRadius:12,padding:"16px 24px",marginBottom:12,
+      }}>
+        <div>
+          <div style={{fontSize:".72rem",color:"var(--ink2)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>Gewinn lfd. Jahr — Echtzeit</div>
+          <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:"2.2rem",fontWeight:800,color:gewinn>=0?"var(--accent)":"var(--a3)",letterSpacing:"-.02em"}}>{fmtEur(gewinn)}</div>
+          <div style={{fontSize:".75rem",fontWeight:600,color:gewinn>=0?"var(--accent)":"var(--a3)",marginTop:2}}>{gewinn>=0?"▲ Gewinn":"▼ Verlust"}</div>
+        </div>
+        <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+          {[["Einnahmen",fmtEur(dash.einnahmen),"var(--accent)"],["Ausgaben",fmtEur(dash.ausgaben),"var(--a3)"],["USt-Zahllast",fmtEur(dash.ust_zahllast),"var(--ink)"],["Buchungen",dash.buchungen_gesamt??0,"var(--ink)"]].map(([lbl,val,col]) => (
+            <div key={lbl}>
+              <div style={{fontSize:".7rem",color:"var(--ink2)"}}>{lbl}</div>
+              <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:col}}>{val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── Mode chips (secondary stats below hero) ─── */}
+      {mode==="b2b" && opos && (
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+          {[
+            {lbl:`${opos.total_offen} offen`,val:fmtEur(opos.summe_offen),col:"var(--ink2)",warn:false},
+            {lbl:`${opos.davon_ueberfaellig_anzahl} überfällig`,val:fmtEur(opos.davon_ueberfaellig_summe),col:"var(--a3)",warn:opos.davon_ueberfaellig_anzahl>0},
+            opos.aelteste_rechnung_tage>0&&{lbl:"Älteste Forderung",val:`${opos.aelteste_rechnung_tage} Tage`,col:opos.aelteste_rechnung_tage>30?"var(--a3)":"var(--ink2)",warn:opos.aelteste_rechnung_tage>30},
+            proposals!=null&&{lbl:"Offene Angebote",val:`${proposals}`,col:"var(--ink2)",warn:false},
+          ].filter(Boolean).map((c,i) => (
+            <div key={i} style={{padding:"7px 14px",borderRadius:8,background:c.warn?"rgba(255,77,141,.07)":"var(--surface)",border:`1px solid ${c.warn?"rgba(255,77,141,.2)":"var(--border)"}`,minWidth:110}}>
+              <div style={{fontSize:".68rem",color:c.col,marginBottom:2}}>{c.lbl}</div>
+              <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,fontSize:".9rem",color:c.col}}>{c.val}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {mode==="b2c" && (
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+          {[
+            {lbl:"Umsatz heute",val:fmtEur(todayUmsatz),col:"var(--accent)"},
+            {lbl:`${todayBons.length} Bons`,val:avgBon>0?`Ø ${fmtEur(avgBon)}`:"—",col:"var(--ink)"},
+            kassenstand!=null&&{lbl:"Kassenbestand",val:fmtEur(kassenstand),col:"var(--accent)"},
+          ].filter(Boolean).map((c,i) => (
+            <div key={i} style={{padding:"7px 14px",borderRadius:8,background:"var(--surface)",border:"1px solid var(--border)",minWidth:110}}>
+              <div style={{fontSize:".68rem",color:"var(--ink2)",marginBottom:2}}>{c.lbl}</div>
+              <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,fontSize:".9rem",color:c.col}}>{c.val}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ─── Quick actions (mode-aware) ─── */}
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {mode==="b2c" ? (<>
+          <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => onNavigate?.("kasse")}>Tagesabschluss</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("kasse")}>+ Kassenbon</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={onUpload}>+ Beleg</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("steuern")} title="Umsatzsteuer-Voranmeldung">UStVA</button>
+        </>) : mode==="b2b" ? (<>
+          <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => onNavigate?.("rechnungen")}>+ Rechnung</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("rechnungen")}>+ Angebot</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("posten")}>Offene Posten</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("posten")}>Mahnwesen</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("steuern")} title="Umsatzsteuer-Voranmeldung">UStVA</button>
+        </>) : (<>
+          <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => onNavigate?.("rechnungen")}>+ Rechnung</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={onUpload}>+ Beleg hochladen</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("posten")}>Offene Posten</button>
+          <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => onNavigate?.("steuern")} title="Umsatzsteuer-Voranmeldung">UStVA</button>
+        </>)}
+      </div>
+
+      {/* ─── B2B KPI widgets ─── */}
+      {(has("ar")||has("overdue")||has("proposals")) && opos && (
+        <div className="ac-kpi-grid" style={{marginBottom:16}}>
+          {has("ar") && (
+            <div className="ac-kpi">
+              <div className="ac-kpi-label">Offene Forderungen</div>
+              <div className="ac-kpi-value">{fmtEur(opos.summe_offen)}</div>
+              <div className="ac-kpi-delta">{opos.total_offen} Rechnung{opos.total_offen!==1?"en":""} offen</div>
+            </div>
+          )}
+          {has("overdue") && (
+            <div className="ac-kpi" style={opos.davon_ueberfaellig_anzahl>0?{borderColor:"rgba(255,77,141,.3)",background:"rgba(255,77,141,.04)"}:{}}>
+              <div className="ac-kpi-label">Überfällig</div>
+              <div className="ac-kpi-value pink">{fmtEur(opos.davon_ueberfaellig_summe)}</div>
+              <div className="ac-kpi-delta">{opos.davon_ueberfaellig_anzahl} überfällig{opos.aelteste_rechnung_tage>0?` · älteste ${opos.aelteste_rechnung_tage}d`:""}</div>
+            </div>
+          )}
+          {has("proposals") && proposals!=null && (
+            <div className="ac-kpi">
+              <div className="ac-kpi-label">Offene Angebote</div>
+              <div className="ac-kpi-value purple">{proposals}</div>
+              <div className="ac-kpi-delta">warten auf Antwort</div>
             </div>
           )}
         </div>
+      )}
 
-        <div className="ac-card">
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            <div className="ac-section-title" style={{marginBottom:0}}>Ausgaben nach Kategorie</div>
-            {activeKat && (
-              <button onClick={() => setActiveKat(null)} style={{
-                fontSize:".72rem", padding:"3px 10px", borderRadius:6,
-                border:"1px solid var(--border)", background:"transparent",
-                color:"var(--ink2)", cursor:"pointer",
-              }}>✕ {activeKat}</button>
-            )}
-          </div>
-          {allPie.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={200} aria-label="Ausgaben nach Kategorie – Tortendiagramm">
-                <PieChart>
-                  <Pie data={allPie} dataKey="value" nameKey="name"
-                    cx="50%" cy="50%" innerRadius={50} outerRadius={80}
-                    activeIndex={activeIdx}
-                    activeShape={(props) => {
-                      const {cx,cy,innerRadius,outerRadius,startAngle,endAngle,fill,payload,value} = props;
-                      return (
-                        <g>
-                          <text x={cx} y={cy-8} textAnchor="middle" fill="var(--ink)"
-                            fontSize={12} fontWeight={600} fontFamily="JetBrains Mono,monospace">
-                            {fmtEur(value)}
-                          </text>
-                          <text x={cx} y={cy+10} textAnchor="middle" fill="var(--ink2)" fontSize={9}>
-                            {payload.name}
-                          </text>
-                          <Sector cx={cx} cy={cy} innerRadius={innerRadius}
-                            outerRadius={outerRadius+5} startAngle={startAngle}
-                            endAngle={endAngle} fill={fill}/>
-                          <Sector cx={cx} cy={cy} innerRadius={outerRadius+9}
-                            outerRadius={outerRadius+11} startAngle={startAngle}
-                            endAngle={endAngle} fill={fill} opacity={0.4}/>
-                        </g>
-                      );
-                    }}
-                    onMouseEnter={(_,i) => setActiveIdx(i)}
-                    onMouseLeave={() => setActiveIdx(null)}
-                    onClick={d => setActiveKat(prev => prev===d.name ? null : d.name)}
-                    animationDuration={600} animationEasing="ease-out" paddingAngle={2}>
-                    {allPie.map((_,i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}
-                        opacity={activeKat && allPie[i].name!==activeKat ? 0.2 : 1}
-                        style={{cursor:"pointer"}}/>
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={v => fmtEur(v)}
-                    contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{display:"flex",flexWrap:"wrap",gap:"5px 12px",marginTop:6,justifyContent:"center"}} role="group" aria-label="Kategorien filtern">
-                {allPie.slice(0,7).map((p,i) => (
-                  <button key={p.name}
-                    onClick={() => setActiveKat(prev => prev===p.name ? null : p.name)}
-                    aria-pressed={activeKat===p.name}
-                    style={{
-                      display:"flex", alignItems:"center", gap:5, fontSize:".72rem",
-                      cursor:"pointer", background:"transparent", border:"none", padding:"2px 4px", borderRadius:4,
-                      color: activeKat===p.name ? "var(--ink)" : "var(--ink2)",
-                      opacity: activeKat && activeKat!==p.name ? 0.3 : 1,
-                      transition:"all .15s",
-                    }}>
-                    <div style={{width:7,height:7,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}} aria-hidden="true"/>
-                    {p.name}
-                  </button>
+      {/* ─── B2C KPI widgets ─── */}
+      {(has("today")||has("kassenstand")||has("payment_split")) && (
+        <div className="ac-kpi-grid" style={{marginBottom:16}}>
+          {has("today") && (
+            <div className="ac-kpi">
+              <div className="ac-kpi-label">Umsatz heute</div>
+              <div className="ac-kpi-value green">{fmtEur(todayUmsatz)}</div>
+              <div className="ac-kpi-delta">{todayBons.length} Bon{todayBons.length!==1?"s":""}{avgBon>0?` · Ø ${fmtEur(avgBon)}`:""}</div>
+            </div>
+          )}
+          {has("kassenstand") && kassenstand!=null && (
+            <div className="ac-kpi">
+              <div className="ac-kpi-label">Kassenbestand</div>
+              <div className="ac-kpi-value green">{fmtEur(kassenstand)}</div>
+              <div className="ac-kpi-delta">laufender Saldo</div>
+            </div>
+          )}
+          {has("payment_split") && paymentSplit.length>0 && (
+            <div className="ac-kpi" style={{gridColumn:"span 2"}}>
+              <div className="ac-kpi-label">Zahlungsarten heute</div>
+              <div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>
+                {paymentSplit.map(([z,amt]) => (
+                  <div key={z} style={{padding:"4px 10px",borderRadius:6,background:"var(--surface2)",fontSize:".8rem"}}>
+                    <span style={{color:"var(--ink2)",marginRight:6}}>{ZAHLART_LABELS[z]||z}</span>
+                    <span style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{fmtEur(amt)}</span>
+                  </div>
                 ))}
               </div>
-            </>
-          ) : <div className="ac-empty" style={{padding:40}}>Noch keine Daten</div>}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      {dash.letzte_buchungen?.length > 0 && (
+      {/* ─── Charts ─── */}
+      {(has("cashflow")||has("categories")) && (
+        <div className={has("cashflow")&&has("categories")?"ac-grid-2":""} style={{marginBottom:16}}>
+          {has("cashflow") && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Cashflow</div>
+                <div style={{display:"flex",gap:4}}>
+                  {perioden.map(p => (
+                    <button key={p.key} onClick={() => setPeriode(p.key)} style={{
+                      padding:"3px 10px",borderRadius:6,border:"1px solid var(--border)",
+                      background:periode===p.key?"var(--accent)":"transparent",
+                      color:periode===p.key?"#000":"var(--ink2)",
+                      fontSize:".72rem",cursor:"pointer",fontWeight:periode===p.key?600:400,transition:"all .15s",
+                    }}>{p.label}</button>
+                  ))}
+                </div>
+              </div>
+              {areaData.length>0 ? (
+                <ResponsiveContainer width="100%" height={220} aria-label="Cashflow-Verlauf: Einnahmen und Ausgaben nach Monat">
+                  <AreaChart data={areaData} margin={{top:4,right:4,left:0,bottom:0}}>
+                    <defs>
+                      <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c6ff3c" stopOpacity={0.25}/><stop offset="95%" stopColor="#c6ff3c" stopOpacity={0}/></linearGradient>
+                      <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#7a5cff" stopOpacity={0.2}/><stop offset="95%" stopColor="#7a5cff" stopOpacity={0}/></linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                    <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
+                    <Tooltip content={({active,payload,label}) => {
+                      if(!active||!payload?.length) return null;
+                      return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}><div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>{payload.map((p,i)=><div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>{p.name}: {fmtEur(p.value)}</div>)}</div>;
+                    }}/>
+                    <Area type="monotone" dataKey="Einnahmen" stroke="#c6ff3c" fill="url(#gE)" strokeWidth={2} dot={false} activeDot={{r:5,fill:"#c6ff3c",strokeWidth:0}} animationDuration={600} animationEasing="ease-out"/>
+                    <Area type="monotone" dataKey="Ausgaben" stroke="#7a5cff" fill="url(#gA)" strokeWidth={2} dot={false} activeDot={{r:5,fill:"#7a5cff",strokeWidth:0}} animationDuration={600} animationEasing="ease-out" animationBegin={100}/>
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : <div className="ac-empty" style={{padding:40}}>Noch keine Verlaufsdaten — erstelle deine ersten Rechnungen und Buchungen.</div>}
+              {areaData.length>0 && (
+                <div style={{display:"flex",gap:16,marginTop:8,justifyContent:"center"}}>
+                  {[["Einnahmen","#c6ff3c"],["Ausgaben","#7a5cff"]].map(([l,col]) => (
+                    <div key={l} style={{display:"flex",alignItems:"center",gap:6,fontSize:".75rem",color:"var(--ink2)"}}>
+                      <div style={{width:12,height:2,background:col,borderRadius:2}}/>{l}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {has("categories") && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Ausgaben nach Kategorie</div>
+                {activeKat && <button onClick={() => setActiveKat(null)} style={{fontSize:".72rem",padding:"3px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--ink2)",cursor:"pointer"}}>✕ {activeKat}</button>}
+              </div>
+              {allPie.length>0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={200} aria-label="Ausgaben nach Kategorie – Tortendiagramm">
+                    <PieChart>
+                      <Pie data={allPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80}
+                        activeIndex={activeIdx}
+                        activeShape={({cx:cx2,cy:cy2,innerRadius:ir,outerRadius:or,startAngle:sa,endAngle:ea,fill:f,payload:pl,value:v}) => (
+                          <g>
+                            <text x={cx2} y={cy2-8} textAnchor="middle" fill="var(--ink)" fontSize={12} fontWeight={600} fontFamily="JetBrains Mono,monospace">{fmtEur(v)}</text>
+                            <text x={cx2} y={cy2+10} textAnchor="middle" fill="var(--ink2)" fontSize={9}>{pl.name}</text>
+                            <Sector cx={cx2} cy={cy2} innerRadius={ir} outerRadius={or+5} startAngle={sa} endAngle={ea} fill={f}/>
+                            <Sector cx={cx2} cy={cy2} innerRadius={or+9} outerRadius={or+11} startAngle={sa} endAngle={ea} fill={f} opacity={0.4}/>
+                          </g>
+                        )}
+                        onMouseEnter={(_,i) => setActiveIdx(i)} onMouseLeave={() => setActiveIdx(null)}
+                        onClick={d => setActiveKat(prev => prev===d.name?null:d.name)}
+                        animationDuration={600} animationEasing="ease-out" paddingAngle={2}>
+                        {allPie.map((_,i) => <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]} opacity={activeKat&&allPie[i].name!==activeKat?0.2:1} style={{cursor:"pointer"}}/>)}
+                      </Pie>
+                      <Tooltip formatter={v=>fmtEur(v)} contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:"5px 12px",marginTop:6,justifyContent:"center"}} role="group" aria-label="Kategorien filtern">
+                    {allPie.slice(0,7).map((p,i) => (
+                      <button key={p.name} onClick={() => setActiveKat(prev=>prev===p.name?null:p.name)} aria-pressed={activeKat===p.name}
+                        style={{display:"flex",alignItems:"center",gap:5,fontSize:".72rem",cursor:"pointer",background:"transparent",border:"none",padding:"2px 4px",borderRadius:4,color:activeKat===p.name?"var(--ink)":"var(--ink2)",opacity:activeKat&&activeKat!==p.name?0.3:1,transition:"all .15s"}}>
+                        <div style={{width:7,height:7,borderRadius:2,background:PIE_COLORS[i%PIE_COLORS.length],flexShrink:0}} aria-hidden="true"/>{p.name}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : <div className="ac-empty" style={{padding:40}}>Noch keine Daten</div>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Recent bookings ─── */}
+      {has("recent") && (dash.letzte_buchungen?.length>0) && (
         <div className="ac-card">
           <div className="ac-section-title">Letzte Buchungen</div>
-          <table className="ac-table">
-            <thead><tr><th>Datum</th><th>Text</th><th>Beleg</th><th style={{textAlign:"right"}}>Betrag</th></tr></thead>
+          <table className="ac-table" aria-label="Letzte Buchungen">
+            <thead><tr>
+              <th scope="col">Datum</th><th scope="col">Text</th>
+              <th scope="col">Beleg</th><th scope="col" style={{textAlign:"right"}}>Betrag</th>
+            </tr></thead>
             <tbody>
-              {dash.letzte_buchungen.slice(0,8).map(b => (
-                <tr key={b.id}>
+              {dash.letzte_buchungen.slice(0,8).map((b,i) => (
+                <tr key={b.id??`fb-${i}`}>
                   <td className="ac-mono">{b.buchungsdatum}</td>
-                  <td>{b.buchungstext || "—"}</td>
-                  <td className="ac-mono" style={{color:"var(--ink2)"}}>{b.beleg_nummer || "—"}</td>
+                  <td>{b.buchungstext||"—"}</td>
+                  <td className="ac-mono" style={{color:"var(--ink2)"}}>{b.beleg_nummer||"—"}</td>
                   <td className="ac-mono" style={{textAlign:"right"}}>{fmtEur(b.betrag)}</td>
                 </tr>
               ))}
