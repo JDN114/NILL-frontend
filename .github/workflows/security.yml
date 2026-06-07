@@ -1,0 +1,45 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'  # Monday 3am UTC — catches newly released CVE rules
+
+jobs:
+  npm-audit:
+    name: npm audit — dependency CVEs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm audit --audit-level=high
+
+  semgrep:
+    name: Semgrep — JavaScript / React
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Semgrep SAST
+        run: |
+          semgrep scan src/ \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/react \
+            --config p/secrets \
+            --severity ERROR \
+            --error \
+            --quiet
