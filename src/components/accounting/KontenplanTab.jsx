@@ -566,7 +566,7 @@ export default function KontenplanTab() {
               </button>
               {expanded[cls] && (
                 <table aria-label="Kontenplan" className="ac-table">
-                  <thead><tr><th scope="col" style={{width:100}}>Nr.</th><th scope="col">Bezeichnung</th><th scope="col">Art</th><th scope="col" style={{textAlign:"right"}}>Saldo</th><th scope="col">USt</th><th scope="col" style={{width:32}}></th></tr></thead>
+                  <thead><tr><th scope="col" style={{width:100}}>Nr.</th><th scope="col">Bezeichnung</th><th scope="col">Art</th><th scope="col" style={{textAlign:"right"}}>Saldo</th><th scope="col"><abbr title="Umsatzsteuer-Kennzeichen">USt</abbr></th><th scope="col" style={{width:32}}></th></tr></thead>
                   <tbody>
                     {grouped[cls].map(k => (
                       <React.Fragment key={k.id}>

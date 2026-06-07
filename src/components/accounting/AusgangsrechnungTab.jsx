@@ -287,24 +287,24 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: 2 }}>
             <label className="ac-label">Firmenname / Name *</label>
-            <input className="ac-input" value={form.absender_name}
+            <input className="ac-input" autoComplete="organization" value={form.absender_name}
               onChange={e => set("absender_name", e.target.value)} />
           </div>
           <div className="ac-form-col">
             <label className="ac-label">E-Mail</label>
-            <input className="ac-input" type="email" value={form.absender_email}
+            <input className="ac-input" type="email" autoComplete="email" value={form.absender_email}
               onChange={e => set("absender_email", e.target.value)} />
           </div>
           <div className="ac-form-col">
             <label className="ac-label">Telefon</label>
-            <input className="ac-input" value={form.absender_telefon}
+            <input className="ac-input" type="tel" autoComplete="tel" value={form.absender_telefon}
               onChange={e => set("absender_telefon", e.target.value)} />
           </div>
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: 2 }}>
             <label className="ac-label">Straße, Hausnummer</label>
-            <input className="ac-input" value={form.absender_strasse}
+            <input className="ac-input" autoComplete="street-address" value={form.absender_strasse}
               onChange={e => set("absender_strasse", e.target.value)} />
           </div>
           <div className="ac-form-col">
@@ -325,7 +325,7 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
               onChange={e => set("absender_steuernummer", e.target.value)} placeholder="12/345/67890" />
           </div>
           <div className="ac-form-col">
-            <label className="ac-label">USt-IdNr.</label>
+            <label className="ac-label"><abbr title="Umsatzsteuer-Identifikationsnummer">USt-IdNr.</abbr></label>
             <input className="ac-input ac-mono" value={form.absender_ustid}
               onChange={e => set("absender_ustid", e.target.value)} placeholder="DE123456789" />
           </div>
@@ -337,12 +337,12 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
         </div>
         <div className="ac-form-row">
           <div className="ac-form-col" style={{ flex: 2 }}>
-            <label className="ac-label">IBAN</label>
+            <label className="ac-label"><abbr title="International Bank Account Number">IBAN</abbr></label>
             <input className="ac-input ac-mono" value={form.absender_iban}
               onChange={e => set("absender_iban", e.target.value)} placeholder="DE00 0000 0000 0000 0000 00" />
           </div>
           <div className="ac-form-col">
-            <label className="ac-label">BIC</label>
+            <label className="ac-label"><abbr title="Bank Identifier Code">BIC</abbr></label>
             <input className="ac-input ac-mono" value={form.absender_bic}
               onChange={e => set("absender_bic", e.target.value)} placeholder="XXXXXXXX" />
           </div>
@@ -490,7 +490,7 @@ function RechnungForm({ initial, vorlagen, onSaved, onCancel }) {
                 <th scope="col" style={{ width: 68 }}>Einheit</th>
                 <th scope="col" style={{ width: 98 }}>Einzelpreis (€)</th>
                 <th scope="col" style={{ width: 70 }} title="Rabatt in Prozent vom Einzelpreis">Rab. %</th>
-                <th scope="col" style={{ width: 80 }}>MwSt</th>
+                <th scope="col" style={{ width: 80 }}><abbr title="Mehrwertsteuer">MwSt</abbr></th>
                 <th scope="col" style={{ width: 112, textAlign: "right" }}>Netto</th>
                 <th scope="col" style={{ width: 36 }}></th>
               </tr>

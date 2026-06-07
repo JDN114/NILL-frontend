@@ -180,7 +180,7 @@ function SerienForm({ initial, onSaved, onCancel }) {
 
       <div className="ac-form-col" style={{ marginBottom: 14 }}>
         <label className="ac-label">Absender (Ihre Firma)</label>
-        <input className="ac-input" value={form.absender_name}
+        <input className="ac-input" autoComplete="organization" value={form.absender_name}
           onChange={e => set("absender_name", e.target.value)} placeholder="Ihr Firmenname" />
       </div>
 

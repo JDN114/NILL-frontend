@@ -553,6 +553,7 @@ export default function TagesabschlussTab() {
                       <td>
                         <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
                           <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                            aria-label={`Details für Tagesabschluss vom ${ta.datum}`}
                             onClick={() => setModal({ ta, mode: "detail" })}>Details</button>
                           {ta.status === "entwurf" && <>
                             <button className="ac-btn ac-btn-ghost ac-btn-sm"

@@ -1,5 +1,5 @@
 // src/pages/AccountingPage.jsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import {
@@ -7,46 +7,48 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 
-import BuchungenTab         from "../components/accounting/BuchungenTab";
-import KontenplanTab        from "../components/accounting/KontenplanTab";
-import AnlagenTab           from "../components/accounting/AnlagenTab";
-import UstVaTab             from "../components/accounting/UstVaTab";
-import BerichteTab          from "../components/accounting/BerichteTab";
-import GeschaeftspartnerTab from "../components/accounting/GeschaeftspartnerTab";
-import TaxDashboard         from "../components/accounting/TaxDashboard";
-import InvoiceList          from "../components/accounting/InvoiceList";
-import BankInsights         from "../components/accounting/BankInsights";
-import ReceiptUploadModal   from "../components/accounting/ReceiptUploadModal";
-import AusgangsrechnungTab  from "../components/accounting/AusgangsrechnungTab";
-import ImportTab            from "../components/accounting/ImportTab";
-import OposTab              from "../components/accounting/OposTab";
-import MahnwesenTab         from "../components/accounting/MahnwesenTab";
-import GutschriftTab        from "../components/accounting/GutschriftTab";
-import SerienrechnungTab    from "../components/accounting/SerienrechnungTab";
-import BelegarchivTab       from "../components/accounting/BelegarchivTab";
-import ErechnungTab         from "../components/accounting/ErechnungTab";
-import BankSyncTab          from "../components/accounting/BankSyncTab";
-import AngeboteTab          from "../components/accounting/AngeboteTab";
-import ReisekostenTab       from "../components/accounting/ReisekostenTab";
-import KassenbuchTab        from "../components/accounting/KassenbuchTab";
-import TagesabschlussTab   from "../components/accounting/TagesabschlussTab";
-import GewerbesteuerTab     from "../components/accounting/GewerbesteuerTab";
-import BelegEmailTab        from "../components/accounting/BelegEmailTab";
-import ProjektTab           from "../components/accounting/ProjektTab";
-import BudgetTab            from "../components/accounting/BudgetTab";
-import LieferscheinTab      from "../components/accounting/LieferscheinTab";
-import SteuerkalenderTab    from "../components/accounting/SteuerkalenderTab";
-import WechselkurseTab      from "../components/accounting/WechselkurseTab";
-import ZahlungsmoralTab     from "../components/accounting/ZahlungsmoralTab";
-import OnboardingWizard     from "../components/accounting/OnboardingWizard";
-import WiderrufSettingsPanel from "../components/accounting/WiderrufSettingsPanel";
-import KostenstellenTab     from "../components/accounting/KostenstellenTab";
-import JahresabschlussTab  from "../components/accounting/JahresabschlussTab";
-import KassenbonTab         from "../components/accounting/KassenbonTab";
-import TrinkgeldTab         from "../components/accounting/TrinkgeldTab";
-import EcClearingTab        from "../components/accounting/EcClearingTab";
-import GutscheinTab         from "../components/accounting/GutscheinTab";
-import { LohnbuchhaltungContent } from "./LohnbuchhaltungLanding";
+// ── Lazy-loaded sub-tab components (split into separate chunks, loaded on demand) ─
+const BuchungenTab         = lazy(() => import("../components/accounting/BuchungenTab"));
+const KontenplanTab        = lazy(() => import("../components/accounting/KontenplanTab"));
+const AnlagenTab           = lazy(() => import("../components/accounting/AnlagenTab"));
+const UstVaTab             = lazy(() => import("../components/accounting/UstVaTab"));
+const BerichteTab          = lazy(() => import("../components/accounting/BerichteTab"));
+const GeschaeftspartnerTab = lazy(() => import("../components/accounting/GeschaeftspartnerTab"));
+const TaxDashboard         = lazy(() => import("../components/accounting/TaxDashboard"));
+const InvoiceList          = lazy(() => import("../components/accounting/InvoiceList"));
+const ReceiptUploadModal   = lazy(() => import("../components/accounting/ReceiptUploadModal"));
+const AusgangsrechnungTab  = lazy(() => import("../components/accounting/AusgangsrechnungTab"));
+const ImportTab            = lazy(() => import("../components/accounting/ImportTab"));
+const OposTab              = lazy(() => import("../components/accounting/OposTab"));
+const MahnwesenTab         = lazy(() => import("../components/accounting/MahnwesenTab"));
+const GutschriftTab        = lazy(() => import("../components/accounting/GutschriftTab"));
+const SerienrechnungTab    = lazy(() => import("../components/accounting/SerienrechnungTab"));
+const BelegarchivTab       = lazy(() => import("../components/accounting/BelegarchivTab"));
+const ErechnungTab         = lazy(() => import("../components/accounting/ErechnungTab"));
+const BankSyncTab          = lazy(() => import("../components/accounting/BankSyncTab"));
+const AngeboteTab          = lazy(() => import("../components/accounting/AngeboteTab"));
+const ReisekostenTab       = lazy(() => import("../components/accounting/ReisekostenTab"));
+const KassenbuchTab        = lazy(() => import("../components/accounting/KassenbuchTab"));
+const TagesabschlussTab    = lazy(() => import("../components/accounting/TagesabschlussTab"));
+const GewerbesteuerTab     = lazy(() => import("../components/accounting/GewerbesteuerTab"));
+const BelegEmailTab        = lazy(() => import("../components/accounting/BelegEmailTab"));
+const ProjektTab           = lazy(() => import("../components/accounting/ProjektTab"));
+const BudgetTab            = lazy(() => import("../components/accounting/BudgetTab"));
+const LieferscheinTab      = lazy(() => import("../components/accounting/LieferscheinTab"));
+const SteuerkalenderTab    = lazy(() => import("../components/accounting/SteuerkalenderTab"));
+const WechselkurseTab      = lazy(() => import("../components/accounting/WechselkurseTab"));
+const ZahlungsmoralTab     = lazy(() => import("../components/accounting/ZahlungsmoralTab"));
+const OnboardingWizard     = lazy(() => import("../components/accounting/OnboardingWizard"));
+const WiderrufSettingsPanel = lazy(() => import("../components/accounting/WiderrufSettingsPanel"));
+const KostenstellenTab     = lazy(() => import("../components/accounting/KostenstellenTab"));
+const JahresabschlussTab   = lazy(() => import("../components/accounting/JahresabschlussTab"));
+const KassenbonTab         = lazy(() => import("../components/accounting/KassenbonTab"));
+const TrinkgeldTab         = lazy(() => import("../components/accounting/TrinkgeldTab"));
+const EcClearingTab        = lazy(() => import("../components/accounting/EcClearingTab"));
+const GutscheinTab         = lazy(() => import("../components/accounting/GutscheinTab"));
+const LohnbuchhaltungContent = lazy(() =>
+  import("./LohnbuchhaltungLanding").then(m => ({ default: m.LohnbuchhaltungContent }))
+);
 
 // ── design system ─────────────────────────────────────────────────────────────
 const S = `
@@ -113,7 +115,7 @@ const S = `
 
   .ac-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:600;}
   .ac-badge-green{background:rgba(198,255,60,.15);color:var(--accent);}
-  .ac-badge-purple{background:rgba(122,92,255,.15);color:var(--a2);}
+  .ac-badge-purple{background:rgba(122,92,255,.15);color:#a585ff;}
   .ac-badge-pink{background:rgba(255,77,141,.15);color:var(--a3);}
   .ac-badge-gray{background:rgba(155,152,144,.1);color:var(--ink2);}
 
@@ -1311,24 +1313,30 @@ export default function AccountingPage() {
         </nav>
 
         <main id="ac-main-content" role="tabpanel" aria-labelledby={`ac-tab-${tab}`}>
-        {renderTab()}
+        <Suspense fallback={<div className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Wird geladen…</div>}>
+          {renderTab()}
+        </Suspense>
         </main>
 
         {uploadOpen && (
-          <ReceiptUploadModal
-            onClose={()=>{ setUploadOpen(false); triggerRefresh(); }}
-          />
+          <Suspense fallback={null}>
+            <ReceiptUploadModal
+              onClose={()=>{ setUploadOpen(false); triggerRefresh(); }}
+            />
+          </Suspense>
         )}
 
         {showOnboarding && (
-          <OnboardingWizard
-            onClose={() => setShowOnboarding(false)}
-            onComplete={(mode) => {
-              setAccountingMode(mode);
-              setShowOnboarding(false);
-              setTab("rechnungen");
-            }}
-          />
+          <Suspense fallback={null}>
+            <OnboardingWizard
+              onClose={() => setShowOnboarding(false)}
+              onComplete={(mode) => {
+                setAccountingMode(mode);
+                setShowOnboarding(false);
+                setTab("rechnungen");
+              }}
+            />
+          </Suspense>
         )}
       </div>
     </>

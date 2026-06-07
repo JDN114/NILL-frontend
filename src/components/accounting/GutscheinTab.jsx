@@ -491,6 +491,7 @@ export default function GutscheinTab() {
                             onClick={() => setEinloesungTarget(g)}>Einlösen</button>
                         )}
                         <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                          aria-label={`Details für Gutschein ${g.code}`}
                           onClick={() => openDetail(g)}>Details</button>
                         {canRedeem(g.status) && (
                           <button className="ac-btn ac-btn-danger ac-btn-sm"

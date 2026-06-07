@@ -181,7 +181,7 @@ function KontoVorschlagPanel({ invoice, onAccept, onOverride }) {
             {showLines ? "▾ Buchungszeilen ausblenden" : "▸ Buchungszeilen anzeigen"}
           </button>
           {showLines && (
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:".73rem", marginBottom:8 }}>
+            <table aria-label="Buchungszeilen" style={{ width:"100%", borderCollapse:"collapse", fontSize:".73rem", marginBottom:8 }}>
               <thead>
                 <tr style={{ color:"var(--ink3)", textAlign:"left" }}>
                   <th scope="col" style={{ padding:"2px 6px" }}>Konto</th>

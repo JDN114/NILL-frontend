@@ -199,11 +199,11 @@ function AngebotModal({ initial, onSaved, onClose }) {
           <div className="ac-form-row">
             <div className="ac-form-col" style={{ flex: 2 }}>
               <label className="ac-label">Firmenname / Name</label>
-              <input className="ac-input" value={form.absender_name} onChange={e => set("absender_name", e.target.value)} />
+              <input className="ac-input" autoComplete="organization" value={form.absender_name} onChange={e => set("absender_name", e.target.value)} />
             </div>
             <div className="ac-form-col">
               <label className="ac-label">E-Mail</label>
-              <input className="ac-input" type="email" value={form.absender_email} onChange={e => set("absender_email", e.target.value)} />
+              <input className="ac-input" type="email" autoComplete="email" value={form.absender_email} onChange={e => set("absender_email", e.target.value)} />
             </div>
           </div>
           <div className="ac-form-row">

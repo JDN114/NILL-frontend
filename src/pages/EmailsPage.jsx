@@ -555,11 +555,18 @@ export default function EmailsPage() {
     stopPolling();
     const email = await openEmailRef.current(id);
     setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e));
-    const status = email?.ai_status ?? "skipped";
+    let status = email?.ai_status ?? "skipped";
+    // Retry failed IMAP AI analyses automatically when the user opens the email.
+    // Polling (which also calls openEmail) does NOT go through handleOpen, so
+    // this runs at most once per user click — no infinite-retry loop.
+    if (provider === "imap" && status === "failed" && aiEnabledRef.current) {
+      api.post(`/imap/emails/${id}/retry-ai`).catch(() => {});
+      status = "pending";
+    }
     if (aiEnabledRef.current && !["done", "success", "failed", "skipped"].includes(status)) {
       startPolling(id);
     }
-  }, [stopPolling, startPolling]);
+  }, [stopPolling, startPolling, provider]);
 
   const handleClose = useCallback(() => {
     stopPolling();

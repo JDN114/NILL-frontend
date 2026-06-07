@@ -94,8 +94,8 @@ export default function OnboardingWizard({ onClose, onComplete }) {
         {/* Step 0: Rechtsform */}
         {step === 0 && (
           <div>
-            <div className="ac-modal-title">Welche Rechtsform hat Ihr Unternehmen?</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="ac-modal-title" id="wiz-rf-heading">Welche Rechtsform hat Ihr Unternehmen?</div>
+            <div role="group" aria-labelledby="wiz-rf-heading" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {RECHTSFORMEN.map(rf => (
                 <label key={rf.value} style={{
                   display: "flex", gap: 12, padding: "12px 16px", borderRadius: 10,
@@ -131,11 +131,11 @@ export default function OnboardingWizard({ onClose, onComplete }) {
         {/* Step 1: Umsatz */}
         {step === 1 && (
           <div>
-            <div className="ac-modal-title">Wie hoch ist Ihr Jahresumsatz?</div>
+            <div className="ac-modal-title" id="wiz-uk-heading">Wie hoch ist Ihr Jahresumsatz?</div>
             <p style={{ fontSize: ".85rem", color: "var(--ink2)", marginBottom: 16 }}>
               Dies beeinflusst den USt-Status und die UStVA-Häufigkeit.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div role="group" aria-labelledby="wiz-uk-heading" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {UMSATZ_KLASSEN.map(uk => (
                 <label key={uk.value} style={{
                   display: "flex", gap: 12, padding: "12px 16px", borderRadius: 10,
@@ -171,7 +171,7 @@ export default function OnboardingWizard({ onClose, onComplete }) {
         {/* Step 2: Buchhaltungsmodus */}
         {step === 2 && (
           <div>
-            <div className="ac-modal-title">Welcher Buchhaltungsmodus?</div>
+            <div className="ac-modal-title" id="wiz-mode-heading">Welcher Buchhaltungsmodus?</div>
             <p style={{ fontSize: ".85rem", color: "var(--ink2)", marginBottom: 12 }}>
               Sie können den Modus jederzeit wechseln. Der Modus beeinflusst nur die sichtbaren Tabs.
             </p>
@@ -179,7 +179,7 @@ export default function OnboardingWizard({ onClose, onComplete }) {
               <strong style={{ color:"var(--ink)" }}>Wann ist doppelte Buchführung gesetzlich Pflicht?</strong><br/>
               Nach §141 AO ab Umsatz &gt; 600.000 € oder Gewinn &gt; 60.000 € pro Jahr. Freiberufler (§18 EStG) sind grundsätzlich von der Bilanzierungspflicht ausgenommen.
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div role="group" aria-labelledby="wiz-mode-heading" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 {
                   value: "einfach", label: "Einfache Buchführung (EÜR)",

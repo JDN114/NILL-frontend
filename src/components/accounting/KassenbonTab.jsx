@@ -291,7 +291,7 @@ function DetailModal({ bon, firmenname, firmenadresse, onClose }) {
             <thead><tr>
               <th scope="col">Bezeichnung</th><th scope="col" style={{ textAlign: "right" }}>Menge</th>
               <th scope="col">Einheit</th><th scope="col" style={{ textAlign: "right" }}>EP Brutto</th>
-              <th scope="col" style={{ textAlign: "right" }}>USt</th><th scope="col" style={{ textAlign: "right" }}>GP</th>
+              <th scope="col" style={{ textAlign: "right" }}><abbr title="Umsatzsteuer">USt</abbr></th><th scope="col" style={{ textAlign: "right" }}><abbr title="Gesamtpreis">GP</abbr></th>
             </tr></thead>
             <tbody>
               {(bon.positionen || []).map((p, i) => (
@@ -597,8 +597,12 @@ export default function KassenbonTab() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => openDetail(b.id)}>Details</button>
-                        <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => downloadPdf(b.id)}>PDF</button>
+                        <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                          aria-label={`Details für Kassenbon ${b.bon_nummer || `#${b.id}`}`}
+                          onClick={() => openDetail(b.id)}>Details</button>
+                        <button className="ac-btn ac-btn-ghost ac-btn-sm"
+                          aria-label={`PDF für Kassenbon ${b.bon_nummer || `#${b.id}`}`}
+                          onClick={() => downloadPdf(b.id)}>PDF</button>
                         {b.status === "offen" && (
                           <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => setStornoId(b.id)}>Storno</button>
                         )}

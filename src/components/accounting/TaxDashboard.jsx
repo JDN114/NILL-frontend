@@ -171,7 +171,7 @@ export default function TaxDashboard() {
     if (!gobdVon || !gobdBis) { alert("Bitte Von- und Bis-Datum wählen."); return; }
     setGobdExporting(true);
     try {
-      const r = await api.get("/tax/gobd-export", {
+      const r = await api.get("/api/v1/buchhaltung/export/gobd-zip", {
         params: { von: gobdVon, bis: gobdBis },
         responseType: "blob",
       });
