@@ -11,6 +11,7 @@ import { ImapProvider } from "./context/ImapContext";
 import ProtectedRoute from "./ProtectedRoute";
 import AdminGuard from "./components/AdminGuard";
 import CookieBanner from "./components/CookieBanner";
+import TrialBanner from "./components/TrialBanner";
 import RouteTracker from "./components/RouteTracker";
 import Footer from "./components/Footer";
 import FeatureRoute from "./FeatureRoute";
@@ -134,6 +135,7 @@ function App() {
               <InactivityGuard />
               <RouteTracker />
               <CookieBanner />
+              <TrialBanner />
               <StationBackButton />
               <Suspense fallback={<PageLoader />}>
                 <Routes>

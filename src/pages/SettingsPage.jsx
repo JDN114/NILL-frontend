@@ -774,6 +774,12 @@ export default function SettingsPage() {
     marketing: false,
   });
 
+  // ── Push notifications ────────────────────────────────────────────────────
+  const [pushSupported,   setPushSupported]   = useState(false);
+  const [pushSubscribed,  setPushSubscribed]  = useState(false);
+  const [pushLoading,     setPushLoading]     = useState(false);
+  const [pushError,       setPushError]       = useState("");
+
   // ── Sessions ────────────────────────────────────────────────────────────
   const [sessions,        setSessions]        = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
@@ -883,6 +889,20 @@ export default function SettingsPage() {
   useEffect(() => {
     const saved = localStorage.getItem("nill_notif_prefs");
     if (saved) { try { setNotifs(JSON.parse(saved)); } catch {} }
+    // Also load from backend if available
+    api.get("/me/notification-preferences").then(r => {
+      setNotifs(p => ({ ...p, ...r.data }));
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    setPushSupported(true);
+    navigator.serviceWorker.ready.then(reg => {
+      reg.pushManager.getSubscription().then(sub => {
+        setPushSubscribed(!!sub);
+      });
+    });
   }, []);
 
   useEffect(() => {
@@ -944,6 +964,63 @@ export default function SettingsPage() {
     setNotifs(updated);
     localStorage.setItem("nill_notif_prefs", JSON.stringify(updated));
     api.patch("/me/notification-preferences", updated).catch(() => {});
+  };
+
+  const handlePushSubscribe = async () => {
+    setPushLoading(true); setPushError("");
+    try {
+      const keyRes = await api.get("/me/push/vapid-key");
+      const publicKey = keyRes.data.public_key;
+
+      const reg = await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushError("Bitte erlaube Benachrichtigungen in deinem Browser.");
+        return;
+      }
+
+      const b64ToUint8 = (b64) => {
+        const pad = b64.replace(/-/g, "+").replace(/_/g, "/");
+        const raw = atob(pad);
+        return Uint8Array.from(raw, c => c.charCodeAt(0));
+      };
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: b64ToUint8(publicKey),
+      });
+      const json = sub.toJSON();
+      await api.post("/me/push/subscribe", {
+        endpoint: json.endpoint,
+        p256dh:   json.keys.p256dh,
+        auth:     json.keys.auth,
+      });
+      setPushSubscribed(true);
+    } catch (e) {
+      setPushError(e?.response?.data?.detail || e?.message || "Fehler beim Aktivieren.");
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const handlePushUnsubscribe = async () => {
+    setPushLoading(true); setPushError("");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        const json = sub.toJSON();
+        await api.delete("/me/push/unsubscribe", {
+          data: { endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth },
+        });
+        await sub.unsubscribe();
+      }
+      setPushSubscribed(false);
+    } catch (e) {
+      setPushError(e?.response?.data?.detail || e?.message || "Fehler beim Deaktivieren.");
+    } finally {
+      setPushLoading(false);
+    }
   };
 
   const handleRevokeSession = async (id) => {
@@ -2095,24 +2172,153 @@ export default function SettingsPage() {
 
             {/* ══ BENACHRICHTIGUNGEN ═════════════════════════════════════ */}
             {activeTab === "benachrichtigungen" && (
-              <div style={panelStyle}>
-                <SectionHead title="Benachrichtigungseinstellungen" />
-                <Toggle on={notifs.invoices}  onChange={v => toggleNotif("invoices")}
-                  label="Rechnungen & Zahlungen"
-                  description="Benachrichtigungen bei neuen Rechnungen, Zahlungsein- und -ausgängen" />
-                <Toggle on={notifs.tasks}     onChange={v => toggleNotif("tasks")}
-                  label="Aufgaben & Fristen"
-                  description="Erinnerungen bei fälligen Aufgaben und ablaufenden Fristen" />
-                <Toggle on={notifs.team}      onChange={v => toggleNotif("team")}
-                  label="Team & HR"
-                  description="Benachrichtigungen bei Urlaubsanträgen, neuen Mitgliedern und Rollenänderungen" />
-                <Toggle on={notifs.system}    onChange={v => toggleNotif("system")}
-                  label="System & Sicherheit"
-                  description="Wichtige Systemereignisse, Login-Aktivitäten und Sicherheitshinweise" />
-                <Toggle on={notifs.marketing} onChange={v => toggleNotif("marketing")}
-                  label="Produktneuigkeiten"
-                  description="Updates zu neuen Features, Verbesserungen und NILL-Neuigkeiten" />
-              </div>
+              <>
+                {/* ── Push device card ─────────────────────────────────── */}
+                <div style={{
+                  background: pushSubscribed
+                    ? "linear-gradient(135deg, rgba(197,165,114,0.08) 0%, rgba(197,165,114,0.03) 100%)"
+                    : surface,
+                  border: `1px solid ${pushSubscribed ? "rgba(197,165,114,0.22)" : border}`,
+                  borderRadius: 16,
+                  padding: "1.5rem",
+                  display: "flex", alignItems: "flex-start", gap: "1.25rem",
+                  transition: "all 0.2s",
+                }}>
+                  {/* Icon */}
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: pushSubscribed ? "rgba(197,165,114,0.15)" : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${pushSubscribed ? "rgba(197,165,114,0.3)" : border}`,
+                    transition: "all 0.2s",
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke={pushSubscribed ? gold : dim} strokeWidth="1.75"
+                      strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                      {pushSubscribed && <circle cx="18" cy="5" r="4" fill={gold} stroke="none"/>}
+                    </svg>
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+                      <div>
+                        <div style={{ fontSize: "0.9rem", fontWeight: 700, color: text }}>
+                          Push-Benachrichtigungen
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: dim, marginTop: 2 }}>
+                          {pushSubscribed
+                            ? "Dieses Gerät erhält Benachrichtigungen"
+                            : pushSupported
+                              ? "Noch nicht aktiviert auf diesem Gerät"
+                              : "Nicht unterstützt in diesem Browser"}
+                        </div>
+                      </div>
+                      {pushSupported && (
+                        <button
+                          onClick={pushSubscribed ? handlePushUnsubscribe : handlePushSubscribe}
+                          disabled={pushLoading}
+                          style={{
+                            padding: "0.45rem 1.1rem",
+                            borderRadius: 8, fontSize: "0.8rem", fontWeight: 700,
+                            cursor: pushLoading ? "not-allowed" : "pointer",
+                            opacity: pushLoading ? 0.55 : 1,
+                            transition: "all 0.15s",
+                            border: "none",
+                            background: pushSubscribed ? "rgba(248,113,113,0.1)" : gold,
+                            color: pushSubscribed ? red : "#000",
+                            ...(pushSubscribed ? { border: "1px solid rgba(248,113,113,0.25)" } : {}),
+                          }}
+                        >
+                          {pushLoading
+                            ? pushSubscribed ? "Deaktiviere…" : "Aktiviere…"
+                            : pushSubscribed ? "Deaktivieren" : "Aktivieren"}
+                        </button>
+                      )}
+                    </div>
+
+                    {pushError && (
+                      <div style={{
+                        marginTop: "0.75rem", fontSize: "0.75rem", color: red,
+                        background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)",
+                        borderRadius: 7, padding: "0.45rem 0.7rem",
+                      }}>
+                        {pushError}
+                      </div>
+                    )}
+
+                    <div style={{
+                      marginTop: "0.85rem", fontSize: "0.7rem",
+                      color: "rgba(239,237,231,0.28)", lineHeight: 1.5,
+                    }}>
+                      TTDSG §25 — Token wird ausschließlich zur Nachrichtenzustellung gespeichert.
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Category toggles ─────────────────────────────────── */}
+                <div style={panelStyle}>
+                  <SectionHead title="Benachrichtigungstypen" />
+
+                  {[
+                    { key: "invoices",  icon: "◎", label: "Rechnungen & Zahlungen",  desc: "Neue Rechnungen, Zahlungsein- und -ausgänge" },
+                    { key: "tasks",     icon: "⌘", label: "Aufgaben & Fristen",       desc: "Fällige Aufgaben, ablaufende Fristen" },
+                    { key: "team",      icon: "⬡", label: "Team & HR",                desc: "Urlaubsanträge, neue Mitglieder, Rollenänderungen" },
+                    { key: "system",    icon: "◈", label: "System & Sicherheit",      desc: "Login-Aktivitäten, Sicherheitshinweise" },
+                    { key: "marketing", icon: "◉", label: "Produktneuigkeiten",       desc: "Features, Updates und NILL-Neuigkeiten" },
+                  ].map(({ key, icon, label, desc }, i, arr) => (
+                    <div
+                      key={key}
+                      onClick={() => toggleNotif(key)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "1rem",
+                        padding: "0.95rem 1.25rem",
+                        borderBottom: i < arr.length - 1 ? `1px solid ${border}` : "none",
+                        cursor: "pointer",
+                        transition: "background 0.12s",
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                      onMouseOut={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <span style={{
+                        width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "0.9rem",
+                        background: notifs[key] ? "rgba(197,165,114,0.1)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${notifs[key] ? "rgba(197,165,114,0.2)" : border}`,
+                        color: notifs[key] ? gold : mute,
+                        transition: "all 0.15s",
+                      }}>
+                        {icon}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: notifs[key] ? text : dim, transition: "color 0.15s" }}>
+                          {label}
+                        </div>
+                        <div style={{ fontSize: "0.72rem", color: mute, marginTop: 1 }}>{desc}</div>
+                      </div>
+                      {/* Custom minimal toggle */}
+                      <div style={{
+                        width: 40, height: 22, borderRadius: 99, flexShrink: 0,
+                        background: notifs[key] ? gold : "rgba(255,255,255,0.08)",
+                        border: `1px solid ${notifs[key] ? "transparent" : "rgba(255,255,255,0.1)"}`,
+                        position: "relative", transition: "background 0.2s",
+                        cursor: "pointer",
+                      }}>
+                        <span style={{
+                          position: "absolute", top: 2,
+                          left: notifs[key] ? 20 : 2,
+                          width: 16, height: 16, borderRadius: "50%",
+                          background: notifs[key] ? "#000" : "rgba(255,255,255,0.35)",
+                          transition: "left 0.2s, background 0.2s",
+                        }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {/* ══ SICHERHEIT ═════════════════════════════════════════════ */}

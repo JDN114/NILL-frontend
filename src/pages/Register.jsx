@@ -11,6 +11,7 @@ export default function Register() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [agbAccepted, setAgbAccepted] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const MIN_PASSWORD_LENGTH = 8;
@@ -30,6 +31,10 @@ export default function Register() {
         return "Ungültige Anfrage. Bitte lade die Seite neu.";
       if (detail.includes("Failed to send verification email"))
         return "Bestätigungs-Mail konnte nicht gesendet werden. Bitte versuche es später erneut.";
+      if (detail.includes("Datenschutzerklärung"))
+        return "Bitte akzeptiere die Datenschutzerklärung.";
+      if (detail.includes("AGB"))
+        return "Bitte akzeptiere die AGB.";
     }
 
     return "Registrierung fehlgeschlagen. Bitte versuche es später erneut.";
@@ -58,9 +63,20 @@ export default function Register() {
       setError("Bitte akzeptiere die Datenschutzerklärung.");
       return;
     }
+    if (!agbAccepted) {
+      setError("Bitte akzeptiere die AGB.");
+      return;
+    }
     setLoading(true);
     try {
-      await api.post("/auth/register", { email, password });
+      await api.post("/auth/register", {
+        email,
+        password,
+        datenschutz_accepted: true,
+        agb_accepted: true,
+        consent_version: "v1",
+        agb_version: "v1",
+      });
       setSuccess(true);
     } catch (err) {
       console.error("Registration error:", err);
@@ -344,7 +360,7 @@ export default function Register() {
           </div>
 
           <h1 className="nill-auth-heading">Konto <em>erstellen.</em></h1>
-          <p className="nill-auth-sub">Kostenlos starten — keine Kreditkarte nötig.</p>
+          <p className="nill-auth-sub">14 Tage kostenlos testen — keine Kreditkarte nötig.</p>
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="nill-field">
@@ -409,6 +425,29 @@ export default function Register() {
                   Datenschutzerklärung
                 </a>{" "}
                 gelesen und akzeptiere sie.
+              </span>
+            </label>
+
+            <label className="nill-privacy-box">
+              <input
+                className="nill-privacy-checkbox"
+                type="checkbox"
+                checked={agbAccepted}
+                onChange={(e) => setAgbAccepted(e.target.checked)}
+              />
+              <span className="nill-privacy-label">
+                Ich akzeptiere die{" "}
+                <a
+                  href="https://nillai.de/agb"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  AGB
+                </a>
+                {" "}und stimme dem{" "}
+                <strong style={{ color: "rgba(239,237,231,.75)" }}>14-tägigen kostenlosen Testzeitraum</strong>
+                {" "}zu.
               </span>
             </label>
 

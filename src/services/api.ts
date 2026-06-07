@@ -19,6 +19,14 @@ api.interceptors.response.use(
         // Clear any stale state and force re-login
         document.cookie = "csrf_t=; Max-Age=0; path=/";
         window.location.href = "/login";
+      } else if (status === 402) {
+        const detail = error.response.data?.detail;
+        const code = typeof detail === "object" ? detail?.code : null;
+        if (code === "trial_expired") {
+          // Trial expired — clear auth state and redirect to pricing
+          document.cookie = "csrf_t=; Max-Age=0; path=/";
+          window.location.href = "/pricing?reason=trial_expired";
+        }
       } else if (status === 403) {
         console.error("Zugriff verweigert.");
       } else {
