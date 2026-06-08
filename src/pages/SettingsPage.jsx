@@ -901,10 +901,18 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
     setPushSupported(true);
-    navigator.serviceWorker.ready.then(reg => {
-      reg.pushManager.getSubscription().then(sub => {
-        setPushSubscribed(!!sub);
-      });
+
+    // Check both browser-side subscription and backend — macOS Safari PWA can
+    // lose the local subscription reference after restart while the backend
+    // still holds a valid endpoint.
+    Promise.all([
+      navigator.serviceWorker.ready.then(reg => reg.pushManager.getSubscription()),
+      api.get("/me/push/status").then(r => r.data).catch(() => ({ subscribed: false })),
+    ]).then(([browserSub, serverStatus]) => {
+      const granted = Notification.permission === "granted";
+      // Show as subscribed if backend has a subscription AND browser has
+      // granted permission (covers Safari PWA restart case).
+      setPushSubscribed(!!(browserSub || (serverStatus.subscribed && granted)));
     });
   }, []);
 
