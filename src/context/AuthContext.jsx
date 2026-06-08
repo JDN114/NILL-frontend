@@ -55,6 +55,18 @@ export function AuthProvider({ children }) {
   const isNillAdmin    = useCallback(() => user?.is_admin === true,          [user]);
   const hasModule      = useCallback((module) => org?.modules?.includes(module) ?? false, [org]);
 
+  const isTrialActive  = useCallback(() => {
+    if (org?.plan_status !== "trial") return false;
+    if (!org?.trial_ends_at) return false;
+    return new Date(org.trial_ends_at) > new Date();
+  }, [org]);
+
+  const trialDaysRemaining = useCallback(() => {
+    if (!isTrialActive() || !org?.trial_ends_at) return 0;
+    const ms = new Date(org.trial_ends_at) - new Date();
+    return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+  }, [org, isTrialActive]);
+
   const hasFeature = useCallback((feature) => {
     if (!user) return false;
     if (isCompanyAdmin() || isSolo()) return true;
@@ -76,7 +88,9 @@ export function AuthProvider({ children }) {
     isNillAdmin,
     hasModule,
     hasFeature,
-  }), [user, org, loading, logout, updateOrg, isSolo, isCompanyAdmin, isNillAdmin, hasModule, hasFeature]);
+    isTrialActive,
+    trialDaysRemaining,
+  }), [user, org, loading, logout, updateOrg, isSolo, isCompanyAdmin, isNillAdmin, hasModule, hasFeature, isTrialActive, trialDaysRemaining]);
 
   if (loading) {
     return (

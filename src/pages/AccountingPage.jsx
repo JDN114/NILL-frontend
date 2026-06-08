@@ -288,20 +288,24 @@ const DASH_MODES = [
 ];
 
 const WIDGET_META = {
-  cashflow:      { label:"Cashflow-Verlauf",        desc:"Einnahmen/Ausgaben pro Monat" },
-  categories:    { label:"Ausgaben-Kategorien",     desc:"Tortendiagramm nach Kostenstelle" },
-  recent:        { label:"Letzte Buchungen",         desc:"Die 8 neuesten Journaleinträge" },
-  ar:            { label:"Offene Forderungen",       desc:"Summe offener & überfälliger Rechnungen" },
-  overdue:       { label:"Überfällige Rechnungen",  desc:"Anzahl und Betrag der fälligen Rechnungen" },
-  proposals:     { label:"Offene Angebote",          desc:"Angebote im Status Gesendet" },
-  today:         { label:"Heutiger Umsatz",          desc:"Kassenbons heute — Summe & Anzahl" },
-  kassenstand:   { label:"Kassenbestand",            desc:"Laufender Saldo des Kassenbuchs" },
-  payment_split: { label:"Zahlungsarten heute",      desc:"Bar / EC / Kreditkarte-Aufteilung" },
+  cashflow:          { label:"Cashflow-Verlauf",        desc:"Einnahmen/Ausgaben pro Monat" },
+  categories:        { label:"Ausgaben-Kategorien",     desc:"Tortendiagramm nach Kostenstelle" },
+  recent:            { label:"Letzte Buchungen",         desc:"Die 8 neuesten Journaleinträge" },
+  ar:                { label:"Offene Forderungen",       desc:"Summe offener & überfälliger Rechnungen" },
+  overdue:           { label:"Überfällige Rechnungen",  desc:"Anzahl und Betrag der fälligen Rechnungen" },
+  proposals:         { label:"Offene Angebote",          desc:"Angebote im Status Gesendet" },
+  today:             { label:"Heutiger Umsatz",          desc:"Kassenbons heute — Summe & Anzahl" },
+  kassenstand:       { label:"Kassenbestand",            desc:"Laufender Saldo des Kassenbuchs" },
+  payment_split:     { label:"Zahlungsarten heute",      desc:"Bar / EC / Kreditkarte-Aufteilung" },
+  gewinnmarge:       { label:"Gewinnmarge",              desc:"Nettogewinn in % der Einnahmen — lfd. Jahr" },
+  steuerruecklage:   { label:"Steuerrücklage",           desc:"Empfohlene Rücklage für Steuern (30 % des Gewinns)" },
+  monatsumsatz:      { label:"Monatsumsatz lfd.",        desc:"Einnahmen diesen Monat vs. Vormonat" },
+  deb_zahlungsziel:  { label:"Ø Zahlungsverzug",        desc:"Älteste offene Ausgangsrechnung in Tagen" },
 };
 
 const MODE_DEFAULTS = {
-  universal: ["cashflow","categories","recent"],
-  b2b:       ["ar","overdue","proposals","cashflow","categories","recent"],
+  universal: ["cashflow","categories","recent","gewinnmarge","steuerruecklage","monatsumsatz"],
+  b2b:       ["ar","overdue","proposals","cashflow","categories","recent","gewinnmarge","deb_zahlungsziel"],
   b2c:       ["today","kassenstand","payment_split","cashflow","recent"],
 };
 
@@ -405,6 +409,13 @@ function OverviewTab({ onNavigate, onUpload }) {
   );
 
   const gewinn = (dash.einnahmen||0)-(dash.ausgaben||0);
+  const gewinnmarge = dash.einnahmen > 0 ? (gewinn / dash.einnahmen) * 100 : 0;
+  const mv = dash.monatsverlauf ?? [];
+  const lfdMonat   = mv.length > 0 ? mv[mv.length - 1]  : null;
+  const vorMonat   = mv.length > 1 ? mv[mv.length - 2]  : null;
+  const monatsTrend = lfdMonat && vorMonat && (vorMonat.einnahmen||0) > 0
+    ? ((( lfdMonat.einnahmen||0) - (vorMonat.einnahmen||0)) / (vorMonat.einnahmen||0)) * 100
+    : null;
 
   return (
     <div>
@@ -589,6 +600,48 @@ function OverviewTab({ onNavigate, onUpload }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Universal KPIs ─── */}
+      {(has("gewinnmarge")||has("steuerruecklage")||has("monatsumsatz")||has("deb_zahlungsziel")) && (
+        <div className="ac-kpi-grid" style={{marginBottom:16}}>
+          {has("gewinnmarge") && dash.einnahmen > 0 && (
+            <div className="ac-kpi">
+              <div className="ac-kpi-label">Gewinnmarge</div>
+              <div className={`ac-kpi-value ${gewinnmarge >= 0 ? "green" : "pink"}`}>
+                {gewinnmarge.toFixed(1)} %
+              </div>
+              <div className="ac-kpi-delta">Nettogewinn / Einnahmen</div>
+            </div>
+          )}
+          {has("steuerruecklage") && gewinn > 0 && (
+            <div className="ac-kpi" style={{borderColor:"rgba(122,92,255,.2)",background:"rgba(122,92,255,.03)"}}>
+              <div className="ac-kpi-label">Steuerrücklage</div>
+              <div className="ac-kpi-value purple">{fmtEur(gewinn * 0.30)}</div>
+              <div className="ac-kpi-delta">Empfehlung: 30 % des Gewinns zurücklegen</div>
+            </div>
+          )}
+          {has("monatsumsatz") && lfdMonat && (
+            <div className="ac-kpi">
+              <div className="ac-kpi-label">Monatsumsatz lfd.</div>
+              <div className="ac-kpi-value">{fmtEur(lfdMonat.einnahmen||0)}</div>
+              <div className="ac-kpi-delta" style={monatsTrend != null ? {color:monatsTrend >= 0 ? "var(--accent)" : "var(--a3)"} : {}}>
+                {monatsTrend != null
+                  ? `${monatsTrend >= 0 ? "▲" : "▼"} ${Math.abs(monatsTrend).toFixed(0)} % ggü. Vormonat`
+                  : "Kein Vormonatswert"}
+              </div>
+            </div>
+          )}
+          {has("deb_zahlungsziel") && opos?.aelteste_rechnung_tage > 0 && (
+            <div className="ac-kpi" style={opos.aelteste_rechnung_tage > 30 ? {borderColor:"rgba(255,77,141,.3)",background:"rgba(255,77,141,.04)"} : {}}>
+              <div className="ac-kpi-label">Ø Zahlungsverzug</div>
+              <div className={`ac-kpi-value ${opos.aelteste_rechnung_tage > 30 ? "pink" : ""}`}>
+                {opos.aelteste_rechnung_tage} Tage
+              </div>
+              <div className="ac-kpi-delta">Älteste offene Forderung</div>
             </div>
           )}
         </div>
