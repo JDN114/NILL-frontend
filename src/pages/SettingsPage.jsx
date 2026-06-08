@@ -780,6 +780,8 @@ export default function SettingsPage() {
   const [pushSubscribed,  setPushSubscribed]  = useState(false);
   const [pushLoading,     setPushLoading]     = useState(false);
   const [pushError,       setPushError]       = useState("");
+  const [pushTestLoading, setPushTestLoading] = useState(false);
+  const [pushTestMsg,     setPushTestMsg]     = useState("");
 
   // ── Sessions ────────────────────────────────────────────────────────────
   const [sessions,        setSessions]        = useState([]);
@@ -973,7 +975,12 @@ export default function SettingsPage() {
       // requestPermission must be the first await — macOS Safari drops the
       // native dialog if any other async call precedes it (breaks user-gesture chain).
       if (Notification.permission === "denied") {
-        setPushError("Benachrichtigungen sind blockiert. Bitte erlaube sie in den Browser-Einstellungen (Adressleiste → Site Settings → Notifications) und versuche es erneut.");
+        const isIOSPWA = window.navigator.standalone === true;
+        setPushError(
+          isIOSPWA
+            ? "Benachrichtigungen sind blockiert. Gehe zu iOS Einstellungen → [App-Name] → Mitteilungen → Erlauben und versuche es erneut."
+            : "Benachrichtigungen sind blockiert. Bitte erlaube sie in den Browser-Einstellungen (Adressleiste → Site Settings → Notifications) und versuche es erneut."
+        );
         return;
       }
       const permission = await Notification.requestPermission();
@@ -1029,6 +1036,19 @@ export default function SettingsPage() {
       setPushError(e?.response?.data?.detail || e?.message || "Fehler beim Deaktivieren.");
     } finally {
       setPushLoading(false);
+    }
+  };
+
+  const handlePushTest = async () => {
+    setPushTestLoading(true); setPushTestMsg("");
+    try {
+      await api.post("/me/push/test");
+      setPushTestMsg("Testbenachrichtigung gesendet — prüfe ob sie erscheint.");
+    } catch (e) {
+      setPushTestMsg(e?.response?.data?.detail || "Fehler beim Senden.");
+    } finally {
+      setPushTestLoading(false);
+      setTimeout(() => setPushTestMsg(""), 6000);
     }
   };
 
@@ -2255,6 +2275,44 @@ export default function SettingsPage() {
                         borderRadius: 7, padding: "0.45rem 0.7rem",
                       }}>
                         {pushError}
+                      </div>
+                    )}
+
+                    {/* Test button — only when subscribed */}
+                    {pushSubscribed && (
+                      <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                        <button
+                          onClick={handlePushTest}
+                          disabled={pushTestLoading}
+                          style={{
+                            padding: "0.35rem 0.85rem", borderRadius: 7,
+                            fontSize: "0.75rem", fontWeight: 600,
+                            background: "rgba(239,237,231,0.06)",
+                            border: "1px solid rgba(239,237,231,0.12)",
+                            color: "rgba(239,237,231,0.6)", cursor: pushTestLoading ? "not-allowed" : "pointer",
+                            opacity: pushTestLoading ? 0.55 : 1,
+                          }}
+                        >
+                          {pushTestLoading ? "Sende…" : "Testbenachrichtigung senden"}
+                        </button>
+                        {pushTestMsg && (
+                          <span style={{ fontSize: "0.72rem", color: pushTestMsg.includes("Fehler") ? red : gold }}>
+                            {pushTestMsg}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* macOS hint */}
+                    {pushSubscribed && /Mac|iPhone|iPad/.test(navigator.userAgent) && (
+                      <div style={{
+                        marginTop: "0.6rem", fontSize: "0.7rem", lineHeight: 1.55,
+                        color: "rgba(239,237,231,0.35)",
+                        background: "rgba(239,237,231,0.04)",
+                        border: "1px solid rgba(239,237,231,0.08)",
+                        borderRadius: 6, padding: "0.45rem 0.65rem",
+                      }}>
+                        <strong style={{ color: "rgba(239,237,231,0.55)" }}>macOS:</strong> Stelle sicher, dass Safari unter <em>Systemeinstellungen → Mitteilungen</em> erlaubt ist — der Browser benötigt dort eine eigene Freigabe.
                       </div>
                     )}
 
