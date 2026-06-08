@@ -93,6 +93,12 @@ const S = `
     .nd-welcome { padding:24px 20px; }
     .nd-grid { grid-template-columns:1fr 1fr; }
   }
+  @media(max-width:420px) {
+    .nd-welcome { padding:20px 16px; margin-bottom:20px; }
+    .nd-grid { grid-template-columns:1fr; }
+    .nd-nill-modules { grid-template-columns:repeat(3,1fr); }
+    .nd-ai-banner { padding:16px; gap:14px; }
+  }
 `;
 
 const ICONS = {

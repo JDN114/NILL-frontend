@@ -1084,12 +1084,33 @@ body {
 
 html, body { overflow-x: hidden; }
 
+/* Remove iOS tap flash */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Proper mobile viewport — dvh respects browser chrome */
+html { height: -webkit-fill-available; }
+body { min-height: -webkit-fill-available; }
+
+/* Safe-area top padding for sticky bars on notch devices */
+.nill-navbar { padding-top: env(safe-area-inset-top, 0); }
+
 /* Touch-friendly tap targets */
 @media (max-width: 768px) {
   button, select { min-height: 40px; }
   /* Exclude visual-only small elements */
   .em-badge, .em-dot, .em-category, .em-priority,
   .em-sentiment, .nill-hamburger-bar { min-height: unset; }
+
+  /* Email shell must reserve space for bottom nav */
+  .em-shell {
+    height: calc(100dvh - 64px - 54px - env(safe-area-inset-bottom, 0));
+  }
+
+  /* Prevent card grids from overflowing on narrow phones */
+  .nd-grid { grid-template-columns: 1fr !important; }
+
+  /* Make tables scroll horizontally instead of overflow */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 /* Table horizontal scroll utility */

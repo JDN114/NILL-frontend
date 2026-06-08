@@ -10,6 +10,14 @@ const NAV_ITEMS = [
   { label: "Einstellungen",  path: "/dashboard/settings" },
 ];
 
+const BOTTOM_NAV = [
+  { label: "Start",      path: "/dashboard",            exact: true,  icon: "◧" },
+  { label: "E-Mails",    path: "/dashboard/emails",                   icon: "✉" },
+  { label: "Buchhaltung",path: "/dashboard/accounting",               icon: "◎" },
+  { label: "Workflow",   path: "/dashboard/workflow",                 icon: "⬡" },
+  { label: "Mehr",       path: "/dashboard/settings",                 icon: "◉" },
+];
+
 export default function Navbar() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -136,8 +144,75 @@ export default function Navbar() {
 
         @media (max-width: 768px) {
           .nill-navbar-nav  { display: none; }
-          .nill-hamburger   { display: flex; }
+          .nill-hamburger   { display: none; }
           .nill-navbar-inner { padding: 0 1rem; }
+        }
+
+        /* ── Bottom tab bar ─────────────────────────────────────── */
+        .nill-bottom-nav {
+          display: none;
+          position: fixed;
+          bottom: 0; left: 0; right: 0;
+          z-index: 200;
+          background: rgba(7,16,35,0.97);
+          border-top: 1px solid var(--nill-border);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        .nill-bottom-nav-inner {
+          display: flex;
+          align-items: stretch;
+        }
+        .nill-bnav-item {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 0.25rem 0.45rem;
+          min-height: 54px;
+          text-decoration: none;
+          color: rgba(148,163,184,0.7);
+          transition: color 0.15s;
+          position: relative;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .nill-bnav-item.active { color: var(--nill-gold); }
+        .nill-bnav-item.active .nill-bnav-icon-wrap::after {
+          content: "";
+          position: absolute;
+          bottom: -6px; left: 50%; transform: translateX(-50%);
+          width: 18px; height: 2px;
+          background: var(--nill-gold);
+          border-radius: 2px;
+        }
+        .nill-bnav-icon-wrap {
+          position: relative;
+          display: flex; align-items: center; justify-content: center;
+          width: 28px; height: 28px;
+          border-radius: 10px;
+          transition: background 0.15s;
+          margin-bottom: 2px;
+        }
+        .nill-bnav-item.active .nill-bnav-icon-wrap {
+          background: rgba(197,165,114,0.12);
+        }
+        .nill-bnav-icon {
+          font-size: 1rem;
+          line-height: 1;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .nill-bnav-label {
+          font-size: 0.6rem;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+          margin-top: 1px;
+        }
+
+        @media (max-width: 768px) {
+          .nill-bottom-nav { display: block; }
         }
       `}</style>
 
@@ -242,7 +317,7 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu (desktop fallback, hidden when bottom nav is active) */}
       <div className={`nill-mobile-menu${menuOpen ? " open" : ""}`}>
         {NAV_ITEMS.map((item) => {
           if (item.disabled) {
@@ -268,6 +343,30 @@ export default function Navbar() {
           );
         })}
       </div>
+
+      {/* Bottom tab bar — mobile/PWA only */}
+      <nav className="nill-bottom-nav" aria-label="Hauptnavigation">
+        <div className="nill-bottom-nav-inner">
+          {BOTTOM_NAV.map((item) => {
+            const active = item.exact
+              ? pathname === item.path
+              : pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nill-bnav-item${active ? " active" : ""}`}
+                aria-label={item.label}
+              >
+                <div className="nill-bnav-icon-wrap">
+                  <span className="nill-bnav-icon">{item.icon}</span>
+                </div>
+                <span className="nill-bnav-label">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </>
   );
 }
