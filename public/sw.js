@@ -1,5 +1,5 @@
 // NILL PWA Service Worker — push notifications + offline caching
-const CACHE = "nill-v1";
+const CACHE = "nill-v2";
 
 // ── Install: cache essential shell ──────────────────────────────────────────
 self.addEventListener("install", (e) => {
@@ -27,7 +27,6 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
-  // Don't intercept API or cross-origin requests
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api")) return;
 
   e.respondWith(
@@ -55,16 +54,23 @@ self.addEventListener("push", (e) => {
     } catch {}
   }
 
+  // Broadcast to any open clients so the app can show an in-app toast
+  // even when the OS blocks the system notification.
+  self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    clients.forEach((c) => c.postMessage({ type: "PUSH", ...data }));
+  });
+
+  // Use minimal options — vibrate/badge/renotify are unsupported on macOS
+  // Safari and can silently cause showNotification to fail.
+  const show = (opts) => self.registration.showNotification(data.title, opts);
+
   e.waitUntil(
-    self.registration.showNotification(data.title, {
-      body:    data.body,
-      icon:    "/logo192.png",
-      badge:   "/logo192.png",
-      data:    { url: data.url },
-      vibrate: [150, 50, 150],
-      tag:     data.url,
-      renotify: true,
-    })
+    show({ body: data.body, icon: "/logo192.png", data: { url: data.url } })
+      .catch(() =>
+        // Retry without icon in case the browser can't resolve it
+        show({ body: data.body, data: { url: data.url } })
+      )
+      .catch(() => {}) // swallow if showNotification is entirely blocked
   );
 });
 
