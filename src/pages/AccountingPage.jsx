@@ -413,20 +413,40 @@ const WIDGET_META = {
   gewinnmarge:       { label:"Gewinnmarge",              desc:"Nettogewinn in % der Einnahmen — lfd. Jahr" },
   steuerruecklage:   { label:"Steuerrücklage",           desc:"Empfohlene Rücklage für Steuern (30 % des Gewinns)" },
   monatsumsatz:      { label:"Monatsumsatz lfd.",        desc:"Einnahmen diesen Monat vs. Vormonat" },
-  deb_zahlungsziel:  { label:"Ø Zahlungsverzug",        desc:"Älteste offene Ausgangsrechnung in Tagen" },
-  jahresvgl:         { label:"Jahr-über-Jahr",           desc:"Einnahmen: aktuelles vs. letztes Jahr pro Monat" },
-  top_ausgaben:      { label:"Top Ausgabenposten",       desc:"Balkendiagramm der größten Kostenstellen" },
-  forderungsquote:   { label:"Forderungsquote",          desc:"Aufteilung: offen / überfällig / bezahlt (B2B)" },
-  wochen_umsatz:     { label:"Wochenumsatz",             desc:"Tagesumsatz der laufenden Woche (B2C)" },
-  bon_trend:         { label:"Ø Bonwert-Trend",          desc:"Durchschnittlicher Bonwert letzte 7 Tage (B2C)" },
-  umsatzziel:        { label:"Umsatzziel",               desc:"Jahresfortschritt in % deines Umsatzziels" },
+  deb_zahlungsziel:     { label:"Ø Zahlungsverzug",           desc:"Älteste offene Ausgangsrechnung in Tagen" },
+  jahresvgl:            { label:"Jahr-über-Jahr",              desc:"Einnahmen: aktuelles vs. letztes Jahr pro Monat" },
+  top_ausgaben:         { label:"Top Ausgabenposten",          desc:"Balkendiagramm der größten Kostenstellen" },
+  forderungsquote:      { label:"Forderungsstruktur",          desc:"Aufteilung offen / überfällig (B2B)" },
+  wochen_umsatz:        { label:"Wochenumsatz",                desc:"Tagesumsatz der laufenden Woche (B2C)" },
+  bon_trend:            { label:"Ø Bonwert-Trend",             desc:"Durchschnittlicher Bonwert letzte Tage (B2C)" },
+  umsatzziel:           { label:"Umsatzziel",                  desc:"Jahresfortschritt in % deines Umsatzziels" },
+  kunden_aktivitaet:    { label:"Kundenaktivität",             desc:"Unique Kunden und Umsatz: Heute / 3 Tage / Woche / Monat" },
+  top_kunden:           { label:"Top-Kunden",                  desc:"Die umsatzstärksten Kunden im laufenden Jahr" },
+  gewinn_verlauf:       { label:"Gewinn/Verlust-Verlauf",      desc:"Monatliches Nettoergebnis — positiv/negativ" },
+  umsatz_prognose:      { label:"Umsatzprognose",              desc:"Trendbasierte Hochrechnung für die nächsten 3 Monate" },
+  ausgaben_trend:       { label:"Ausgabenentwicklung",         desc:"Monatliche Ausgaben mit Trendlinie" },
+  stornoquote:          { label:"Stornoquote",                 desc:"Anteil stornierter Kassenbons diese Woche (B2C)" },
+  zahlungsarten_tag:    { label:"Zahlungsarten nach Tag",      desc:"Welche Zahlungsart dominiert an welchem Wochentag (B2C)" },
 };
 
 const MODE_DEFAULTS = {
-  universal: ["cashflow","categories","recent","gewinnmarge","steuerruecklage","monatsumsatz","jahresvgl","top_ausgaben","umsatzziel"],
-  b2b:       ["ar","overdue","proposals","cashflow","recent","gewinnmarge","deb_zahlungsziel","jahresvgl","top_ausgaben","forderungsquote","umsatzziel"],
-  b2c:       ["today","kassenstand","payment_split","cashflow","recent","wochen_umsatz","bon_trend","top_ausgaben","umsatzziel"],
+  universal: ["cashflow","categories","recent","gewinnmarge","steuerruecklage","monatsumsatz",
+              "umsatzziel","jahresvgl","gewinn_verlauf","top_ausgaben","umsatz_prognose","kunden_aktivitaet"],
+  b2b:       ["ar","overdue","proposals","cashflow","recent","gewinnmarge","deb_zahlungsziel",
+              "umsatzziel","jahresvgl","top_ausgaben","forderungsquote","kunden_aktivitaet","top_kunden","gewinn_verlauf","umsatz_prognose"],
+  b2c:       ["today","kassenstand","payment_split","cashflow","recent",
+              "umsatzziel","wochen_umsatz","bon_trend","top_ausgaben","stornoquote","zahlungsarten_tag","kunden_aktivitaet"],
 };
+
+const KUNDEN_PERIODS = [
+  { key:"heute",   label:"Heute",   days:0  },
+  { key:"3tage",   label:"3 Tage",  days:3  },
+  { key:"woche",   label:"Woche",   days:7  },
+  { key:"monat",   label:"Monat",   days:30 },
+  { key:"quartal", label:"Quartal", days:90 },
+];
+
+const ZAHLART_COLORS = { bar:"#c6ff3c", ec:"#7a5cff", kreditkarte:"#ff4d8d", gutschein:"#ffb347", sepa:"#9b9890" };
 
 const ZAHLART_LABELS = { bar:"Bar", ec:"EC", kreditkarte:"Kreditkarte", gutschein:"Gutschein", sepa:"SEPA" };
 
@@ -454,9 +474,12 @@ function OverviewTab({ onNavigate, onUpload }) {
   const [showCustom,  setShowCustom]  = useState(false);
   const [mode,        setMode]        = useLStorage("nill_dash_mode", "universal");
   const [widgetPrefs, setWidgetPrefs] = useLStorage("nill_dash_widgets", {});
-  const [jahresZiel,  setJahresZiel]  = useLStorage("nill_jahres_ziel", 0);
-  const [editingZiel, setEditingZiel] = useState(false);
-  const [zielInput,   setZielInput]   = useState("");
+  const [rechnungen,    setRechnungen]    = useState([]);
+  const [rawWeekBons,   setRawWeekBons]   = useState([]);
+  const [kundenPeriod,  setKundenPeriod]  = useLStorage("nill_kunden_period","woche");
+  const [jahresZiel,    setJahresZiel]    = useLStorage("nill_jahres_ziel", 0);
+  const [editingZiel,   setEditingZiel]   = useState(false);
+  const [zielInput,     setZielInput]     = useState("");
 
   const activeWidgets = widgetPrefs[mode] ?? MODE_DEFAULTS[mode] ?? MODE_DEFAULTS.universal;
   const has = (id) => activeWidgets.includes(id);
@@ -484,12 +507,14 @@ function OverviewTab({ onNavigate, onUpload }) {
     api.get("/api/v1/kassenbon", { params:{ datum_von:todayStr, datum_bis:todayStr } })
       .then(r => setTodayBons((r.data||[]).filter(b => b.status !== "storniert"))).catch(() => {});
     api.get("/api/v1/kassenbon", { params:{ datum_von:weekStartStr, datum_bis:todayStr } })
-      .then(r => setWeekBons((r.data||[]).filter(b => b.status !== "storniert"))).catch(() => {});
+      .then(r => { const all=r.data||[]; setRawWeekBons(all); setWeekBons(all.filter(b=>b.status!=="storniert")); })
+      .catch(() => {});
     api.get("/api/v1/kassenbuch")
       .then(r => { const rows=r.data||[]; if(rows.length) setKassenstand(rows[rows.length-1].kassenstand??null); })
       .catch(() => {});
     api.get("/api/v1/angebote")
       .then(r => setProposals((r.data||[]).filter(a => a.status==="gesendet").length)).catch(() => {});
+    api.get("/api/v1/rechnungen").then(r => setRechnungen(r.data||[])).catch(() => {});
   }, [todayStr, weekStartStr]);
 
   useEffect(() => { load(); }, [load]);
@@ -577,6 +602,119 @@ function OverviewTab({ onNavigate, onUpload }) {
       .sort((a,b) => a.day.localeCompare(b.day))
       .map(d => ({ name:d.day.slice(5), avg: d.count>0 ? d.gesamt/d.count : 0 }));
   }, [weekBons]);
+
+  // ── Additional computed stats ─────────────────────────────────
+  const gewinnVerlauf = useMemo(() =>
+    (dash?.monatsverlauf||[]).slice(-12).map(m => ({
+      name: fmtMonat(m.monat),
+      gewinn: (m.einnahmen||0)-(m.ausgaben||0),
+    }))
+  , [dash]);
+
+  const ausgabenTrend = useMemo(() => {
+    const mv = (dash?.monatsverlauf||[]).slice(-12);
+    if (mv.length < 2) return [];
+    const n = mv.length;
+    const ys = mv.map(m => m.ausgaben||0);
+    const meanX = (n-1)/2;
+    const meanY = ys.reduce((s,y)=>s+y,0)/n;
+    const slope = ys.reduce((s,y,i)=>s+(i-meanX)*(y-meanY),0) / ys.reduce((s,_,i)=>s+(i-meanX)**2,0);
+    const intercept = meanY - slope*meanX;
+    return mv.map((m,i) => ({
+      name: fmtMonat(m.monat),
+      Ausgaben: m.ausgaben||0,
+      Trend: Math.max(Math.round(intercept + slope*i), 0),
+    }));
+  }, [dash]);
+
+  const umsatzPrognose = useMemo(() => {
+    const mv = (dash?.monatsverlauf||[]).filter(m=>(m.einnahmen||0)>0).slice(-8);
+    if (mv.length < 3) return null;
+    const n = mv.length;
+    const ys = mv.map(m => m.einnahmen||0);
+    const meanX = (n-1)/2;
+    const meanY = ys.reduce((s,y)=>s+y,0)/n;
+    const denom = ys.reduce((_,__,i)=>(i-meanX)**2,0) || 1;
+    const slope = ys.reduce((s,y,i)=>s+(i-meanX)*(y-meanY),0) / mv.reduce((s,_,i)=>s+(i-meanX)**2,0);
+    const intercept = meanY - slope*meanX;
+    const hist = mv.map((m,i) => ({ name:fmtMonat(m.monat), Einnahmen:m.einnahmen, prognose:null }));
+    const [lastY, lastMo] = mv[mv.length-1].monat.split("-");
+    const proj = [1,2,3].map(i => {
+      const d = new Date(parseInt(lastY), parseInt(lastMo)-1+i);
+      return {
+        name: d.toLocaleDateString("de-DE",{month:"short",year:"2-digit"}),
+        Einnahmen: null,
+        prognose: Math.max(Math.round(intercept + slope*(n-1+i)), 0),
+      };
+    });
+    return { data:[...hist,...proj], pivot:hist.length };
+  }, [dash]);
+
+  const kundenData = useMemo(() => {
+    if (!rechnungen.length) return null;
+    const kp = KUNDEN_PERIODS.find(p=>p.key===kundenPeriod);
+    const days = kp?.days ?? 7;
+    const cutoff = new Date();
+    if (days===0) cutoff.setHours(0,0,0,0);
+    else cutoff.setDate(cutoff.getDate()-days);
+    const filtered = rechnungen.filter(r => {
+      const d = new Date(r.datum||r.rechnungsdatum||r.erstellt_am);
+      return !isNaN(d) && d>=cutoff;
+    });
+    const map = {};
+    for (const r of filtered) {
+      const name = r.partner_name||r.partner||r.empfaenger_name||r.kunde||r.debitor||"Unbekannt";
+      if (!map[name]) map[name] = {name,umsatz:0,anzahl:0};
+      map[name].umsatz  += (r.betrag_netto||r.betrag_brutto||r.betrag||0);
+      map[name].anzahl  += 1;
+    }
+    const list = Object.values(map).sort((a,b)=>b.umsatz-a.umsatz);
+    return { total:filtered.length, unique:list.length, umsatz:list.reduce((s,c)=>s+c.umsatz,0), list };
+  }, [rechnungen, kundenPeriod]);
+
+  const topKunden = useMemo(() => {
+    if (!rechnungen.length) return [];
+    const thisYear = new Date().getFullYear();
+    const map = {};
+    for (const r of rechnungen) {
+      const d = new Date(r.datum||r.rechnungsdatum||r.erstellt_am);
+      if (isNaN(d)||d.getFullYear()!==thisYear) continue;
+      const name = r.partner_name||r.partner||r.empfaenger_name||r.kunde||r.debitor||"Unbekannt";
+      if (!map[name]) map[name]={name,umsatz:0};
+      map[name].umsatz += (r.betrag_netto||r.betrag_brutto||r.betrag||0);
+    }
+    return Object.values(map).sort((a,b)=>b.umsatz-a.umsatz).slice(0,8)
+      .map(k=>({...k, name:k.name.length>22?k.name.slice(0,21)+"…":k.name}));
+  }, [rechnungen]);
+
+  const stornoquoteData = useMemo(() => {
+    if (!rawWeekBons.length) return null;
+    const total     = rawWeekBons.length;
+    const storniert = rawWeekBons.filter(b=>b.status==="storniert").length;
+    const byDay = {};
+    for (const b of rawWeekBons) {
+      const d = new Date(b.datum||b.erstellt_am?.slice(0,10)||todayStr);
+      const key = DAY_NAMES[(d.getDay()+6)%7];
+      if (!byDay[key]) byDay[key]={name:key,aktiv:0,storniert:0};
+      b.status==="storniert" ? byDay[key].storniert++ : byDay[key].aktiv++;
+    }
+    return { total, storniert, pct:total>0?storniert/total*100:0,
+      byDay: DAY_NAMES.map(d=>byDay[d]||{name:d,aktiv:0,storniert:0}) };
+  }, [rawWeekBons, todayStr]);
+
+  const zahlungsartenTagData = useMemo(() => {
+    const zahlarten = new Set();
+    const byDay = {};
+    for (const b of weekBons) {
+      const d = new Date(b.datum||b.erstellt_am?.slice(0,10)||todayStr);
+      const key = DAY_NAMES[(d.getDay()+6)%7];
+      const z = b.zahlungsart||"bar";
+      zahlarten.add(z);
+      if (!byDay[key]) byDay[key]={name:key};
+      byDay[key][z]=(byDay[key][z]||0)+(b.betrag_brutto||0);
+    }
+    return { data:DAY_NAMES.map(d=>byDay[d]||{name:d}), zahlarten:[...zahlarten] };
+  }, [weekBons, todayStr]);
 
   if(loading) return <div role="status" aria-label="Dashboard wird geladen" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Dashboard…</div>;
   if(dashError) return (
@@ -926,6 +1064,104 @@ function OverviewTab({ onNavigate, onUpload }) {
         </div>
       )}
 
+      {/* ─── Kundenaktivität ─── */}
+      {has("kunden_aktivitaet") && (
+        <div className="ac-card" style={{marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Kundenaktivität</div>
+            <div style={{display:"flex",gap:2,background:"rgba(255,255,255,.04)",borderRadius:8,padding:3}}>
+              {KUNDEN_PERIODS.map(p=>(
+                <button key={p.key} onClick={()=>setKundenPeriod(p.key)}
+                  style={{padding:"4px 11px",borderRadius:6,border:"none",cursor:"pointer",
+                    fontFamily:"Inter,sans-serif",fontSize:".73rem",fontWeight:kundenPeriod===p.key?600:400,
+                    background:kundenPeriod===p.key?"rgba(198,255,60,.15)":"transparent",
+                    color:kundenPeriod===p.key?"var(--accent)":"var(--ink2)",transition:"all .12s",
+                  }}>{p.label}</button>
+              ))}
+            </div>
+          </div>
+          {kundenData ? (
+            <div>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:kundenData.list.length>0?16:0}}>
+                {[
+                  {lbl:"Unique Kunden",   val:kundenData.unique, col:"var(--accent)"},
+                  {lbl:"Rechnungen",      val:kundenData.total,  col:"var(--ink)"},
+                  {lbl:"Umsatz gesamt",   val:fmtEur(kundenData.umsatz), col:"var(--accent)"},
+                  kundenData.unique>0&&{lbl:"Ø pro Kunde", val:fmtEur(kundenData.umsatz/kundenData.unique), col:"var(--ink2)"},
+                ].filter(Boolean).map((c,i)=>(
+                  <div key={i} style={{padding:"10px 16px",borderRadius:10,background:"var(--surface2)",border:"1px solid var(--border)",minWidth:110}}>
+                    <div style={{fontSize:".68rem",color:"var(--ink2)",marginBottom:4}}>{c.lbl}</div>
+                    <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,fontSize:".95rem",color:c.col}}>{c.val}</div>
+                  </div>
+                ))}
+              </div>
+              {kundenData.list.length>0 && (
+                <div>
+                  <div style={{fontSize:".72rem",color:"var(--ink2)",marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Top Kunden — {KUNDEN_PERIODS.find(p=>p.key===kundenPeriod)?.label}</div>
+                  {kundenData.list.slice(0,5).map((k,i)=>{
+                    const maxU = kundenData.list[0].umsatz||1;
+                    return (
+                      <div key={i} style={{marginBottom:8}}>
+                        <div style={{display:"flex",justifyContent:"space-between",fontSize:".8rem",marginBottom:3}}>
+                          <span style={{color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"60%"}}>{k.name}</span>
+                          <span style={{fontFamily:"JetBrains Mono,monospace",color:"var(--accent)",fontWeight:600,flexShrink:0}}>{fmtEur(k.umsatz)}</span>
+                        </div>
+                        <div style={{height:4,background:"rgba(255,255,255,.06)",borderRadius:99}}>
+                          <div style={{height:"100%",borderRadius:99,background:`rgba(198,255,60,${0.8-i*0.1})`,width:`${k.umsatz/maxU*100}%`,transition:"width .5s ease"}}/>
+                        </div>
+                        <div style={{fontSize:".68rem",color:"var(--ink2)",marginTop:2}}>{k.anzahl} Rechnung{k.anzahl!==1?"en":""}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {kundenData.list.length===0 && (
+                <div style={{color:"var(--ink2)",fontSize:".82rem",padding:"8px 0"}}>Keine Rechnungen im gewählten Zeitraum.</div>
+              )}
+            </div>
+          ) : (
+            <div style={{color:"var(--ink2)",fontSize:".82rem",padding:"8px 0"}}>
+              Kundendaten werden aus Rechnungen berechnet. Erstelle Ausgangsrechnungen, um diese Auswertung zu sehen.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Top-Kunden (B2B, YTD bar chart) ─── */}
+      {has("top_kunden") && (
+        <div className="ac-card" style={{marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Top-Kunden {new Date().getFullYear()}</div>
+            <span style={{fontSize:".75rem",color:"var(--ink2)"}}>nach Umsatz (netto)</span>
+          </div>
+          {topKunden.length>0 ? (
+            <ResponsiveContainer width="100%" height={topKunden.length*38+16} aria-label="Top-Kunden nach Umsatz">
+              <BarChart data={topKunden} layout="vertical" margin={{top:0,right:72,left:0,bottom:0}}>
+                <XAxis type="number" hide/>
+                <YAxis type="category" dataKey="name" tick={{fill:"#9b9890",fontSize:11}} axisLine={false} tickLine={false} width={140}/>
+                <Tooltip
+                  cursor={{fill:"rgba(255,255,255,.03)"}}
+                  formatter={v=>[fmtEur(v),"Umsatz"]}
+                  contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
+                />
+                <Bar dataKey="umsatz" radius={[0,4,4,0]} animationDuration={700}
+                  label={({x,y,width,height,value})=>(
+                    <text x={x+width+6} y={y+height/2+1} fill="var(--ink2)" fontSize={10} dominantBaseline="middle" fontFamily="JetBrains Mono,monospace">
+                      {value>=1000?`${(value/1000).toFixed(1)}k`:fmtEur(value)}
+                    </text>
+                  )}>
+                  {topKunden.map((_,i)=><Cell key={i} fill={`rgba(198,255,60,${0.85-i*0.08})`}/>)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{color:"var(--ink2)",fontSize:".82rem",padding:"12px 0"}}>
+              Keine Rechnungsdaten — Top-Kunden werden aus Ausgangsrechnungen berechnet.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ─── Umsatzziel ─── */}
       {has("umsatzziel") && (
         <div className="ac-card" style={{marginBottom:16}}>
@@ -1121,6 +1357,130 @@ function OverviewTab({ onNavigate, onUpload }) {
         </div>
       )}
 
+      {/* ─── Gewinn/Verlust-Verlauf ─── */}
+      {has("gewinn_verlauf") && gewinnVerlauf.length>0 && (
+        <div className="ac-card" style={{marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Monatlicher Gewinn / Verlust</div>
+            <div style={{display:"flex",gap:12,fontSize:".75rem"}}>
+              <span style={{display:"flex",alignItems:"center",gap:5,color:"var(--ink2)"}}><div style={{width:10,height:10,borderRadius:2,background:"var(--accent)"}}/> Gewinn</span>
+              <span style={{display:"flex",alignItems:"center",gap:5,color:"var(--ink2)"}}><div style={{width:10,height:10,borderRadius:2,background:"var(--a3)"}}/> Verlust</span>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200} aria-label="Monatlicher Gewinn und Verlust">
+            <BarChart data={gewinnVerlauf} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="25%">
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+              <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
+                tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v>=0?v:`-${Math.abs(v)>=1000?(Math.abs(v)/1000).toFixed(0)+"k":Math.abs(v)}`} width={40}/>
+              <ReferenceLine y={0} stroke="rgba(239,237,231,.15)" strokeWidth={1}/>
+              <Tooltip
+                cursor={{fill:"rgba(255,255,255,.03)"}}
+                content={({active,payload,label})=>{
+                  if(!active||!payload?.length) return null;
+                  const v=payload[0].value;
+                  return (
+                    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
+                      <div style={{color:"var(--ink2)",marginBottom:4,fontSize:".75rem"}}>{label}</div>
+                      <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:v>=0?"var(--accent)":"var(--a3)"}}>{v>=0?"▲ ":  "▼ "}{fmtEur(Math.abs(v))}</div>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="gewinn" radius={[3,3,0,0]} animationDuration={700} isAnimationActive={true}>
+                {gewinnVerlauf.map((d,i)=><Cell key={i} fill={d.gewinn>=0?"var(--accent)":"var(--a3)"} opacity={0.85}/>)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ─── Umsatzprognose + Ausgabentrend row ─── */}
+      {(has("umsatz_prognose")||has("ausgaben_trend")) && (
+        <div className={has("umsatz_prognose")&&has("ausgaben_trend")?"ac-grid-2":""} style={{marginBottom:16}}>
+
+          {has("umsatz_prognose") && umsatzPrognose && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Umsatzprognose</div>
+                <span style={{fontSize:".72rem",color:"var(--ink2)",padding:"2px 8px",borderRadius:20,background:"rgba(122,92,255,.12)",border:"1px solid rgba(122,92,255,.2)",color:"#a585ff"}}>Trendbasiert</span>
+              </div>
+              <ResponsiveContainer width="100%" height={200} aria-label="Umsatzprognose nächste 3 Monate">
+                <LineChart data={umsatzPrognose.data} margin={{top:4,right:4,left:0,bottom:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
+                    tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={36}/>
+                  {umsatzPrognose.pivot>0 && (
+                    <ReferenceLine x={umsatzPrognose.data[umsatzPrognose.pivot-1]?.name}
+                      stroke="rgba(239,237,231,.15)" strokeDasharray="4 4" label={{value:"Heute",fill:"rgba(155,152,144,.5)",fontSize:9,position:"top"}}/>
+                  )}
+                  <Tooltip
+                    content={({active,payload,label})=>{
+                      if(!active||!payload?.length) return null;
+                      const pts = payload.filter(p=>p.value!=null);
+                      return (
+                        <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
+                          <div style={{color:"var(--ink2)",marginBottom:4,fontSize:".75rem"}}>{label}</div>
+                          {pts.map((p,i)=><div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>{p.name==="Einnahmen"?"Ist":"Prognose"}: {fmtEur(p.value)}</div>)}
+                        </div>
+                      );
+                    }}
+                  />
+                  <Line type="monotone" dataKey="Einnahmen" stroke="#c6ff3c" strokeWidth={2}
+                    dot={{r:3,fill:"#c6ff3c",strokeWidth:0}} activeDot={{r:5}} connectNulls={false} animationDuration={600}/>
+                  <Line type="monotone" dataKey="prognose" stroke="#7a5cff" strokeWidth={2} strokeDasharray="5 4"
+                    dot={{r:3,fill:"#7a5cff",strokeWidth:0}} activeDot={{r:5}} connectNulls={false} animationDuration={700}/>
+                </LineChart>
+              </ResponsiveContainer>
+              <div style={{display:"flex",gap:14,justifyContent:"center",marginTop:8}}>
+                {[["Ist-Werte","#c6ff3c","solid"],["Prognose","#7a5cff","dashed"]].map(([l,col,dash])=>(
+                  <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:".73rem",color:"var(--ink2)"}}>
+                    <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke={col} strokeWidth="2" strokeDasharray={dash==="dashed"?"4 3":"0"}/></svg>
+                    {l}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {has("ausgaben_trend") && ausgabenTrend.length>0 && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Ausgabenentwicklung</div>
+                {ausgabenTrend.length>1 && (()=>{
+                  const first = ausgabenTrend[0].Ausgaben, last = ausgabenTrend[ausgabenTrend.length-1].Ausgaben;
+                  const pct = first>0?(last-first)/first*100:0;
+                  return <span style={{fontSize:".75rem",fontWeight:600,color:pct>5?"var(--a3)":pct<-5?"var(--accent)":"var(--ink2)"}}>{pct>0?"▲":"▼"} {Math.abs(pct).toFixed(0)} % (12M)</span>;
+                })()}
+              </div>
+              <ResponsiveContainer width="100%" height={200} aria-label="Ausgabenentwicklung mit Trendlinie">
+                <LineChart data={ausgabenTrend} margin={{top:4,right:4,left:0,bottom:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
+                    tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={36}/>
+                  <Tooltip formatter={(v,n)=>[fmtEur(v), n==="Trend"?"Trendlinie":"Ausgaben"]}
+                    contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
+                  <Line type="monotone" dataKey="Ausgaben" stroke="#7a5cff" strokeWidth={2}
+                    dot={{r:3,fill:"#7a5cff",strokeWidth:0}} activeDot={{r:5}} animationDuration={600}/>
+                  <Line type="monotone" dataKey="Trend" stroke="rgba(255,77,141,.5)" strokeWidth={1.5} strokeDasharray="4 3"
+                    dot={false} animationDuration={700}/>
+                </LineChart>
+              </ResponsiveContainer>
+              <div style={{display:"flex",gap:14,justifyContent:"center",marginTop:8}}>
+                {[["Ausgaben","#7a5cff","solid"],["Trendlinie","rgba(255,77,141,.7)","dashed"]].map(([l,col,dash])=>(
+                  <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:".73rem",color:"var(--ink2)"}}>
+                    <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke={col} strokeWidth="2" strokeDasharray={dash==="dashed"?"4 3":"0"}/></svg>
+                    {l}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ─── B2C: Wochenumsatz + Bon-Trend ─── */}
       {(has("wochen_umsatz")||has("bon_trend")) && (
         <div className={has("wochen_umsatz")&&has("bon_trend")?"ac-grid-2":""} style={{marginBottom:16}}>
@@ -1200,6 +1560,82 @@ function OverviewTab({ onNavigate, onUpload }) {
                   </LineChart>
                 </ResponsiveContainer>
               ) : <div className="ac-empty" style={{padding:24,fontSize:".82rem"}}>Noch nicht genug Daten für einen Trend</div>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Stornoquote + Zahlungsarten nach Tag ─── */}
+      {(has("stornoquote")||has("zahlungsarten_tag")) && (
+        <div className={has("stornoquote")&&has("zahlungsarten_tag")?"ac-grid-2":""} style={{marginBottom:16}}>
+
+          {has("stornoquote") && (
+            <div className="ac-card">
+              <div className="ac-section-title">Stornoquote diese Woche</div>
+              {stornoquoteData && stornoquoteData.total>0 ? (
+                <>
+                  <div style={{display:"flex",gap:12,marginBottom:14,flexWrap:"wrap"}}>
+                    {[
+                      {lbl:"Gesamt Bons",  val:stornoquoteData.total,     col:"var(--ink)"},
+                      {lbl:"Storniert",    val:stornoquoteData.storniert, col:"var(--a3)"},
+                      {lbl:"Stornoquote",  val:`${stornoquoteData.pct.toFixed(1)} %`, col:stornoquoteData.pct>5?"var(--a3)":"var(--accent)"},
+                    ].map((c,i)=>(
+                      <div key={i} style={{padding:"8px 14px",borderRadius:8,background:"var(--surface2)",border:"1px solid var(--border)"}}>
+                        <div style={{fontSize:".68rem",color:"var(--ink2)",marginBottom:3}}>{c.lbl}</div>
+                        <div style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:c.col}}>{c.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <ResponsiveContainer width="100%" height={130} aria-label="Stornoquote nach Wochentag">
+                    <BarChart data={stornoquoteData.byDay} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="28%" barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                      <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                      <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false} width={24} allowDecimals={false}/>
+                      <Tooltip
+                        cursor={{fill:"rgba(255,255,255,.03)"}}
+                        contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
+                      />
+                      <Bar dataKey="aktiv"     name="Aktiv"     fill="rgba(198,255,60,.5)"  radius={[3,3,0,0]} stackId="a" animationDuration={600}/>
+                      <Bar dataKey="storniert" name="Storniert" fill="var(--a3)" radius={[3,3,0,0]} stackId="a" animationDuration={700}/>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </>
+              ) : <div className="ac-empty" style={{padding:24,fontSize:".82rem"}}>Keine Kassenbons diese Woche</div>}
+            </div>
+          )}
+
+          {has("zahlungsarten_tag") && zahlungsartenTagData.zahlarten.length>0 && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Zahlungsarten nach Tag</div>
+              </div>
+              <ResponsiveContainer width="100%" height={180} aria-label="Zahlungsarten nach Wochentag">
+                <BarChart data={zahlungsartenTagData.data} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="28%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false}
+                    tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={32}/>
+                  <Tooltip
+                    cursor={{fill:"rgba(255,255,255,.03)"}}
+                    formatter={(v,n)=>[fmtEur(v), ZAHLART_LABELS[n]||n]}
+                    contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
+                  />
+                  {zahlungsartenTagData.zahlarten.map(z=>(
+                    <Bar key={z} dataKey={z} name={z} stackId="z"
+                      fill={ZAHLART_COLORS[z]||"#9b9890"}
+                      radius={zahlungsartenTagData.zahlarten.indexOf(z)===zahlungsartenTagData.zahlarten.length-1?[3,3,0,0]:[0,0,0,0]}
+                      animationDuration={600}/>
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center",marginTop:8}}>
+                {zahlungsartenTagData.zahlarten.map(z=>(
+                  <div key={z} style={{display:"flex",alignItems:"center",gap:5,fontSize:".73rem",color:"var(--ink2)"}}>
+                    <div style={{width:10,height:10,borderRadius:2,background:ZAHLART_COLORS[z]||"#9b9890"}}/>
+                    {ZAHLART_LABELS[z]||z}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
