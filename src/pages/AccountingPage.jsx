@@ -3,8 +3,10 @@ import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import {
-  AreaChart, Area, PieChart, Pie, Cell, Sector,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  PieChart, Pie, Cell, Sector,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 
 // ── Lazy-loaded sub-tab components (split into separate chunks, loaded on demand) ─
@@ -412,12 +414,18 @@ const WIDGET_META = {
   steuerruecklage:   { label:"Steuerrücklage",           desc:"Empfohlene Rücklage für Steuern (30 % des Gewinns)" },
   monatsumsatz:      { label:"Monatsumsatz lfd.",        desc:"Einnahmen diesen Monat vs. Vormonat" },
   deb_zahlungsziel:  { label:"Ø Zahlungsverzug",        desc:"Älteste offene Ausgangsrechnung in Tagen" },
+  jahresvgl:         { label:"Jahr-über-Jahr",           desc:"Einnahmen: aktuelles vs. letztes Jahr pro Monat" },
+  top_ausgaben:      { label:"Top Ausgabenposten",       desc:"Balkendiagramm der größten Kostenstellen" },
+  forderungsquote:   { label:"Forderungsquote",          desc:"Aufteilung: offen / überfällig / bezahlt (B2B)" },
+  wochen_umsatz:     { label:"Wochenumsatz",             desc:"Tagesumsatz der laufenden Woche (B2C)" },
+  bon_trend:         { label:"Ø Bonwert-Trend",          desc:"Durchschnittlicher Bonwert letzte 7 Tage (B2C)" },
+  umsatzziel:        { label:"Umsatzziel",               desc:"Jahresfortschritt in % deines Umsatzziels" },
 };
 
 const MODE_DEFAULTS = {
-  universal: ["cashflow","categories","recent","gewinnmarge","steuerruecklage","monatsumsatz"],
-  b2b:       ["ar","overdue","proposals","cashflow","categories","recent","gewinnmarge","deb_zahlungsziel"],
-  b2c:       ["today","kassenstand","payment_split","cashflow","recent"],
+  universal: ["cashflow","categories","recent","gewinnmarge","steuerruecklage","monatsumsatz","jahresvgl","top_ausgaben","umsatzziel"],
+  b2b:       ["ar","overdue","proposals","cashflow","recent","gewinnmarge","deb_zahlungsziel","jahresvgl","top_ausgaben","forderungsquote","umsatzziel"],
+  b2c:       ["today","kassenstand","payment_split","cashflow","recent","wochen_umsatz","bon_trend","top_ausgaben","umsatzziel"],
 };
 
 const ZAHLART_LABELS = { bar:"Bar", ec:"EC", kreditkarte:"Kreditkarte", gutschein:"Gutschein", sepa:"SEPA" };
@@ -437,6 +445,7 @@ function OverviewTab({ onNavigate, onUpload }) {
   const [dashError,   setDashError]   = useState(false);
   const [opos,        setOpos]        = useState(null);
   const [todayBons,   setTodayBons]   = useState([]);
+  const [weekBons,    setWeekBons]    = useState([]);
   const [kassenstand, setKassenstand] = useState(null);
   const [proposals,   setProposals]   = useState(null);
   const [periode,     setPeriode]     = useState("12");
@@ -445,6 +454,9 @@ function OverviewTab({ onNavigate, onUpload }) {
   const [showCustom,  setShowCustom]  = useState(false);
   const [mode,        setMode]        = useLStorage("nill_dash_mode", "universal");
   const [widgetPrefs, setWidgetPrefs] = useLStorage("nill_dash_widgets", {});
+  const [jahresZiel,  setJahresZiel]  = useLStorage("nill_jahres_ziel", 0);
+  const [editingZiel, setEditingZiel] = useState(false);
+  const [zielInput,   setZielInput]   = useState("");
 
   const activeWidgets = widgetPrefs[mode] ?? MODE_DEFAULTS[mode] ?? MODE_DEFAULTS.universal;
   const has = (id) => activeWidgets.includes(id);
@@ -458,6 +470,11 @@ function OverviewTab({ onNavigate, onUpload }) {
   };
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0,10), []);
+  const weekStartStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d.toISOString().slice(0,10);
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true); setDashError(false);
@@ -466,12 +483,14 @@ function OverviewTab({ onNavigate, onUpload }) {
     api.get("/api/v1/opos/summary").then(r => setOpos(r.data)).catch(() => {});
     api.get("/api/v1/kassenbon", { params:{ datum_von:todayStr, datum_bis:todayStr } })
       .then(r => setTodayBons((r.data||[]).filter(b => b.status !== "storniert"))).catch(() => {});
+    api.get("/api/v1/kassenbon", { params:{ datum_von:weekStartStr, datum_bis:todayStr } })
+      .then(r => setWeekBons((r.data||[]).filter(b => b.status !== "storniert"))).catch(() => {});
     api.get("/api/v1/kassenbuch")
       .then(r => { const rows=r.data||[]; if(rows.length) setKassenstand(rows[rows.length-1].kassenstand??null); })
       .catch(() => {});
     api.get("/api/v1/angebote")
       .then(r => setProposals((r.data||[]).filter(a => a.status==="gesendet").length)).catch(() => {});
-  }, [todayStr]);
+  }, [todayStr, weekStartStr]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -501,6 +520,63 @@ function OverviewTab({ onNavigate, onUpload }) {
   }, [todayBons]);
 
   const perioden = [{key:"3",label:"3M"},{key:"6",label:"6M"},{key:"12",label:"12M"},{key:"all",label:"Alle"}];
+
+  // ── New computed stats ──────────────────────────────────────────
+  const topAusgaben = useMemo(() =>
+    [...(dash?.ausgaben_kategorien||[])]
+      .sort((a,b) => b.betrag-a.betrag)
+      .slice(0,7)
+      .map(k => ({ name: k.kategorie.length>18?k.kategorie.slice(0,17)+"…":k.kategorie, value: k.betrag }))
+  ,[dash]);
+
+  const jahresVglData = useMemo(() => {
+    const mv = dash?.monatsverlauf||[];
+    const byYear = {};
+    for (const m of mv) {
+      const [yr, mo] = m.monat.split("-");
+      if (!byYear[yr]) byYear[yr] = {};
+      byYear[yr][mo] = { ein: m.einnahmen||0, aus: m.ausgaben||0 };
+    }
+    const years = Object.keys(byYear).sort();
+    if (years.length < 2) return null;
+    const [prev, curr] = years.slice(-2);
+    const MO = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+    const LBL = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+    const rows = MO.map((m,i) => ({
+      name: LBL[i],
+      [curr]: byYear[curr]?.[m]?.ein ?? 0,
+      [prev]: byYear[prev]?.[m]?.ein ?? 0,
+    })).filter(r => r[curr]>0 || r[prev]>0);
+    return rows.length ? { rows, curr, prev } : null;
+  }, [dash]);
+
+  const DAY_NAMES = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  const wochenData = useMemo(() => {
+    const map = {};
+    for (const b of weekBons) {
+      const d = new Date(b.datum || b.erstellt_am?.slice(0,10) || todayStr);
+      const idx = (d.getDay()+6)%7;
+      const key = DAY_NAMES[idx];
+      if (!map[key]) map[key] = { name:key, umsatz:0, bons:0 };
+      map[key].umsatz += (b.betrag_brutto||0);
+      map[key].bons   += 1;
+    }
+    return DAY_NAMES.map(d => map[d]||{name:d,umsatz:0,bons:0});
+  }, [weekBons, todayStr]);
+
+  const bonTrendData = useMemo(() => {
+    const map = {};
+    for (const b of weekBons) {
+      const day = b.datum || b.erstellt_am?.slice(0,10);
+      if (!day) continue;
+      if (!map[day]) map[day] = { day, gesamt:0, count:0 };
+      map[day].gesamt += (b.betrag_brutto||0);
+      map[day].count  += 1;
+    }
+    return Object.values(map)
+      .sort((a,b) => a.day.localeCompare(b.day))
+      .map(d => ({ name:d.day.slice(5), avg: d.count>0 ? d.gesamt/d.count : 0 }));
+  }, [weekBons]);
 
   if(loading) return <div role="status" aria-label="Dashboard wird geladen" className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Lade Dashboard…</div>;
   if(dashError) return (
@@ -845,6 +921,285 @@ function OverviewTab({ onNavigate, onUpload }) {
                   </div>
                 </>
               ) : <div className="ac-empty" style={{padding:40}}>Noch keine Daten</div>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Umsatzziel ─── */}
+      {has("umsatzziel") && (
+        <div className="ac-card" style={{marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Umsatzziel {new Date().getFullYear()}</div>
+            {!editingZiel ? (
+              <button onClick={() => { setZielInput(jahresZiel>0?String(jahresZiel):""); setEditingZiel(true); }}
+                style={{fontSize:".75rem",padding:"3px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--ink2)",cursor:"pointer"}}>
+                {jahresZiel>0?"Ziel ändern":"Ziel setzen"}
+              </button>
+            ) : (
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <input
+                  type="number" min="0" placeholder="Ziel in €"
+                  value={zielInput} onChange={e => setZielInput(e.target.value)}
+                  style={{width:120,padding:"4px 8px",borderRadius:6,border:"1px solid var(--accent)",background:"var(--surface2)",color:"var(--ink)",fontSize:".82rem",outline:"none"}}
+                  autoFocus onKeyDown={e => {
+                    if (e.key==="Enter") { setJahresZiel(parseFloat(zielInput)||0); setEditingZiel(false); }
+                    if (e.key==="Escape") setEditingZiel(false);
+                  }}
+                />
+                <button onClick={() => { setJahresZiel(parseFloat(zielInput)||0); setEditingZiel(false); }}
+                  style={{padding:"4px 10px",borderRadius:6,background:"var(--accent)",border:"none",color:"#000",fontSize:".78rem",cursor:"pointer",fontWeight:600}}>OK</button>
+                <button onClick={() => setEditingZiel(false)}
+                  style={{padding:"4px 8px",borderRadius:6,background:"transparent",border:"1px solid var(--border)",color:"var(--ink2)",fontSize:".78rem",cursor:"pointer"}}>✕</button>
+              </div>
+            )}
+          </div>
+          {jahresZiel > 0 ? (() => {
+            const pct = Math.min((dash.einnahmen||0) / jahresZiel * 100, 100);
+            const remaining = Math.max(jahresZiel - (dash.einnahmen||0), 0);
+            const monthsLeft = 12 - new Date().getMonth();
+            const needed = monthsLeft > 0 ? remaining / monthsLeft : 0;
+            return (
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,fontSize:".82rem"}}>
+                  <span style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:"var(--accent)",fontSize:"1.1rem"}}>{fmtEur(dash.einnahmen||0)}</span>
+                  <span style={{color:"var(--ink2)"}}>von {fmtEur(jahresZiel)}</span>
+                </div>
+                <div style={{height:10,background:"rgba(255,255,255,.06)",borderRadius:99,overflow:"hidden",marginBottom:8}}>
+                  <div style={{
+                    height:"100%",borderRadius:99,
+                    background: pct>=100 ? "var(--accent)" : pct>=70 ? "rgba(198,255,60,.7)" : pct>=40 ? "#7a5cff" : "var(--a3)",
+                    width:`${pct}%`,transition:"width .6s ease",
+                  }}/>
+                </div>
+                <div style={{display:"flex",gap:16,fontSize:".75rem",color:"var(--ink2)",flexWrap:"wrap"}}>
+                  <span style={{color:pct>=100?"var(--accent)":"var(--ink)",fontWeight:600}}>{pct.toFixed(1)} % erreicht</span>
+                  {pct < 100 && <span>Noch {fmtEur(remaining)} bis zum Ziel</span>}
+                  {pct < 100 && monthsLeft > 0 && <span>≈ {fmtEur(needed)} / Monat nötig ({monthsLeft} Monate verbleibend)</span>}
+                  {pct >= 100 && <span style={{color:"var(--accent)",fontWeight:600}}>Ziel erreicht!</span>}
+                </div>
+              </div>
+            );
+          })() : (
+            <div style={{color:"var(--ink2)",fontSize:".85rem",padding:"12px 0"}}>
+              Setze ein Jahresziel, um deinen Fortschritt zu verfolgen.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Jahr-über-Jahr ─── */}
+      {has("jahresvgl") && jahresVglData && (
+        <div className="ac-card" style={{marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+            <div className="ac-section-title" style={{marginBottom:0}}>Einnahmen Jahr-über-Jahr</div>
+            <div style={{display:"flex",gap:12,fontSize:".75rem"}}>
+              {[[jahresVglData.curr,"#c6ff3c"],[jahresVglData.prev,"rgba(155,152,144,.5)"]].map(([yr,col]) => (
+                <div key={yr} style={{display:"flex",alignItems:"center",gap:5,color:"var(--ink2)"}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:col,flexShrink:0}}/>
+                  {yr}
+                </div>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200} aria-label="Einnahmen Jahresvergleich">
+            <BarChart data={jahresVglData.rows} margin={{top:4,right:4,left:0,bottom:0}} barGap={2} barCategoryGap="28%">
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+              <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={36}/>
+              <Tooltip
+                cursor={{fill:"rgba(255,255,255,.03)"}}
+                content={({active,payload,label}) => {
+                  if (!active||!payload?.length) return null;
+                  return (
+                    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
+                      <div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>
+                      {payload.map((p,i) => <div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>{p.dataKey}: {fmtEur(p.value)}</div>)}
+                      {payload.length===2 && payload[1].value>0 && (
+                        <div style={{marginTop:6,paddingTop:6,borderTop:"1px solid rgba(255,255,255,.08)",color:"var(--ink2)",fontSize:".72rem"}}>
+                          {payload[0].value >= payload[1].value
+                            ? `▲ +${(((payload[0].value-payload[1].value)/payload[1].value)*100).toFixed(1)} % ggü. Vorjahr`
+                            : `▼ ${(((payload[0].value-payload[1].value)/payload[1].value)*100).toFixed(1)} % ggü. Vorjahr`}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey={jahresVglData.curr} fill="#c6ff3c" radius={[3,3,0,0]} animationDuration={600}/>
+              <Bar dataKey={jahresVglData.prev} fill="rgba(155,152,144,.3)" radius={[3,3,0,0]} animationDuration={600} animationBegin={100}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ─── Top Ausgaben + Forderungsquote row ─── */}
+      {(has("top_ausgaben") || has("forderungsquote")) && (
+        <div className={has("top_ausgaben")&&has("forderungsquote")&&opos?"ac-grid-2":""} style={{marginBottom:16}}>
+
+          {has("top_ausgaben") && topAusgaben.length>0 && (
+            <div className="ac-card">
+              <div className="ac-section-title">Top Ausgabenposten</div>
+              <ResponsiveContainer width="100%" height={topAusgaben.length*36+20} aria-label="Top Ausgabenkategorien">
+                <BarChart data={topAusgaben} layout="vertical" margin={{top:0,right:60,left:0,bottom:0}}>
+                  <XAxis type="number" hide tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
+                  <YAxis type="category" dataKey="name" tick={{fill:"#9b9890",fontSize:11}} axisLine={false} tickLine={false} width={110}/>
+                  <Tooltip
+                    cursor={{fill:"rgba(255,255,255,.03)"}}
+                    formatter={v => [fmtEur(v), "Ausgaben"]}
+                    contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
+                  />
+                  <Bar dataKey="value" radius={[0,4,4,0]} animationDuration={700}
+                    label={({x,y,width,height,value}) => (
+                      <text x={x+width+6} y={y+height/2+1} fill="var(--ink2)" fontSize={10} dominantBaseline="middle" fontFamily="JetBrains Mono,monospace">
+                        {value>=1000?`${(value/1000).toFixed(1)}k`:value.toFixed(0)}
+                      </text>
+                    )}>
+                    {topAusgaben.map((_,i) => (
+                      <Cell key={i} fill={`rgba(198,255,60,${0.7 - i*0.08})`}/>
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {has("forderungsquote") && opos && (
+            <div className="ac-card">
+              <div className="ac-section-title">Forderungsstruktur</div>
+              {(() => {
+                const offen   = (opos.summe_offen||0) - (opos.davon_ueberfaellig_summe||0);
+                const faellig = opos.davon_ueberfaellig_summe||0;
+                const total   = opos.summe_offen||0;
+                if (total <= 0) return <div className="ac-empty" style={{padding:24}}>Keine offenen Forderungen</div>;
+                const offenPct   = total>0 ? offen/total*100 : 0;
+                const faelligPct = total>0 ? faellig/total*100 : 0;
+                const pieData = [
+                  {name:"Fällig (offen)",  value:offen,   color:"#c6ff3c"},
+                  {name:"Überfällig",      value:faellig, color:"#ff4d8d"},
+                ];
+                return (
+                  <>
+                    <div style={{display:"flex",justifyContent:"center"}}>
+                      <ResponsiveContainer width={180} height={160} aria-label="Forderungsstruktur">
+                        <PieChart>
+                          <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={44} outerRadius={70}
+                            paddingAngle={3} animationDuration={600}>
+                            {pieData.map((d,i) => <Cell key={i} fill={d.color}/>)}
+                          </Pie>
+                          <Tooltip formatter={v=>[fmtEur(v),"Betrag"]} contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}/>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
+                      {[
+                        {label:"Noch nicht fällig",val:offen,    pct:offenPct,   col:"#c6ff3c"},
+                        {label:"Überfällig",         val:faellig, pct:faelligPct, col:"#ff4d8d"},
+                      ].map(r => (
+                        <div key={r.label}>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
+                            <span style={{color:r.col,fontWeight:600}}>{r.label}</span>
+                            <span style={{fontFamily:"JetBrains Mono,monospace",color:"var(--ink)"}}>{fmtEur(r.val)}</span>
+                          </div>
+                          <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:99}}>
+                            <div style={{height:"100%",borderRadius:99,background:r.col,width:`${r.pct}%`,transition:"width .5s ease"}}/>
+                          </div>
+                          <div style={{fontSize:".7rem",color:"var(--ink2)",marginTop:2}}>{r.pct.toFixed(0)} %</div>
+                        </div>
+                      ))}
+                      {opos.aelteste_rechnung_tage > 0 && (
+                        <div style={{marginTop:4,padding:"8px 12px",borderRadius:8,background:"rgba(255,77,141,.06)",border:"1px solid rgba(255,77,141,.15)",fontSize:".78rem",color:"var(--a3)"}}>
+                          Älteste offene Forderung: <strong>{opos.aelteste_rechnung_tage} Tage</strong>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── B2C: Wochenumsatz + Bon-Trend ─── */}
+      {(has("wochen_umsatz")||has("bon_trend")) && (
+        <div className={has("wochen_umsatz")&&has("bon_trend")?"ac-grid-2":""} style={{marginBottom:16}}>
+
+          {has("wochen_umsatz") && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Umsatz diese Woche</div>
+                <span style={{fontSize:".75rem",color:"var(--ink2)"}}>
+                  {fmtEur(wochenData.reduce((s,d)=>s+d.umsatz,0))} gesamt
+                </span>
+              </div>
+              {wochenData.some(d=>d.umsatz>0) ? (
+                <ResponsiveContainer width="100%" height={160} aria-label="Umsatz pro Wochentag">
+                  <BarChart data={wochenData} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="30%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                    <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false}
+                      tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={32}/>
+                    <Tooltip
+                      cursor={{fill:"rgba(255,255,255,.03)"}}
+                      content={({active,payload,label}) => {
+                        if(!active||!payload?.length) return null;
+                        const d = payload[0];
+                        return (
+                          <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
+                            <div style={{color:"var(--ink2)",marginBottom:4,fontSize:".75rem"}}>{label}</div>
+                            <div style={{fontFamily:"JetBrains Mono,monospace",color:"var(--accent)",fontWeight:700}}>{fmtEur(d.value)}</div>
+                            {d.payload.bons>0 && <div style={{fontSize:".72rem",color:"var(--ink2)",marginTop:2}}>{d.payload.bons} Bon{d.payload.bons!==1?"s":""}</div>}
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="umsatz" radius={[4,4,0,0]} animationDuration={600}>
+                      {wochenData.map((d,i) => {
+                        const isToday = DAY_NAMES[(new Date().getDay()+6)%7]===d.name;
+                        return <Cell key={i} fill={isToday?"#c6ff3c":"rgba(198,255,60,.35)"}/>;
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <div className="ac-empty" style={{padding:24,fontSize:".82rem"}}>Noch kein Umsatz diese Woche</div>}
+            </div>
+          )}
+
+          {has("bon_trend") && (
+            <div className="ac-card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div className="ac-section-title" style={{marginBottom:0}}>Ø Bonwert letzte Tage</div>
+                {bonTrendData.length>0 && (
+                  <span style={{fontFamily:"JetBrains Mono,monospace",fontSize:".85rem",color:"var(--accent)",fontWeight:700}}>
+                    {fmtEur(bonTrendData.reduce((s,d)=>s+d.avg,0)/bonTrendData.length)}
+                  </span>
+                )}
+              </div>
+              {bonTrendData.length > 1 ? (
+                <ResponsiveContainer width="100%" height={160} aria-label="Durchschnittlicher Bonwert Trend">
+                  <LineChart data={bonTrendData} margin={{top:4,right:4,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                    <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false}
+                      tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={32}/>
+                    {bonTrendData.length>1 && (
+                      <ReferenceLine
+                        y={bonTrendData.reduce((s,d)=>s+d.avg,0)/bonTrendData.length}
+                        stroke="rgba(198,255,60,.3)" strokeDasharray="4 4"
+                      />
+                    )}
+                    <Tooltip
+                      formatter={v=>[fmtEur(v),"Ø Bonwert"]}
+                      contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
+                    />
+                    <Line type="monotone" dataKey="avg" stroke="#c6ff3c" strokeWidth={2}
+                      dot={{r:3,fill:"#c6ff3c",strokeWidth:0}}
+                      activeDot={{r:5,fill:"#c6ff3c",strokeWidth:0}}
+                      animationDuration={600}/>
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : <div className="ac-empty" style={{padding:24,fontSize:".82rem"}}>Noch nicht genug Daten für einen Trend</div>}
             </div>
           )}
         </div>
