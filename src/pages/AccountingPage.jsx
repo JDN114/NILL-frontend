@@ -61,26 +61,137 @@ const S = `
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;}
 
-  .ac-page{min-height:100vh;padding:28px 24px;max-width:1400px;margin:0 auto;}
-  .ac-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
-  .ac-logo{font-family:Fraunces,serif;font-size:1.6rem;font-weight:700;color:var(--ink);text-decoration:none;cursor:pointer;transition:color .15s;flex-shrink:0;}
+  /* ── App shell ──────────────────────────────────────────────── */
+  .ac-shell{
+    display:grid;
+    grid-template-columns:210px 1fr;
+    grid-template-rows:52px 1fr;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* ── Top bar ─────────────────────────────────────────────────*/
+  .ac-topbar{
+    grid-column:1/-1;grid-row:1;
+    display:flex;align-items:center;gap:12px;
+    padding:0 18px;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    z-index:10;
+  }
+  .ac-logo{font-family:Fraunces,serif;font-size:1.3rem;font-weight:700;color:var(--ink);text-decoration:none;cursor:pointer;transition:color .15s;flex-shrink:0;}
   .ac-logo:hover{color:var(--accent);}
   .ac-logo span{color:var(--accent);}
-  .ac-header-divider{width:1px;height:28px;background:var(--border);flex-shrink:0;}
-  .ac-title{font-family:Fraunces,serif;font-size:1.3rem;font-weight:600;color:var(--ink2);}
-  .ac-header-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .ac-topbar-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
+  .ac-topbar-title{font-size:.82rem;color:var(--ink2);font-weight:500;letter-spacing:.01em;}
+  .ac-topbar-right{margin-left:auto;display:flex;gap:7px;align-items:center;}
 
-  .ac-tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius);padding:4px;overflow-x:auto;overflow-y:hidden;margin-bottom:24px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
-  .ac-tabs::-webkit-scrollbar{display:none;}
-  .ac-tab{padding:7px 14px;border-radius:8px;border:none;background:transparent;color:var(--ink2);font-size:.82rem;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0;}
-  .ac-tab:hover{color:var(--ink);background:var(--surface2);}
-  .ac-tab.active{background:var(--accent);color:#000;font-weight:600;}
-  .ac-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  /* ── Sidebar ─────────────────────────────────────────────────*/
+  .ac-sidebar{
+    grid-column:1;grid-row:2;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    overflow-y:auto;overflow-x:hidden;
+    scrollbar-width:none;
+    padding:12px 8px 24px;
+    display:flex;flex-direction:column;
+  }
+  .ac-sidebar::-webkit-scrollbar{display:none;}
+
+  .ac-nav-standalone{
+    display:flex;align-items:center;gap:8px;
+    width:100%;padding:8px 10px;
+    border-radius:8px;border:none;
+    background:transparent;
+    color:var(--ink);font-size:.85rem;font-weight:500;
+    font-family:Inter,sans-serif;cursor:pointer;
+    text-align:left;transition:all .12s;
+    margin-bottom:6px;
+  }
+  .ac-nav-standalone:hover{background:rgba(255,255,255,.04);}
+  .ac-nav-standalone.active{background:rgba(198,255,60,.1);color:var(--accent);}
+
+  .ac-nav-group{margin-bottom:2px;}
+  .ac-nav-group-label{
+    font-size:.62rem;font-weight:600;
+    color:var(--ink2);
+    text-transform:uppercase;letter-spacing:.09em;
+    padding:14px 10px 5px;
+    display:block;
+  }
+  .ac-nav-item{
+    display:flex;align-items:center;gap:8px;
+    width:100%;padding:6px 10px 6px 14px;
+    border-radius:8px;border:none;
+    background:transparent;
+    color:var(--ink2);font-size:.82rem;
+    font-family:Inter,sans-serif;cursor:pointer;
+    text-align:left;transition:all .12s;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    min-height:32px;
+  }
+  .ac-nav-item:hover{color:var(--ink);background:rgba(255,255,255,.04);}
+  .ac-nav-item.active{
+    background:rgba(198,255,60,.1);
+    color:var(--accent);font-weight:600;
+  }
+  .ac-nav-item-dot{
+    width:5px;height:5px;border-radius:50%;
+    background:currentColor;opacity:.4;flex-shrink:0;
+  }
+  .ac-nav-item.active .ac-nav-item-dot{opacity:1;}
+  .ac-nav-item:focus-visible,.ac-nav-standalone:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .ac-sidebar-bottom{
+    margin-top:auto;padding-top:14px;
+    border-top:1px solid var(--border);
+    display:flex;flex-direction:column;gap:2px;
+  }
+
+  /* ── Content area ────────────────────────────────────────────*/
+  .ac-content{
+    grid-column:2;grid-row:2;
+    overflow-y:auto;
+    padding:28px 28px;
+  }
+
   .ac-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .ac-skip-link{position:absolute;top:-48px;left:16px;background:var(--accent);color:#000;padding:6px 14px;border-radius:0 0 8px 8px;font-size:.85rem;font-weight:600;z-index:10000;text-decoration:none;transition:top .15s;}
   .ac-skip-link:focus{top:0;outline:2px solid #000;outline-offset:2px;}
-  .ac-tab-soon{opacity:.5;}
-  .ac-tab-soon:hover{opacity:.7;}
+
+  /* ── Mobile ──────────────────────────────────────────────────*/
+  @media(max-width:768px){
+    .ac-shell{
+      grid-template-columns:1fr;
+      grid-template-rows:50px auto 1fr;
+      height:100dvh;
+    }
+    .ac-topbar{grid-column:1;padding:0 14px;}
+    .ac-topbar-title{display:none;}
+    .ac-topbar-sep{display:none;}
+    .ac-sidebar{
+      grid-column:1;grid-row:2;
+      flex-direction:row;flex-wrap:nowrap;
+      overflow-x:auto;overflow-y:hidden;
+      padding:6px 8px;gap:2px;
+      border-right:none;border-bottom:1px solid var(--border);
+      height:auto;
+    }
+    .ac-sidebar-bottom{
+      margin-top:0;padding-top:0;border-top:none;
+      flex-direction:row;gap:2px;
+    }
+    .ac-nav-group{display:contents;}
+    .ac-nav-group-label{display:none;}
+    .ac-nav-standalone,.ac-nav-item{
+      flex-shrink:0;
+      padding:5px 12px;font-size:.78rem;
+      min-height:30px;
+    }
+    .ac-nav-item{padding-left:12px;}
+    .ac-nav-item-dot{display:none;}
+    .ac-content{grid-column:1;grid-row:3;padding:16px 14px;}
+  }
 
   .ac-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
   .ac-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px;}
@@ -1404,20 +1515,60 @@ const KasseGruppe = React.memo(function KasseGruppe({ refreshKey }) {
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const ALL_TABS = [
-  {id:"overview",       label:"Übersicht",          modes:["einfach","doppelt"]},
-  {id:"hilfe",          label:"❓ Hilfe",             modes:["einfach","doppelt"]},
-  {id:"rechnungen",     label:"Rechnungen",         modes:["einfach","doppelt"]},
-  {id:"posten",         label:"Posten & Mahnwesen", modes:["einfach","doppelt"]},
-  {id:"planung",        label:"Planung",            modes:["einfach","doppelt"]},
-  {id:"steuern",        label:"Steuern",            modes:["einfach","doppelt"]},
-  {id:"buchhaltung",    label:"Buchführung",        modes:["doppelt"]},
-  {id:"belege",         label:"Belege",             modes:["einfach","doppelt"]},
-  {id:"partner",        label:"Geschäftspartner",   modes:["einfach","doppelt"]},
-  {id:"bank",           label:"Bank",               modes:["doppelt"]},
-  {id:"kasse",          label:"Kasse / POS",        modes:["einfach","doppelt"]},
-  {id:"berichte",       label:"Berichte & Export",  modes:["einfach","doppelt"]},
-  {id:"import",         label:"Import",             modes:["einfach","doppelt"]},
-  {id:"lohnsteuer",     label:"Lohnsteuer",         modes:["doppelt"]},
+  {id:"overview",       label:"Übersicht",     modes:["einfach","doppelt"]},
+  {id:"rechnungen",     label:"Rechnungen",    modes:["einfach","doppelt"]},
+  {id:"posten",         label:"Mahnwesen",     modes:["einfach","doppelt"]},
+  {id:"planung",        label:"Planung",       modes:["einfach","doppelt"]},
+  {id:"steuern",        label:"Steuern",       modes:["einfach","doppelt"]},
+  {id:"buchhaltung",    label:"Buchführung",   modes:["doppelt"]},
+  {id:"belege",         label:"Belege",        modes:["einfach","doppelt"]},
+  {id:"partner",        label:"Partner",       modes:["einfach","doppelt"]},
+  {id:"bank",           label:"Bank",          modes:["doppelt"]},
+  {id:"kasse",          label:"Kasse",         modes:["einfach","doppelt"]},
+  {id:"berichte",       label:"Berichte",      modes:["einfach","doppelt"]},
+  {id:"import",         label:"Import",        modes:["einfach","doppelt"]},
+  {id:"lohnsteuer",     label:"Lohnsteuer",    modes:["doppelt"]},
+  {id:"hilfe",          label:"Hilfe",         modes:["einfach","doppelt"]},
+];
+
+const NAV_GROUPS = [
+  {
+    id:"grp-verkauf", label:"Verkauf",
+    items:[
+      {id:"rechnungen", label:"Rechnungen", modes:["einfach","doppelt"]},
+      {id:"posten",     label:"Mahnwesen",  modes:["einfach","doppelt"]},
+      {id:"partner",    label:"Partner",    modes:["einfach","doppelt"]},
+    ],
+  },
+  {
+    id:"grp-buchh", label:"Buchhaltung",
+    items:[
+      {id:"buchhaltung", label:"Buchführung", modes:["doppelt"]},
+      {id:"belege",      label:"Belege",      modes:["einfach","doppelt"]},
+      {id:"bank",        label:"Bank",        modes:["doppelt"]},
+      {id:"import",      label:"Import",      modes:["einfach","doppelt"]},
+    ],
+  },
+  {
+    id:"grp-controlling", label:"Controlling",
+    items:[
+      {id:"planung",  label:"Planung",  modes:["einfach","doppelt"]},
+      {id:"steuern",  label:"Steuern",  modes:["einfach","doppelt"]},
+      {id:"berichte", label:"Berichte", modes:["einfach","doppelt"]},
+    ],
+  },
+  {
+    id:"grp-kasse", label:"Kasse",
+    items:[
+      {id:"kasse", label:"Kasse", modes:["einfach","doppelt"]},
+    ],
+  },
+  {
+    id:"grp-personal", label:"Personal",
+    items:[
+      {id:"lohnsteuer", label:"Lohnsteuer", modes:["doppelt"]},
+    ],
+  },
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -1431,11 +1582,6 @@ export default function AccountingPage() {
   const [accountingMode, setAccountingMode] = useState(
     () => localStorage.getItem("nill_accounting_mode") || "einfach"
   );
-  const TABS = useMemo(
-    () => ALL_TABS.filter(t => t.modes.includes(accountingMode)),
-    [accountingMode]
-  );
-
   useEffect(() => {
     if (!localStorage.getItem("nill_onboarding_done")) {
       setShowOnboarding(true);
@@ -1450,17 +1596,13 @@ export default function AccountingPage() {
   }, []);
 
   useEffect(() => {
-    const tabLabel = TABS.find(t => t.id === tab)?.label?.replace(/^❓\s*/, "") || "Buchhaltung";
+    const tabLabel = ALL_TABS.find(t => t.id === tab)?.label || "Buchhaltung";
     document.title = `${tabLabel} – NILL Buchhaltung`;
     return () => { document.title = "NILL"; };
-  }, [tab, TABS]);
+  }, [tab]);
 
   const goTo = useCallback((tabId) => setTab(tabId), []);
   const openUpload = useCallback(() => setUploadOpen(true), []);
-
-  const goToDashboard = () => {
-    window.location.href = "/dashboard";
-  };
 
   const renderedTab = useMemo(() => {
     switch(tab) {
@@ -1487,54 +1629,88 @@ export default function AccountingPage() {
   return (
     <>
       <style>{S}</style>
-      <div className="ac-page">
+      <div className="ac-shell">
         <a href="#ac-main-content" className="ac-skip-link">Zum Hauptinhalt springen</a>
 
-        <div className="ac-header">
-          <a className="ac-logo" href="/dashboard" title="Zurück zum Dashboard">
-            NILL<span>.</span>
-          </a>
-          <div className="ac-header-divider"/>
-          <span className="ac-title">Buchhaltung</span>
-          <div className="ac-header-right">
-            {/* H — GoBD-Badge */}
-            <div style={{
-              display:"flex",alignItems:"center",gap:5,padding:"4px 10px",
-              borderRadius:20,background:"rgba(198,255,60,.1)",border:"1px solid rgba(198,255,60,.25)",
-              fontSize:".72rem",color:"var(--accent)",fontWeight:600,cursor:"default",
-            }} title="NILL entspricht den GoBD-Anforderungen (§147 AO, BMF-Schreiben 2019)">
-              GoBD-konform
+        {/* ── Top bar ── */}
+        <header className="ac-topbar">
+          <a className="ac-logo" href="/dashboard" title="Zurück zum Dashboard">NILL<span>.</span></a>
+          <div className="ac-topbar-sep"/>
+          <span className="ac-topbar-title">Buchhaltung</span>
+          <div className="ac-topbar-right">
+            <div style={{display:"flex",background:"rgba(255,255,255,.04)",border:"1px solid var(--border)",borderRadius:7,overflow:"hidden"}}>
+              {["einfach","doppelt"].map(m => (
+                <button key={m}
+                  onClick={() => { setAccountingMode(m); localStorage.setItem("nill_accounting_mode",m); setTab("overview"); }}
+                  style={{
+                    padding:"4px 11px",border:"none",cursor:"pointer",
+                    fontFamily:"Inter,sans-serif",fontSize:".73rem",fontWeight:500,
+                    background:accountingMode===m?"rgba(198,255,60,.15)":"transparent",
+                    color:accountingMode===m?"var(--accent)":"var(--ink2)",
+                    transition:"all .15s",
+                  }}
+                  title={m==="einfach"?"Einnahmen-Überschuss-Rechnung (§4 Abs.3 EStG)":"Doppelte Buchführung nach HGB (§238 HGB)"}
+                >{m.charAt(0).toUpperCase()+m.slice(1)}</button>
+              ))}
             </div>
+            <span title="NILL entspricht den GoBD-Anforderungen" style={{padding:"2px 8px",borderRadius:20,background:"rgba(198,255,60,.08)",border:"1px solid rgba(198,255,60,.18)",fontSize:".68rem",color:"var(--accent)",fontWeight:600,cursor:"default"}}>GoBD</span>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup</button>
-            <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={()=>setTab("hilfe")}>Hilfe</button>
-            <button className="ac-btn ac-btn-primary" onClick={openUpload}>+ Beleg</button>
+            <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={openUpload}>+ Beleg</button>
           </div>
-        </div>
+        </header>
 
-        <nav aria-label="Buchhaltungs-Navigation">
-        <div className="ac-tabs" role="tablist">
-          {TABS.map(t => (
+        {/* ── Sidebar ── */}
+        <nav className="ac-sidebar" aria-label="Buchhaltungs-Navigation">
+          {/* Übersicht — standalone */}
+          <button
+            className={`ac-nav-standalone${tab==="overview"?" active":""}`}
+            onClick={()=>setTab("overview")}
+            aria-current={tab==="overview"?"page":undefined}
+          >
+            <span aria-hidden="true" style={{fontSize:".8rem",opacity:tab==="overview"?1:.5}}>◧</span>
+            Übersicht
+          </button>
+
+          {/* Groups */}
+          {NAV_GROUPS.map(grp => {
+            const visible = grp.items.filter(it => it.modes.includes(accountingMode));
+            if (!visible.length) return null;
+            return (
+              <div key={grp.id} className="ac-nav-group">
+                <span className="ac-nav-group-label">{grp.label}</span>
+                {visible.map(it => (
+                  <button
+                    key={it.id}
+                    className={`ac-nav-item${tab===it.id?" active":""}`}
+                    onClick={()=>setTab(it.id)}
+                    aria-current={tab===it.id?"page":undefined}
+                  >
+                    <span aria-hidden="true" className="ac-nav-item-dot"/>
+                    {it.label}
+                    {it.id==="rechnungen" && !localStorage.getItem("nill_first_invoice") && (
+                      <span aria-hidden="true" style={{marginLeft:"auto",fontSize:"9px",background:"var(--accent)",color:"var(--surface)",borderRadius:20,padding:"1px 6px",fontWeight:700,flexShrink:0}}>Start</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+
+          {/* Bottom: Hilfe */}
+          <div className="ac-sidebar-bottom">
             <button
-              key={t.id}
-              id={`ac-tab-${t.id}`}
-              role="tab"
-              aria-selected={tab===t.id}
-              aria-controls="ac-main-content"
-              className={`ac-tab${tab===t.id?" active":""}${t.comingSoon?" ac-tab-soon":""}`}
-              onClick={()=>setTab(t.id)}
-              title={t.comingSoon ? "Demnächst verfügbar" : undefined}
+              className={`ac-nav-item${tab==="hilfe"?" active":""}`}
+              onClick={()=>setTab("hilfe")}
+              aria-current={tab==="hilfe"?"page":undefined}
             >
-              {t.label}
-              {t.comingSoon && <span aria-hidden="true" style={{marginLeft:5,fontSize:"9px",opacity:.6,fontFamily:"monospace",verticalAlign:"middle"}}>soon</span>}
-              {t.id === "rechnungen" && !localStorage.getItem("nill_first_invoice") && (
-                <span aria-hidden="true" style={{marginLeft:4,fontSize:"9px",background:"var(--accent)",color:"var(--surface)",borderRadius:20,padding:"1px 5px",verticalAlign:"middle",fontWeight:700}}>Start</span>
-              )}
+              <span aria-hidden="true" className="ac-nav-item-dot"/>
+              Hilfe
             </button>
-          ))}
-        </div>
+          </div>
         </nav>
 
-        <main id="ac-main-content" role="tabpanel" aria-labelledby={`ac-tab-${tab}`}>
+        {/* ── Content ── */}
+        <main id="ac-main-content" className="ac-content" aria-live="polite">
         <Suspense fallback={<div className="ac-loading"><span className="ac-spinner" aria-hidden="true"/>Wird geladen…</div>}>
           {renderedTab}
         </Suspense>
