@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
@@ -66,6 +66,53 @@ const ArbeitsStationInventur   = React.lazy(() => import("./pages/station/Arbeit
 const Widerruf               = React.lazy(() => import("./pages/Widerruf.jsx"));
 const Barrierefreiheit       = React.lazy(() => import("./pages/Barrierefreiheit"));
 const CheckoutPage           = React.lazy(() => import("./pages/CheckoutPage.jsx"));
+
+function PushNotification() {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const handler = (e) => {
+      if (e.data?.type !== "PUSH") return;
+      const id = Date.now();
+      setItems(prev => [...prev.slice(-2), { id, title: e.data.title, body: e.data.body, url: e.data.url }]);
+      setTimeout(() => setItems(prev => prev.filter(x => x.id !== id)), 5000);
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, []);
+
+  if (!items.length) return null;
+  return (
+    <div style={{ position: "fixed", top: 20, right: 20, zIndex: 99999, display: "flex", flexDirection: "column", gap: 8, pointerEvents: "none" }}>
+      {items.map(n => (
+        <div key={n.id}
+          onClick={() => { window.location.href = n.url || "/"; }}
+          style={{
+            pointerEvents: "all", cursor: "pointer",
+            display: "flex", alignItems: "flex-start", gap: "0.65rem",
+            background: "rgba(18,18,16,0.92)", backdropFilter: "blur(16px)",
+            border: "1px solid rgba(212,175,55,0.2)",
+            borderRadius: 12, padding: "0.7rem 0.9rem",
+            width: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            animation: "nill-push-in 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+          }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+            background: "linear-gradient(135deg,#d4af37,#a07830)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 700, color: "#000",
+          }}>N</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#efeee7", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{n.title}</div>
+            <div style={{ fontSize: "0.72rem", color: "rgba(239,237,231,0.55)", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{n.body}</div>
+          </div>
+        </div>
+      ))}
+      <style>{`@keyframes nill-push-in{from{opacity:0;transform:translateX(24px) scale(0.96)}to{opacity:1;transform:translateX(0) scale(1)}}`}</style>
+    </div>
+  );
+}
 
 function PageLoader() {
   return (
@@ -136,6 +183,7 @@ function App() {
               <RouteTracker />
               <CookieBanner />
               <TrialBanner />
+              <PushNotification />
               <StationBackButton />
               <Suspense fallback={<PageLoader />}>
                 <Routes>

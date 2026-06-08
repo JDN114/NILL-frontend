@@ -1047,6 +1047,28 @@ export default function SettingsPage() {
     }
   };
 
+  const handlePushRefresh = async () => {
+    setPushLoading(true); setPushError(""); setPushTestMsg("");
+    try {
+      // Force-expire the browser subscription so the next subscribe() creates a
+      // brand-new endpoint token (avoids stale Apple/FCM tokens that silently drop).
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
+      // Remove all backend subscriptions for this user
+      await api.delete("/me/push/unsubscribe", {
+        data: { endpoint: existing?.toJSON?.()?.endpoint ?? "" },
+      }).catch(() => {});
+      setPushSubscribed(false);
+    } catch (e) {
+      setPushLoading(false);
+      return;
+    }
+    // Re-subscribe fresh — must call with loading already managed
+    setPushLoading(false);
+    await handlePushSubscribe();
+  };
+
   const handlePushTest = async () => {
     setPushTestLoading(true); setPushTestMsg("");
     try {
@@ -2286,22 +2308,39 @@ export default function SettingsPage() {
                       </div>
                     )}
 
-                    {/* Test button — only when subscribed */}
+                    {/* Test + Refresh buttons — only when subscribed */}
                     {pushSubscribed && (
                       <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
                         <button
                           onClick={handlePushTest}
-                          disabled={pushTestLoading}
+                          disabled={pushTestLoading || pushLoading}
                           style={{
                             padding: "0.35rem 0.85rem", borderRadius: 7,
                             fontSize: "0.75rem", fontWeight: 600,
                             background: "rgba(239,237,231,0.06)",
                             border: "1px solid rgba(239,237,231,0.12)",
-                            color: "rgba(239,237,231,0.6)", cursor: pushTestLoading ? "not-allowed" : "pointer",
-                            opacity: pushTestLoading ? 0.55 : 1,
+                            color: "rgba(239,237,231,0.6)",
+                            cursor: (pushTestLoading || pushLoading) ? "not-allowed" : "pointer",
+                            opacity: (pushTestLoading || pushLoading) ? 0.55 : 1,
                           }}
                         >
                           {pushTestLoading ? "Sende…" : "Testbenachrichtigung senden"}
+                        </button>
+                        <button
+                          onClick={handlePushRefresh}
+                          disabled={pushLoading || pushTestLoading}
+                          title="Erneuert das Push-Token — behebe Probleme mit ausbleibenden Benachrichtigungen"
+                          style={{
+                            padding: "0.35rem 0.85rem", borderRadius: 7,
+                            fontSize: "0.75rem", fontWeight: 600,
+                            background: "rgba(239,237,231,0.04)",
+                            border: "1px solid rgba(239,237,231,0.08)",
+                            color: "rgba(239,237,231,0.4)",
+                            cursor: (pushLoading || pushTestLoading) ? "not-allowed" : "pointer",
+                            opacity: (pushLoading || pushTestLoading) ? 0.45 : 1,
+                          }}
+                        >
+                          {pushLoading ? "Erneuere…" : "Token erneuern"}
                         </button>
                         {pushTestMsg && (
                           <span style={{ fontSize: "0.72rem", color: pushTestMsg.includes("Fehler") ? red : gold }}>
@@ -2311,16 +2350,18 @@ export default function SettingsPage() {
                       </div>
                     )}
 
-                    {/* macOS hint */}
+                    {/* macOS / Safari PWA hint */}
                     {pushSubscribed && /Mac|iPhone|iPad/.test(navigator.userAgent) && (
                       <div style={{
-                        marginTop: "0.6rem", fontSize: "0.7rem", lineHeight: 1.55,
-                        color: "rgba(239,237,231,0.35)",
-                        background: "rgba(239,237,231,0.04)",
+                        marginTop: "0.6rem", fontSize: "0.7rem", lineHeight: 1.6,
+                        color: "rgba(239,237,231,0.38)",
+                        background: "rgba(239,237,231,0.03)",
                         border: "1px solid rgba(239,237,231,0.08)",
-                        borderRadius: 6, padding: "0.45rem 0.65rem",
+                        borderRadius: 6, padding: "0.5rem 0.7rem",
                       }}>
-                        <strong style={{ color: "rgba(239,237,231,0.55)" }}>macOS:</strong> Stelle sicher, dass Safari unter <em>Systemeinstellungen → Mitteilungen</em> erlaubt ist — der Browser benötigt dort eine eigene Freigabe.
+                        <strong style={{ color: "rgba(239,237,231,0.58)" }}>macOS PWA:</strong>{" "}
+                        Öffne <em>Systemeinstellungen → Mitteilungen → NILL</em> und setze den Stil auf <strong style={{ color: "rgba(239,237,231,0.5)" }}>Banner</strong>.
+                        Erscheint NILL dort nicht, deinstalliere und reinstalliere die App aus Safari, klicke dann auf <em>Token erneuern</em>.
                       </div>
                     )}
 

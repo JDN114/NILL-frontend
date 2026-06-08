@@ -1,5 +1,5 @@
 // NILL PWA Service Worker — push notifications + offline caching
-const CACHE = "nill-v2";
+const CACHE = "nill-v3";
 
 // ── Install: cache essential shell ──────────────────────────────────────────
 self.addEventListener("install", (e) => {
