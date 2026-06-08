@@ -769,6 +769,7 @@ export default function SettingsPage() {
 
   // ── Notification prefs (localStorage + backend) ─────────────────────────
   const [notifs, setNotifs] = useState({
+    emails:    true,
     invoices:  true, tasks:  true,
     team:      true, system: true,
     marketing: false,
@@ -969,15 +970,23 @@ export default function SettingsPage() {
   const handlePushSubscribe = async () => {
     setPushLoading(true); setPushError("");
     try {
-      const keyRes = await api.get("/me/push/vapid-key");
-      const publicKey = keyRes.data.public_key;
-
-      const reg = await navigator.serviceWorker.ready;
+      // requestPermission must be the first await — macOS Safari drops the
+      // native dialog if any other async call precedes it (breaks user-gesture chain).
+      if (Notification.permission === "denied") {
+        setPushError("Benachrichtigungen sind blockiert. Bitte erlaube sie in den Browser-Einstellungen (Adressleiste → Site Settings → Notifications) und versuche es erneut.");
+        return;
+      }
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setPushError("Bitte erlaube Benachrichtigungen in deinem Browser.");
         return;
       }
+
+      const [keyRes, reg] = await Promise.all([
+        api.get("/me/push/vapid-key"),
+        navigator.serviceWorker.ready,
+      ]);
+      const publicKey = keyRes.data.public_key;
 
       const b64ToUint8 = (b64) => {
         const pad = b64.replace(/-/g, "+").replace(/_/g, "/");
@@ -2263,6 +2272,7 @@ export default function SettingsPage() {
                   <SectionHead title="Benachrichtigungstypen" />
 
                   {[
+                    { key: "emails",    icon: "✉", label: "E-Mails",                  desc: "Neue eingehende E-Mails (Gmail & IMAP)" },
                     { key: "invoices",  icon: "◎", label: "Rechnungen & Zahlungen",  desc: "Neue Rechnungen, Zahlungsein- und -ausgänge" },
                     { key: "tasks",     icon: "⌘", label: "Aufgaben & Fristen",       desc: "Fällige Aufgaben, ablaufende Fristen" },
                     { key: "team",      icon: "⬡", label: "Team & HR",                desc: "Urlaubsanträge, neue Mitglieder, Rollenänderungen" },
