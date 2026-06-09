@@ -3,6 +3,7 @@ import api from "../services/api";
 
 export default function DeleteAccountModal({ isOpen, onClose }) {
   const [password, setPassword] = useState("");
+  const [gobdConfirmed, setGobdConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,6 +31,30 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
         <h2 className="text-xl font-bold text-white">Account löschen</h2>
         <p className="text-gray-400 text-sm">Diese Aktion kann nicht rückgängig gemacht werden.</p>
 
+        {/* GoBD §147 AO retention warning */}
+        <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4 space-y-3">
+          <p className="text-yellow-400 text-sm font-semibold">
+            ⚠ Hinweis: Aufbewahrungspflicht nach §147 AO
+          </p>
+          <p className="text-yellow-300/80 text-xs leading-relaxed">
+            Buchhaltungsunterlagen (Rechnungen, Buchungen, Belege) unterliegen einer gesetzlichen
+            Aufbewahrungspflicht von 10 Jahren. Bitte lade vor der Löschung deinen GoBD-Export herunter.
+            Das Löschen dieser Daten vor Ablauf der Aufbewahrungsfrist kann eine Ordnungswidrigkeit darstellen.
+          </p>
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={gobdConfirmed}
+              onChange={(e) => setGobdConfirmed(e.target.checked)}
+              className="mt-0.5 accent-yellow-400 flex-shrink-0"
+            />
+            <span className="text-yellow-300/80 text-xs leading-relaxed">
+              Ich habe meinen GoBD-Export heruntergeladen oder bestätige, keine aufbewahrungspflichtigen
+              Buchhaltungsdaten zu haben.
+            </span>
+          </label>
+        </div>
+
         <input
           type="password"
           placeholder="Passwort eingeben"
@@ -46,8 +71,8 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
           </button>
           <button
             onClick={handleDelete}
-            disabled={loading || !password}
-            className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white transition"
+            disabled={loading || !password || !gobdConfirmed}
+            className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Löscht…" : "Löschen"}
           </button>

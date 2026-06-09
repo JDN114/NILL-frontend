@@ -43,6 +43,7 @@ export function AuthProvider({ children }) {
     try {
       await api.post("/auth/logout", {}, { withCredentials: true });
     } catch (_) {}
+    localStorage.removeItem("nill_imap_saved");
     setUser(null);
     setOrg(null);
   }, []);

@@ -932,6 +932,7 @@ export default function SettingsPage() {
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     try { await logoutUser(); } catch {}
+    localStorage.removeItem("nill_imap_saved");
     navigate("/login");
   };
 
@@ -1344,13 +1345,14 @@ export default function SettingsPage() {
 
         /* Mobile: sidebar becomes horizontal scrollable tab strip */
         @media (max-width: 700px) {
-          .sp-header { margin-bottom: 1rem; }
+          .sp-header { margin-bottom: 0.6rem; }
+          .sp-header h1 { font-size: clamp(1.2rem, 5vw, 1.5rem) !important; }
           .sp-body { flex-direction: column; gap: 0; }
           .sp-sidebar {
             width: 100%; position: static;
             flex-direction: row; overflow-x: auto; overflow-y: hidden;
-            padding-bottom: 0.5rem; margin-bottom: 1rem;
-            scrollbar-width: none; gap: 4px;
+            padding-bottom: 0.35rem; margin-bottom: 0.75rem;
+            scrollbar-width: none; gap: 2px;
           }
           .sp-sidebar::-webkit-scrollbar { display: none; }
           .sp-sidebar-btn {
@@ -1358,16 +1360,19 @@ export default function SettingsPage() {
             border-left: none !important;
             border-bottom: 2px solid transparent;
             white-space: nowrap;
+            padding: 0.4rem 0.65rem !important;
+            font-size: 0.77rem !important;
           }
+          .sp-sidebar-btn span { display: none; }
           .sp-sidebar-btn.active {
             border-left: none !important;
             border-bottom: 2px solid var(--nill-gold) !important;
           }
           .sp-sidebar-divider { display: none; }
-          .sp-content { gap: 1rem; }
+          .sp-content { gap: 0.75rem; }
         }
 
-        /* Responsive grids inside settings panels */
+        /* Compact settings rows on mobile */
         @media (max-width: 640px) {
           .sp-grid-2 { grid-template-columns: 1fr !important; }
           .sp-grid-3 { grid-template-columns: 1fr !important; }

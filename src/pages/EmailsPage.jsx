@@ -725,6 +725,16 @@ export default function EmailsPage() {
 
         {/* ── Liste ── */}
         <div className={`em-list-col ${activeEmail ? "em-list-col--pushed" : ""}`}>
+          {/* Mobile-only NILL logo bar */}
+          <div className="em-mobile-bar">
+            <a href="/dashboard" className="em-logo">
+              <span className="em-logo-mark">N</span>
+              <span className="em-logo-label">NILL</span>
+            </a>
+            <button onClick={() => setComposeOpen(true)} className="em-compose" style={{ margin: 0, padding: "0.4rem 0.75rem", fontSize: "0.75rem" }}>
+              {IC.compose} Neu
+            </button>
+          </div>
           <div className="em-list-header">
             <span className="em-list-title">
               {activeFolder

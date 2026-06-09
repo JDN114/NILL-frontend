@@ -569,7 +569,7 @@ export default function InvoiceList() {
   };
 
   const deleteInvoice = async (id) => {
-    if (!window.confirm("Rechnung wirklich löschen?")) return;
+    if (!window.confirm("Rechnung wirklich löschen? (Nur nicht-gebuchte Rechnungen dürfen gelöscht werden.)")) return;
     try {
       await api.delete(`/accounting/invoices/${id}`);
       setMsg({ type:"ok", text:"Rechnung gelöscht." });
@@ -736,9 +736,11 @@ export default function InvoiceList() {
                       >
                         {inv.is_booked ? "↺" : "Buchen"}
                       </button>
-                      <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => deleteInvoice(inv.id)}>
-                        ×
-                      </button>
+                      {!inv.is_booked && (
+                        <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => deleteInvoice(inv.id)}>
+                          ×
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

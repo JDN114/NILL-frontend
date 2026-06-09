@@ -10,18 +10,26 @@ export function getImapSavedConfigs() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; }
 }
 
-export function getImapSavedByEmail(email) {
-  return getImapSavedConfigs().find(s => s.email === email) ?? null;
+// Returns a 16-char hex prefix of SHA-256(email) — stable but non-reversible lookup key.
+async function _emailKey(email) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(email.toLowerCase()));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
 }
 
-function saveImapConfig(form) {
-  const list = getImapSavedConfigs().filter(s => s.email !== form.email);
+export async function getImapSavedByEmail(email) {
+  const key = await _emailKey(email);
+  return getImapSavedConfigs().find(s => s._key === key) ?? null;
+}
+
+async function saveImapConfig(form) {
+  const key = await _emailKey(form.email);
+  const list = getImapSavedConfigs().filter(s => s._key !== key);
   list.unshift({
-    email: form.email, display_name: form.display_name || "",
+    _key: key,
     imap_host: form.imap_host, imap_port: Number(form.imap_port) || 993,
     imap_use_ssl: !!form.imap_use_ssl, imap_starttls: !!form.imap_starttls,
     smtp_host: form.smtp_host || null, smtp_port: form.smtp_port ? Number(form.smtp_port) : null,
-    smtp_use_ssl: !!form.smtp_use_ssl, username: form.username || form.email,
+    smtp_use_ssl: !!form.smtp_use_ssl,
     savedAt: new Date().toISOString(),
   });
   try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 20))); } catch {}
@@ -254,45 +262,47 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
   useEffect(() => {
     if (isReauth || !form.email.includes("@")) return;
-    const saved = getImapSavedByEmail(form.email);
-    if (saved) {
-      setForm(prev => ({
-        ...prev,
-        display_name:  saved.display_name  || prev.display_name,
-        imap_host:     saved.imap_host     || prev.imap_host,
-        imap_port:     saved.imap_port     || prev.imap_port,
-        imap_use_ssl:  saved.imap_use_ssl  ?? prev.imap_use_ssl,
-        imap_starttls: saved.imap_starttls ?? prev.imap_starttls,
-        smtp_host:     saved.smtp_host     || prev.smtp_host,
-        smtp_port:     saved.smtp_port     || prev.smtp_port,
-        smtp_use_ssl:  saved.smtp_use_ssl  ?? prev.smtp_use_ssl,
-        username:      saved.username      || prev.username || prev.email,
-      }));
-      setSavedHint(true);
-      setShowAdvanced(false);
-      return;
-    }
-    if (detected) {
-      setForm(prev => ({
-        ...prev,
-        imap_host:    detected.imap,
-        imap_port:    detected.imapPort,
-        imap_use_ssl: detected.ssl,
-        smtp_host:    detected.smtp,
-        smtp_port:    detected.smtpPort,
-        smtp_use_ssl: detected.smtpSsl,
-        username:     prev.username || prev.email,
-      }));
-      setSavedHint(false);
-      setShowAdvanced(false);
-      return;
-    }
-    // Unknown provider — open server settings automatically
-    const dom = form.email.split("@")[1];
-    if (dom && dom.length > 2) {
-      setSavedHint(false);
-      setShowAdvanced(true);
-    }
+    let cancelled = false;
+    getImapSavedByEmail(form.email).then(saved => {
+      if (cancelled) return;
+      if (saved) {
+        setForm(prev => ({
+          ...prev,
+          imap_host:     saved.imap_host     || prev.imap_host,
+          imap_port:     saved.imap_port     || prev.imap_port,
+          imap_use_ssl:  saved.imap_use_ssl  ?? prev.imap_use_ssl,
+          imap_starttls: saved.imap_starttls ?? prev.imap_starttls,
+          smtp_host:     saved.smtp_host     || prev.smtp_host,
+          smtp_port:     saved.smtp_port     || prev.smtp_port,
+          smtp_use_ssl:  saved.smtp_use_ssl  ?? prev.smtp_use_ssl,
+        }));
+        setSavedHint(true);
+        setShowAdvanced(false);
+        return;
+      }
+      if (detected) {
+        setForm(prev => ({
+          ...prev,
+          imap_host:    detected.imap,
+          imap_port:    detected.imapPort,
+          imap_use_ssl: detected.ssl,
+          smtp_host:    detected.smtp,
+          smtp_port:    detected.smtpPort,
+          smtp_use_ssl: detected.smtpSsl,
+          username:     prev.username || prev.email,
+        }));
+        setSavedHint(false);
+        setShowAdvanced(false);
+        return;
+      }
+      // Unknown provider — open server settings automatically
+      const dom = form.email.split("@")[1];
+      if (dom && dom.length > 2) {
+        setSavedHint(false);
+        setShowAdvanced(true);
+      }
+    });
+    return () => { cancelled = true; };
   }, [form.email, isReauth]);
 
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
@@ -323,7 +333,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
         ? await imap.reauthAccount(account.id, payload)
         : await imap.connectImap(payload);
 
-      saveImapConfig({ ...form, imap_host: payload.imap_host });
+      await saveImapConfig({ ...form, imap_host: payload.imap_host });
       onConnected?.(result);
       onClose?.();
     } catch (err) {
@@ -598,6 +608,19 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
               {error}
             </div>
           )}
+
+          {/* BetrVG §87(1) Nr. 6 notice for company accounts */}
+          <div style={{
+            background: "rgba(96,165,250,0.07)",
+            border: "1px solid rgba(96,165,250,0.2)",
+            borderRadius: 10, padding: "0.75rem",
+            fontSize: "0.75rem", color: "rgba(147,197,253,0.85)", lineHeight: 1.55,
+          }}>
+            <span style={{ fontWeight: 700 }}>ℹ Hinweis für Unternehmenskonten:</span>{" "}
+            Wenn Sie ein Firmen-E-Mail-Konto verbinden und Mitarbeiter-E-Mails verarbeiten,
+            beachten Sie, dass die KI-gestützte Analyse ggf. der Mitbestimmung des Betriebsrats
+            gemäß §87 Abs.&nbsp;1 Nr.&nbsp;6 BetrVG bedarf.
+          </div>
 
           <div style={{ display: "flex", gap: "0.75rem", paddingTop: "0.25rem" }}>
             <button type="button" onClick={onClose} disabled={submitting} className="nim-btn-ghost">

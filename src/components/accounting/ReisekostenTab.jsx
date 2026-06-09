@@ -148,7 +148,8 @@ export default function ReisekostenTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const del = async (id) => {
+  const del = async (id, isBooked) => {
+    if (isBooked) return;
     if (!confirm("Reisekosten-Beleg löschen?")) return;
     try { await api.delete(`/api/v1/reisekosten/${id}`); load(); }
     catch (e) { setMsg({ type: "err", text: e.response?.data?.detail || "Fehler" }); }
@@ -222,7 +223,14 @@ export default function ReisekostenTab() {
                     <td>
                       <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
                         <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setModal(r)}>Bearb.</button>
-                        <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(r.id)}>Löschen</button>
+                        {r.buchungssatz_id ? (
+                          <span title="GoBD §147 AO: Gebuchter Beleg darf nicht gelöscht werden."
+                            style={{ fontSize: ".75rem", color: "var(--ink2)", padding: "2px 6px" }}>
+                            Gebucht
+                          </span>
+                        ) : (
+                          <button className="ac-btn ac-btn-danger ac-btn-sm" onClick={() => del(r.id, false)}>Löschen</button>
+                        )}
                       </div>
                     </td>
                   </tr>

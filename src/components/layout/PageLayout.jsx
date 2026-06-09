@@ -16,7 +16,7 @@ export default function PageLayout({ children, noScroll, footer }) {
           .nill-page-fixed { height: calc(100dvh - 64px) !important; }
         }
       `}</style>
-      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)]" style={fixedHeight ? {display:"flex",flexDirection:"column",height:"100vh",overflow:"hidden"} : {}}>
+      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)]" style={fixedHeight ? {display:"flex",flexDirection:"column",height:"100dvh",overflow:"hidden"} : {}}>
         <Navbar />
         {noPadding ? (
           <div className="nill-page-fixed" style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>

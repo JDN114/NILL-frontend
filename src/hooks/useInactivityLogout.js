@@ -7,6 +7,7 @@ const LS_KEY         = "nill_last_activity";
 
 async function doLogout() {
   try { await api.post("/auth/logout"); } catch {}
+  localStorage.removeItem("nill_imap_saved");
   window.location.href = "/login?reason=inactivity";
 }
 
