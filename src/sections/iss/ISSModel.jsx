@@ -193,6 +193,7 @@ function buildISSIntoGroup(rootGroup) {
   rootGroup.add(buildTruss(1.7, .65))
 
   /* SOLAR ARRAYS */
+  const solarWings = []
   ;[-1, 1].forEach(side => {
     const armGroup = new T.Group()
     const yokeBase = new T.Mesh(new T.CylinderGeometry(.13, .13, .35, 12), hullMatDark)
@@ -209,6 +210,7 @@ function buildISSIntoGroup(rootGroup) {
       const bracket = new T.Mesh(new T.BoxGeometry(.18, .25, .25), darkMat)
       bracket.position.x = wingX > 0 ? -2.3 : 2.3; wing.add(bracket)
       armGroup.add(wing)
+      solarWings.push(wing)
     })
     rootGroup.add(armGroup)
   })
@@ -321,7 +323,7 @@ function buildISSIntoGroup(rootGroup) {
     return h
   })
 
-  return { thrusterGlows, navLights, focusHalos, FOCUS_ANCHORS }
+  return { thrusterGlows, navLights, focusHalos, FOCUS_ANCHORS, solarWings, dishGroup }
 }
 
 /* ─── ISSModel — R3F component ─────────────────────────────────── */
@@ -343,7 +345,15 @@ export const ISSModel = forwardRef(function ISSModel({ thrusterProxy, focusProxy
     const t = clock.elapsedTime
     const intensity = thrusterProxy?.intensity ?? 0
     const activeFocus = focusProxy?.value ?? -1
-    const { thrusterGlows, navLights, focusHalos } = internalsRef.current
+    const { thrusterGlows, navLights, focusHalos, solarWings, dishGroup } = internalsRef.current
+
+    // Solar arrays slowly articulate as if tracking the sun
+    solarWings.forEach((w, i) => {
+      w.rotation.z = Math.sin(t * 0.06 + i * 1.4) * 0.22
+    })
+    // Comms dish sweeps in a slow tracking pattern
+    dishGroup.rotation.y = Math.sin(t * 0.05) * 0.30
+    dishGroup.rotation.x = Math.sin(t * 0.041 + 0.7) * 0.08
 
     thrusterGlows.forEach(({ outer, inner }, i) => {
       const pulse = Math.sin(t * 9.0 + i * 0.8) * 0.5 + 0.5

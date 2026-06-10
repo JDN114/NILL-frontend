@@ -239,6 +239,84 @@ function Starfield() {
   return <points geometry={geometry} material={material} />
 }
 
+/* ─── Orbital dust — drifting particles that sell the velocity ──── */
+function OrbitalDust() {
+  const { geometry, material } = useMemo(() => {
+    const N = 220
+    const pos = new Float32Array(N * 3)
+    const spd = new Float32Array(N)
+    const siz = new Float32Array(N)
+    for (let i = 0; i < N; i++) {
+      pos[i * 3]     = (Math.random() - .5) * 30
+      pos[i * 3 + 1] = (Math.random() - .5) * 18
+      pos[i * 3 + 2] = -6 + Math.random() * 14
+      spd[i] = .25 + Math.random() * .9
+      siz[i] = .3 + Math.random() * 1.0
+    }
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    geometry.setAttribute('aSpeed', new THREE.BufferAttribute(spd, 1))
+    geometry.setAttribute('starSize', new THREE.BufferAttribute(siz, 1))
+    const material = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 } },
+      vertexShader: /* glsl */`
+        attribute float aSpeed; attribute float starSize;
+        uniform float uTime;
+        varying float vA;
+        void main(){
+          vec3 p = position;
+          p.x = mod(p.x + uTime * aSpeed + 15., 30.) - 15.;
+          vA = smoothstep(15., 12., abs(p.x));
+          vec4 mv = modelViewMatrix * vec4(p, 1.);
+          gl_PointSize = starSize * (120. / -mv.z);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: /* glsl */`
+        varying float vA;
+        void main(){
+          vec2 uv = gl_PointCoord - .5;
+          float a = 1. - smoothstep(.15, .5, length(uv));
+          if(a < .01) discard;
+          gl_FragColor = vec4(vec3(.82, .88, 1.), a * vA * .26);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+    return { geometry, material }
+  }, [])
+
+  useFrame(({ clock }) => { material.uniforms.uTime.value = clock.elapsedTime })
+
+  return <points geometry={geometry} material={material} />
+}
+
+/* ─── Sun glare aligned with the key light ──────────────────────── */
+function SunGlare() {
+  const material = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = c.height = 256
+    const g = c.getContext('2d')
+    const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128)
+    gr.addColorStop(0,   'rgba(255,244,220,.95)')
+    gr.addColorStop(.18, 'rgba(255,210,150,.38)')
+    gr.addColorStop(.5,  'rgba(255,170,90,.08)')
+    gr.addColorStop(1,   'rgba(0,0,0,0)')
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 256)
+    return new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(c),
+      transparent: true, opacity: .5,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false, fog: false,
+    })
+  }, [])
+  useFrame(({ clock }) => {
+    material.opacity = .46 + Math.sin(clock.elapsedTime * .8) * .06
+  })
+  return <sprite material={material} position={[44.7, 22.3, 31.3]} scale={[30, 30, 1]} />
+}
+
 /* ─── Camera rig — reads the proxies each frame ─────────────────── */
 function CameraRig({ cameraProxy, lookProxy, fovProxy }) {
   const { camera } = useThree()
@@ -292,6 +370,8 @@ function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrus
 
       <Starfield />
       <DistantEarth />
+      <OrbitalDust />
+      <SunGlare />
 
       <Suspense fallback={null}>
         <ISSModel

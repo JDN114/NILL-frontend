@@ -95,7 +95,7 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
 
 /* TICKER */
-.ticker{border-block:1px solid var(--line);padding:22px 0;overflow:hidden;background:linear-gradient(to right,var(--bg-2),var(--bg) 50%,var(--bg-2))}
+.ticker{border-block:1px solid var(--line);padding:22px 0;overflow:hidden;background:linear-gradient(to right,var(--bg-2),var(--bg) 50%,var(--bg-2));-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
 .ticker-track{display:flex;gap:64px;white-space:nowrap;animation:ticker 40s linear infinite;font-family:var(--serif);font-size:clamp(24px,3vw,40px);letter-spacing:-.02em}
 .ticker-track span{display:inline-flex;align-items:center;gap:64px;color:var(--ink)}
 .ticker-track em{font-style:italic;color:var(--accent);font-variation-settings:"opsz" 144,"SOFT" 100}
@@ -107,9 +107,25 @@ section{position:relative;padding:160px 0}
 .section-head h2{max-width:16ch}
 .section-head .lead{max-width:36ch}
 @media(max-width:780px){.section-head{flex-direction:column;align-items:flex-start}}
-.reveal{opacity:0;transform:translateY(40px);transition:opacity 1s var(--ease-out),transform 1s var(--ease-out)}
-.reveal.in{opacity:1;transform:none}
+.reveal{opacity:0;transform:translateY(40px);filter:blur(10px);transition:opacity 1.1s var(--ease-out),transform 1.1s var(--ease-out),filter 1.1s var(--ease-out)}
+.reveal.in{opacity:1;transform:none;filter:blur(0)}
 .reveal-delay-1{transition-delay:.08s}
+.stagger>*{opacity:0}
+.stagger.in>*{opacity:1;animation:staggerIn .95s var(--ease-out) backwards}
+@keyframes staggerIn{from{opacity:0;transform:translateY(36px) scale(.985);filter:blur(8px)}}
+.stagger.in>*:nth-child(2){animation-delay:.09s}.stagger.in>*:nth-child(3){animation-delay:.18s}
+.stagger.in>*:nth-child(4){animation-delay:.27s}.stagger.in>*:nth-child(5){animation-delay:.36s}
+.stagger.in>*:nth-child(6){animation-delay:.45s}.stagger.in>*:nth-child(7){animation-delay:.54s}
+.stagger.in>*:nth-child(8){animation-delay:.63s}
+.section-head{position:relative}
+.section-head::after{content:"";position:absolute;left:0;right:0;bottom:-28px;height:1px;background:linear-gradient(90deg,var(--accent),rgba(198,255,60,.18) 38%,transparent 75%);transform:scaleX(0);transform-origin:0 50%;transition:transform 1.5s .25s var(--ease-out)}
+.section-head.in::after{transform:scaleX(1)}
+.scroll-progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:70;pointer-events:none;background:transparent}
+.scroll-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-4) 55%,var(--accent-2));transform:scaleX(0);transform-origin:0 50%;box-shadow:0 0 12px rgba(198,255,60,.5)}
+@media (prefers-reduced-motion:reduce){
+  .reveal,.stagger>*{opacity:1!important;transform:none!important;filter:none!important;transition:none!important;animation:none!important}
+  .hero h1 .word>span,.hero .lead,.hero-cta{transform:none!important;opacity:1!important;transition:none!important}
+}
 
 /* BENTO */
 .bento{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:200px;gap:16px}
@@ -243,6 +259,8 @@ section{position:relative;padding:160px 0}
 .faq summary::after{content:"+";font-family:var(--mono);font-size:28px;color:var(--accent);transition:transform .3s}
 .faq details[open] summary::after{transform:rotate(45deg)}
 .faq .a{padding:14px 0 4px;color:var(--ink-dim);max-width:70ch}
+.faq details[open] .a{animation:faqIn .55s var(--ease-out) both}
+@keyframes faqIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
 /* BIG CTA */
 .cta-big{position:relative;padding:180px 0;overflow:hidden;isolation:isolate}
@@ -319,6 +337,34 @@ function useReveal(threshold = 0.12) {
     return () => io.disconnect();
   }, []);
   return [ref, vis];
+}
+
+/* Generic scroll-reveal wrapper — stagger=true animates children in cascade */
+function Reveal({ className = '', stagger = false, children, ...rest }) {
+  const [ref, vis] = useReveal(0.08);
+  return (
+    <div ref={ref} className={`${stagger ? 'stagger' : 'reveal'}${vis ? ' in' : ''} ${className}`} {...rest}>
+      {children}
+    </div>
+  );
+}
+
+/* Page scroll progress bar under the nav */
+function ScrollProgress() {
+  const ref = useRef(null);
+  useEffect(() => {
+    let raf, cur = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const max = document.documentElement.scrollHeight - innerHeight;
+      const target = max > 0 ? window.scrollY / max : 0;
+      cur += (target - cur) * 0.12;
+      if (ref.current) ref.current.style.transform = `scaleX(${cur})`;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <div className="scroll-progress" aria-hidden="true"><span ref={ref}/></div>;
 }
 
 function useTilt(ref) {
@@ -586,8 +632,8 @@ const RING_FRAG = NOISE_LIB + `
 
 function buildScene(canvas) {
   const T = THREE;
-  const renderer = new T.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.0));
+  const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.setClearColor(0x02030a, 1);
 
   const scene = new T.Scene();
@@ -600,7 +646,9 @@ function buildScene(canvas) {
   const sp = new Float32Array(N * 3);
   const ss = new Float32Array(N);
   const sc = new Float32Array(N * 3);
+  const stw = new Float32Array(N);
   for (let i = 0; i < N; i++) {
+    stw[i] = Math.random() * Math.PI * 2;
     const r = 60 + Math.random() * 70, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
     sp[i*3]   = r * Math.sin(ph) * Math.cos(th);
     sp[i*3+1] = r * Math.sin(ph) * Math.sin(th);
@@ -615,10 +663,11 @@ function buildScene(canvas) {
   sGeo.setAttribute('position', new T.BufferAttribute(sp, 3));
   sGeo.setAttribute('starSize', new T.BufferAttribute(ss, 1));
   sGeo.setAttribute('color', new T.BufferAttribute(sc, 3));
+  sGeo.setAttribute('twinkle', new T.BufferAttribute(stw, 1));
   const starMat = new T.ShaderMaterial({
-    uniforms: {},
-    vertexShader: `attribute float starSize;attribute vec3 color;varying vec3 vC;void main(){vC=color;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader: `varying vec3 vC;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.25,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vC,a*.85);}`,
+    uniforms: { uTime: { value: 0 } },
+    vertexShader: `attribute float starSize;attribute vec3 color;attribute float twinkle;uniform float uTime;varying vec3 vC;varying float vTw;void main(){vC=color;vTw=.72+.28*sin(uTime*1.6+twinkle*7.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(.85+.3*sin(uTime*1.1+twinkle*5.))*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `varying vec3 vC;varying float vTw;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.25,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vC,a*.85*vTw);}`,
     transparent: true, depthWrite: false, blending: T.AdditiveBlending
   });
   const stars = new T.Points(sGeo, starMat);
@@ -738,6 +787,64 @@ function buildScene(canvas) {
     planets.push({mesh,pMat,atmo,atmoMat,ring,def:m});
   });
 
+  /* ASTEROID BELT — sparse dust ring between gas giant and moon orbit */
+  const AB = 700;
+  const abPos = new Float32Array(AB * 3);
+  const abSize = new Float32Array(AB);
+  const abTw = new Float32Array(AB);
+  for (let i = 0; i < AB; i++) {
+    const r = 5.42 + Math.random() * .42 + (Math.random() < .06 ? Math.random() * .2 : 0);
+    const a = Math.random() * Math.PI * 2;
+    abPos[i*3]   = Math.cos(a) * r;
+    abPos[i*3+1] = (Math.random() - .5) * .14;
+    abPos[i*3+2] = Math.sin(a) * r;
+    abSize[i] = .35 + Math.random() * 1.1;
+    abTw[i] = Math.random() * Math.PI * 2;
+  }
+  const abGeo = new T.BufferGeometry();
+  abGeo.setAttribute('position', new T.BufferAttribute(abPos, 3));
+  abGeo.setAttribute('starSize', new T.BufferAttribute(abSize, 1));
+  abGeo.setAttribute('twinkle', new T.BufferAttribute(abTw, 1));
+  const abMat = new T.ShaderMaterial({
+    uniforms: { uTime: { value: 0 } },
+    vertexShader: `attribute float starSize;attribute float twinkle;uniform float uTime;varying float vA;void main(){vA=.5+.5*sin(uTime*.9+twinkle*9.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(260./-mv.z);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `varying float vA;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.18,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vec3(.78,.74,.66),a*(.22+vA*.28));}`,
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending
+  });
+  const belt = new T.Points(abGeo, abMat);
+  system.add(belt);
+
+  /* COMET — eccentric orbit with particle trail */
+  const cometTex = mkGlowCanvas([[0,'rgba(225,250,255,1)'],[.25,'rgba(150,210,255,.6)'],[.6,'rgba(80,140,255,.12)'],[1,'rgba(0,0,0,0)']]);
+  const cometCore = new T.Sprite(new T.SpriteMaterial({ map: cometTex, transparent: true, opacity: .95, blending: T.AdditiveBlending, depthWrite: false }));
+  cometCore.scale.set(.55, .55, 1);
+  system.add(cometCore);
+  const TRAIL = 64;
+  const trailPos = new Float32Array(TRAIL * 3);
+  const trailAge = new Float32Array(TRAIL);
+  for (let i = 0; i < TRAIL; i++) trailAge[i] = i / TRAIL;
+  const trailGeo = new T.BufferGeometry();
+  trailGeo.setAttribute('position', new T.BufferAttribute(trailPos, 3).setUsage(T.DynamicDrawUsage));
+  trailGeo.setAttribute('age', new T.BufferAttribute(trailAge, 1));
+  const trailMat = new T.ShaderMaterial({
+    vertexShader: `attribute float age;varying float vA;void main(){vA=1.-age;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=(1.-age)*(95./-mv.z)+1.5;gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `varying float vA;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.1,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(mix(vec3(.35,.55,1.),vec3(.85,.95,1.),vA),a*vA*.6);}`,
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending
+  });
+  const cometTrail = new T.Points(trailGeo, trailMat);
+  system.add(cometTrail);
+  let cometTheta = Math.random() * Math.PI * 2;
+  const cometP = 3.4, cometE = .62;
+  const cometPos = new T.Vector3();
+
+  /* MOON of the gas giant */
+  const gasMoonMat = new T.ShaderMaterial({
+    uniforms: { uTime:{value:0}, uSunPos:{value:new T.Vector3()}, uAtmo:{value:new T.Color(.7,.7,.66)} },
+    vertexShader: PLANET_VERT, fragmentShader: mkPlanetFrag(SURF_MOON)
+  });
+  const gasMoon = new T.Mesh(new T.SphereGeometry(.085, 26, 18), gasMoonMat);
+  system.add(gasMoon);
+
   /* INTERACTION */
   let tmx=0,tmy=0,mx=0,my=0,scrollYv=0;
   const onPointer = e => { tmx=(e.clientX/innerWidth)-.5; tmy=(e.clientY/innerHeight)-.5; };
@@ -758,6 +865,7 @@ function buildScene(canvas) {
 
   /* LOOP */
   const start=performance.now(); let last=start, rafId;
+  let sScroll=0, trailInit=false;
   const animate = () => {
     rafId = requestAnimationFrame(animate);
     const now = performance.now();
@@ -765,17 +873,49 @@ function buildScene(canvas) {
     last = now;
     const t = (now-start)/1000;
     mx+=(tmx-mx)*.05; my+=(tmy-my)*.05;
-    system.rotation.y = t*.028+mx*.26;
-    system.rotation.x = -.55+my*.09-scrollYv*.16;
-    system.position.y = -scrollYv*.7;
+    sScroll+=(scrollYv-sScroll)*.06;
+    // Cinematic fly-in over the first ~2.8s
+    const ie = 1-Math.pow(1-Math.min(1,t/2.8),3);
+    camera.position.set(0, 1.8+(1-ie)*1.7, 11.0+(1-ie)*4.6);
+    camera.lookAt(0,0,0);
+    system.rotation.y = t*.028+mx*.26-(1-ie)*.65;
+    system.rotation.x = -.55+my*.09-sScroll*.16;
+    system.position.y = -sScroll*.7;
     sunMat.uniforms.uTime.value = t;
     sunCore.rotation.y = t*.07;
     sunCore.scale.setScalar(1+Math.sin(t*.9)*.018);
     corona1.material.opacity = .46+Math.sin(t*1.1)*.04;
     corona2.material.opacity = .22+Math.sin(t*.7+1.2)*.04;
+    corona1.material.rotation = t*.02;
+    corona2.material.rotation = -t*.015;
     flareSprite.material.opacity = .80+Math.sin(t*1.2)*.07;
     sunGroup.getWorldPosition(sunWorldPos);
     stars.rotation.y = t*.003;
+    starMat.uniforms.uTime.value = t;
+    abMat.uniforms.uTime.value = t;
+    belt.rotation.y = t*.014;
+    // Comet — Kepler-ish sweep, faster near perihelion
+    const cr = cometP/(1+cometE*Math.cos(cometTheta));
+    cometTheta += dt*1.35/(cr*cr);
+    cometPos.set(Math.cos(cometTheta)*cr, Math.sin(cometTheta)*cr*.16, Math.sin(cometTheta)*cr);
+    cometCore.position.copy(cometPos);
+    const cs=.3+1.1/cr; cometCore.scale.set(cs,cs,1);
+    if (!trailInit) {
+      trailInit = true;
+      for (let i=0;i<TRAIL;i++){trailPos[i*3]=cometPos.x;trailPos[i*3+1]=cometPos.y;trailPos[i*3+2]=cometPos.z;}
+    } else {
+      for (let i=TRAIL-1;i>0;i--){trailPos[i*3]=trailPos[(i-1)*3];trailPos[i*3+1]=trailPos[(i-1)*3+1];trailPos[i*3+2]=trailPos[(i-1)*3+2];}
+      trailPos[0]=cometPos.x;trailPos[1]=cometPos.y;trailPos[2]=cometPos.z;
+    }
+    trailGeo.attributes.position.needsUpdate = true;
+    // Moon around the gas giant
+    const gd=modules[3], ga=gd.phase+t*gd.spd;
+    const gx=Math.cos(ga)*gd.r, gy=Math.sin(ga*.55+gd.tilt*4.)*.22, gz=Math.sin(ga)*gd.r;
+    const ma=t*.85;
+    gasMoon.position.set(gx+Math.cos(ma)*1.18, gy+Math.sin(ma)*.26, gz+Math.sin(ma)*1.18);
+    gasMoon.rotation.y = t*.3;
+    gasMoonMat.uniforms.uTime.value = t;
+    gasMoonMat.uniforms.uSunPos.value.copy(sunWorldPos);
     for (const {mesh,pMat,atmo,atmoMat,ring,def} of planets) {
       const a=def.phase+t*def.spd;
       const px=Math.cos(a)*def.r, py=Math.sin(a*.55+def.tilt*4.)*.22, pz=Math.sin(a)*def.r;
@@ -902,7 +1042,7 @@ function Products({ onCTA }) {
           <div><span className="eyebrow">Module — 05 live · 01 in Entwicklung</span><h2>Sechs Module. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Eine</em> Intelligenz.</h2></div>
           <p className="lead">Jedes Modul steht für sich — doch gemeinsam werden sie zu einem Gehirn, das dein Unternehmen versteht.</p>
         </div>
-        <div className="bento reveal in">
+        <Reveal stagger className="bento">
           <TiltCard className="k1">
             <div className="viz" aria-hidden="true">
               <svg viewBox="0 0 600 380" preserveAspectRatio="none">
@@ -940,7 +1080,7 @@ function Products({ onCTA }) {
               <MagBtn className="btn btn-ghost" style={{padding:'10px 18px'}} onClick={e=>{e.preventDefault();onCTA('Frühzugang')}} href="#"><span>Frühzugang sichern</span><span className="arrow">→</span></MagBtn>
             </div>
           </TiltCard>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -1059,7 +1199,7 @@ function Stats() {
   return (
     <section style={{padding:'40px 0 120px'}}>
       <div className="wrap">
-        <div className={`stats reveal${vis?' in':''}`} ref={ref}>
+        <div className={`stats stagger${vis?' in':''}`} ref={ref}>
           <div className="stat"><div className="num"><em>3,5</em><span>×</span></div><div className="label">Schneller im Alltag</div></div>
           <div className="stat"><div className="num"><span ref={countRef}>{count}</span><em>%</em></div><div className="label">Weniger manuelle Arbeit</div></div>
           <div className="stat"><div className="num"><em>24</em><span>/</span><em>7</em></div><div className="label">KI im Einsatz</div></div>
@@ -1098,9 +1238,9 @@ function Pricing({ onCTA }) {
           <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Eins. Zwei. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Drei.</em></h2></div>
           <p className="lead">Transparent. Ohne versteckte Kosten. Monatlich kündbar.</p>
         </div>
-        <div className="pricing-grid reveal in">
+        <Reveal stagger className="pricing-grid">
           {PRICING_TIERS.map(t => <PricingCard key={t.tier} {...t} />)}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -1116,7 +1256,7 @@ function Sustainability({ onCTA }) {
           <div><span className="eyebrow">Verantwortung statt Fußnote</span><h2>Software, die <em>nicht heizt.</em></h2></div>
           <p className="lead">KI verbraucht Strom. Also nehmen wir es ernst: NILL läuft auf erneuerbaren Energien — und was nicht grün geht, wird <strong style={{color:'var(--ink)',fontWeight:500}}>transparent kompensiert</strong>.</p>
         </div>
-        <div className="nh-hero reveal in">
+        <Reveal stagger className="nh-hero">
           <div>
             <span className="eyebrow" style={{color:'var(--accent)'}}>Unser Anspruch</span>
             <h3 style={{marginTop:20,fontSize:'clamp(34px,4.4vw,64px)',letterSpacing:'-.02em',lineHeight:1.02}}>100&nbsp;% <em>erneuerbar</em> ·<br/>100&nbsp;% <em>kompensiert.</em></h3>
@@ -1129,24 +1269,24 @@ function Sustainability({ onCTA }) {
               <path d="M100 20 C 95 80, 80 130, 45 165" stroke="#0a0a10" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".55"/>
             </svg>
           </div>
-        </div>
-        <div className="nh-stats reveal in">
+        </Reveal>
+        <Reveal stagger className="nh-stats">
           {[['100 %','Rechenzentrum erneuerbar','Frankfurt — Stromversorgung aus erneuerbaren Energien.'],['<2 g','CO₂ pro KI-Anfrage','Effiziente Modelle, Caching, Batching — jede Operation wird gemessen.'],['105 %','Überkompensation','Wir kompensieren 5 % mehr als unser Fußabdruck.']].map(([val,lbl,txt])=>(
             <div key={lbl} className="nh-stat">
               <div className="val"><em>{val}</em></div>
               <span className="lbl">{lbl}</span><p>{txt}</p>
             </div>
           ))}
-        </div>
-        <div className="nh-pillars reveal in">
+        </Reveal>
+        <Reveal stagger className="nh-pillars">
           {[['01 / Strom','Grünstrom zuerst.','Primärinfrastruktur bei Anbietern mit 100 % Ökostrom.'],['02 / Effizienz','Jedes Watt zählt.','Modell-Routing spart Tokens. Idle-Hardware schläft automatisch.'],['03 / Kompensation','Gold Standard.','Zertifizierte Waldschutz- & Clean-Cooking-Projekte — mit öffentlicher Seriennummer.']].map(([num,h,p])=>(
             <article key={num} className="nh-pillar"><span className="num">{num}</span><h3>{h}</h3><p>{p}</p></article>
           ))}
-        </div>
-        <div className="nh-pledge reveal in">
+        </Reveal>
+        <Reveal className="nh-pledge">
           <div className="big"><em>Transparenter Nachhaltigkeitsbericht</em> — jährlich, als PDF, mit Stromquellen, Emissionen und Kompensations-Zertifikaten.</div>
           <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Nachhaltigkeitsbericht')}} href="#"><span>Bericht anfordern</span><span className="arrow">→</span></MagBtn>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -1166,9 +1306,9 @@ function FAQ() {
     <section id="faq">
       <div className="wrap-tight">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref} style={{marginBottom:40}}><div><span className="eyebrow">Antworten auf das Naheliegende</span><h2>FAQ.</h2></div></div>
-        <div className="faq reveal in">
+        <Reveal stagger className="faq">
           {items.map(([q,a])=><details key={q}><summary>{q}</summary><p className="a">{a}</p></details>)}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -1311,6 +1451,7 @@ export default function LandingPage() {
   return (
     <>
       <div className="vignette" aria-hidden="true"/>
+      <ScrollProgress/>
       <Nav onDemo={openModal}/>
       <Hero onCTA={openModal}/>
       <ISSSection />
