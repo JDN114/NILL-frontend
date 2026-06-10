@@ -33,7 +33,11 @@ export default function ImapReplyModal({ open, onClose, emailId, onSent }) {
       setAiGenerated(true);
     } catch (err) {
       console.error("[ImapReply] ai-reply failed", err);
-      setError("KI-Antwort fehlgeschlagen.");
+      const detail = err?.response?.data?.detail;
+      setError(
+        (typeof detail === "object" ? detail?.message : detail) ??
+        "KI-Antwort fehlgeschlagen."
+      );
     } finally {
       setAiBusy(false);
     }

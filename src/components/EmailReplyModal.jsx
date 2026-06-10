@@ -66,8 +66,12 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
       const res = await api.post(`/gmail/emails/${emailId}/ai-reply`, null);
       setBody(sanitizeReply(res.data?.reply || ""));
       setAiGenerated(true);
-    } catch {
-      setError("KI-Antwort konnte nicht geladen werden.");
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setError(
+        (typeof detail === "object" ? detail?.message : detail) ??
+        "KI-Antwort konnte nicht geladen werden."
+      );
     } finally {
       setAiLoading(false);
     }
