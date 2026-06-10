@@ -780,8 +780,6 @@ export default function SettingsPage() {
   const [pushSubscribed,  setPushSubscribed]  = useState(false);
   const [pushLoading,     setPushLoading]     = useState(false);
   const [pushError,       setPushError]       = useState("");
-  const [pushTestLoading, setPushTestLoading] = useState(false);
-  const [pushTestMsg,     setPushTestMsg]     = useState("");
 
   // ── Sessions ────────────────────────────────────────────────────────────
   const [sessions,        setSessions]        = useState([]);
@@ -1049,7 +1047,7 @@ export default function SettingsPage() {
   };
 
   const handlePushRefresh = async () => {
-    setPushLoading(true); setPushError(""); setPushTestMsg("");
+    setPushLoading(true); setPushError("");
     try {
       // Force-expire the browser subscription so the next subscribe() creates a
       // brand-new endpoint token (avoids stale Apple/FCM tokens that silently drop).
@@ -1068,19 +1066,6 @@ export default function SettingsPage() {
     // Re-subscribe fresh — must call with loading already managed
     setPushLoading(false);
     await handlePushSubscribe();
-  };
-
-  const handlePushTest = async () => {
-    setPushTestLoading(true); setPushTestMsg("");
-    try {
-      await api.post("/me/push/test");
-      setPushTestMsg("Testbenachrichtigung gesendet — prüfe ob sie erscheint.");
-    } catch (e) {
-      setPushTestMsg(e?.response?.data?.detail || "Fehler beim Senden.");
-    } finally {
-      setPushTestLoading(false);
-      setTimeout(() => setPushTestMsg(""), 6000);
-    }
   };
 
   const handleRevokeSession = async (id) => {
@@ -2313,27 +2298,12 @@ export default function SettingsPage() {
                       </div>
                     )}
 
-                    {/* Test + Refresh buttons — only when subscribed */}
+                    {/* Refresh button — only when subscribed */}
                     {pushSubscribed && (
                       <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
                         <button
-                          onClick={handlePushTest}
-                          disabled={pushTestLoading || pushLoading}
-                          style={{
-                            padding: "0.35rem 0.85rem", borderRadius: 7,
-                            fontSize: "0.75rem", fontWeight: 600,
-                            background: "rgba(239,237,231,0.06)",
-                            border: "1px solid rgba(239,237,231,0.12)",
-                            color: "rgba(239,237,231,0.6)",
-                            cursor: (pushTestLoading || pushLoading) ? "not-allowed" : "pointer",
-                            opacity: (pushTestLoading || pushLoading) ? 0.55 : 1,
-                          }}
-                        >
-                          {pushTestLoading ? "Sende…" : "Testbenachrichtigung senden"}
-                        </button>
-                        <button
                           onClick={handlePushRefresh}
-                          disabled={pushLoading || pushTestLoading}
+                          disabled={pushLoading}
                           title="Erneuert das Push-Token — behebe Probleme mit ausbleibenden Benachrichtigungen"
                           style={{
                             padding: "0.35rem 0.85rem", borderRadius: 7,
@@ -2341,17 +2311,12 @@ export default function SettingsPage() {
                             background: "rgba(239,237,231,0.04)",
                             border: "1px solid rgba(239,237,231,0.08)",
                             color: "rgba(239,237,231,0.4)",
-                            cursor: (pushLoading || pushTestLoading) ? "not-allowed" : "pointer",
-                            opacity: (pushLoading || pushTestLoading) ? 0.45 : 1,
+                            cursor: pushLoading ? "not-allowed" : "pointer",
+                            opacity: pushLoading ? 0.45 : 1,
                           }}
                         >
                           {pushLoading ? "Erneuere…" : "Token erneuern"}
                         </button>
-                        {pushTestMsg && (
-                          <span style={{ fontSize: "0.72rem", color: pushTestMsg.includes("Fehler") ? red : gold }}>
-                            {pushTestMsg}
-                          </span>
-                        )}
                       </div>
                     )}
 
@@ -2836,7 +2801,7 @@ export default function SettingsPage() {
                     )}
 
                     {!aiUsageLoad && aiUsage && (() => {
-                      const planLabel = org?.plan === "solo" ? "Solo" : org?.plan === "team" ? "Team" : org?.plan === "business" ? "Business" : "Enterprise";
+                      const planLabel = ({ solo: "Solo", team: "Team", business: "Business", enterprise: "Enterprise" })[org?.plan] ?? (org?.plan_status === "trial" ? "Testzeitraum" : "Inaktiv");
                       const UsageBar = ({ label, icon, used, cap, unlimited, available = true }) => {
                         if (!available) return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
