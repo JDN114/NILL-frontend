@@ -7,7 +7,7 @@ export default function AGB() {
       <iframe
         src="https://itrk.legal/1yEr.4V.17NW-iframe.html"
         title="Allgemeine Geschäftsbedingungen"
-        style={{ width: "100%", minHeight: "80vh", border: "none" }}
+        style={{ width: "100%", minHeight: "80vh", border: "none", filter: "invert(1) hue-rotate(180deg)" }}
         loading="lazy"
       />
     </LegalLayout>

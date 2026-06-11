@@ -7,7 +7,7 @@ export default function Datenschutz() {
       <iframe
         src="https://itrk.legal/1yEr.bg.17NW-iframe.html"
         title="Datenschutzerklärung"
-        style={{ width: "100%", minHeight: "80vh", border: "none" }}
+        style={{ width: "100%", minHeight: "80vh", border: "none", filter: "invert(1) hue-rotate(180deg)" }}
         loading="lazy"
       />
     </LegalLayout>

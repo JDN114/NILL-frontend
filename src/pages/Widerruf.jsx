@@ -7,7 +7,7 @@ export default function Widerruf() {
       <iframe
         src="https://itrk.legal/1yEr.3K.17NW-iframe.html"
         title="Widerrufsbelehrung"
-        style={{ width: "100%", minHeight: "80vh", border: "none" }}
+        style={{ width: "100%", minHeight: "80vh", border: "none", filter: "invert(1) hue-rotate(180deg)" }}
         loading="lazy"
       />
     </LegalLayout>

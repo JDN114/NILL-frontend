@@ -1,14 +1,19 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const bg     = "#040407";
 const ink    = "#efede7";
 const inkDim = "rgba(239,237,231,0.5)";
 const line   = "rgba(239,237,231,0.07)";
+const accent = "#c6ff3c";
 const serif  = "'Fraunces','Iowan Old Style',Georgia,serif";
 const mono   = "'JetBrains Mono',monospace";
 const sans   = "'Inter',system-ui,sans-serif";
 
 export default function LegalLayout({ title, children }) {
+  const navigate = useNavigate();
+  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate("/"));
+
   return (
     <div style={{ background: bg, color: ink, fontFamily: sans, minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
 
@@ -26,7 +31,33 @@ export default function LegalLayout({ title, children }) {
         }} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 10, width: "min(860px, 100% - 48px)", margin: "0 auto", padding: "100px 0 80px" }}>
+      <div style={{ position: "relative", zIndex: 10, width: "min(860px, 100% - 48px)", margin: "0 auto", padding: "60px 0 80px" }}>
+
+        {/* Back button */}
+        <button
+          onClick={goBack}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            background: "none", border: "none", cursor: "pointer", padding: 0,
+            marginBottom: 52, color: ink,
+          }}
+          onMouseEnter={e => e.currentTarget.querySelector("span").style.color = accent}
+          onMouseLeave={e => e.currentTarget.querySelector("span").style.color = ink}
+        >
+          <div style={{
+            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+            background: `conic-gradient(from 210deg, ${accent}, #38f5d0, #7a5cff, #ff4d8d, ${accent})`,
+            position: "relative", overflow: "hidden",
+          }}>
+            <div style={{ position: "absolute", inset: 4, borderRadius: 5, background: bg }} />
+          </div>
+          <span style={{
+            fontFamily: serif, fontSize: 20, letterSpacing: "-0.02em",
+            color: ink, transition: "color 0.2s",
+          }}>
+            NILL
+          </span>
+        </button>
 
         {/* Eyebrow */}
         <div style={{

@@ -52,6 +52,7 @@ const FahrtenbuchTab       = lazy(() => import("../components/accounting/Fahrten
 const SteuerberaterTab     = lazy(() => import("../components/accounting/SteuerberaterTab"));
 const KassenmeldungTab     = lazy(() => import("../components/accounting/KassenmeldungTab"));
 const OssTab               = lazy(() => import("../components/accounting/OssTab"));
+const AuditLogTab          = lazy(() => import("../components/accounting/AuditLogTab"));
 const LohnbuchhaltungContent = lazy(() =>
   import("./LohnbuchhaltungLanding").then(m => ({ default: m.LohnbuchhaltungContent }))
 );
@@ -2150,6 +2151,7 @@ const BUCHHALTUNG_SUBS = [
   {id:"kontenplan",    label:"Kontenplan"},
   {id:"anlagen",       label:"Anlagenbuch"},
   {id:"kostenstellen", label:"Kostenstellen"},
+  {id:"auditlog",      label:"Audit-Log"},
 ];
 const PLANUNG_SUBS = [
   {id:"projekte",       label:"Projekte & Zeit"},
@@ -2249,6 +2251,7 @@ const BuchhaltungGruppe = React.memo(function BuchhaltungGruppe({ refreshKey }) 
       {sub==="kontenplan"    && <KontenplanTab key={refreshKey}/>}
       {sub==="anlagen"       && <AnlagenTab key={refreshKey}/>}
       {sub==="kostenstellen" && <KostenstellenTab key={refreshKey}/>}
+      {sub==="auditlog"      && <AuditLogTab key={refreshKey}/>}
     </div>
   );
 });
