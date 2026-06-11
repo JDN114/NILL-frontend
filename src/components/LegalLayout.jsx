@@ -1,33 +1,68 @@
 import React from "react";
 
+const bg     = "#040407";
+const ink    = "#efede7";
+const inkDim = "rgba(239,237,231,0.5)";
+const line   = "rgba(239,237,231,0.07)";
+const serif  = "'Fraunces','Iowan Old Style',Georgia,serif";
+const mono   = "'JetBrains Mono',monospace";
+const sans   = "'Inter',system-ui,sans-serif";
+
 export default function LegalLayout({ title, children }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
-      {/* Glow Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-200px] left-[-150px] h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute bottom-[-250px] right-[-150px] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-3xl" />
+    <div style={{ background: bg, color: ink, fontFamily: sans, minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
+
+      {/* Ambient glow */}
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+        <div style={{
+          position: "absolute", top: -200, left: -150,
+          width: 500, height: 500, borderRadius: "50%",
+          background: "rgba(198,255,60,0.04)", filter: "blur(80px)",
+        }} />
+        <div style={{
+          position: "absolute", bottom: -250, right: -150,
+          width: 400, height: 400, borderRadius: "50%",
+          background: "rgba(255,255,255,0.015)", filter: "blur(80px)",
+        }} />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
-        {/* Header */}
-        <div className="mb-12">
-          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1 text-sm text-cyan-300 backdrop-blur-md">
-            Rechtliche Informationen
-          </div>
+      <div style={{ position: "relative", zIndex: 10, width: "min(860px, 100% - 48px)", margin: "0 auto", padding: "100px 0 80px" }}>
 
-          <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight">
-            {title}
-          </h1>
-
-          <div className="mt-6 h-px w-full bg-gradient-to-r from-cyan-500/40 via-white/10 to-transparent" />
+        {/* Eyebrow */}
+        <div style={{
+          fontFamily: mono, fontSize: 11, letterSpacing: "0.22em",
+          textTransform: "uppercase", color: inkDim,
+          display: "inline-flex", alignItems: "center", gap: 10,
+          marginBottom: 20,
+        }}>
+          <span style={{ width: 22, height: 1, background: inkDim, display: "inline-block", opacity: 0.6 }} />
+          Rechtliche Informationen
         </div>
 
-        {/* Card */}
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-2xl shadow-cyan-500/5 p-6 md:p-10">
-          <div className="legal-content prose prose-invert max-w-none">
-            {children}
-          </div>
+        {/* Title */}
+        <h1 style={{
+          fontFamily: serif, fontWeight: 400,
+          fontSize: "clamp(36px, 6vw, 72px)",
+          letterSpacing: "-0.025em", lineHeight: 0.95,
+          margin: "0 0 28px", color: ink,
+        }}>
+          {title}
+        </h1>
+
+        {/* Accent divider */}
+        <div style={{
+          height: 1, width: "100%", marginBottom: 48,
+          background: "linear-gradient(to right, rgba(198,255,60,0.3), rgba(239,237,231,0.07) 40%, transparent)",
+        }} />
+
+        {/* Content card */}
+        <div style={{
+          borderRadius: 28,
+          border: `1px solid ${line}`,
+          background: "linear-gradient(180deg,#0a0a0e,#060609)",
+          padding: "40px 44px",
+        }}>
+          {children}
         </div>
       </div>
     </div>
