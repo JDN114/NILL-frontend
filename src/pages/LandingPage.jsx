@@ -1064,17 +1064,34 @@ function FeatureWalkthrough() {
   const [ref, vis] = useReveal();
 
   useEffect(() => {
-    const steps = document.querySelectorAll('.step-item');
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const key = e.target.dataset.scene;
-        setActiveScene(key);
-        if (key === 'time') setArcDash(314 * 0.28);
-      });
-    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
-    steps.forEach(s => io.observe(s));
-    return () => io.disconnect();
+    // Pick the step whose center is nearest the viewport center. More robust than a
+    // thin-band IntersectionObserver: the tall step-items (22vh padding) can scroll
+    // straight past a 10%-tall detection band, leaving the scene stuck on the first.
+    const steps = [...document.querySelectorAll('.step-item')];
+    if (!steps.length) return;
+    let raf = 0;
+    const pick = () => {
+      raf = 0;
+      const mid = window.innerHeight / 2;
+      let best = steps[0], bestDist = Infinity;
+      for (const s of steps) {
+        const r = s.getBoundingClientRect();
+        const dist = Math.abs(r.top + r.height / 2 - mid);
+        if (dist < bestDist) { bestDist = dist; best = s; }
+      }
+      const key = best.dataset.scene;
+      setActiveScene(prev => (prev === key ? prev : key));
+      setArcDash(key === 'time' ? 314 * 0.28 : 314);
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(pick); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    pick();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   const SKUS = ['X-101','A-22','B-09','T-77','R-3','Q-41','P-18','S-54','D-09','M-66','V-12','N-88','K-2','Z-99','H-14','J-5','L-8','F-31'];
