@@ -26,6 +26,11 @@ const TABELLE_LABEL = {
   konten:              "Konto",
   tagesabschluesse:    "Tagesabschluss",
   mahnungen:           "Mahnung",
+  buchungsperioden:    "Buchungsperiode",
+  anlagen:             "Anlage",
+  ust_perioden:        "UStVA",
+  geschaeftspartner:   "Geschäftspartner",
+  unternehmensprofil:  "Unternehmensprofil",
 };
 
 const S = `
@@ -193,9 +198,13 @@ export default function AuditLogTab() {
             <option value="buchungssaetze">Buchungssätze</option>
             <option value="ausgangsrechnungen">Ausgangsrechnungen</option>
             <option value="invoices">Eingangsrechnungen</option>
-            <option value="konten">Konten</option>
-            <option value="tagesabschluesse">Tagesabschlüsse</option>
             <option value="mahnungen">Mahnungen</option>
+            <option value="anlagen">Anlagen</option>
+            <option value="buchungsperioden">Buchungsperioden</option>
+            <option value="ust_perioden">UStVA</option>
+            <option value="geschaeftspartner">Geschäftspartner</option>
+            <option value="tagesabschluesse">Tagesabschlüsse</option>
+            <option value="unternehmensprofil">Unternehmensprofil</option>
           </select>
           <select value={filterOp} onChange={e => { setFilterOp(e.target.value); setPage(0); }}>
             <option value="">Alle Operationen</option>

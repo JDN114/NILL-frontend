@@ -1,0 +1,240 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  # ── 1. ESLint — style + security rules ───────────────────────────────────────
+  eslint:
+    name: Lint — ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint -- --max-warnings=0
+
+  # ── 2. Unit tests with coverage ───────────────────────────────────────────────
+  vitest:
+    name: Unit Tests + Coverage — vitest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Post coverage summary as PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let summary = '';
+            try {
+              const raw = fs.readFileSync('coverage/coverage-summary.json', 'utf8');
+              const data = JSON.parse(raw).total;
+              const fmt = (v) => `${v.pct.toFixed(1)}%`;
+              summary = [
+                '## 🧪 Frontend Coverage Report',
+                '',
+                `| Metric | Coverage |`,
+                `|--------|----------|`,
+                `| Statements | ${fmt(data.statements)} |`,
+                `| Branches   | ${fmt(data.branches)}   |`,
+                `| Functions  | ${fmt(data.functions)}  |`,
+                `| Lines      | ${fmt(data.lines)}      |`,
+              ].join('\n');
+            } catch (e) {
+              summary = '## 🧪 Frontend Coverage\n\nCoverage report not available.';
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const existing = comments.find(c => c.body.startsWith('## 🧪 Frontend Coverage'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary,
+              });
+            }
+        continue-on-error: true
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-${{ github.run_id }}
+          path: coverage/
+          retention-days: 14
+
+  # ── 3. Build + bundle size report ─────────────────────────────────────────────
+  bundle-size:
+    name: Build + Bundle Size Report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_API_URL: https://placeholder.nillai.de
+
+      - name: Calculate bundle sizes
+        id: sizes
+        run: |
+          node - <<'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          function getSize(dir) {
+            let total = 0;
+            if (!fs.existsSync(dir)) return 0;
+            for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, f.name);
+              if (f.isDirectory()) {
+                total += getSize(full);
+              } else {
+                total += fs.statSync(full).size;
+              }
+            }
+            return total;
+          }
+
+          const distSize  = getSize('dist');
+          const assetsSize = getSize('dist/assets');
+
+          const fmt = (bytes) => {
+            if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+            return `${(bytes / 1024).toFixed(1)} KB`;
+          };
+
+          const result = {
+            total: distSize,
+            assets: assetsSize,
+            totalFmt: fmt(distSize),
+            assetsFmt: fmt(assetsSize),
+          };
+
+          console.log(JSON.stringify(result));
+          fs.writeFileSync('bundle-sizes.json', JSON.stringify(result, null, 2));
+
+          // Also list top JS chunks by size
+          const jsFiles = fs.readdirSync('dist/assets')
+            .filter(f => f.endsWith('.js'))
+            .map(f => ({ name: f, size: fs.statSync(`dist/assets/${f}`).size }))
+            .sort((a, b) => b.size - a.size)
+            .slice(0, 8);
+          fs.writeFileSync('bundle-chunks.json', JSON.stringify(jsFiles, null, 2));
+          EOF
+
+      - name: Comment bundle size on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const sizes  = JSON.parse(fs.readFileSync('bundle-sizes.json',  'utf8'));
+            const chunks = JSON.parse(fs.readFileSync('bundle-chunks.json', 'utf8'));
+
+            const fmt = (b) => b > 1048576
+              ? `${(b/1048576).toFixed(2)} MB`
+              : `${(b/1024).toFixed(1)} KB`;
+
+            let body = '## 📦 Bundle Size Report\n\n';
+            body += `| Metric | Size |\n|--------|------|\n`;
+            body += `| Total dist/ | **${sizes.totalFmt}** |\n`;
+            body += `| JS assets   | **${sizes.assetsFmt}** |\n\n`;
+            body += '### Top JS chunks\n';
+            body += '| Chunk | Size |\n|-------|------|\n';
+            for (const c of chunks) {
+              body += `| \`${c.name}\` | ${fmt(c.size)} |\n`;
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const existing = comments.find(c => c.body.startsWith('## 📦 Bundle Size'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
+        continue-on-error: true
+
+      - name: Upload bundle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ github.run_id }}
+          path: |
+            bundle-sizes.json
+            bundle-chunks.json
+          retention-days: 30
+
+  # ── 4. Secret scanning — gitleaks ─────────────────────────────────────────────
+  gitleaks:
+    name: Secret Scan — gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

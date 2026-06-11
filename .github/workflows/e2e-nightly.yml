@@ -1,0 +1,177 @@
+name: E2E + Visual + Lighthouse (Nightly)
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 02:00 UTC nightly
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: 'Update visual regression snapshots'
+        type: boolean
+        default: false
+      staging_url:
+        description: 'Override staging URL'
+        type: string
+
+jobs:
+  # ── 1. Playwright E2E tests ───────────────────────────────────────────────────
+  playwright:
+    name: Playwright E2E — ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run E2E tests
+        run: npx playwright test --project=${{ matrix.browser }}
+        env:
+          STAGING_URL: ${{ inputs.staging_url || vars.STAGING_URL }}
+          TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test videos on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-videos-${{ matrix.browser }}-${{ github.run_id }}
+          path: test-results/
+          retention-days: 7
+
+  # ── 2. Visual regression snapshots ───────────────────────────────────────────
+  visual-regression:
+    name: Visual Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright (chromium only for snapshots)
+        run: npx playwright install --with-deps chromium
+
+      - name: Download baseline snapshots (if they exist)
+        uses: actions/cache@v4
+        with:
+          path: tests/e2e/__screenshots__
+          key: visual-snapshots-${{ github.ref_name }}
+          restore-keys: |
+            visual-snapshots-main
+            visual-snapshots-
+
+      - name: Run visual regression tests
+        run: |
+          UPDATE_FLAG=""
+          if [ "${{ inputs.update_snapshots }}" = "true" ]; then
+            UPDATE_FLAG="--update-snapshots"
+          fi
+          npx playwright test --project=chromium tests/e2e/visual.spec.js $UPDATE_FLAG
+        env:
+          STAGING_URL: ${{ inputs.staging_url || vars.STAGING_URL }}
+          CI: true
+        continue-on-error: true
+
+      - name: Save updated snapshots to cache
+        if: inputs.update_snapshots == true
+        uses: actions/cache/save@v4
+        with:
+          path: tests/e2e/__screenshots__
+          key: visual-snapshots-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload visual diff artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-diffs-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # ── 3. Lighthouse CI performance + accessibility ──────────────────────────────
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ inputs.staging_url || vars.STAGING_URL || 'https://placeholder.nillai.de' }}
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+          LHCI_BUILD_CONTEXT__COMMIT_TIME: ${{ github.event.head_commit.timestamp }}
+          LHCI_BUILD_CONTEXT__CURRENT_BRANCH: ${{ github.ref_name }}
+          LHCI_BUILD_CONTEXT__GITHUB_REPO_SLUG: ${{ github.repository }}
+
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-${{ github.run_id }}
+          path: .lighthouseci/
+          retention-days: 30
+
+  # ── 4. Failure notification ───────────────────────────────────────────────────
+  notify-on-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [playwright, visual-regression, lighthouse]
+    if: failure()
+
+    steps:
+      - name: Report failure details
+        run: |
+          echo "Nightly E2E pipeline FAILED at $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
