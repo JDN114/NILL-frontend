@@ -84,11 +84,9 @@ self.addEventListener("notificationclick", (e) => {
       .then((clients) => {
         const existing = clients.find((c) => c.url.includes(self.location.origin));
         if (existing) {
-          existing.focus();
-          existing.navigate(target);
-        } else {
-          self.clients.openWindow(target);
+          return existing.focus().then((client) => client.navigate(target));
         }
+        return self.clients.openWindow(target);
       })
   );
 });

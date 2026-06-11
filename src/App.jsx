@@ -136,10 +136,11 @@ function InactivityGuard() {
   return null;
 }
 
+const FOOTER_HIDDEN = ["/station", "/dashboard", "/Impressum", "/Datenschutz", "/agb", "/Widerruf"];
+
 function ConditionalFooter() {
   const location = useLocation();
-  if (location.pathname.startsWith("/station")) return null;
-  if (location.pathname.startsWith("/dashboard")) return null;
+  if (FOOTER_HIDDEN.some(p => location.pathname.startsWith(p))) return null;
   return <Footer />;
 }
 
