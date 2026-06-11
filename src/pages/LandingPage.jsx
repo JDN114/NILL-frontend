@@ -318,7 +318,7 @@ function ensureInit() {
   if (!window.THREE && !__threeLoaded) {
     __threeLoaded = true;
     const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    s.src = "/three.min.js"; // self-hosted (CSP-allowed); avoids third-party CDN per DSGVO posture
     document.head.appendChild(s);
   }
 }

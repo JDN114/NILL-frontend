@@ -1,1 +1,0 @@
-import{j as e}from"./vendor-react--hPKs4bs.js";import{L as t}from"./LegalLayout-BhFIp0P4.js";function r(){return e.jsx(t,{title:"Allgemeine Geschäftsbedingungen",children:e.jsx("iframe",{src:"https://itrk.legal/1yEr.4V.17NW-iframe.html",title:"Allgemeine Geschäftsbedingungen",style:{width:"100%",minHeight:"80vh",border:"none"},loading:"lazy"})})}export{r as default};
