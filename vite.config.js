@@ -11,6 +11,15 @@ export default defineConfig(({ mode }) => {
   plugins: [react()],
   envDir,
 
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    // api.js throws if VITE_API_URL is unset — provide a dummy base for tests.
+    env: { VITE_API_URL: 'http://api.test' },
+  },
+
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

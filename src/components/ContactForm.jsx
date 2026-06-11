@@ -1,6 +1,6 @@
 // src/components/ContactForm.jsx
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 /**
  * 🔒 Security Limits
@@ -58,16 +58,13 @@ export default function ContactForm() {
     setLoading(true);
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL || ""}/api/contact`,
+      await api.post(
+        "/api/contact",
         {
           email: safeEmail,
           message: safeMessage,
         },
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
           timeout: 10000, // 🔒 verhindert Hängenbleiben
         }
       );

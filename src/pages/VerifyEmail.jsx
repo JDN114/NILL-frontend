@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import api from "../services/api";
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -20,17 +21,7 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const url = new URL(`${import.meta.env.VITE_API_URL}/auth/verify-email`);
-        url.searchParams.set("token", token);
-
-        const res = await fetch(url.toString(), { method: "GET" });
-        const data = await res.json();
-
-        if (!res.ok) {
-          setStatus("error");
-          setMessage(data.detail || "Verifizierung fehlgeschlagen.");
-          return;
-        }
+        await api.get("/auth/verify-email", { params: { token } });
 
         setStatus("success");
         setMessage("Deine E-Mail-Adresse wurde erfolgreich bestätigt 🎉");
@@ -49,7 +40,10 @@ export default function VerifyEmail() {
 
       } catch (err) {
         setStatus("error");
-        setMessage("Server nicht erreichbar.");
+        setMessage(
+          err?.response?.data?.detail ||
+          (err?.response ? "Verifizierung fehlgeschlagen." : "Server nicht erreichbar.")
+        );
       }
     };
 

@@ -10,6 +10,8 @@ import { ImapProvider } from "./context/ImapContext";
 
 import ProtectedRoute from "./ProtectedRoute";
 import AdminGuard from "./components/AdminGuard";
+import NillAdminGuard from "./components/NillAdminGuard";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import CookieBanner from "./components/CookieBanner";
 import TrialBanner from "./components/TrialBanner";
 import RouteTracker from "./components/RouteTracker";
@@ -50,6 +52,7 @@ const UpgradePage            = React.lazy(() => import("./pages/UpgradePage"));
 const AGB                    = React.lazy(() => import("./pages/AGB"));
 const ChangelogPage          = React.lazy(() => import("./pages/ChangelogPage"));
 const SicherheitPage         = React.lazy(() => import("./pages/SicherheitPage"));
+const GobdPage               = React.lazy(() => import("./pages/GobdPage"));
 const KarrierePage           = React.lazy(() => import("./pages/KarrierePage"));
 const WorkflowDeliveryNotes  = React.lazy(() => import("./pages/Workflow_delivery_notes_page.jsx"));
 const HrDocuments            = React.lazy(() => import("./pages/HrDocuments.jsx"));
@@ -186,6 +189,7 @@ function App() {
               <PushNotification />
               <StationBackButton />
               <Suspense fallback={<PageLoader />}>
+                <ErrorBoundary>
                 <Routes>
 
                 {/* Public */}
@@ -210,6 +214,7 @@ function App() {
                   <Route path="/ueber-uns" element={<AboutUsPage />} />
                   <Route path="/changelog" element={<ChangelogPage />} />
                   <Route path="/sicherheit" element={<SicherheitPage />} />
+                  <Route path="/gobd" element={<GobdPage />} />
                   <Route path="/karriere" element={<KarrierePage />} />
                   <Route path="/founder" element={<Founder />} />
                   <Route path="/roadmap" element={<Roadmap />} />
@@ -300,7 +305,9 @@ function App() {
 
                   {/* NILL Superadmin */}
                   <Route path="/admin" element={
-                    <ProtectedRoute><AdminPage /></ProtectedRoute>
+                    <ProtectedRoute>
+                      <NillAdminGuard><AdminPage /></NillAdminGuard>
+                    </ProtectedRoute>
                   }/>
                   <Route path="/dashboard/NILL-Secretary" element={
                     <ProtectedRoute><NILLModule /></ProtectedRoute>
@@ -335,6 +342,7 @@ function App() {
                     <ProtectedRoute><ArbeitsStationInventur /></ProtectedRoute>
                   }/>
                 </Routes>
+                </ErrorBoundary>
               </Suspense>
               <ConditionalFooter />
             </Router>

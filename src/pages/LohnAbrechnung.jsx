@@ -152,8 +152,13 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
   }
 
   function handlePdf() {
-    const base = import.meta.env.VITE_API_BASE || "https://api.nillai.de";
-    window.open(`${base}/hr/payroll/${run.id}/pdf`, "_blank");
+    // Full-page download — must be a direct URL, so use VITE_API_URL (same
+    // single source as the api.js instance) rather than a separate env var.
+    window.open(`${import.meta.env.VITE_API_URL}/hr/payroll/${run.id}/pdf`, "_blank");
+  }
+
+  function handleDatevLohn() {
+    window.open(`${import.meta.env.VITE_API_URL}/hr/payroll/${run.id}/datev-lohn.csv`, "_blank");
   }
 
   const isFinalized = run.status === "finalized";
@@ -164,12 +169,16 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
         <button onClick={onBack} style={{ background: "none", border: "1px solid var(--nill-border)", borderRadius: 7, padding: "0.4rem 0.8rem", color: "var(--nill-text-dim)", cursor: "pointer", fontSize: "0.8rem" }}>← Zurück</button>
         <div>
-          <span style={{ fontSize: "0.68rem", color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Lohnabrechnung</span>
+          <span style={{ fontSize: "0.68rem", color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>
+            Lohnabrechnung{" "}
+            <span title="Schätzwerte zur Liquiditätsplanung — keine rechtsgültige Lohnabrechnung. Für die Abrechnung: DATEV-Lohn-Export an den Steuerberater." style={{ padding: "1px 7px", borderRadius: 99, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.35)", color: "#fbbf24", fontSize: "0.62rem", letterSpacing: "0.04em" }}>Vorschau</span>
+          </span>
           <h2 style={{ margin: "0.1rem 0 0", fontSize: "1.4rem", fontWeight: 800, color: "var(--nill-text)" }}>{MONTHS[run.month]} {run.year}</h2>
         </div>
         <StatusBadge status={run.status} />
         <div style={{ marginLeft: "auto", display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
           <button onClick={handlePdf} style={{ padding: "0.45rem 1rem", background: "var(--nill-surface)", border: "1px solid var(--nill-border)", borderRadius: 8, color: "var(--nill-text-dim)", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600 }}>PDF Export</button>
+          <button onClick={handleDatevLohn} title="Bewegungsdaten als CSV für DATEV Lohn & Gehalt / LODAS — zur rechtsgültigen Abrechnung durch den Steuerberater" style={{ padding: "0.45rem 1rem", background: "var(--nill-surface)", border: "1px solid var(--nill-border)", borderRadius: 8, color: "var(--nill-text-dim)", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600 }}>DATEV-Lohn CSV</button>
           {!isFinalized && (
             <>
               <button onClick={handleFinalize} disabled={busy} style={{ padding: "0.45rem 1rem", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)", borderRadius: 8, color: "#34d399", cursor: busy ? "not-allowed" : "pointer", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -319,10 +328,11 @@ export function LohnAbrechnungContent() {
     <>
       <div style={{ marginBottom: "1.5rem" }}>
         <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: "0 0 0.3rem", color: "var(--nill-text)", letterSpacing: "-0.01em" }}>
-          Lohnabrechnung
+          Lohnabrechnung{" "}
+          <span title="Schätzwerte zur Liquiditätsplanung — keine rechtsgültige Lohnabrechnung" style={{ verticalAlign: "middle", padding: "2px 9px", borderRadius: 99, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.35)", color: "#fbbf24", fontSize: "0.66rem", fontWeight: 700, letterSpacing: "0.04em" }}>Vorschau</span>
         </h2>
         <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--nill-text-mute)" }}>
-          Monatliche Abrechnungen generieren, prüfen & als PDF exportieren
+          Brutto-Netto-Vorschau zur Liquiditätsplanung — rechtsgültige Abrechnung via DATEV-Lohn-Export an den Steuerberater
         </p>
       </div>
 

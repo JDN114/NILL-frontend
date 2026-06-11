@@ -787,33 +787,6 @@ function buildScene(canvas) {
     planets.push({mesh,pMat,atmo,atmoMat,ring,def:m});
   });
 
-  /* ASTEROID BELT — sparse dust ring between gas giant and moon orbit */
-  const AB = 700;
-  const abPos = new Float32Array(AB * 3);
-  const abSize = new Float32Array(AB);
-  const abTw = new Float32Array(AB);
-  for (let i = 0; i < AB; i++) {
-    const r = 5.42 + Math.random() * .42 + (Math.random() < .06 ? Math.random() * .2 : 0);
-    const a = Math.random() * Math.PI * 2;
-    abPos[i*3]   = Math.cos(a) * r;
-    abPos[i*3+1] = (Math.random() - .5) * .14;
-    abPos[i*3+2] = Math.sin(a) * r;
-    abSize[i] = .35 + Math.random() * 1.1;
-    abTw[i] = Math.random() * Math.PI * 2;
-  }
-  const abGeo = new T.BufferGeometry();
-  abGeo.setAttribute('position', new T.BufferAttribute(abPos, 3));
-  abGeo.setAttribute('starSize', new T.BufferAttribute(abSize, 1));
-  abGeo.setAttribute('twinkle', new T.BufferAttribute(abTw, 1));
-  const abMat = new T.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } },
-    vertexShader: `attribute float starSize;attribute float twinkle;uniform float uTime;varying float vA;void main(){vA=.5+.5*sin(uTime*.9+twinkle*9.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(260./-mv.z);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader: `varying float vA;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.18,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vec3(.78,.74,.66),a*(.22+vA*.28));}`,
-    transparent: true, depthWrite: false, blending: T.AdditiveBlending
-  });
-  const belt = new T.Points(abGeo, abMat);
-  system.add(belt);
-
   /* COMET — eccentric orbit with particle trail */
   const cometTex = mkGlowCanvas([[0,'rgba(225,250,255,1)'],[.25,'rgba(150,210,255,.6)'],[.6,'rgba(80,140,255,.12)'],[1,'rgba(0,0,0,0)']]);
   const cometCore = new T.Sprite(new T.SpriteMaterial({ map: cometTex, transparent: true, opacity: .95, blending: T.AdditiveBlending, depthWrite: false }));
@@ -892,8 +865,6 @@ function buildScene(canvas) {
     sunGroup.getWorldPosition(sunWorldPos);
     stars.rotation.y = t*.003;
     starMat.uniforms.uTime.value = t;
-    abMat.uniforms.uTime.value = t;
-    belt.rotation.y = t*.014;
     // Comet — Kepler-ish sweep, faster near perihelion
     const cr = cometP/(1+cometE*Math.cos(cometTheta));
     cometTheta += dt*1.35/(cr*cr);

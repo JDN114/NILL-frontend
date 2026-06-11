@@ -3,19 +3,23 @@
 // §§ 312g, 355 BGB — AGB + Widerrufsbelehrung vor Zahlungsabschluss
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import api from "../services/api";
 
-const API = import.meta.env.VITE_API_URL || "https://api.nillai.de";
-
-async function apiFetch(path, opts = {}) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
-    ...opts,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "Fehler" }));
-    throw new Error(err.detail || `HTTP ${res.status}`);
+// Public checkout endpoints routed through the single api.js instance
+// (VITE_API_URL baseURL + CSRF + credentials). Normalizes axios errors to the
+// { detail } shape the UI already expects.
+async function apiFetch(path, { method = "GET", body } = {}) {
+  try {
+    const res = await api.request({
+      url: path,
+      method,
+      data: body ? JSON.parse(body) : undefined,
+    });
+    return res.data;
+  } catch (e) {
+    const detail = e?.response?.data?.detail;
+    throw new Error(detail || `HTTP ${e?.response?.status || "Fehler"}`);
   }
-  return res.json();
 }
 
 const fmtEur = (n, currency = "EUR") =>

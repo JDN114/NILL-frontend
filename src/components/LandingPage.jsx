@@ -1234,6 +1234,7 @@ function Footer() {
             <li><Link to="/Datenschutz">Datenschutz</Link></li>
             <li><Link to="/agb">AGB</Link></li>
             <li><Link to="/sicherheit">Sicherheit</Link></li>
+            <li><Link to="/gobd">GoBD-Konformität</Link></li>
           </ul></div>
         </div>
         <div className="wordmark">NILL<em>.</em></div>

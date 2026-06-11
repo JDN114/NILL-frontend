@@ -48,6 +48,10 @@ const KassenbonTab         = lazy(() => import("../components/accounting/Kassenb
 const TrinkgeldTab         = lazy(() => import("../components/accounting/TrinkgeldTab"));
 const EcClearingTab        = lazy(() => import("../components/accounting/EcClearingTab"));
 const GutscheinTab         = lazy(() => import("../components/accounting/GutscheinTab"));
+const FahrtenbuchTab       = lazy(() => import("../components/accounting/FahrtenbuchTab"));
+const SteuerberaterTab     = lazy(() => import("../components/accounting/SteuerberaterTab"));
+const KassenmeldungTab     = lazy(() => import("../components/accounting/KassenmeldungTab"));
+const OssTab               = lazy(() => import("../components/accounting/OssTab"));
 const LohnbuchhaltungContent = lazy(() =>
   import("./LohnbuchhaltungLanding").then(m => ({ default: m.LohnbuchhaltungContent }))
 );
@@ -2137,6 +2141,7 @@ const STEUERN_SUBS   = [
   {id:"dashboard",       label:"Steuer-Cockpit"},
   {id:"ustva",           label:"UStVA"},
   {id:"gewerbesteuer",   label:"GewSt / ZM"},
+  {id:"oss",             label:"OSS (EU)"},
   {id:"jahresabschluss", label:"Jahresabschluss"},
   {id:"steuerkalender",  label:"Steuer-Kalender"},
 ];
@@ -2150,14 +2155,20 @@ const PLANUNG_SUBS = [
   {id:"projekte",       label:"Projekte & Zeit"},
   {id:"budget",         label:"Budget"},
   {id:"reisekosten",    label:"Reisekosten"},
+  {id:"fahrtenbuch",    label:"Fahrtenbuch"},
   {id:"kassenbuch",     label:"Kassenbuch"},
   {id:"tagesabschluss", label:"Tagesabschluss"},
 ];
 const BELEGE_SUBS   = [{id:"archiv",label:"Belegarchiv"},{id:"email",label:"Belege per E-Mail"}];
 const PARTNER_SUBS  = [{id:"partner",label:"Partner"},{id:"zahlungsmoral",label:"Zahlungsmoral"},{id:"waehrungen",label:"Währungen"}];
-const BERICHTE_SUBS = [{id:"berichte",label:"Berichte"},{id:"export",label:"Export & DATEV"}];
+const BERICHTE_SUBS = [
+  {id:"berichte",      label:"Berichte"},
+  {id:"export",        label:"Export & DATEV"},
+  {id:"steuerberater", label:"Steuerberater-Zugang"},
+];
 const KASSE_SUBS = [
   {id:"kassenbons",     label:"Kassenbons + TSE"},
+  {id:"meldung146a",    label:"§146a Meldung"},
   {id:"ec",             label:"EC-Clearing"},
   {id:"trinkgeld",      label:"Trinkgeld"},
   {id:"gutscheine",     label:"Gutscheine"},
@@ -2222,6 +2233,7 @@ const SteuernGruppe = React.memo(function SteuernGruppe({ refreshKey }) {
       {sub==="dashboard"       && <TaxDashboard key={refreshKey}/>}
       {sub==="ustva"           && <UstVaTab key={refreshKey}/>}
       {sub==="gewerbesteuer"   && <GewerbesteuerTab key={refreshKey}/>}
+      {sub==="oss"             && <OssTab key={refreshKey}/>}
       {sub==="jahresabschluss" && <JahresabschlussTab key={refreshKey}/>}
       {sub==="steuerkalender"  && <SteuerkalenderTab key={refreshKey}/>}
     </div>
@@ -2249,6 +2261,7 @@ const PlanungGruppe = React.memo(function PlanungGruppe({ refreshKey }) {
       {sub==="projekte"       && <ProjektTab key={refreshKey}/>}
       {sub==="budget"         && <BudgetTab key={refreshKey}/>}
       {sub==="reisekosten"    && <ReisekostenTab key={refreshKey}/>}
+      {sub==="fahrtenbuch"    && <FahrtenbuchTab key={refreshKey}/>}
       {sub==="kassenbuch"     && <KassenbuchTab key={refreshKey}/>}
       {sub==="tagesabschluss" && <TagesabschlussTab key={refreshKey}/>}
     </div>
@@ -2283,8 +2296,9 @@ const BerichteExportGruppe = React.memo(function BerichteExportGruppe({ refreshK
   return (
     <div>
       <SubNav tabs={BERICHTE_SUBS} active={sub} onChange={setSub}/>
-      {sub==="berichte"&& <BerichteTab key={refreshKey}/>}
-      {sub==="export"  && <ExportTab/>}
+      {sub==="berichte"      && <BerichteTab key={refreshKey}/>}
+      {sub==="export"        && <ExportTab/>}
+      {sub==="steuerberater" && <SteuerberaterTab/>}
     </div>
   );
 });
@@ -2296,6 +2310,7 @@ const KasseGruppe = React.memo(function KasseGruppe({ refreshKey }) {
     <div>
       <SubNav tabs={KASSE_SUBS} active={sub} onChange={setSub} />
       {sub === "kassenbons"     && <KassenbonTab    key={refreshKey} />}
+      {sub === "meldung146a"    && <KassenmeldungTab key={refreshKey} />}
       {sub === "ec"             && <EcClearingTab   key={refreshKey} />}
       {sub === "trinkgeld"      && <TrinkgeldTab    key={refreshKey} />}
       {sub === "gutscheine"     && <GutscheinTab    key={refreshKey} />}
@@ -2444,7 +2459,7 @@ export default function AccountingPage() {
                 >{m.charAt(0).toUpperCase()+m.slice(1)}</button>
               ))}
             </div>
-            <span title="NILL entspricht den GoBD-Anforderungen" style={{padding:"2px 8px",borderRadius:20,background:"rgba(198,255,60,.08)",border:"1px solid rgba(198,255,60,.18)",fontSize:".68rem",color:"var(--accent)",fontWeight:600,cursor:"default"}}>GoBD</span>
+            <a href="/gobd" target="_blank" rel="noopener" title="So ist NILL GoBD-konform — alle Details" style={{padding:"2px 8px",borderRadius:20,background:"rgba(198,255,60,.08)",border:"1px solid rgba(198,255,60,.18)",fontSize:".68rem",color:"var(--accent)",fontWeight:600,textDecoration:"none"}}>GoBD ✓</a>
             <button className="ac-btn ac-btn-ghost ac-btn-sm" onClick={() => setShowOnboarding(true)}>Setup</button>
             <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={openUpload}>+ Beleg</button>
           </div>

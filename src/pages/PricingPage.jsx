@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://api.nillai.de";
+import api from "../services/api";
 
 // ─── Design tokens (matches LandingPage) ─────────────────────────────────────
 const bg      = "#040407";
@@ -300,10 +298,9 @@ export default function PricingPage() {
     setError(null);
     setLoadingPlan(planId);
     try {
-      const res = await axios.post(
-        `${API_URL}/billing/create-checkout-session`,
-        { plan: planId, billing_cycle: cycle },
-        { withCredentials: true }
+      const res = await api.post(
+        "/billing/create-checkout-session",
+        { plan: planId, billing_cycle: cycle }
       );
       if (res?.data?.checkout_url) {
         window.location.href = res.data.checkout_url;

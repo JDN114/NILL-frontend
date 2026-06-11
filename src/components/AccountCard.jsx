@@ -1,7 +1,7 @@
 // src/components/AccountCard.jsx
 
 import { useState } from "react";
-import axios from "../utils/axios";
+import api from "../services/api";
 import { motion } from "framer-motion";
 
 export default function AccountCard() {
@@ -49,7 +49,7 @@ export default function AccountCard() {
     setLoading(true);
 
     try {
-      await axios.post("/email-accounts/connect", {
+      await api.post("/email-accounts/connect", {
         ...form,
         provider: "imap"
       });

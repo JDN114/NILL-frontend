@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import EmailCard from "./EmailCard";
 import { GmailContext } from "../context/GmailContext";
-
-const API_BASE = "https://api.nillai.de";
+import { getOutlookStatus, getOutlookEmails } from "../services/api";
 
 export default function EmailList() {
   const gmail = useContext(GmailContext);
@@ -18,10 +17,7 @@ export default function EmailList() {
   // --------------------------------------------------
   const fetchOutlookStatus = async () => {
     try {
-      const res = await fetch(`${API_BASE}/outlook/status`, {
-        credentials: "include",
-      });
-      const data = await res.json();
+      const data = await getOutlookStatus();
       setOutlookConnected(data.connected === true);
       return data.connected === true;
     } catch {
@@ -34,13 +30,7 @@ export default function EmailList() {
   // --------------------------------------------------
   const fetchOutlookEmails = async () => {
     try {
-      const res = await fetch(`${API_BASE}/outlook/emails`, {
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Outlook fetch failed");
-
-      const data = await res.json();
+      const data = await getOutlookEmails();
       setOutlookEmails(data.emails || []);
     } catch (err) {
       console.error(err);
