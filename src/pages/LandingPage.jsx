@@ -1,6 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ISSSection from '../sections/iss/ISSSection'
+import SustainabilitySection from '../sections/sustainability/SustainabilitySection'
+import PWASection from '../sections/pwa/PWASection'
 import '../styles/landing.css'
 
 const __css = `
@@ -1448,7 +1450,8 @@ export default function LandingPage() {
       <FeatureWalkthrough/>
       <Stats/>
       <Pricing onCTA={openModal}/>
-      <Sustainability onCTA={openModal}/>
+      <PWASection onCTA={openModal}/>
+      <SustainabilitySection onCTA={openModal}/>
       <FAQ/>
       <BigCTA onCTA={openModal}/>
 

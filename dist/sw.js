@@ -77,14 +77,17 @@ self.addEventListener("push", (e) => {
 // ── Notification click: focus/open the app ───────────────────────────────────
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
-  const target = e.notification.data?.url || "/";
+  const raw = e.notification.data?.url || "/";
+  const target = raw.startsWith("http") ? raw : self.location.origin + raw;
   e.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        const existing = clients.find((c) => c.url.includes(self.location.origin));
+        const exact = clients.find((c) => c.url === target);
+        if (exact) return exact.focus();
+        const existing = clients.find((c) => c.url.startsWith(self.location.origin));
         if (existing) {
-          return existing.focus().then((client) => client.navigate(target));
+          return existing.navigate(target).then((client) => client?.focus());
         }
         return self.clients.openWindow(target);
       })
