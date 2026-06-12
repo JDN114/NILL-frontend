@@ -17,24 +17,36 @@ import '../../styles/sustainability.css'
    Section-ID bleibt #nachhaltigkeit. onCTA-Prop wie zuvor.
    ────────────────────────────────────────────────────────────── */
 
-function useReveal(threshold = 0.12) {
+/* Triggert ~120px bevor das Element den Viewport erreicht — die Einblendung
+   läuft dann schon, wenn es sichtbar wird, statt erst träge zu starten */
+function useReveal(threshold = 0) {
   const ref = useRef(null)
   const [vis, setVis] = useState(false)
   useEffect(() => {
     if (!ref.current) return
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) { setVis(true); io.disconnect() }
-    }, { threshold })
+    }, { threshold, rootMargin: '0px 0px 120px 0px' })
     io.observe(ref.current)
     return () => io.disconnect()
   }, [])
   return [ref, vis]
 }
 
+/* Schneller Block-Reveal — nutzt die .reveal-Klassen aus landing.css */
+function Rev({ className = '', children }) {
+  const [ref, vis] = useReveal()
+  return (
+    <div ref={ref} className={`reveal${vis ? ' in' : ''} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
 /* Smooth count-up triggered on scroll */
-function useCountUp(target, { duration = 1800, decimals = 0, start = 0 } = {}) {
+function useCountUp(target, { duration = 1000, decimals = 0, start = 0 } = {}) {
   const [val, setVal] = useState(start)
-  const [ref, vis] = useReveal(0.2)
+  const [ref, vis] = useReveal()
   useEffect(() => {
     if (!vis) return
     const t0 = performance.now()
@@ -89,7 +101,9 @@ function LeafParticles({ count = 14 }) {
 }
 
 /* ── Animated growing plant SVG ──────────────────────── */
-function GrowingPlant() {
+/* play: Animation startet erst, wenn der Hero-Block sichtbar wird —
+   vorher lief sie beim Seitenload und war längst fertig, wenn man ankam */
+function GrowingPlant({ play = true }) {
   return (
     <svg viewBox="0 0 240 240" fill="none" style={{overflow:'visible'}}>
       <defs>
@@ -116,16 +130,16 @@ function GrowingPlant() {
         style={{
           strokeDasharray: 200,
           strokeDashoffset: 200,
-          animation: 'nh2grow 2.4s .3s cubic-bezier(.16,1,.3,1) forwards',
+          animation: play ? 'nh2grow 1.5s .15s cubic-bezier(.16,1,.3,1) forwards' : 'none',
         }}
       />
 
       {/* Leaves */}
       {[
-        {d:'M122 130 Q145 118 165 122 Q150 138 122 134 Z', delay:1.4, rot:0,  ox:122, oy:130},
-        {d:'M120 100 Q98 90 80 96 Q95 112 122 108 Z',      delay:1.7, rot:0,  ox:120, oy:100},
-        {d:'M121 80 Q140 70 156 76 Q142 92 121 86 Z',      delay:2.0, rot:0,  ox:121, oy:80},
-        {d:'M120 60 Q108 44 96 38 Q98 62 116 66 Z',        delay:2.3, rot:0,  ox:120, oy:60},
+        {d:'M122 130 Q145 118 165 122 Q150 138 122 134 Z', delay:0.8, rot:0,  ox:122, oy:130},
+        {d:'M120 100 Q98 90 80 96 Q95 112 122 108 Z',      delay:1.0, rot:0,  ox:120, oy:100},
+        {d:'M121 80 Q140 70 156 76 Q142 92 121 86 Z',      delay:1.2, rot:0,  ox:121, oy:80},
+        {d:'M120 60 Q108 44 96 38 Q98 62 116 66 Z',        delay:1.4, rot:0,  ox:120, oy:60},
       ].map((leaf, i) => (
         <path key={i}
           d={leaf.d}
@@ -135,7 +149,7 @@ function GrowingPlant() {
             transformOrigin: `${leaf.ox}px ${leaf.oy}px`,
             transformBox:'fill-box',
             opacity:0, transform:'scale(0)',
-            animation:`nh2leaf .85s ${leaf.delay}s cubic-bezier(.34,1.42,.64,1) forwards`,
+            animation: play ? `nh2leaf .6s ${leaf.delay}s cubic-bezier(.34,1.42,.64,1) forwards` : 'none',
           }}
         />
       ))}
@@ -145,7 +159,7 @@ function GrowingPlant() {
         <circle key={i} cx={x} cy={y} r="2" fill="#C6FF3C"
           style={{
             opacity:0,
-            animation:`nh2spark 2.4s ${2.5+i*0.2}s ease-in-out infinite`,
+            animation: play ? `nh2spark 2.4s ${1.8+i*0.2}s ease-in-out infinite` : 'none',
           }}
         />
       ))}
@@ -241,9 +255,9 @@ function PowerMixWidget() {
 
 /* ── Count-up stats panel ────────────────────────────── */
 function CountStats() {
-  const [r1, v1] = useCountUp(100, { duration: 1600 })
-  const [r2, v2] = useCountUp(1.7, { duration: 1800, decimals: 1 })
-  const [r3, v3] = useCountUp(105, { duration: 2000 })
+  const [r1, v1] = useCountUp(100, { duration: 850 })
+  const [r2, v2] = useCountUp(1.7, { duration: 950, decimals: 1 })
+  const [r3, v3] = useCountUp(105, { duration: 1050 })
   return (
     <div className="nh2-counts">
       <div className="nh2-count" ref={r1}>
@@ -502,11 +516,13 @@ const BENCH_TABS = Object.keys(BENCH)
 function EnergyBenchmark() {
   const [tab, setTab] = useState(BENCH_TABS[0])
   const [animKey, setAnimKey] = useState(0)
+  // Balken füllen erst, wenn die Liste sichtbar wird — nicht schon beim Seitenload
+  const [listRef, listVis] = useReveal()
   useEffect(() => { setAnimKey(k => k + 1) }, [tab])
   const rows = BENCH[tab]
   const max = Math.max(...rows.map(r => r.v))
   return (
-    <div className="nh2-bench">
+    <div className="nh2-bench" ref={listRef}>
       <div className="nh2-bench-head">
         <span className="eyebrow">Watt pro Aktion</span>
         <h3>Eine NILL-Anfrage wiegt <em>weniger</em> als du denkst.</h3>
@@ -530,7 +546,7 @@ function EnergyBenchmark() {
               <span className="nh2-bench-fill"
                 style={{
                   width: 0,
-                  animation: `nh2benchFill 1.4s ${0.1 + i*0.12}s cubic-bezier(.16,1,.3,1) forwards`,
+                  animation: listVis ? `nh2benchFill .9s ${0.05 + i*0.08}s cubic-bezier(.16,1,.3,1) forwards` : 'none',
                   '--bench-w': `${(r.v / max) * 100}%`,
                 }}
               />
@@ -678,7 +694,7 @@ export default function SustainabilitySection({ onCTA }) {
 
           <div className="nh2-plant">
             <div className="nh2-plant-rings" aria-hidden="true"><span/><span/><span/></div>
-            <GrowingPlant/>
+            <GrowingPlant play={headVis}/>
             <div className="nh2-plant-stat">
               <span className="dot"/>NILL · CO₂-NEUTRAL · 2026
             </div>
@@ -686,30 +702,30 @@ export default function SustainabilitySection({ onCTA }) {
         </div>
 
         {/* Live mix + count-up stats */}
-        <div className="nh2-strip">
+        <Rev className="nh2-strip">
           <PowerMixWidget/>
           <CountStats/>
-        </div>
+        </Rev>
 
-        <LiveTotalRibbon/>
+        <Rev><LiveTotalRibbon/></Rev>
 
         {/* Interactive calculator */}
-        <ImpactCalculator/>
+        <Rev><ImpactCalculator/></Rev>
 
         {/* Energy benchmark */}
-        <EnergyBenchmark/>
+        <Rev><EnergyBenchmark/></Rev>
 
         {/* Carbon journey */}
-        <CarbonJourney/>
+        <Rev><CarbonJourney/></Rev>
 
         {/* Milestones timeline */}
-        <Milestones/>
+        <Rev><Milestones/></Rev>
 
         {/* Expandable pillars */}
-        <ExpandablePillars/>
+        <Rev><ExpandablePillars/></Rev>
 
         {/* Public offset ledger */}
-        <CertificateLedger/>
+        <Rev><CertificateLedger/></Rev>
 
         {/* Pledge / CTA */}
         <div className="nh2-pledge">
