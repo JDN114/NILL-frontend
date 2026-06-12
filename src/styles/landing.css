@@ -604,3 +604,6 @@ textarea{min-height:92px;resize:vertical}
 .modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
 .modal-close:hover{background:rgba(255,255,255,.06);color:var(--ink)}
 @media(max-width:540px){.form-row{grid-template-columns:1fr}}
+
+/* ── MODULE-VISUALS (Higgsfield) — k3 Inventur; weitere folgen bei Credits ── */
+.bento .k3{background:linear-gradient(180deg,rgba(4,5,10,.35),rgba(4,5,10,.88) 75%),url(/modules/inventur.png) center/cover no-repeat}
