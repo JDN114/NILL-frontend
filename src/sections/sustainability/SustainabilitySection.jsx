@@ -222,7 +222,7 @@ function PowerMixWidget() {
           <span>· Power Mix · Frankfurt-Datacenter</span>
         </div>
         <div className="nh2-mix-ts">
-          <em>{hh}:{mm}:{ss}</em> · #{tick}
+          <em>{hh}:{mm}:{ss}</em>
         </div>
       </div>
 
@@ -360,7 +360,7 @@ function ImpactCalculator() {
 
         <div className="nh2-result">
           <div className="nh2-result-label">
-            <span className="ico">✈</span>Inlandsflüge gespart
+            <span className="ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></span>Inlandsflüge gespart
           </div>
           <div className="nh2-result-val">{flights}<small>HAM ↔ MUC</small></div>
           <div className="nh2-result-sub">Hin- und Rückflug pro Person, Economy.</div>
@@ -371,11 +371,37 @@ function ImpactCalculator() {
 }
 
 /* ── Carbon journey ──────────────────────────────────── */
+const StageIcon = {
+  bolt: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
+    </svg>
+  ),
+  chip: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="6" y="6" width="12" height="12" rx="2"/>
+      <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>
+    </svg>
+  ),
+  gauge: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 19a9 9 0 1 1 16 0"/>
+      <path d="M12 13l4-4"/>
+      <circle cx="12" cy="14" r="1.4" fill="currentColor"/>
+    </svg>
+  ),
+  leaf: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 21c0-9 4-15 14-16-1 10-7 14-14 16z"/>
+      <path d="M5 21c3-5 7-9 11-11"/>
+    </svg>
+  ),
+}
 const STAGES = [
-  { num:'01', icon:'⚡', title:'Grünstrom', text:'Server bei Anbietern mit zertifiziertem Ökostrom-Mix.' },
-  { num:'02', icon:'⌬', title:'Effizienz', text:'Modell-Routing & Caching. Idle-Hardware schläft.' },
-  { num:'03', icon:'∑', title:'Messung',   text:'Jede Anfrage wird in g CO₂ erfasst und reportet.' },
-  { num:'04', icon:'❋', title:'Kompensation', text:'Was übrig bleibt — Gold-Standard. Mit Seriennummer.' },
+  { num:'01', icon:StageIcon.bolt,  title:'Grünstrom', text:'Server bei Anbietern mit zertifiziertem Ökostrom-Mix.' },
+  { num:'02', icon:StageIcon.chip,  title:'Effizienz', text:'Modell-Routing & Caching. Idle-Hardware schläft.' },
+  { num:'03', icon:StageIcon.gauge, title:'Messung',   text:'Jede Anfrage wird in g CO₂ erfasst und reportet.' },
+  { num:'04', icon:StageIcon.leaf,  title:'Kompensation', text:'Was übrig bleibt — Gold-Standard. Mit Seriennummer.' },
 ]
 
 function CarbonJourney() {
@@ -390,7 +416,7 @@ function CarbonJourney() {
         {STAGES.map((s, i) => (
           <div key={s.num} className="nh2-stage" role="listitem">
             <div className="nh2-stage-orb" aria-hidden="true">
-              <span style={{fontSize:28,fontWeight:300}}>{s.icon}</span>
+              {s.icon}
             </div>
             <div className="nh2-stage-num">{s.num}</div>
             <h4>{s.title}</h4>
@@ -471,14 +497,11 @@ function ExpandablePillars() {
 /* ── Live total counter ribbon ───────────────────── */
 function LiveTotalRibbon() {
   const [tons, setTons] = useState(247.413)
+  // 1× pro Sekunde statt ~8×: ein Dauer-Re-Render alle 100ms hält die ganze
+  // Seite permanent layout-dirty und kostet beim Scrollen spürbar Frames
   useEffect(() => {
-    let raf
-    const tick = () => {
-      setTons(t => t + 0.0008 + Math.random() * 0.0007)
-      raf = setTimeout(tick, 90 + Math.random() * 60)
-    }
-    tick()
-    return () => clearTimeout(raf)
+    const t = setInterval(() => setTons(v => v + 0.006 + Math.random() * 0.005), 1000)
+    return () => clearInterval(t)
   }, [])
   const fmt = tons.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })
   return (

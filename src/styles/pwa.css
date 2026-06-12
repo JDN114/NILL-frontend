@@ -223,8 +223,6 @@
     inset 0 1px 0 rgba(255,255,255,.10),
     inset 0 0 0 1px rgba(255,255,255,.06),
     0 20px 50px -10px rgba(0,0,0,.7);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
   animation:pwaSheetIn .9s var(--ease-out) backwards;
 }
 @keyframes pwaSheetIn{from{opacity:0;transform:translateY(20px)}}

@@ -69,6 +69,12 @@ const Icon = {
       <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
     </svg>
   ),
+  Lock: () => (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2.5"/>
+      <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+    </svg>
+  ),
   Apple: () => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M16.4 12.7c0-2.5 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.8-3.2-.8-1.6 0-3.2 1-4 2.4-1.7 3-.4 7.5 1.3 9.9.8 1.2 1.8 2.5 3 2.5s1.7-.8 3.2-.8 1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.7-1-2.7-4.1Zm-2.4-7.5c.7-.8 1.1-2 1-3-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.5Z"/>
@@ -92,7 +98,7 @@ function MacChrome({ url, install }) {
     <div className="pwa-chrome">
       <div className="pwa-chrome-dots"><span/><span/><span/></div>
       <div className="pwa-chrome-url">
-        <span className="lock">⚿</span><span>{url}</span>
+        <span className="lock"><Icon.Lock/></span><span>{url}</span>
       </div>
       <div className="pwa-chrome-icons">
         {install && <span className="install"><Icon.Plus/>App</span>}
@@ -105,7 +111,7 @@ function MobileUrlBar({ url }) {
   return (
     <div className="pwa-chrome" style={{padding:'6px 10px'}}>
       <div className="pwa-chrome-url" style={{flex:1}}>
-        <span className="lock">⚿</span><span>{url}</span>
+        <span className="lock"><Icon.Lock/></span><span>{url}</span>
       </div>
     </div>
   )
@@ -132,7 +138,7 @@ function MockIOS() {
   return (
     <div className="pwa-mock phone">
       <div className="pwa-screen">
-        <MobileUrlBar url="app.nillai.de"/>
+        <MobileUrlBar url="nillai.de"/>
         <SiteSkeleton/>
         <div className="pwa-sheet" role="presentation">
           <div className="pwa-sheet-row">
@@ -165,13 +171,13 @@ function MockAndroid() {
   return (
     <div className="pwa-mock phone">
       <div className="pwa-screen">
-        <MobileUrlBar url="app.nillai.de"/>
+        <MobileUrlBar url="nillai.de"/>
         <SiteSkeleton/>
         <div className="pwa-android-banner">
           <span className="ico">N</span>
           <div className="txt">
             <strong>NILL installieren</strong>
-            <span>app.nillai.de</span>
+            <span>nillai.de</span>
           </div>
           <span className="cta">Inst.</span>
         </div>
@@ -185,7 +191,7 @@ function MockMacOS() {
   return (
     <div className="pwa-mock">
       <div className="pwa-screen">
-        <MacChrome url="app.nillai.de" install/>
+        <MacChrome url="nillai.de" install/>
         <SiteSkeleton/>
         <div className="pwa-tap" style={{right:'18%',top:'14%'}}/>
       </div>
@@ -199,7 +205,7 @@ function MockWindows() {
       <div className="pwa-screen">
         <div className="pwa-chrome">
           <div className="pwa-chrome-url">
-            <span className="lock">⚿</span><span>app.nillai.de</span>
+            <span className="lock"><Icon.Lock/></span><span>nillai.de</span>
           </div>
           <div className="pwa-chrome-icons">
             <span className="install"><Icon.Download/>Installieren</span>
@@ -222,7 +228,7 @@ const OS_CARDS = [
     icon: 'apple',
     Mock: MockIOS,
     steps: [
-      <>NILL in <kbd>Safari</kbd> öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>app.nillai.de</span></>,
+      <>NILL in <kbd>Safari</kbd> öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>nillai.de</span></>,
       <>Unten auf das <kbd className="accent"><Icon.Share/>Teilen</kbd>-Icon tippen</>,
       <>„<kbd className="accent">Zum Home-Bildschirm</kbd>" wählen — fertig.</>,
     ],
@@ -235,7 +241,7 @@ const OS_CARDS = [
     icon: 'android',
     Mock: MockAndroid,
     steps: [
-      <>NILL in <kbd>Chrome</kbd> öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>app.nillai.de</span></>,
+      <>NILL in <kbd>Chrome</kbd> öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>nillai.de</span></>,
       <>Banner erscheint — auf <kbd className="accent">Installieren</kbd> tippen.</>,
       <>Alternativ <kbd>⋮ Menü</kbd> → <kbd className="accent">App installieren</kbd>.</>,
     ],
@@ -248,7 +254,7 @@ const OS_CARDS = [
     icon: 'apple',
     Mock: MockMacOS,
     steps: [
-      <>NILL im Browser öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>app.nillai.de</span></>,
+      <>NILL im Browser öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>nillai.de</span></>,
       <>In Safari: <kbd>Ablage</kbd> → <kbd className="accent">Zum Dock hinzufügen</kbd>.</>,
       <>In Chrome/Edge: <kbd className="accent"><Icon.Plus/>App-Icon</kbd> in der Adressleiste.</>,
     ],
@@ -293,7 +299,7 @@ function QRBlock() {
   const isInFinder = (x, y) =>
     (x<7&&y<7) || (x>13&&y<7) || (x<7&&y>13)
   return (
-    <div className="pwa-qr" role="img" aria-label="QR-Code zu app.nillai.de">
+    <div className="pwa-qr" role="img" aria-label="QR-Code zu nillai.de">
       <svg viewBox="0 0 21 21" shapeRendering="crispEdges">
         {cells.filter(([x,y])=>!isInFinder(x,y)).map(([x,y])=>(
           <rect key={`c${x}-${y}`} x={x} y={y} width="1" height="1" fill="#0a0a0c"/>
@@ -406,15 +412,15 @@ export default function PWASection({ onCTA }) {
           </div>
           <a
             className="pwa-footer-url"
-            href="https://app.nillai.de"
+            href="https://nillai.de"
             onClick={(e)=>{
               if (!navigator.clipboard) return
               e.preventDefault()
-              navigator.clipboard.writeText('https://app.nillai.de')
-              window.open('https://app.nillai.de','_blank')
+              navigator.clipboard.writeText('https://nillai.de')
+              window.open('https://nillai.de','_blank')
             }}
           >
-            <span>app.nillai.de</span>
+            <span>nillai.de</span>
             <span className="copy"><Icon.Copy/></span>
           </a>
         </div>

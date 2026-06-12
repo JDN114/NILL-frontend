@@ -408,7 +408,7 @@ export function ISSScene({ active = true, issGroupRef, stationProxy, cameraProxy
   return (
     <Canvas
       frameloop={active ? 'always' : 'never'}
-      dpr={[1, 1.75]}
+      dpr={[1, 1.4]}
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       style={{ width: '100%', height: '100%', background: '#02030a' }}
       camera={{ fov: 36, near: 0.1, far: 300, position: [0, 1.6, 30] }}

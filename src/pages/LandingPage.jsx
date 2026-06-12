@@ -46,16 +46,20 @@ function Reveal({ className = '', stagger = false, children, ...rest }) {
 function ScrollProgress() {
   const ref = useRef(null);
   useEffect(() => {
-    let raf, cur = 0;
+    let raf, cur = 0, max = 1, frame = 0;
+    // scrollHeight pro Frame lesen erzwingt Layout-Recalc, sobald irgendeine
+    // Animation Layout dirty macht — nur alle ~2s und bei Resize messen
+    const measure = () => { max = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
+    addEventListener('resize', measure);
     const tick = () => {
       raf = requestAnimationFrame(tick);
-      const max = document.documentElement.scrollHeight - innerHeight;
-      const target = max > 0 ? window.scrollY / max : 0;
+      if (frame++ % 120 === 0) measure();
+      const target = window.scrollY / max;
       cur += (target - cur) * 0.12;
       if (ref.current) ref.current.style.transform = `scaleX(${cur})`;
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); removeEventListener('resize', measure); };
   }, []);
   return <div className="scroll-progress" aria-hidden="true"><span ref={ref}/></div>;
 }
@@ -326,7 +330,9 @@ const RING_FRAG = NOISE_LIB + `
 function buildScene(canvas) {
   const T = THREE;
   const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  // 1.25 statt 1.5: die Planeten-Shader (fbm/snoise pro Pixel) sind teuer —
+  // auf Retina ~30 % weniger Fragment-Last, visuell kaum unterscheidbar
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
   renderer.setClearColor(0x02030a, 1);
 
   const scene = new T.Scene();
@@ -663,9 +669,9 @@ function Hero({ onCTA }) {
       <HeroCanvas />
       <div className="hero-chips" aria-hidden="true">
         <span className="chip c1"><span className="chip-dot"/><span>KI aktiv</span></span>
-        <span className="chip c2"><span className="chip-dot" style={{background:'var(--accent-4)'}}/><span>47 Mails sortiert</span></span>
-        <span className="chip c3"><span className="chip-dot" style={{background:'var(--accent-2)'}}/><span>Rechnung gebucht</span></span>
-        <span className="chip c4"><span className="chip-dot" style={{background:'var(--accent-3)'}}/><span>Dienstplan aktualisiert</span></span>
+        <span className="chip c2"><span className="chip-dot"/><span>47 Mails sortiert</span></span>
+        <span className="chip c3"><span className="chip-dot"/><span>Rechnung gebucht</span></span>
+        <span className="chip c4"><span className="chip-dot"/><span>Dienstplan aktualisiert</span></span>
       </div>
       <div className="wrap hero-inner">
         <span className="eyebrow hero-eyebrow">KI-Betriebssystem für Unternehmen</span>
@@ -684,7 +690,7 @@ function Hero({ onCTA }) {
         </div>
       </div>
       <div className="hero-meta">
-        <span>NILL v4 · Stand 2026</span>
+        <span>NILL · KI-Betriebssystem</span>
         <div className="scroll-ind"><span>scroll</span><div className="scroll-bar"/></div>
         <span>DE · Made in Germany</span>
       </div>

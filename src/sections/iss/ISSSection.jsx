@@ -12,9 +12,9 @@ const MODULES = [
     description:
       'NILL überwacht jeden Kanal wie aus der Cupola — Postfach, Belege, Lager, Schichten. Alles in einer Ansicht, ohne tote Winkel.',
     stats: [
-      ['99,99 %', 'uptime'],
-      ['<2 ms',   'latenz'],
-      ['24/7',    'aktiv'],
+      ['24/7', 'aktiv'],
+      ['5',    'Module'],
+      ['1',    'Ansicht'],
     ],
     position: 'tr',
   },
@@ -24,9 +24,9 @@ const MODULES = [
     description:
       'Wie Solar-Arrays, die sich zur Sonne drehen — NILLs Module skalieren, balancieren und heilen sich selbst, bevor du es bemerkst.',
     stats: [
-      ['400+',  'knoten'],
-      ['0,4 ms','failover'],
-      ['∞',     'skalierung'],
+      ['DE',     'gehostet'],
+      ['100 %',  'Ökostrom'],
+      ['DSGVO',  'konform'],
     ],
     position: 'tl',
   },
@@ -36,9 +36,9 @@ const MODULES = [
     description:
       'Die Schüssel zeigt nach draußen — NILL spricht mit Banken, Behörden, Lieferanten. Workloads finden ihren Weg, ohne dass du ein Ticket öffnest.',
     stats: [
-      ['1.200+', 'aufgaben/tag'],
-      ['−60 %',  'manuelle arbeit'],
-      ['3 s',    'cold start'],
+      ['1.200+', 'Aufgaben/Tag'],
+      ['−60 %',  'Handarbeit'],
+      ['0',      'Tickets'],
     ],
     position: 'br',
   },
@@ -145,7 +145,7 @@ export default function ISSSection() {
         </div>
         <div className="iss-hud tr">
           <div className="label">REF · NILL-OS / ISS-04</div>
-          <div className="value">42° 06′ 18″ N · 5° 23′ 41″ E</div>
+          <div className="value">50° 06′ 45″ N · 8° 40′ 56″ E</div>
         </div>
         <div className="iss-hud bl">
           <div className="label">CAMERA</div>
