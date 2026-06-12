@@ -8,7 +8,7 @@
 
 .iss-section {
   position: relative;
-  height: 400vh;
+  height: 560vh; /* longer runway → each camera beat gets a real dwell */
   background: #02030a;
   isolation: isolate;
 }
@@ -354,7 +354,7 @@
 
 /* ── Small screens ───────────────────────────────────────── */
 @media (max-width: 860px) {
-  .iss-section { height: 360vh }
+  .iss-section { height: 470vh }
   .iss-card { width: min(360px, 88vw); padding: 20px 22px }
   .iss-card.pos-tl, .iss-card.pos-tr { top: 10% }
   .iss-card.pos-bl, .iss-card.pos-br { bottom: 14% }

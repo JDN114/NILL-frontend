@@ -59,7 +59,7 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 
 /* HERO */
 .hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 80px;display:flex;align-items:center;overflow:hidden}
-.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:35vh;background:linear-gradient(to bottom,transparent,var(--bg) 85%);z-index:2;pointer-events:none}
+/* No bottom fade — hero starfield runs edge-to-edge into the ISS section so both read as one continuous space */
 .hero-inner{position:relative;z-index:3;width:100%}
 .hero-eyebrow{margin-bottom:24px}
 .hero h1{margin-bottom:28px;max-width:14ch}

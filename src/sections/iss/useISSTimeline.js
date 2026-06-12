@@ -7,21 +7,33 @@ const smoothstep5 = t => {
   return x * x * x * (x * (x * 6 - 15) + 10)
 }
 
+/*
+   Waypoint pairs ("in" → "hold") give each beat a real dwell: the camera
+   arrives, then drifts only a few cm while the visitor reads the card.
+   The final hold (0.88 → 1.0) keeps the outro framed until the section
+   unpins — no dead scroll at the end.
+*/
 export const WAYPOINTS = [
   // 0 — DEEP APPROACH
-  { p: 0.00, cam: { x: 0,    y: 1.6,  z: 28 },  look: { x: 0,    y: 0,     z: 0    }, rotX: 0.05, rotY: 0.20,  rotZ: 0.00,  fov: 36, thruster: 0,    focus: -1, card: -1, phase: 'approach' },
-  // 1 — ALIGNMENT
-  { p: 0.10, cam: { x: 0,    y: 0.7,  z: 13.5 },look: { x: 0,    y: 0.1,   z: 0    }, rotX: 0.18, rotY: 0.85,  rotZ: 0.04,  fov: 40, thruster: 0.25, focus: -1, card: -1, phase: 'active' },
-  // 2 — CUPOLA close-up
-  { p: 0.26, cam: { x: -1.9, y: 1.8,  z: 6.4 }, look: { x: 0,    y: 0.6,   z: 0.2  }, rotX:-0.06, rotY: 1.55,  rotZ:-0.04,  fov: 38, thruster: 0,    focus: 0,  card: 0,  phase: 'reveal' },
-  // 3 — SOLAR ARRAYS
-  { p: 0.46, cam: { x: 3.6,  y: -0.1, z: 8.0 }, look: { x: -0.4, y: 1.4,   z: 0    }, rotX: 0.08, rotY: 2.55,  rotZ: 0.08,  fov: 44, thruster: 0,    focus: 1,  card: 1,  phase: 'reveal' },
-  // 4 — COMMS DISH
-  { p: 0.66, cam: { x: -2.3, y: -0.6, z: 6.6 }, look: { x: 0.4,  y: -0.05, z: 0.9  }, rotX: 0.18, rotY: 3.45,  rotZ:-0.05,  fov: 36, thruster: 0,    focus: 2,  card: 2,  phase: 'reveal' },
-  // 5 — EPIC PULLBACK
-  { p: 0.86, cam: { x: 0,    y: 2.9,  z: 19.5 },look: { x: 0,    y: -0.8,  z: -1.8 }, rotX: 0.28, rotY: 4.25,  rotZ:-0.05,  fov: 46, thruster: 0.55, focus: -1, card: -1, phase: 'outro' },
-  // 6 — DRIFT-OUT
-  { p: 1.00, cam: { x: 0,    y: 3.4,  z: 23 },  look: { x: 0,    y: -1.1,  z: -2.4 }, rotX: 0.30, rotY: 4.45,  rotZ:-0.06,  fov: 48, thruster: 0.25, focus: -1, card: -1, phase: 'outro' },
+  { p: 0.000, cam: { x: 0,     y: 1.6,  z: 30 },   look: { x: 0,    y: 0,     z: 0    }, rotX: 0.05, rotY: 0.20, rotZ: 0.00,  fov: 36, thruster: 0,    focus: -1, card: -1, phase: 'approach' },
+  // 1 — ALIGNMENT BURN
+  { p: 0.080, cam: { x: 0,     y: 0.7,  z: 13.5 }, look: { x: 0,    y: 0.1,   z: 0    }, rotX: 0.18, rotY: 0.85, rotZ: 0.04,  fov: 40, thruster: 0.30, focus: -1, card: -1, phase: 'active' },
+  // 2 — CUPOLA arrive
+  { p: 0.170, cam: { x: -1.9,  y: 1.8,  z: 6.4 },  look: { x: 0,    y: 0.6,   z: 0.2  }, rotX:-0.06, rotY: 1.55, rotZ:-0.04,  fov: 38, thruster: 0,    focus: 0,  card: 0,  phase: 'reveal' },
+  // 3 — CUPOLA hold (slow drift while reading)
+  { p: 0.300, cam: { x: -2.15, y: 1.7,  z: 6.15 }, look: { x: 0,    y: 0.62,  z: 0.2  }, rotX:-0.05, rotY: 1.63, rotZ:-0.04,  fov: 38, thruster: 0,    focus: 0,  card: 0,  phase: 'reveal' },
+  // 4 — SOLAR ARRAYS arrive
+  { p: 0.390, cam: { x: 3.6,   y: -0.1, z: 8.0 },  look: { x: -0.4, y: 1.4,   z: 0    }, rotX: 0.08, rotY: 2.55, rotZ: 0.08,  fov: 44, thruster: 0,    focus: 1,  card: 1,  phase: 'reveal' },
+  // 5 — SOLAR ARRAYS hold
+  { p: 0.520, cam: { x: 3.85,  y: 0.05, z: 7.7 },  look: { x: -0.4, y: 1.42,  z: 0    }, rotX: 0.09, rotY: 2.63, rotZ: 0.08,  fov: 44, thruster: 0,    focus: 1,  card: 1,  phase: 'reveal' },
+  // 6 — COMMS DISH arrive
+  { p: 0.610, cam: { x: -2.3,  y: -0.6, z: 6.6 },  look: { x: 0.4,  y: -0.05, z: 0.9  }, rotX: 0.18, rotY: 3.45, rotZ:-0.05,  fov: 36, thruster: 0,    focus: 2,  card: 2,  phase: 'reveal' },
+  // 7 — COMMS DISH hold
+  { p: 0.740, cam: { x: -2.52, y: -0.5, z: 6.35 }, look: { x: 0.4,  y: -0.03, z: 0.9  }, rotX: 0.19, rotY: 3.53, rotZ:-0.05,  fov: 36, thruster: 0,    focus: 2,  card: 2,  phase: 'reveal' },
+  // 8 — EPIC PULLBACK (departure burn)
+  { p: 0.880, cam: { x: 0,     y: 2.9,  z: 19.5 }, look: { x: 0,    y: -0.8,  z: -1.8 }, rotX: 0.28, rotY: 4.25, rotZ:-0.05,  fov: 46, thruster: 0.60, focus: -1, card: -1, phase: 'outro' },
+  // 9 — FINAL HOLD (outro stays framed until unpin)
+  { p: 1.000, cam: { x: 0,     y: 3.3,  z: 21.5 }, look: { x: 0,    y: -1.0,  z: -2.2 }, rotX: 0.30, rotY: 4.40, rotZ:-0.06,  fov: 47, thruster: 0.25, focus: -1, card: -1, phase: 'outro' },
 ]
 
 function sampleWaypoints(p) {
@@ -40,9 +52,9 @@ function sampleWaypoints(p) {
     rotZ:  lerp(a.rotZ, b.rotZ, local),
     fov:   lerp(a.fov,  b.fov,  local),
     thruster: lerp(a.thruster, b.thruster, local),
-    focus: local > 0.65 ? b.focus : a.focus,
-    card:  local > 0.65 ? b.card  : a.card,
-    phase: local > 0.65 ? b.phase : a.phase,
+    focus: local > 0.5 ? b.focus : a.focus,
+    card:  local > 0.5 ? b.card  : a.card,
+    phase: local > 0.5 ? b.phase : a.phase,
   }
 }
 
@@ -71,6 +83,7 @@ export function useISSTimeline({
     let lastCard = -2
     let lastPhase = ''
     let mounted = true
+    let lastTime = performance.now()
 
     // getBoundingClientRect reflects any scroll container (window or inner div).
     // Called inside RAF so the DOM is always in a fully-settled, consistent state —
@@ -95,11 +108,17 @@ export function useISSTimeline({
       // any other scroll container. No dependency on scroll/resize events.
       recomputeRaw()
 
-      smoothP = lerp(smoothP, rawP, damping)
+      // Framerate-independent exponential smoothing: `damping` is calibrated
+      // for 60 fps, corrected here so 120 Hz/30 Hz displays feel identical.
+      const nowMs = performance.now()
+      const dt = Math.min((nowMs - lastTime) / 1000, 1 / 20)
+      lastTime = nowMs
+      const k = 1 - Math.pow(1 - damping, dt * 60)
+      smoothP = lerp(smoothP, rawP, k)
       if (Math.abs(smoothP - rawP) < 1e-4) smoothP = rawP
 
       const s = sampleWaypoints(smoothP)
-      const t = performance.now() / 1000
+      const t = nowMs / 1000
 
       if (cameraProxy)   { cameraProxy.x   = s.cam.x;  cameraProxy.y   = s.cam.y;  cameraProxy.z = s.cam.z }
       if (lookProxy)     { lookProxy.x     = s.look.x; lookProxy.y     = s.look.y; lookProxy.z   = s.look.z }

@@ -55,7 +55,7 @@ function DistantEarth() {
         uCloudOpacity: { value: 0.45 },
         uCloudSpeed:   { value: 0.65 },
         uCityLights:   { value: 1.0 },
-        uAtmoStrength: { value: 0.0 },
+        uAtmoStrength: { value: 0.65 },
       },
       vertexShader: /* glsl */`
         varying vec3 vLP; varying vec3 vWP; varying vec3 vWN;
@@ -173,7 +173,7 @@ function DistantEarth() {
   })
 
   return (
-    <group ref={groupRef} position={[-7.4, -7.5, -13.7]} scale={1.14}>
+    <group ref={groupRef} position={[-7.8, -7.9, -14.2]} scale={1.34}>
       <mesh material={surfaceMat}>
         <sphereGeometry args={[2.7, 96, 64]} />
       </mesh>
@@ -184,13 +184,15 @@ function DistantEarth() {
   )
 }
 
-/* ─── Custom starfield with shader ──────────────────────────────── */
+/* ─── Custom starfield — same twinkle shader as the hero so both
+       sections read as the same sky ─────────────────────────────── */
 function Starfield() {
   const N = 2200
   const { geometry, material } = useMemo(() => {
     const pos = new Float32Array(N * 3)
     const siz = new Float32Array(N)
     const col = new Float32Array(N * 3)
+    const twk = new Float32Array(N)
     for (let i = 0; i < N; i++) {
       const r = 60 + Math.random() * 70
       const th = Math.random() * Math.PI * 2
@@ -199,6 +201,7 @@ function Starfield() {
       pos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th)
       pos[i * 3 + 2] = r * Math.cos(ph)
       siz[i] = 0.4 + Math.random() * 1.4
+      twk[i] = Math.random() * Math.PI * 2
       const tint = Math.random()
       col[i * 3]     = tint < .15 ? 1 : (tint > .85 ? .7 : .95)
       col[i * 3 + 1] = tint < .15 ? .85 : (tint > .85 ? .8 : .95)
@@ -208,25 +211,28 @@ function Starfield() {
     geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3))
     geometry.setAttribute('starSize', new THREE.BufferAttribute(siz, 1))
     geometry.setAttribute('color', new THREE.BufferAttribute(col, 3))
+    geometry.setAttribute('twinkle', new THREE.BufferAttribute(twk, 1))
     const material = new THREE.ShaderMaterial({
-      uniforms: {},
+      uniforms: { uTime: { value: 0 } },
       vertexShader: /* glsl */`
-        attribute float starSize; attribute vec3 color;
-        varying vec3 vC;
+        attribute float starSize; attribute vec3 color; attribute float twinkle;
+        uniform float uTime;
+        varying vec3 vC; varying float vTw;
         void main(){
           vC = color;
+          vTw = .72 + .28 * sin(uTime * 1.6 + twinkle * 7.);
           vec4 mv = modelViewMatrix * vec4(position, 1.);
-          gl_PointSize = starSize * (700. / -mv.z);
+          gl_PointSize = starSize * (.85 + .3 * sin(uTime * 1.1 + twinkle * 5.)) * (700. / -mv.z);
           gl_Position = projectionMatrix * mv;
         }
       `,
       fragmentShader: /* glsl */`
-        varying vec3 vC;
+        varying vec3 vC; varying float vTw;
         void main(){
           vec2 uv = gl_PointCoord - .5;
           float a = 1. - smoothstep(.25, .5, length(uv));
           if(a < .01) discard;
-          gl_FragColor = vec4(vC, a * .85);
+          gl_FragColor = vec4(vC, a * .85 * vTw);
         }
       `,
       transparent: true,
@@ -235,6 +241,8 @@ function Starfield() {
     })
     return { geometry, material }
   }, [])
+
+  useFrame(({ clock }) => { material.uniforms.uTime.value = clock.elapsedTime })
 
   return <points geometry={geometry} material={material} />
 }
@@ -318,39 +326,47 @@ function SunGlare() {
 }
 
 /* ─── Camera rig — reads the proxies each frame ─────────────────── */
-function CameraRig({ cameraProxy, lookProxy, fovProxy }) {
+function CameraRig({ cameraProxy, lookProxy, fovProxy, thrusterProxy }) {
   const { camera } = useThree()
   const lookTarget = useMemo(() => new THREE.Vector3(), [])
   const tmp        = useMemo(() => new THREE.Vector3(), [])
 
   useEffect(() => {
-    camera.position.set(0, 1.6, 28)
+    camera.position.set(0, 1.6, 30)
     camera.fov = 36
     camera.updateProjectionMatrix()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     const t = clock.elapsedTime
+    const dt = Math.min(delta, 1 / 20)
     const driftX = Math.sin(t * 0.19) * 0.06
     const driftY = Math.sin(t * 0.13) * 0.04
     const driftZ = Math.sin(t * 0.07) * 0.05
 
+    // Thruster burns add a fine high-frequency shake — sells the burn
+    const burn = thrusterProxy?.intensity ?? 0
+    const shake = burn * 0.045
+    const shX = shake * Math.sin(t * 31.7) * (0.6 + 0.4 * Math.sin(t * 13.1))
+    const shY = shake * Math.sin(t * 27.3 + 1.7) * (0.6 + 0.4 * Math.cos(t * 17.9))
+
     tmp.set(
-      (cameraProxy?.x ?? 0) + driftX,
-      (cameraProxy?.y ?? 0) + driftY,
+      (cameraProxy?.x ?? 0) + driftX + shX,
+      (cameraProxy?.y ?? 0) + driftY + shY,
       (cameraProxy?.z ?? 16) + driftZ,
     )
-    camera.position.lerp(tmp, 0.18)
+    // Framerate-independent damping (0.18/frame @60fps equivalent)
+    camera.position.lerp(tmp, 1 - Math.pow(1 - 0.18, dt * 60))
 
     lookTarget.set(
-      (lookProxy?.x ?? 0) + Math.sin(t * 0.17) * 0.025,
-      (lookProxy?.y ?? 0) + Math.cos(t * 0.21) * 0.02,
+      (lookProxy?.x ?? 0) + Math.sin(t * 0.17) * 0.025 + shX * 0.5,
+      (lookProxy?.y ?? 0) + Math.cos(t * 0.21) * 0.02 + shY * 0.5,
       (lookProxy?.z ?? 0),
     )
     camera.lookAt(lookTarget)
 
     if (fovProxy && Math.abs(camera.fov - fovProxy.value) > 0.05) {
-      camera.fov += (fovProxy.value - camera.fov) * 0.12
+      camera.fov += (fovProxy.value - camera.fov) * (1 - Math.pow(1 - 0.12, dt * 60))
       camera.updateProjectionMatrix()
     }
   })
@@ -363,10 +379,11 @@ function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrus
 
   return (
     <>
-      <ambientLight color={0x202840} intensity={0.35} />
-      <directionalLight color={0xfff4dc} intensity={2.4} position={[10, 5, 7]} />
-      <directionalLight color={0x4a78b8} intensity={0.95} position={[6, -8, -4]} />
-      <directionalLight color={0x88ccff} intensity={0.45} position={[-7, 3, -5]} />
+      {/* Key/fill/rim balanced for the ACES curve */}
+      <ambientLight color={0x202840} intensity={0.4} />
+      <directionalLight color={0xfff4dc} intensity={2.8} position={[10, 5, 7]} />
+      <directionalLight color={0x4a78b8} intensity={1.05} position={[6, -8, -4]} />
+      <directionalLight color={0x88ccff} intensity={0.5} position={[-7, 3, -5]} />
 
       <Starfield />
       <DistantEarth />
@@ -381,7 +398,7 @@ function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrus
         />
       </Suspense>
 
-      <CameraRig cameraProxy={cameraProxy} lookProxy={lookProxy} fovProxy={fovProxy} />
+      <CameraRig cameraProxy={cameraProxy} lookProxy={lookProxy} fovProxy={fovProxy} thrusterProxy={thrusterProxy} />
     </>
   )
 }
@@ -390,12 +407,18 @@ function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrus
 export function ISSScene({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onLoaded }) {
   return (
     <Canvas
-      dpr={[1, 1.6]}
+      dpr={[1, 1.75]}
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       style={{ width: '100%', height: '100%', background: '#02030a' }}
-      camera={{ fov: 36, near: 0.1, far: 300, position: [0, 1.6, 28] }}
-      onCreated={({ scene }) => {
-        scene.fog = new THREE.FogExp2(0x02030a, 0.025)
+      camera={{ fov: 36, near: 0.1, far: 300, position: [0, 1.6, 30] }}
+      onCreated={({ gl, scene }) => {
+        // Filmic pipeline — ACES tames the metal highlights on the station
+        // and gives the StandardMaterials a photographic falloff.
+        gl.toneMapping = THREE.ACESFilmicToneMapping
+        gl.toneMappingExposure = 1.15
+        gl.outputColorSpace = THREE.SRGBColorSpace
+        // Thinner fog: the station stays crisp through the whole flight
+        scene.fog = new THREE.FogExp2(0x02030a, 0.014)
       }}
     >
       <SceneContent

@@ -56,7 +56,7 @@ export default function ISSSection() {
   const [coords, setCoords] = useState({ x: '0.00', y: '0.00', z: '0.00' })
 
   const stationProxy  = useMemo(() => ({ rotX: 0, rotY: 0, rotZ: 0 }), [])
-  const cameraProxy   = useMemo(() => ({ x: 0, y: 1.6, z: 28 }), [])
+  const cameraProxy   = useMemo(() => ({ x: 0, y: 1.6, z: 30 }), [])
   const lookProxy     = useMemo(() => ({ x: 0, y: 0, z: 0 }), [])
   const thrusterProxy = useMemo(() => ({ intensity: 0 }), [])
   const fovProxy      = useMemo(() => ({ value: 36 }), [])
