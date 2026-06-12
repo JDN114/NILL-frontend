@@ -678,8 +678,8 @@ function Hero({ onCTA }) {
           NILL verbindet <strong style={{color:'var(--ink)',fontWeight:500}}>Postfach, Buchhaltung, Inventur, Zeiterfassung</strong> und <strong style={{color:'var(--ink)',fontWeight:500}}>Teamverwaltung</strong> zu einem einzigen System — gesteuert von einer KI, die Arbeit erkennt, entscheidet und erledigt.
         </p>
         <div className="hero-cta">
-          <MagBtn className="btn btn-primary" href="https://app.nillai.de/register"><span>Kostenlos registrieren</span><span className="arrow">→</span></MagBtn>
-          <MagBtn className="btn btn-ghost" href="https://app.nillai.de/login"><span>Login</span><span className="arrow">→</span></MagBtn>
+          <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos registrieren</span><span className="arrow">→</span></MagBtn>
+          <MagBtn className="btn btn-ghost" href="/login"><span>Login</span><span className="arrow">→</span></MagBtn>
           <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Demo')}} href="#"><span>Live-Demo</span><span className="arrow">↓</span></MagBtn>
         </div>
       </div>

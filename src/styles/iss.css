@@ -14,6 +14,11 @@
   margin-top: -22vh;
   background: #02030a;
   isolation: isolate;
+  /* Cross-Fade statt harter Kante: die ersten 22vh (= Überlappung mit dem Hero)
+     blenden von transparent nach deckend — Hero-Sterne scheinen durch, ISS-Sterne
+     faden ein; bei 22vh endet exakt auch die Hero-Canvas, beide Kanten unsichtbar */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22vh);
+  mask-image: linear-gradient(180deg, transparent 0, #000 22vh);
 }
 
 .iss-section::before {
