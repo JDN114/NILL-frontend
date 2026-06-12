@@ -419,9 +419,7 @@
 .pwa-footer-url .copy{color:var(--ink-40);transition:color .2s}
 .pwa-footer-url:hover .copy{color:var(--accent)}
 
-/* ── Reveal animation (shared token) ─────────────────── */
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
-.reveal.in{opacity:1;transform:none}
+/* .reveal is defined once, in landing.css — single source of truth */
 
 @media(max-width:1020px){
   .pwa-grid{grid-template-columns:1fr}

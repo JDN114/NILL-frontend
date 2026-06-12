@@ -51,9 +51,7 @@
  100%{transform:translate(20vw,120vh) rotate(540deg);opacity:0}
 }
 
-/* ── Reveal animation ──────────────────────────────────── */
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
-.reveal.in{opacity:1;transform:none}
+/* .reveal is defined once, in landing.css — single source of truth */
 
 /* ── Hero block ──────────────────────────────────────── */
 .nh2-hero{
