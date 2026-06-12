@@ -52,8 +52,22 @@ export default function ISSSection() {
   const [activeCard, setActiveCard] = useState(-1)
   const [phase, setPhase] = useState('approach')
   const [loaded, setLoaded] = useState(false)
+  // Canvas rendert nur, wenn die Section (fast) im Viewport ist — sonst läuft
+  // der WebGL-Loop beim Scrollen durch andere Sections weiter und erzeugt Lag
+  const [inView, setInView] = useState(false)
 
   const [coords, setCoords] = useState({ x: '0.00', y: '0.00', z: '0.00' })
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([e]) => setInView(e.isIntersecting),
+      { rootMargin: '25% 0px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   const stationProxy  = useMemo(() => ({ rotX: 0, rotY: 0, rotZ: 0 }), [])
   const cameraProxy   = useMemo(() => ({ x: 0, y: 1.6, z: 30 }), [])
@@ -77,6 +91,7 @@ export default function ISSSection() {
   })
 
   useEffect(() => {
+    if (!inView) return
     let raf = 0, last = 0
     const tick = (now) => {
       raf = requestAnimationFrame(tick)
@@ -90,7 +105,7 @@ export default function ISSSection() {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [cameraProxy])
+  }, [cameraProxy, inView])
 
   const cardState = (i) => {
     if (i === activeCard) return 'active'
@@ -108,6 +123,7 @@ export default function ISSSection() {
 
         <div className="iss-canvas-wrap">
           <ISSScene
+            active={inView}
             issGroupRef={issGroupRef}
             stationProxy={stationProxy}
             cameraProxy={cameraProxy}

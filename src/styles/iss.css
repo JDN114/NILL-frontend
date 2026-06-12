@@ -9,6 +9,9 @@
 .iss-section {
   position: relative;
   height: 560vh; /* longer runway → each camera beat gets a real dwell */
+  /* zieht die Section unter das Hero-Sternenfeld — ein durchgehender Weltraum,
+     kein Gap zwischen Sonnensystem und ISS (stand vorher im Inline-CSS des Heroes) */
+  margin-top: -22vh;
   background: #02030a;
   isolation: isolate;
 }

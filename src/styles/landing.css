@@ -12,7 +12,7 @@
 .btn{display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:99px;font-size:14px;font-weight:500;position:relative;overflow:hidden;isolation:isolate;transition:transform .35s var(--ease-out),color .3s}
 
 /* HERO */
-.hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 80px;display:flex;align-items:center;overflow:hidden}
+.hero{position:relative;min-height:100vh;min-height:100svh;padding:140px 0 0;display:flex;align-items:center;overflow:hidden}
 
 /* CHIPS */
 .hero-chips{position:absolute;inset:0;z-index:1;pointer-events:none}

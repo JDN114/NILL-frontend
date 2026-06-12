@@ -529,10 +529,13 @@ function buildScene(canvas) {
   onResize();
   addEventListener('resize', onResize);
 
-  /* LOOP */
-  const start=performance.now(); let last=start, rafId;
+  /* LOOP — läuft nur, solange der Hero im Viewport ist. Ohne Pause rendert
+     die Szene beim Scrollen durch die restliche Seite ständig weiter und
+     frisst GPU/Main-Thread (spürbares Lag bis runter zur Sustainability). */
+  const start=performance.now(); let last=start, rafId=0, running=false;
   let sScroll=0, trailInit=false;
   const animate = () => {
+    if (!running) return;
     rafId = requestAnimationFrame(animate);
     const now = performance.now();
     const dt = Math.min((now-last)/1000, 1/20);
@@ -590,10 +593,21 @@ function buildScene(canvas) {
     }
     renderer.render(scene, camera);
   };
-  animate();
+  const setRunning = (on) => {
+    if (on === running) return;
+    running = on;
+    if (on) { last = performance.now(); rafId = requestAnimationFrame(animate); }
+    else cancelAnimationFrame(rafId);
+  };
+  const io = new IntersectionObserver(
+    ([e]) => setRunning(e.isIntersecting),
+    { rootMargin: '25% 0px' }
+  );
+  io.observe(canvas);
 
   return () => {
-    cancelAnimationFrame(rafId);
+    io.disconnect();
+    setRunning(false);
     removeEventListener('pointermove',onPointer);
     removeEventListener('scroll',onScroll);
     removeEventListener('resize',onResize);

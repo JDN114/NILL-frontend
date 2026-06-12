@@ -404,9 +404,10 @@ function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrus
 }
 
 /* ─── Public component ───────────────────────────────────────────── */
-export function ISSScene({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onLoaded }) {
+export function ISSScene({ active = true, issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onLoaded }) {
   return (
     <Canvas
+      frameloop={active ? 'always' : 'never'}
       dpr={[1, 1.75]}
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       style={{ width: '100%', height: '100%', background: '#02030a' }}
