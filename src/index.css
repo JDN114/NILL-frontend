@@ -1110,7 +1110,11 @@ body {
    GLOBAL MOBILE UTILITIES
    ========================================================== */
 
-html, body { overflow-x: hidden; }
+/* clip statt hidden: hidden macht html/body zu Scroll-Containern (body scrollt
+   intern, window.scrollY bleibt 0 und window feuert keine scroll-Events mehr —
+   Nav-Blur, ScrollProgress, Hero-Parallax und Walkthrough wirken dann tot).
+   clip schneidet horizontal genauso ab, lässt aber das Fenster den Scroller. */
+html, body { overflow-x: clip; }
 
 /* Remove iOS tap flash */
 * { -webkit-tap-highlight-color: transparent; }
