@@ -327,6 +327,45 @@ export default function DashboardLanding() {
         }));
         if (evts.length) addItems(evts);
       }),
+      // Inventory changes — who changed what (by name), and when.
+      api.get("/inventory/activity", { params: { limit: 20 } }).then(r => {
+        const ACTION_LABELS = {
+          "inventory.item.create": "Artikel angelegt",
+          "inventory.item.update": "Artikel geändert",
+          "inventory.item.delete": "Artikel gelöscht",
+          "inventory.item.quantity": "Bestand aktualisiert",
+          "inventory.list.create": "Liste angelegt",
+          "inventory.list.update": "Liste geändert",
+          "inventory.list.delete": "Liste gelöscht",
+          "inventory.delivery_note.confirm": "Lieferschein bestätigt",
+          "inventory.entry.create": "Eintrag hinzugefügt",
+          "inventory.entry.delete": "Eintrag gelöscht",
+        };
+        const evts = (r.data?.items || []).map(e => {
+          const what = e.details?.name ? ` — ${e.details.name}` : "";
+          return {
+            id: `inv-${e.id}`,
+            cat: "inventur",
+            title: `${ACTION_LABELS[e.action] || "Inventur-Änderung"}${what}`,
+            desc: e.actor_name ? `von ${e.actor_name}` : null,
+            ts: e.created_at || new Date().toISOString(),
+            link: "/dashboard/workflow/Delivery-notes",
+          };
+        });
+        if (evts.length) addItems(evts);
+      }),
+      // Completed tasks — who finished them, and when.
+      api.get("/workflow/tasks", { params: { status: "completed", limit: 15 } }).then(r => {
+        const evts = (r.data?.items || []).filter(t => t.completed_at).map(t => ({
+          id: `task-${t.id}`,
+          cat: "task",
+          title: `Aufgabe erledigt — ${t.title}`,
+          desc: t.completed_by_name ? `von ${t.completed_by_name}` : null,
+          ts: t.completed_at,
+          link: "/dashboard/workflow/tasks",
+        }));
+        if (evts.length) addItems(evts);
+      }),
     ]);
   }, []);
 

@@ -364,13 +364,13 @@ function TaskCard({ task, onOpenConfirm }) {
             }}>⏰ {dl.label}</span>
           )}
 
-          {task.assigned_role && (
+          {(task.assignee_name || task.assigned_role) && (
             <span style={{
               fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
               color: "rgba(239,237,231,0.35)",
               background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: 99, padding: "2px 8px",
-            }}>👤 {task.assigned_role}</span>
+            }}>👤 {task.assignee_name || task.assigned_role}</span>
           )}
         </div>
       </div>

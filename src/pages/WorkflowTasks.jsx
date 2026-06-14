@@ -301,7 +301,7 @@ export default function WorkflowTasksPage() {
                 <select style={selectStyle} value={form.assignee_id}
                   onChange={e => { fv("assignee_id", e.target.value); if (e.target.value) fv("assigned_role", ""); }}>
                   <option value="">— kein Mitarbeiter —</option>
-                  {orgUsers.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+                  {orgUsers.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
                 </select>
               </div>
               <div>
@@ -437,7 +437,11 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
   const [assignUserId, setAssignUserId] = useState(t.assignee_id || "");
   const [assignRole, setAssignRole] = useState(t.assigned_role || "");
 
-  const assigneeEmail = orgUsers.find(u => u.id === t.assignee_id)?.email;
+  // Show the coworker's name — never the email (email lives only in team config).
+  const assigneeName = t.assignee_name || orgUsers.find(u => u.id === t.assignee_id)?.name;
+  const completedWhen = t.completed_at
+    ? new Date(t.completed_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : null;
 
   async function saveAssign() {
     setActionLoading(true);
@@ -469,12 +473,20 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
             <StatusBadge status={t.status} />
             <RecurrenceBadge recurrence={t.recurrence} />
             <DeadlineBadge due_at={t.due_at} />
-            {(assigneeEmail || t.assigned_role) && (
+            {(assigneeName || t.assigned_role) && (
               <span style={{
                 fontSize: "0.65rem", fontWeight: 600, padding: "0.15rem 0.55rem", borderRadius: 20,
                 background: "rgba(197,165,114,0.08)", border: "1px solid rgba(197,165,114,0.2)", color: "var(--nill-gold)",
               }}>
-                👤 {assigneeEmail ?? `Rolle: ${t.assigned_role}`}
+                👤 {assigneeName ?? `Rolle: ${t.assigned_role}`}
+              </span>
+            )}
+            {t.status === "completed" && completedWhen && (
+              <span style={{
+                fontSize: "0.65rem", fontWeight: 600, padding: "0.15rem 0.55rem", borderRadius: 20,
+                background: "rgba(134,239,172,0.08)", border: "1px solid rgba(134,239,172,0.2)", color: "#86efac",
+              }}>
+                ✓ {t.completed_by_name ? `${t.completed_by_name} · ` : ""}{completedWhen}
               </span>
             )}
           </div>
@@ -522,7 +534,7 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
             <select style={selectStyle} value={assignUserId}
               onChange={e => { setAssignUserId(e.target.value); if (e.target.value) setAssignRole(""); }}>
               <option value="">— keine Zuweisung —</option>
-              {orgUsers.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+              {orgUsers.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
             </select>
           </div>
           <div style={{ flex: 1, minWidth: 160 }}>

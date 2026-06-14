@@ -15,9 +15,11 @@ const DOC_ICONS  = ["📝","📊","🌡️","⚡","💧","🔬","📐","🗒️"
 const inputCls = "w-full px-3 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
 const labelCls = "block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1";
 
-function fmtUser(email) {
-  if (!email) return "Unbekannt";
-  return email.split("@")[0];
+function fmtUser(name) {
+  // Receives a display name from the backend (never an email). Falls back
+  // gracefully and strips any domain if a legacy email slips through.
+  if (!name) return "Unbekannt";
+  return name.includes("@") ? name.split("@")[0] : name;
 }
 function fmtDate(d) {
   if (!d) return "";
@@ -198,9 +200,9 @@ function InventoryTab() {
                 className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-[#C5A572] text-xs transition-all">✏️</button>
             </div>
             <p className="text-[10px] text-slate-600 mt-1">{list.item_count||0} Artikel</p>
-            {list.updated_by_email && (
+            {list.updated_by_name && (
               <p className="text-[10px] text-slate-700 mt-0.5">
-                {fmtUser(list.updated_by_email)} · {fmtDate(list.updated_at).split(",")[0]}
+                {fmtUser(list.updated_by_name)} · {fmtDate(list.updated_at).split(",")[0]}
               </p>
             )}
           </div>
@@ -268,7 +270,7 @@ function InventoryTab() {
                     <div className="col-span-2 text-slate-500 text-xs">{item.location||"—"}</div>
                     <div className="col-span-2 flex items-center justify-between">
                       <div>
-                        {item.updated_by_email && <p className="text-[10px] text-slate-600">{fmtUser(item.updated_by_email)}</p>}
+                        {item.updated_by_name && <p className="text-[10px] text-slate-600">{fmtUser(item.updated_by_name)}</p>}
                         {item.updated_at && <p className="text-[10px] text-slate-700">{fmtDate(item.updated_at)}</p>}
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -445,7 +447,7 @@ function DocListsTab() {
                 className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-blue-400 text-xs">✏️</button>
             </div>
             <p className="text-[10px] text-slate-600 mt-1">{list.entry_count||0} Einträge</p>
-            {list.updated_by_email && <p className="text-[10px] text-slate-700">{fmtUser(list.updated_by_email)}</p>}
+            {list.updated_by_name && <p className="text-[10px] text-slate-700">{fmtUser(list.updated_by_name)}</p>}
           </div>
         ))}
       </div>
@@ -503,7 +505,7 @@ function DocListsTab() {
                             {renderCellValue(entry, col)}
                           </td>
                         ))}
-                        <td className="px-3 py-2.5 text-slate-600 text-xs">{fmtUser(entry.created_by_email)}</td>
+                        <td className="px-3 py-2.5 text-slate-600 text-xs">{fmtUser(entry.created_by_name)}</td>
                         <td className="px-3 py-2.5 text-slate-600 text-xs">{fmtDate(entry.created_at)}</td>
                         <td className="px-3 py-2.5"><button onClick={()=>deleteEntry(entry.id)} className="text-slate-600 hover:text-red-400 text-xs">✕</button></td>
                       </tr>
