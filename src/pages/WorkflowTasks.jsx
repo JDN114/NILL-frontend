@@ -97,7 +97,7 @@ function DeadlineBadge({ due_at }) {
 
 /* ── Haupt-Seite ────────────────────────────────────────── */
 export default function WorkflowTasksPage() {
-  const { user } = useAuth();
+  const { user, org, updateOrg } = useAuth();
   const isAdmin = user?.role === "admin";
 
   const [tasks, setTasks]             = useState([]);
@@ -109,6 +109,12 @@ export default function WorkflowTasksPage() {
   const [createOpen, setCreateOpen]   = useState(false);
   const [myTasksOnly, setMyTasksOnly] = useState(false);
   const [filterStatus, setFilterStatus] = useState("");
+
+  // Auto-Löschen erledigter Aufgaben (Org-Einstellung, nur Admin)
+  const [autoDelEnabled, setAutoDelEnabled] = useState((org?.task_auto_delete_days ?? 0) > 0);
+  const [autoDelDays, setAutoDelDays]       = useState(org?.task_auto_delete_days || 30);
+  const [autoDelSaving, setAutoDelSaving]   = useState(false);
+  const [autoDelMsg, setAutoDelMsg]         = useState("");
 
   // Formular-State
   const [form, setForm] = useState({
@@ -138,6 +144,34 @@ export default function WorkflowTasksPage() {
     // Rollen für Rollenzuweisung aus Team-API (Endpoint liefert ein Array)
     api.get("/team/roles").then(r => setOrgRoles(Array.isArray(r.data) ? r.data : (r.data?.roles || []))).catch(() => {});
   }, [isAdmin]);
+
+  // Keep the toggle in sync once the org payload arrives.
+  useEffect(() => {
+    if (org?.task_auto_delete_days != null) {
+      setAutoDelEnabled((org.task_auto_delete_days ?? 0) > 0);
+      if (org.task_auto_delete_days > 0) setAutoDelDays(org.task_auto_delete_days);
+    }
+  }, [org?.task_auto_delete_days]);
+
+  async function saveAutoDelete(nextEnabled, nextDays) {
+    setAutoDelSaving(true); setAutoDelMsg("");
+    try {
+      const days = nextEnabled ? Math.max(1, Math.min(3650, Number(nextDays) || 30)) : 0;
+      const res = await api.post("/workflow/tasks/retention-settings", {
+        enabled: nextEnabled,
+        task_auto_delete_days: days,
+      });
+      updateOrg?.({ task_auto_delete_days: res.data?.task_auto_delete_days ?? days });
+      const purged = res.data?.purged || 0;
+      setAutoDelMsg(
+        nextEnabled
+          ? `✓ Gespeichert${purged ? ` · ${purged} alte erledigte Aufgabe(n) gelöscht` : ""}`
+          : "✓ Auto-Löschen deaktiviert"
+      );
+      if (purged) fetchTasks();
+    } catch { setAutoDelMsg("Fehler beim Speichern"); }
+    finally { setAutoDelSaving(false); }
+  }
 
   function fv(field, val) { setForm(f => ({ ...f, [field]: val })); }
 
@@ -260,6 +294,65 @@ export default function WorkflowTasksPage() {
           )}
         </div>
       </div>
+
+      {/* ── Auto-Löschen erledigter Aufgaben (Admin) ───────── */}
+      {isAdmin && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap",
+          padding: "0.7rem 1rem", marginBottom: "1.25rem", borderRadius: 12,
+          background: "rgba(255,255,255,0.02)", border: "1px solid var(--nill-border)",
+          fontSize: "0.82rem", color: "var(--nill-text-sub)",
+        }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={autoDelEnabled}
+              onChange={e => {
+                const on = e.target.checked;
+                setAutoDelEnabled(on);
+                saveAutoDelete(on, autoDelDays);
+              }}
+              style={{ accentColor: "var(--nill-gold)", width: 16, height: 16, cursor: "pointer" }}
+            />
+            Erledigte Aufgaben automatisch löschen nach
+          </label>
+          <input
+            type="number" min={1} max={3650}
+            value={autoDelDays}
+            disabled={!autoDelEnabled}
+            onChange={e => setAutoDelDays(e.target.value)}
+            style={{
+              width: 64, padding: "0.3rem 0.5rem", textAlign: "center",
+              background: "rgba(255,255,255,0.04)", border: "1px solid var(--nill-border)",
+              borderRadius: 7, color: "var(--nill-text)", fontSize: "0.82rem",
+              opacity: autoDelEnabled ? 1 : 0.4,
+            }}
+          />
+          <span style={{ opacity: autoDelEnabled ? 1 : 0.4 }}>Tagen</span>
+          {autoDelEnabled && (
+            <button
+              onClick={() => saveAutoDelete(true, autoDelDays)}
+              disabled={autoDelSaving}
+              style={{
+                padding: "0.35rem 0.85rem", borderRadius: 8, cursor: "pointer",
+                background: "var(--nill-gold-dim)", border: "1px solid rgba(197,165,114,0.28)",
+                color: "var(--nill-gold)", fontSize: "0.75rem", fontWeight: 600,
+                opacity: autoDelSaving ? 0.5 : 1,
+              }}
+            >
+              {autoDelSaving ? "Speichern…" : "Übernehmen"}
+            </button>
+          )}
+          {autoDelMsg && (
+            <span style={{ fontSize: "0.75rem", color: autoDelMsg.startsWith("Fehler") ? "#f87171" : "#86efac" }}>
+              {autoDelMsg}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--nill-text-dim)" }}>
+            Nur erledigte Aufgaben · offene bleiben erhalten
+          </span>
+        </div>
+      )}
 
       {/* ── Aufgabe erstellen (Admin) ──────────────────────── */}
       {createOpen && isAdmin && (

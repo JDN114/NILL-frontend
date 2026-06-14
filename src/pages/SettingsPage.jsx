@@ -2852,7 +2852,7 @@ export default function SettingsPage() {
                             <span style={{ fontSize: "0.78rem", fontWeight: 700, color: gold }}>{planLabel}</span>
                           </div>
                           <UsageBar
-                            label="E-Mail KI (Antwort-Assistent)"
+                            label="E-Mail KI (Analyse)"
                             icon="📧"
                             used={aiUsage.email_ai.used}
                             cap={aiUsage.email_ai.cap}
@@ -2867,7 +2867,10 @@ export default function SettingsPage() {
                             available={aiUsage.nill_secretary.available}
                           />
                           <p style={{ fontSize: "0.75rem", color: mute, margin: 0, borderTop: `1px solid ${border}`, paddingTop: "0.75rem" }}>
-                            Tägliche Zusammenfassungen (NILL Sekretärin) werden nicht auf das Limit angerechnet.
+                            Das E-Mail-KI-Limit zählt die automatische Analyse eingehender E-Mails
+                            (Zusammenfassung & Einordnung). KI-Antworten sind nicht auf dieses
+                            Tageslimit angerechnet, unterliegen aber einer Ratenbegrenzung.
+                            Tägliche Zusammenfassungen (NILL Sekretärin) werden nicht angerechnet.
                             Alle Limits laden täglich um Mitternacht neu auf.
                           </p>
                         </>
