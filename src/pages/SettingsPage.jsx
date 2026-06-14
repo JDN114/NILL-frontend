@@ -862,13 +862,16 @@ export default function SettingsPage() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === "nutzung") {
-      setAiUsageLoad(true);
+    if (activeTab !== "nutzung") return;
+    setAiUsageLoad(true);
+    const fetchUsage = () =>
       api.get("/api/v1/ai-usage")
         .then(r => setAiUsage(r.data))
-        .catch(() => setAiUsage(null))
+        .catch(() => {})
         .finally(() => setAiUsageLoad(false));
-    }
+    fetchUsage();
+    const id = setInterval(fetchUsage, 30_000);
+    return () => clearInterval(id);
   }, [activeTab]);
 
   useEffect(() => {
@@ -2801,7 +2804,9 @@ export default function SettingsPage() {
                     )}
 
                     {!aiUsageLoad && aiUsage && (() => {
-                      const planLabel = ({ solo: "Solo", team: "Team", business: "Business", enterprise: "Enterprise" })[org?.plan] ?? (org?.plan_status === "trial" ? "Testzeitraum" : "Inaktiv");
+                      const planLabel = org?.plan
+                        ? ({ solo: "Solo", team: "Team", business: "Business", enterprise: "Enterprise" }[org.plan] ?? "Inaktiv")
+                        : (org?.plan_status === "trial" ? "Testzeitraum" : "Inaktiv");
                       const UsageBar = ({ label, icon, used, cap, unlimited, available = true }) => {
                         if (!available) return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

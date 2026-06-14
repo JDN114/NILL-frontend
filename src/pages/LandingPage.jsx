@@ -1,6 +1,9 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import ISSSection from '../sections/iss/ISSSection'
 import SustainabilitySection from '../sections/sustainability/SustainabilitySection'
 import PWASection from '../sections/pwa/PWASection'
@@ -332,13 +335,24 @@ function buildScene(canvas) {
   const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   // 1.25 statt 1.5: die Planeten-Shader (fbm/snoise pro Pixel) sind teuer —
   // auf Retina ~30 % weniger Fragment-Last, visuell kaum unterscheidbar
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x02030a, 1);
+
+  const composer = new EffectComposer(renderer)
 
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(42, 2, 0.1, 300);
   camera.position.set(0, 1.8, 11.0);
   camera.lookAt(0, 0, 0);
+
+  composer.addPass(new RenderPass(scene, camera))
+  const bloomPass = new UnrealBloomPass(
+    new T.Vector2(window.innerWidth, window.innerHeight),
+    1.1,   // strength
+    0.75,  // radius
+    0.12   // threshold — low so planets + atmosphere glow too
+  )
+  composer.addPass(bloomPass)
 
   /* STARS — ISS-quality shader: 2200 stars, color-tinted, same GLSL as ISSScene */
   const N = 2200;
@@ -529,6 +543,7 @@ function buildScene(canvas) {
     if (!el) return;
     const w=el.clientWidth, h=el.clientHeight;
     renderer.setSize(w,h,false);
+    composer.setSize(w,h);
     camera.aspect=w/h;
     camera.updateProjectionMatrix();
   };
@@ -597,7 +612,7 @@ function buildScene(canvas) {
       atmo.position.set(px,py,pz); atmoMat.uniforms.uSunPos.value.copy(sunWorldPos);
       if(ring){ring.position.set(px,py,pz);ring.material.uniforms.uSunPos.value.copy(sunWorldPos);}
     }
-    renderer.render(scene, camera);
+    composer.render();
   };
   const setRunning = (on) => {
     if (on === running) return;
@@ -617,6 +632,7 @@ function buildScene(canvas) {
     removeEventListener('pointermove',onPointer);
     removeEventListener('scroll',onScroll);
     removeEventListener('resize',onResize);
+    composer.dispose();
     renderer.dispose();
   };
 }

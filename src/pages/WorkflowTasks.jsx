@@ -135,8 +135,8 @@ export default function WorkflowTasksPage() {
   useEffect(() => {
     if (!isAdmin) return;
     api.get("/hr/users").then(r => setOrgUsers(r.data?.users || [])).catch(() => {});
-    // Rollen für Rollenzuweisung aus Team-API
-    api.get("/team/roles").then(r => setOrgRoles(r.data?.roles || [])).catch(() => {});
+    // Rollen für Rollenzuweisung aus Team-API (Endpoint liefert ein Array)
+    api.get("/team/roles").then(r => setOrgRoles(Array.isArray(r.data) ? r.data : (r.data?.roles || []))).catch(() => {});
   }, [isAdmin]);
 
   function fv(field, val) { setForm(f => ({ ...f, [field]: val })); }

@@ -72,10 +72,23 @@ const CheckoutPage           = React.lazy(() => import("./pages/CheckoutPage.jsx
 
 function PushNotification() {
   const [items, setItems] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     const handler = (e) => {
+      // OS notification was clicked — the service worker focused this window
+      // and asks us to route client-side to the notification's destination.
+      if (e.data?.type === "NAVIGATE" && e.data.url) {
+        try {
+          const u = new URL(e.data.url, window.location.origin);
+          if (u.origin === window.location.origin) navigate(u.pathname + u.search + u.hash);
+          else window.location.href = e.data.url;
+        } catch {
+          window.location.href = e.data.url;
+        }
+        return;
+      }
       if (e.data?.type !== "PUSH") return;
       const id = Date.now();
       setItems(prev => [...prev.slice(-2), { id, title: e.data.title, body: e.data.body, url: e.data.url }]);
@@ -83,7 +96,7 @@ function PushNotification() {
     };
     navigator.serviceWorker.addEventListener("message", handler);
     return () => navigator.serviceWorker.removeEventListener("message", handler);
-  }, []);
+  }, [navigate]);
 
   if (!items.length) return null;
   return (

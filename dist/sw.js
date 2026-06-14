@@ -1,5 +1,5 @@
 // NILL PWA Service Worker — push notifications + offline caching
-const CACHE = "nill-v3";
+const CACHE = "nill-v4";
 
 // ── Install: cache essential shell ──────────────────────────────────────────
 self.addEventListener("install", (e) => {
@@ -83,11 +83,19 @@ self.addEventListener("notificationclick", (e) => {
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        const exact = clients.find((c) => c.url === target);
-        if (exact) return exact.focus();
-        const existing = clients.find((c) => c.url.startsWith(self.location.origin));
-        if (existing) {
-          return existing.navigate(target).then((client) => client?.focus());
+        // Reuse an already-open app window when possible. We focus it first
+        // (focus works on any client) and then hand the route to the SPA via
+        // postMessage. We intentionally avoid WindowClient.navigate(): it only
+        // works on clients *controlled* by this worker and silently rejects for
+        // uncontrolled windows (which matchAll returns here), which would leave
+        // the click dead and never reach the destination.
+        const appClient =
+          clients.find((c) => c.url === target) ||
+          clients.find((c) => c.url.startsWith(self.location.origin));
+        if (appClient) {
+          return Promise.resolve(appClient.focus())
+            .then((c) => (c || appClient).postMessage({ type: "NAVIGATE", url: raw }))
+            .catch(() => self.clients.openWindow(target));
         }
         return self.clients.openWindow(target);
       })

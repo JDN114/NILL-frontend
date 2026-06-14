@@ -3,6 +3,8 @@ import api from "../services/api";
 
 export const GmailContext = createContext();
 
+const INBOX_TTL_MS = 30_000; // 30 s before re-fetching inbox on remount
+
 export const GmailProvider = ({ children }) => {
   const [connected, setConnected]       = useState(null);
   const [emails, setEmails]             = useState([]);
@@ -15,8 +17,23 @@ export const GmailProvider = ({ children }) => {
   const [hasMoreSent, setHasMoreSent]   = useState(false);
 
   const lastStatusFetch   = useRef(0);
+  const lastInboxFetch    = useRef(0);   // PERF-C3: TTL for inbox re-fetch
   const fetchInboxPromise = useRef(null);
   const fetchSentPromise  = useRef(null);
+
+  // Refs for pagination tokens — avoids recreating callbacks on each page load.
+  // State counterparts keep the rendered UI in sync.
+  const inboxNextTokenRef = useRef(null);
+  const sentNextTokenRef  = useRef(null);
+
+  const _setInboxNextToken = useCallback((val) => {
+    inboxNextTokenRef.current = val;
+    setInboxNextToken(val);
+  }, []);
+  const _setSentNextToken = useCallback((val) => {
+    sentNextTokenRef.current = val;
+    setSentNextToken(val);
+  }, []);
 
   // ── Status ──────────────────────────────────────────────────────────────────
   const fetchStatus = useCallback(async () => {
@@ -47,10 +64,11 @@ export const GmailProvider = ({ children }) => {
       await api.post("/gmail/disconnect");
       setConnected({ connected: false });
       setEmails([]); setSentEmails([]); setActiveEmail(null);
-      setInboxNextToken(null); setSentNextToken(null);
+      _setInboxNextToken(null); _setSentNextToken(null);
       lastStatusFetch.current = 0;
+      lastInboxFetch.current  = 0;
     } catch (err) { console.error("Gmail disconnect error:", err); }
-  }, []);
+  }, [_setInboxNextToken, _setSentNextToken]);
 
   // ── Fetch helpers ────────────────────────────────────────────────────────────
   const _fetchPage = useCallback(async ({ mailbox, append, token }) => {
@@ -63,32 +81,39 @@ export const GmailProvider = ({ children }) => {
     const next  = data.next_page_token || null;
 
     if (mailbox === "inbox") {
-      setInboxNextToken(next);
+      _setInboxNextToken(next);
       setHasMoreInbox(!!next);
       setEmails(prev => append ? [...prev, ...mails] : mails);
     } else {
-      setSentNextToken(next);
+      _setSentNextToken(next);
       setHasMoreSent(!!next);
       setSentEmails(prev => append ? [...prev, ...mails] : mails);
     }
 
     return mails;
-  }, []);
+  }, [_setInboxNextToken, _setSentNextToken]);
 
   // ── Inbox ────────────────────────────────────────────────────────────────────
+  // Deps: connected (need to know if we can fetch), _fetchPage (stable).
+  // inboxNextToken removed from deps — read via ref to avoid recreation on every page.
   const fetchInboxEmails = useCallback(async ({ append = false } = {}) => {
     if (!connected?.connected) return [];
 
-    if (!append && fetchInboxPromise.current) return fetchInboxPromise.current;
+    // PERF-C3: skip re-fetch if inbox was loaded recently and this is a fresh load
+    if (!append) {
+      if (fetchInboxPromise.current) return fetchInboxPromise.current;
+      if (Date.now() - lastInboxFetch.current < INBOX_TTL_MS && emails.length > 0) return emails;
+    }
 
-    const token   = append ? inboxNextToken : null;
+    const token   = append ? inboxNextTokenRef.current : null;
     const promise = _fetchPage({ mailbox: "inbox", append, token })
+      .then(mails => { if (!append) lastInboxFetch.current = Date.now(); return mails; })
       .catch(err => { console.error("Inbox error:", err); return []; })
       .finally(() => { fetchInboxPromise.current = null; });
 
     if (!append) fetchInboxPromise.current = promise;
     return promise;
-  }, [connected, inboxNextToken, _fetchPage]);
+  }, [connected, emails, _fetchPage]);
 
   // ── Sent ─────────────────────────────────────────────────────────────────────
   const fetchSentEmails = useCallback(async ({ append = false } = {}) => {
@@ -96,14 +121,14 @@ export const GmailProvider = ({ children }) => {
 
     if (!append && fetchSentPromise.current) return fetchSentPromise.current;
 
-    const token   = append ? sentNextToken : null;
+    const token   = append ? sentNextTokenRef.current : null;
     const promise = _fetchPage({ mailbox: "sent", append, token })
       .catch(err => { console.error("Sent error:", err); return []; })
       .finally(() => { fetchSentPromise.current = null; });
 
     if (!append) fetchSentPromise.current = promise;
     return promise;
-  }, [connected, sentNextToken, _fetchPage]);
+  }, [connected, _fetchPage]);
 
   // ── Suche ────────────────────────────────────────────────────────────────────
   const searchEmails = useCallback(async (q, mailbox = null) => {
@@ -147,12 +172,14 @@ export const GmailProvider = ({ children }) => {
     fetchInboxEmails, fetchSentEmails, searchEmails,
     openEmail, closeEmail,
     hasMoreInbox, hasMoreSent,
+    inboxNextToken, sentNextToken,
   }), [
     connected, disconnectGmail, fetchStatus,
     emails, sentEmails, activeEmail, initializing,
     fetchInboxEmails, fetchSentEmails, searchEmails,
     openEmail, closeEmail,
     hasMoreInbox, hasMoreSent,
+    inboxNextToken, sentNextToken,
   ]);
 
   return (

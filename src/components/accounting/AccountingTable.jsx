@@ -1,4 +1,6 @@
-export default function AccountingTable({ invoices }) {
+import React from "react";
+
+const AccountingTable = React.memo(function AccountingTable({ invoices }) {
   return (
     <div className="mt-6 bg-gray-900 rounded-lg border border-gray-700">
       <table className="w-full text-sm text-white">
@@ -25,4 +27,6 @@ export default function AccountingTable({ invoices }) {
       </table>
     </div>
   );
-}
+});
+
+export default AccountingTable;

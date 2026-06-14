@@ -14,7 +14,12 @@ try{
 
 const res=await api.get("/transactions");
 
-setTransactions(res.data);
+// Precompute formatted date once per transaction, not per render per row.
+const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: "short" });
+setTransactions((res.data||[]).map(t=>({
+  ...t,
+  dateFormatted: t.date ? fmt.format(new Date(t.date)) : "—",
+})));
 
 }catch(e){
 
@@ -73,7 +78,7 @@ Lade Transaktionen...
 <tr key={t.id} className="border-t border-white/10">
 
 <td>
-{new Date(t.date).toLocaleDateString()}
+{t.dateFormatted}
 </td>
 
 <td>

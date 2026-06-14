@@ -208,11 +208,24 @@ export const ImapProvider = ({ children }) => {
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
+// Both arrays arrive sorted desc by received_at from the API.
+// A linear O(n+m) merge replaces the O((n+m) log (n+m)) full re-sort that
+// fired on every "load more" page.
 function _mergeUnique(prev, more) {
   const seen = new Set(prev.map(e => e.id));
-  const merged = [...prev];
-  for (const m of more) if (!seen.has(m.id)) merged.push(m);
-  return merged.sort((a, b) =>
-    new Date(b.received_at || 0) - new Date(a.received_at || 0)
-  );
+  const newItems = more.filter(m => !seen.has(m.id));
+  if (!newItems.length) return prev;
+
+  // Merge two descending-sorted arrays in a single pass.
+  const result = [];
+  let i = 0, j = 0;
+  while (i < prev.length && j < newItems.length) {
+    const ta = new Date(prev[i].received_at || 0).getTime();
+    const tb = new Date(newItems[j].received_at || 0).getTime();
+    if (ta >= tb) result.push(prev[i++]);
+    else          result.push(newItems[j++]);
+  }
+  while (i < prev.length)    result.push(prev[i++]);
+  while (j < newItems.length) result.push(newItems[j++]);
+  return result;
 }
