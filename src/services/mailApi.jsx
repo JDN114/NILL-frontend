@@ -79,6 +79,17 @@ export async function aiReply({ provider, emailId }) {
   return r.data?.reply ?? "";
 }
 
+/** Force a fresh AI analysis. Counts against the daily analysis cap. */
+export async function reanalyze({ provider, emailId }) {
+  const path = (
+    provider === "imap"    ? `/imap/emails/${emailId}/reanalyze` :
+    provider === "outlook" ? `/outlook/emails/${emailId}/reanalyze` :
+                             `/gmail/emails/${emailId}/reanalyze`
+  );
+  const r = await api.post(path);
+  return r.data?.ai_status ?? "pending";
+}
+
 /** Mark as read */
 export async function markRead({ provider, emailId }) {
   const path = (

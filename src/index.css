@@ -479,6 +479,21 @@ body {
 .em-detail-actions {
   margin-top: 1.5rem; padding-top: 1rem;
   border-top: 1px solid var(--nill-border);
+  display: flex; gap: 0.6rem; flex-wrap: wrap;
+}
+.em-reanalyze-btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.55rem 1.2rem;
+  font-size: 0.8rem; font-weight: 600;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--nill-border);
+  color: var(--nill-text-sub);
+  border-radius: 8px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.em-reanalyze-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
 }
 .em-reply-btn {
   display: inline-flex; align-items: center; gap: 0.45rem;
@@ -889,6 +904,9 @@ body {
 .em-ai-summary {
   font-size: 0.83rem; color: var(--nill-text-sub);
   line-height: 1.6; margin: 0 0 0.75rem;
+}
+.em-ai-summary--muted {
+  font-style: italic; opacity: 0.7;
 }
 
 /* Sections */

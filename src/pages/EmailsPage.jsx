@@ -26,7 +26,7 @@ import ImapComposeModal from "../components/ImapComposeModal";
 import ImapAccountSwitcher from "../components/ImapAccountSwitcher";
 import SmartFolderModal from "../components/SmartFolderModal";
 import api from "../services/api";
-import { attachmentUrl } from "../services/mailApi";
+import { attachmentUrl, reanalyze } from "../services/mailApi";
 
 const IC = {
   refresh: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>),
@@ -91,32 +91,63 @@ const Spinner = memo(function Spinner({ sm }) {
 });
 
 const AiPanel = memo(function AiPanel({ email, aiEnabled }) {
-  if (!aiEnabled) return null;
-  const s = email.ai_status;
-  if (s === "pending" || s === "processing") return (
-    <div className="em-ai-panel em-ai-panel--loading">
-      <Spinner sm /><span>{s === "processing" ? "KI analysiert…" : "Warte auf Analyse…"}</span>
-    </div>
-  );
-  if (s === "failed") return (
-    <div className="em-ai-panel em-ai-panel--failed">
-      <span className="em-ai-failed-label">KI-Analyse fehlgeschlagen</span>
-    </div>
-  );
-  if (s !== "success") return null;
+  const s   = email.ai_status;
+  const err = email.ai_error;
+
+  // AI disabled (no consent): uniform message across ALL providers, even if a
+  // snippet happens to be stored (IMAP sets one unconditionally). Keeps Gmail/
+  // Outlook/IMAP consistent and nudges the user to enable AI.
+  if (!aiEnabled) {
+    return (
+      <div className="em-ai-panel">
+        <div className="em-ai-header"><span className="em-ai-title">KI Analyse</span></div>
+        <p className="em-ai-summary em-ai-summary--muted">
+          KI-Analyse ist deaktiviert – in den Einstellungen unter Datenschutz aktivierbar.
+        </p>
+      </div>
+    );
+  }
+
+  const hasSummary = !!email.summary;
+
+  // Genuine in-progress (not the limit-deferral, which we surface as a message).
+  if (!hasSummary && (s === "pending" || s === "processing") && err !== "daily_limit_reached") {
+    return (
+      <div className="em-ai-panel em-ai-panel--loading">
+        <Spinner sm /><span>{s === "processing" ? "KI analysiert…" : "Warte auf Analyse…"}</span>
+      </div>
+    );
+  }
+
+  // A summary line ALWAYS shows. Real AI summary if present, otherwise an
+  // explicit backend-driven reason so the panel is never blank.
+  let summaryText = email.summary;
+  const muted = !hasSummary;
+  if (!hasSummary) {
+    if (err === "daily_limit_reached")             summaryText = "KI-Tageslimit erreicht – die Zusammenfassung folgt automatisch nach Mitternacht.";
+    else if (s === "skipped" && err === "too_short") summaryText = "Diese E-Mail ist zu kurz für eine Zusammenfassung.";
+    else if (s === "skipped")                      summaryText = "Keine Zusammenfassung nötig.";
+    else if (s === "success")                      summaryText = "Keine Zusammenfassung nötig.";
+    else if (s === "failed")                       summaryText = "KI-Analyse fehlgeschlagen.";
+    else                                           summaryText = "Keine Zusammenfassung verfügbar.";
+  }
+
+  const showBadges = s === "success";
   const prio = PRIO[email.priority] || PRIO.medium;
   const sent = SENT_CFG[email.sentiment] || SENT_CFG.neutral;
   return (
     <div className="em-ai-panel">
       <div className="em-ai-header">
         <span className="em-ai-title">KI Analyse</span>
-        <div className="em-ai-badges">
-          <span className={`em-priority ${prio.cls}`}>{IC.bolt} {prio.label}</span>
-          <span className={`em-sentiment ${sent.cls}`}>{IC.smile} {sent.label}</span>
-          {email.category && <span className="em-category">{IC.tag} {email.category}</span>}
-        </div>
+        {showBadges && (
+          <div className="em-ai-badges">
+            <span className={`em-priority ${prio.cls}`}>{IC.bolt} {prio.label}</span>
+            <span className={`em-sentiment ${sent.cls}`}>{IC.smile} {sent.label}</span>
+            {email.category && <span className="em-category">{IC.tag} {email.category}</span>}
+          </div>
+        )}
       </div>
-      {email.summary && <p className="em-ai-summary">{email.summary}</p>}
+      {summaryText && <p className={muted ? "em-ai-summary em-ai-summary--muted" : "em-ai-summary"}>{summaryText}</p>}
       {email.action_items?.length > 0 && (
         <div className="em-ai-section">
           <p className="em-ai-section-label">Handlungsbedarf</p>
@@ -304,7 +335,7 @@ function AttachmentPreview({ att, email, onClose }) {
 }
 
 // ── Memoized EmailDetail — re-renders only when activeEmail content changes ──
-const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabled }) {
+const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReanalyze, aiEnabled }) {
   const [preview, setPreview] = useState(null); // att object or null
 
   if (!email) return <div className="em-detail-empty">Wähle eine E-Mail aus</div>;
@@ -356,6 +387,11 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, aiEnabl
           <button onClick={onReply} className="em-reply-btn">
             {IC.reply} Antworten
           </button>
+          {aiEnabled && onReanalyze && (
+            <button onClick={onReanalyze} className="em-reanalyze-btn" title="KI-Analyse neu ausführen (zählt auf das Tageslimit)">
+              Neu analysieren
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -538,7 +574,10 @@ export default function EmailsPage() {
       try {
         const updated = await openEmailRef.current(id);
         const status = updated?.ai_status ?? activeEmailRef.current?.ai_status;
-        if (["done", "success", "failed"].includes(status) || !activeEmailRef.current) {
+        // Stop on terminal states, on "skipped" (too short / not needed), and when
+        // analysis was deferred by the daily cap (won't change until midnight).
+        const deferred = updated?.ai_error === "daily_limit_reached";
+        if (["done", "success", "failed", "skipped"].includes(status) || deferred || !activeEmailRef.current) {
           stopPolling();
         }
       } catch { stopPolling(); }
@@ -563,7 +602,8 @@ export default function EmailsPage() {
       api.post(`/imap/emails/${id}/retry-ai`).catch(() => {});
       status = "pending";
     }
-    if (aiEnabledRef.current && !["done", "success", "failed", "skipped"].includes(status)) {
+    const deferred = email?.ai_error === "daily_limit_reached";
+    if (aiEnabledRef.current && !deferred && !["done", "success", "failed", "skipped"].includes(status)) {
       startPolling(id);
     }
   }, [stopPolling, startPolling, provider]);
@@ -574,6 +614,19 @@ export default function EmailsPage() {
   }, [stopPolling, closeEmail]);
 
   const handleReply = useCallback(() => setReplyOpen(true), []);
+
+  const handleReanalyze = useCallback(async () => {
+    const id = activeEmailRef.current?.id;
+    if (!id) return;
+    try {
+      await reanalyze({ provider, emailId: id });
+      // Refresh the detail and poll until analysis completes / is deferred.
+      await openEmailRef.current(id);
+      if (aiEnabledRef.current) startPolling(id);
+    } catch (err) {
+      console.error("reanalyze error:", err);
+    }
+  }, [provider, startPolling]);
 
   const handleDisconnect = useCallback(async () => {
     if (!window.confirm(`${provider} wirklich trennen?`)) return;
@@ -830,7 +883,7 @@ export default function EmailsPage() {
 
         {/* ── Detail ── */}
         <div className={`em-detail-col ${activeEmail ? "em-detail-col--open" : ""}`}>
-          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} aiEnabled={aiEnabled} />
+          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} onReanalyze={handleReanalyze} aiEnabled={aiEnabled} />
         </div>
       </div>
 
