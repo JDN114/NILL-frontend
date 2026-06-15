@@ -1,5 +1,5 @@
 // NILL PWA Service Worker — push notifications + offline caching
-const CACHE = "nill-v5";
+const CACHE = "nill-v6";
 
 // ── Install: cache essential shell ──────────────────────────────────────────
 self.addEventListener("install", (e) => {
@@ -65,7 +65,17 @@ self.addEventListener("fetch", (e) => {
       })
       .catch(async () => {
         const cached = await caches.match(e.request);
-        return cached || caches.match("/offline.html");
+        if (cached) return cached;
+        // Never hand the HTML offline page back for a script/style/asset
+        // request: the browser would try to evaluate offline.html as an ES
+        // module and throw "Importing a module script failed" (guaranteed
+        // under X-Content-Type-Options: nosniff). Only real document requests
+        // may fall back to offline.html; everything else fails as a network
+        // error so the app's lazyWithRetry can reload instead.
+        if (e.request.destination === "document") {
+          return caches.match("/offline.html");
+        }
+        return Response.error();
       })
   );
 });
