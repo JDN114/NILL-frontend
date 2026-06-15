@@ -355,6 +355,11 @@ function App() {
                   <Route path="/station/inventur" element={
                     <ProtectedRoute><ArbeitsStationInventur /></ProtectedRoute>
                   }/>
+
+                  {/* Catch-all — never leave an unknown route blank. Notifications
+                      delivered before a route rename (or any stray deep link) land
+                      here and are sent to the dashboard instead of a white screen. */}
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
                 </ErrorBoundary>
               </Suspense>

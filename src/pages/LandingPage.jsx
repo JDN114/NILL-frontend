@@ -704,6 +704,12 @@ function Hero({ onCTA }) {
           <MagBtn className="btn btn-ghost" href="/login"><span>Login</span><span className="arrow">→</span></MagBtn>
           <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Demo')}} href="#"><span>Live-Demo</span><span className="arrow">↓</span></MagBtn>
         </div>
+        <p className="hero-trial-note" style={{
+          marginTop:16, fontSize:13, lineHeight:1.5,
+          color:'rgba(239,237,231,.5)', letterSpacing:'.01em'
+        }}>
+          <span style={{color:'var(--accent)',fontWeight:500}}>14 Tage kostenlos</span> testen — keine Kreditkarte nötig.
+        </p>
       </div>
       <div className="hero-meta">
         <span>NILL · KI-Betriebssystem</span>

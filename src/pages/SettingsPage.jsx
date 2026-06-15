@@ -2122,7 +2122,7 @@ export default function SettingsPage() {
                       const used = active + pending;
                       const pct  = Math.min(100, Math.round((used / max) * 100));
                       const barColor = at_capacity ? red : pct >= 80 ? amber : gold;
-                      const planLabel = plan === "solo" ? "Solo (max. 2)" : plan === "team" ? "Team (max. 10)" : "Business";
+                      const planLabel = plan === "arbeitsstation" ? "Arbeitsstation" : plan === "solo" ? "Solo (max. 2)" : plan === "team" ? "Team (max. 10)" : "Business";
                       return (
                         <div style={{
                           padding: "0.9rem 1rem", borderRadius: 10,

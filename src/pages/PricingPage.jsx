@@ -70,6 +70,26 @@ const PLANS = [
   },
 ];
 
+// Standalone "smart workstation" product — sold separately from the full suite.
+// Flat price, no seat tiers. No accounting, no NILL secretary.
+const ARBEITSSTATION_PLAN = {
+  id: "arbeitsstation",
+  title: "Arbeitsstation",
+  subtitle: "Die smarte Arbeitsstation für Ihren Betrieb — Tablet & Kiosk",
+  seats: "Unbegrenzte Stationen & Mitarbeiter",
+  monthlyPrice: 30,
+  yearlyPrice: 300,
+  pop: true,
+  features: [
+    "Smarte Arbeitsstation — Tablet- & Kiosk-Modus",
+    "Zeiterfassung mit QR-Mitarbeiterausweis",
+    "Aufgaben- & Taskmanagement fürs ganze Team",
+    "Lieferscheine, Inventur & Bestandsführung",
+    "E-Mail-Integration: Gmail, Outlook & IMAP",
+    "Teamverwaltung, Rollen & HR-Dokumente",
+  ],
+};
+
 const FAQ = [
   {
     q: "Kann ich den Plan jederzeit wechseln?",
@@ -282,6 +302,7 @@ function FaqItem({ q, a }) {
 
 export default function PricingPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState("suite"); // "suite" = NILL Komplett · "station" = Arbeitsstation
   const [cycle, setCycle] = useState("monthly");
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [error, setError] = useState(null);
@@ -398,17 +419,65 @@ export default function PricingPage() {
             margin: "0 0 28px",
             color: ink,
           }}>
-            Der richtige Plan<br />
-            <em style={{ fontStyle: "italic", color: accent }}>für jede Größe</em>
+            {mode === "station" ? (
+              <>Eine smarte<br />
+              <em style={{ fontStyle: "italic", color: accent }}>Arbeitsstation</em></>
+            ) : (
+              <>Der richtige Plan<br />
+              <em style={{ fontStyle: "italic", color: accent }}>für jede Größe</em></>
+            )}
           </h1>
 
           <p style={{
             fontSize: "clamp(16px, 1.3vw, 20px)", lineHeight: 1.55,
-            color: inkDim, maxWidth: "56ch", margin: "0 auto 52px",
+            color: inkDim, maxWidth: "56ch", margin: "0 auto 40px",
           }}>
-            Von Einzelunternehmern bis zum wachsenden Team — NILL wächst mit Ihnen.
-            Transparent, ohne versteckte Kosten, monatlich kündbar.
+            {mode === "station"
+              ? "Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Buchhaltung, ohne Ballast."
+              : "Von Einzelunternehmern bis zum wachsenden Team — die komplette NILL-Suite mit Buchhaltung & KI-Sekretärin. Transparent, monatlich kündbar."}
           </p>
+
+          {/* ── Probezeitraum-Hinweis (subtil) ── */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 9,
+            margin: "-20px auto 40px", padding: "6px 15px", borderRadius: 99,
+            background: "rgba(198,255,60,0.06)",
+            border: "1px solid rgba(198,255,60,0.18)",
+            fontFamily: mono, fontSize: 11, letterSpacing: "0.16em",
+            textTransform: "uppercase", color: ink,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: 99, background: accent, boxShadow: `0 0 8px ${accent}` }} />
+            14 Tage kostenlos testen · keine Kreditkarte
+          </div>
+
+          {/* ── Produkt-Modus: Komplettlösung vs. Arbeitsstation ── */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 36 }}>
+            <div style={{
+              display: "inline-flex",
+              background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${line}`,
+              borderRadius: 99, padding: 5, gap: 5,
+            }}>
+              {[
+                { id: "suite",   label: "NILL Komplett" },
+                { id: "station", label: "Arbeitsstation" },
+              ].map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  style={{
+                    padding: "11px 26px", borderRadius: 99, border: "none",
+                    fontFamily: sans, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                    transition: "background 0.25s, color 0.25s",
+                    background: mode === m.id ? accent : "transparent",
+                    color: mode === m.id ? "#000" : inkDim,
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Billing toggle */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 72 }}>
@@ -466,28 +535,45 @@ export default function PricingPage() {
           )}
 
           {/* Plan cards */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 18,
-            perspective: 1400,
-            textAlign: "left",
-          }}>
-            {PLANS.map(plan => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                cycle={cycle}
-                loading={loadingPlan}
-                onCheckout={handleCheckout}
-              />
-            ))}
-          </div>
+          {mode === "station" ? (
+            <div style={{
+              display: "flex", justifyContent: "center",
+              perspective: 1400, textAlign: "left",
+            }}>
+              <div style={{ width: "min(420px, 100%)" }}>
+                <PlanCard
+                  plan={ARBEITSSTATION_PLAN}
+                  cycle={cycle}
+                  loading={loadingPlan}
+                  onCheckout={handleCheckout}
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 18,
+              perspective: 1400,
+              textAlign: "left",
+            }}>
+              {PLANS.map(plan => (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  cycle={cycle}
+                  loading={loadingPlan}
+                  onCheckout={handleCheckout}
+                />
+              ))}
+            </div>
+          )}
 
         </div>
       </section>
 
-      {/* ── Feature comparison note ────────────────────────────────────── */}
+      {/* ── Feature comparison note (only for the full suite) ──────────── */}
+      {mode === "suite" && (
       <section style={{ padding: "0 0 80px" }}>
         <div style={{ width: "min(1280px, 100% - 48px)", margin: "0 auto" }}>
           <div style={{
@@ -534,6 +620,7 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section style={{ padding: "80px 0 120px" }}>

@@ -1,5 +1,5 @@
 // src/pages/DashboardLanding.jsx
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
@@ -158,6 +158,7 @@ const ICONS = {
   accounting:    "◎",
   calendar:      "▦",
   team:          "⌘",
+  arbeitsstation:"▤",
   settings:      "◉",
 };
 
@@ -239,7 +240,6 @@ export default function DashboardLanding() {
     () => localStorage.getItem("nill_feed_seen") || "1970-01-01T00:00:00Z"
   );
   const { hasFeature, hasModule, isCompanyAdmin, org } = useAuth();
-  const navigate = useNavigate();
 
   const toggleAccountingMode = (e) => {
     e.preventDefault();
@@ -375,14 +375,19 @@ export default function DashboardLanding() {
     api.post("/me/onboarding-complete").catch(() => {});
   };
 
+  // Simplified landing: only modules the org actually has are shown — nothing
+  // locked is rendered. The Arbeitsstation tile always shows (kiosk activation).
   const cards = [
-    { key: "nill",        title: "NILL",          desc: "KI-Sekretärin",                    link: "/dashboard/NILL-Secretary", feature: null,         module: null,         isNill: true, comingSoon: true },
-    { key: "emails",      title: "E-Mails",        desc: "Postfach, Filter & Kategorien",    link: "/dashboard/emails",         feature: "email",      module: "emails"      },
-    { key: "accounting",  title: "Buchhaltung",    desc: "Rechnungen, Einnahmen & Ausgaben", link: "/dashboard/accounting",     feature: "accounting", module: "accounting"  },
-    { key: "calendar",    title: "Kalender",       desc: "Termine, Planung & Events",        link: "/dashboard/calendar",       feature: "calendar",   module: "calendar"    },
-    { key: "team",        title: "Team",           desc: "Tasks, Prozesse & Rollen",         link: "/dashboard/workflow",       feature: null,         module: null          },
-    { key: "settings",    title: "Einstellungen",  desc: "Account & Verbindungen",            link: "/dashboard/settings",       feature: null,         module: null,         adminOnly: true },
-  ].filter(c => !c.adminOnly || isCompanyAdmin());
+    { key: "emails",        title: "E-Mails",       desc: "Postfach, Filter & Kategorien",          link: "/dashboard/emails",   feature: "email",      module: "emails"     },
+    { key: "team",          title: "Team",          desc: "Aufgaben, Prozesse & Rollen",            link: "/dashboard/workflow", feature: null,         module: null         },
+    { key: "arbeitsstation",title: "Arbeitsstation",desc: "Zeiterfassung, Aufgaben & Lieferscheine",link: "/station",            feature: null,         module: null,        isStation: true },
+    { key: "accounting",    title: "Buchhaltung",   desc: "Rechnungen, Einnahmen & Ausgaben",       link: "/dashboard/accounting", feature: "accounting", module: "accounting" },
+    { key: "calendar",      title: "Kalender",      desc: "Termine, Planung & Events",              link: "/dashboard/calendar", feature: "calendar",   module: "calendar"   },
+    { key: "settings",      title: "Einstellungen", desc: "Account & Verbindungen",                 link: "/dashboard/settings", feature: null,         module: null,        adminOnly: true },
+  ]
+    .filter(c => !c.adminOnly || isCompanyAdmin())
+    // Hide anything the org can't access — no locked/greyed cards in the UI.
+    .filter(c => (!c.module || hasModule(c.module)) && (!c.feature || hasFeature(c.feature)));
 
   const unreadCount = feedItems.filter(i => new Date(i.ts) > new Date(lastSeen)).length;
 
@@ -393,7 +398,6 @@ export default function DashboardLanding() {
     localStorage.setItem("nill_feed_seen", now);
   };
 
-  const actionCount = 0;
   const greeting    = org?.name ?? userName ?? null;
   const hour        = new Date().getHours();
   const timeOfDay   = hour < 12 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
@@ -517,81 +521,22 @@ export default function DashboardLanding() {
 
           <div className="nd-grid">
             {cards.map((card, idx) => {
-              const unlocked = (!card.module || hasModule(card.module)) &&
-                               (!card.feature || hasFeature(card.feature));
-
-              if (card.comingSoon) {
+              if (card.isStation) {
                 return (
                   <motion.div
                     key={card.key}
-                    className="nd-card nd-card-soon"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * .05 }}
                   >
-                    <div className="nd-card-icon">{ICONS[card.key] || "◎"}</div>
-                    <div>
-                      <div className="nd-card-title">{card.title}</div>
-                      <span className="nd-soon-badge">Coming Soon</span>
-                      <p className="nd-card-desc" style={{ marginTop: 6 }}>{card.desc}</p>
-                    </div>
-                  </motion.div>
-                );
-              }
-
-              if (!unlocked) {
-                return (
-                  <motion.div
-                    key={card.key}
-                    className={`nd-card nd-card-locked`}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * .05 }}
-                    onClick={() => navigate("/upgrade", {
-                      state: { from: "/dashboard", feature: card.feature, module: card.module }
-                    })}
-                  >
-                    <div className="nd-card-icon nd-lock-icon">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="nd-card-title">{card.title}</div>
-                      <p className="nd-card-desc">{card.desc}</p>
-                    </div>
-                  </motion.div>
-                );
-              }
-
-              if (card.isNill) {
-                return (
-                  <motion.div
-                    key={card.key}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: .03 }}
-                  >
-                    <Link to={card.link} className="nd-card nd-card-nill" style={{ display: "flex" }}>
-                      {actionCount > 0 && <span className="nd-action-dot" />}
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-                        <div className="nd-card-icon">◈</div>
-                        <div>
-                          <div className="nd-card-title">NILL</div>
-                          <div className="nd-nill-badge">KI-Sekretärin</div>
-                        </div>
+                    <Link to={card.link} className="nd-card" style={{ display: "flex" }}>
+                      <div className="nd-card-icon">{ICONS[card.key] || "▤"}</div>
+                      <div>
+                        <div className="nd-card-title">{card.title}</div>
+                        <span className="nd-soon-badge" style={{ background: "rgba(198,255,60,.1)", borderColor: "rgba(198,255,60,.25)", color: "var(--accent)" }}>Tablet & Kiosk</span>
+                        <p className="nd-card-desc" style={{ marginTop: 6 }}>{card.desc}</p>
                       </div>
-                      <div className="nd-nill-modules">
-                        {[{ label: "Bewerb.", icon: "👤" }, { label: "Reisen", icon: "✈️" }, { label: "Meetings", icon: "📅" }].map(m => (
-                          <div key={m.label} className="nd-nill-module">
-                            <div className="nd-nill-module-icon">{m.icon}</div>
-                            <div className="nd-nill-module-label">{m.label}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="nd-card-desc" style={{ marginTop: 4 }}>Keine offenen Aufgaben</p>
-                      <div className="nd-card-arrow">Öffnen <span>→</span></div>
+                      <div className="nd-card-arrow">Station öffnen <span>→</span></div>
                     </Link>
                   </motion.div>
                 );

@@ -1,5 +1,5 @@
 // NILL PWA Service Worker — push notifications + offline caching
-const CACHE = "nill-v4";
+const CACHE = "nill-v5";
 
 // ── Install: cache essential shell ──────────────────────────────────────────
 self.addEventListener("install", (e) => {
@@ -28,6 +28,31 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api")) return;
+
+  // Navigation requests (HTML documents) — e.g. opening /emails from a push
+  // notification. Always go network-first, and on failure fall back to the
+  // single cached app shell, NEVER to a per-route cached document. A stale
+  // per-route document references hashed JS bundles that no longer exist after
+  // a deploy (Vercel only serves the latest build's /assets), which renders a
+  // blank, unrendered page. The shell is re-fetched by the live index.html.
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE).then((c) => c.put("/index.html", clone));
+          }
+          return res;
+        })
+        .catch(async () =>
+          (await caches.match("/index.html")) ||
+          (await caches.match("/")) ||
+          caches.match("/offline.html")
+        )
+    );
+    return;
+  }
 
   e.respondWith(
     fetch(e.request)
