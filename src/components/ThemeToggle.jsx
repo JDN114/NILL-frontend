@@ -5,16 +5,15 @@
 // chrome, so a global gated control reaches every sub-category at once).
 import { useLocation } from "react-router-dom";
 import { FiMoon, FiSun } from "react-icons/fi";
-import { useTheme } from "../context/ThemeContext";
-
-// Authenticated surfaces where the toggle should appear.
-const SHOW_ON = ["/dashboard", "/station", "/ausweis", "/admin", "/upgrade", "/onboarding"];
+import { useTheme, isDashboardPath } from "../context/ThemeContext";
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
 
-  if (!SHOW_ON.some((p) => pathname.startsWith(p))) return null;
+  // Same gating as <ThemeApplier>: the toggle only appears where the light
+  // theme actually applies, so visibility and effect stay in lockstep.
+  if (!isDashboardPath(pathname)) return null;
 
   const isLight = theme === "light";
   return (

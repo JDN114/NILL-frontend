@@ -2,7 +2,7 @@
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
-import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider, ThemeApplier } from "./context/ThemeContext";
 import ThemeToggle from "./components/ThemeToggle";
 import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
@@ -173,6 +173,7 @@ function App() {
           <ImapProvider>
           <MailProvider>
             <Router>
+              <ThemeApplier />
               <InactivityGuard />
               <RouteTracker />
               <CookieBanner />

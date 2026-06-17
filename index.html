@@ -2,14 +2,18 @@
 <html lang="de">
   <head>
     <script>
-      /* Apply saved theme before paint to avoid a flash of the wrong mode. */
+      /* Apply the effective theme before paint to avoid a flash of the wrong
+         mode. Must mirror <ThemeApplier>: dark is the standard mode, and light
+         only applies on dashboard surfaces — the landing/marketing/legal/auth
+         pages always stay dark regardless of the saved preference. */
       (function () {
         try {
-          var t = localStorage.getItem("nill-theme");
-          if (t !== "light" && t !== "dark") {
-            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-          }
-          document.documentElement.setAttribute("data-theme", t);
+          var stored = localStorage.getItem("nill-theme");
+          var p = location.pathname;
+          var dash = ["/dashboard", "/station", "/ausweis", "/admin", "/upgrade", "/onboarding", "/redeem-coupon"];
+          var onDash = dash.some(function (x) { return p.indexOf(x) === 0; });
+          var effective = stored === "light" && onDash ? "light" : "dark";
+          document.documentElement.setAttribute("data-theme", effective);
         } catch (e) {
           document.documentElement.setAttribute("data-theme", "dark");
         }
