@@ -123,31 +123,56 @@ const S = `
   .nd-feed-empty { padding:48px 20px; text-align:center; color:var(--ink-dim); font-size:13px; }
 
   @media(max-width:768px) {
-    .nd-root { overflow-y:auto; -webkit-overflow-scrolling:touch; height:100%; padding-bottom:env(safe-area-inset-bottom,0); }
-    .nd-welcome { padding:18px 16px; margin-bottom:14px; }
-    .nd-welcome h1 { font-size:clamp(19px,5vw,28px); margin-bottom:4px; }
-    .nd-welcome-sub { font-size:12px; }
-    .nd-welcome-eyebrow { font-size:9px; margin-bottom:8px; }
-    .nd-card { padding:14px 16px; gap:8px; }
-    .nd-card-title { font-size:16px; }
-    .nd-card-desc { font-size:11px; }
-    .nd-card-icon { width:28px; height:28px; font-size:13px; border-radius:8px; }
-    .nd-card-arrow { font-size:10px; }
-    .nd-section-label { font-size:9px; margin-bottom:10px; }
-    .nd-ai-banner { padding:14px; gap:10px; margin-bottom:14px; }
-    .nd-ai-banner-icon { width:32px; height:32px; font-size:14px; border-radius:9px; }
-    .nd-ai-banner-title { font-size:13px; }
-    .nd-ai-banner-desc { font-size:11px; }
+    /* Safety net only — the tile grid below is sized to fit one screen, so
+       this should rarely engage. Keeps the page from ever leaking into a
+       document-level scroll if content is unexpectedly tall (long org name,
+       many notifications, …). The page itself stays non-scrolling. */
+    .nd-root { overflow-y:auto; -webkit-overflow-scrolling:touch; height:100%; padding-bottom:env(safe-area-inset-bottom,0); display:flex; flex-direction:column; }
+
+    .nd-welcome { padding:14px 16px; margin-bottom:10px; }
+    .nd-welcome h1 { font-size:clamp(18px,5vw,26px); margin-bottom:2px; }
+    .nd-welcome-sub { font-size:11.5px; }
+    .nd-welcome-eyebrow { font-size:9px; margin-bottom:6px; }
+    .nd-bell-btn { width:30px; height:30px; top:14px; right:14px; }
+
+    /* Module grid becomes a compact icon-tile grid (Google-style app
+       launcher) — title only, no description/arrow — so all modules fit
+       on one screen without scrolling. */
+    .nd-section-label { font-size:9px; margin-bottom:8px; }
+    .nd-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+    .nd-card { padding:12px; gap:4px; flex-direction:row; align-items:center; }
+    .nd-card-icon { width:30px; height:30px; font-size:13px; border-radius:8px; margin-bottom:0; }
+    .nd-card > div:nth-child(2) { flex:1; min-width:0; }
+    .nd-card-title { font-size:13.5px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .nd-card-desc { display:none; }
+    .nd-card-arrow { display:none; }
+    .nd-soon-badge { font-size:8px; padding:1px 6px; }
+    .nd-mode-toggle { margin-top:4px; padding:2px 2px 2px 7px; }
+    .nd-mode-toggle-label { display:none; }
+
+    .nd-ai-banner { padding:12px; gap:8px; margin-bottom:10px; }
+    .nd-ai-banner-icon { width:30px; height:30px; font-size:13px; border-radius:8px; }
+    .nd-ai-banner-title { font-size:12.5px; }
+    .nd-ai-banner-desc { font-size:10.5px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .nd-ai-banner-cta { font-size:10px; padding:6px 12px; }
+
     .nd-nill-modules { gap:4px; }
     .nd-nill-module { padding:6px 3px; }
     .nd-nill-module-icon { font-size:12px; }
     .nd-nill-module-label { font-size:8px; }
-    .nd-notif { padding:8px 10px; font-size:12px; }
+    .nd-notif { padding:7px 10px; font-size:11.5px; }
     .nd-feed-panel { width:100vw; }
+
+    /* Footer stays attached at the bottom, compacted so it never forces
+       the page (or .nd-root) into scroll territory on small screens. */
+    footer { flex-shrink:0; }
+    footer > div { padding:8px 0 !important; gap:4px 10px !important; }
+    footer a, footer button { font-size:9px !important; letter-spacing:.08em !important; }
   }
   @media(max-width:420px) {
-    .nd-welcome { padding:14px 14px; margin-bottom:12px; }
-    .nd-card { padding:12px 14px; }
+    .nd-welcome { padding:12px 14px; margin-bottom:8px; }
+    .nd-card { padding:10px; }
+    .nd-grid { gap:6px; }
     .nd-nill-modules { grid-template-columns:repeat(3,1fr); }
   }
 `;
@@ -160,6 +185,7 @@ const ICONS = {
   team:          "⌘",
   arbeitsstation:"▤",
   settings:      "◉",
+  ausweis:       "▣",
 };
 
 const CAT = {
@@ -381,6 +407,7 @@ export default function DashboardLanding() {
     { key: "emails",        title: "E-Mails",       desc: "Postfach, Filter & Kategorien",          link: "/dashboard/emails",   feature: "email",      module: "emails"     },
     { key: "team",          title: "Team",          desc: "Aufgaben, Prozesse & Rollen",            link: "/dashboard/workflow", feature: null,         module: null         },
     { key: "arbeitsstation",title: "Arbeitsstation",desc: "Zeiterfassung, Aufgaben & Lieferscheine",link: "/station",            feature: null,         module: null,        isStation: true },
+    { key: "ausweis",       title: "Mein Ausweis",  desc: "QR-Code zum Ein-/Ausstempeln",           link: "/ausweis",            feature: null,         module: null         },
     { key: "accounting",    title: "Buchhaltung",   desc: "Rechnungen, Einnahmen & Ausgaben",       link: "/dashboard/accounting", feature: "accounting", module: "accounting" },
     { key: "calendar",      title: "Kalender",      desc: "Termine, Planung & Events",              link: "/dashboard/calendar", feature: "calendar",   module: "calendar"   },
     { key: "settings",      title: "Einstellungen", desc: "Account & Verbindungen",                 link: "/dashboard/settings", feature: null,         module: null,        adminOnly: true },

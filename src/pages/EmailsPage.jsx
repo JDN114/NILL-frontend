@@ -41,6 +41,8 @@ const IC = {
   tag:     (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>),
   smile:   (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>),
   more:    (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
+  menu:    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>),
+  plus:    (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
 };
 
 const FILTERS = [
@@ -429,6 +431,7 @@ export default function EmailsPage() {
   const [searching, setSearching]       = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [filterOpen, setFilterOpen]     = useState(false);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
 
   const pollingRef     = useRef(null);
   const activeEmailRef = useRef(null);
@@ -694,8 +697,11 @@ export default function EmailsPage() {
   return (
     <>
       <div className="em-shell">
+        {/* Mobile drawer backdrop */}
+        {drawerOpen && <div className="em-drawer-backdrop" onClick={() => setDrawerOpen(false)} />}
+
         {/* ── Sidebar ── */}
-        <aside className="em-sidebar">
+        <aside className={`em-sidebar${drawerOpen ? " em-sidebar--open" : ""}`}>
           <a href="/dashboard" className="em-logo">
             <span className="em-logo-mark">N</span>
             <span className="em-logo-label">NILL</span>
@@ -738,7 +744,7 @@ export default function EmailsPage() {
               { key: "sent",  label: "Gesendet" },
             ].map(({ key, label, badge }) => (
               <button key={key}
-                onClick={() => { setMailbox(key); setActiveFolder(null); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
+                onClick={() => { setMailbox(key); setActiveFolder(null); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); setDrawerOpen(false); }}
                 className={`em-nav-item ${mailbox === key && !activeFolder ? "em-nav-item--active" : ""}`}>
                 <span>{label}</span>
                 {badge > 0 && <span className="em-badge">{badge}</span>}
@@ -749,7 +755,7 @@ export default function EmailsPage() {
             {folders.map(f => (
               <div key={f.id} className="flex items-center group">
                 <button
-                  onClick={() => { setActiveFolder(f.id); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); }}
+                  onClick={() => { setActiveFolder(f.id); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); setDrawerOpen(false); }}
                   className={`em-nav-item flex-1 ${activeFolder === f.id ? "em-nav-item--active" : ""}`}
                   style={activeFolder === f.id ? { background: `${f.color}22`, color: f.color } : {}}
                 >
@@ -778,16 +784,22 @@ export default function EmailsPage() {
 
         {/* ── Liste ── */}
         <div className={`em-list-col ${activeEmail ? "em-list-col--pushed" : ""}`}>
-          {/* Mobile-only NILL logo bar */}
+          {/* Mobile-only top bar: hamburger + logo */}
           <div className="em-mobile-bar">
+            <button onClick={() => setDrawerOpen(true)} className="em-hamburger" aria-label="Menü öffnen">
+              {IC.menu}
+            </button>
             <a href="/dashboard" className="em-logo">
               <span className="em-logo-mark">N</span>
               <span className="em-logo-label">NILL</span>
             </a>
-            <button onClick={() => setComposeOpen(true)} className="em-compose" style={{ margin: 0, padding: "0.4rem 0.75rem", fontSize: "0.75rem" }}>
-              {IC.compose} Neu
-            </button>
+            <span style={{ width: 36 }} />
           </div>
+
+          {/* Mobile-only floating compose button (Gmail-style FAB) */}
+          <button onClick={() => setComposeOpen(true)} className="em-fab" aria-label="Verfassen">
+            {IC.plus}
+          </button>
           <div className="em-list-header">
             <span className="em-list-title">
               {activeFolder

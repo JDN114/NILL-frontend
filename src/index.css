@@ -658,38 +658,122 @@ body {
 .em-mobile-bar {
   display: none;
 }
+.em-hamburger {
+  display: none;
+}
+.em-fab {
+  display: none;
+}
+.em-drawer-backdrop {
+  display: none;
+}
 
-/* ── Mobile ───────────────────────────────────────────────── */
+/* ── Mobile (Gmail-style) ─────────────────────────────────── */
 @media (max-width: 768px) {
-  .em-sidebar           { display: none; }
-  .em-list-col          { width: 100%; min-width: 0; border-right: none; }
+  .em-shell { height: 100dvh; }
+
+  /* Sidebar becomes a slide-in drawer instead of disappearing —
+     folder/provider switching must stay reachable on mobile. */
+  .em-sidebar {
+    display: flex;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    z-index: 300;
+    width: 78vw; min-width: 0; max-width: 300px;
+    box-shadow: 8px 0 32px rgba(0,0,0,0.45);
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(.2,.8,.4,1);
+    background: #0a1322;
+  }
+  .em-sidebar--open { transform: translateX(0); }
+  .em-drawer-backdrop {
+    display: block;
+    position: fixed; inset: 0; z-index: 290;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+    animation: em-fade-in 0.15s ease;
+  }
+
+  .em-list-col          { width: 100%; min-width: 0; border-right: none; position: relative; }
   .em-list-col--pushed  { display: none; }
   .em-detail-col        { display: none; width: 100%; }
   .em-detail-col--open  { display: flex; }
-  .em-detail-inner      { padding: 1rem 0.85rem 2rem; }
+  .em-detail-inner      { padding: 1rem 0.85rem 5.5rem; }
 
   .em-mobile-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.6rem 1rem 0.55rem;
+    padding: 0.55rem 0.65rem;
     border-bottom: 1px solid var(--nill-border);
     flex-shrink: 0;
     background: rgba(7,16,35,0.7);
+    position: sticky; top: 0; z-index: 20;
   }
   .em-mobile-bar .em-logo {
     margin-bottom: 0;
   }
+  .em-hamburger {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; flex-shrink: 0;
+    border-radius: 50%; border: none; background: none;
+    color: var(--nill-text-sub); cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .em-hamburger:hover, .em-hamburger:active { background: var(--nill-panel-hov); color: var(--nill-text); }
 
-  /* Compact list items on mobile */
-  .em-item { padding: 0.65rem 0.85rem; gap: 0.65rem; }
-  .em-avatar { width: 32px; height: 32px; font-size: 0.75rem; }
-  .em-item-sender { font-size: 0.8rem; }
-  .em-item-subject { font-size: 0.77rem; }
-  .em-item-date { font-size: 0.68rem; }
-  .em-list-header { padding: 0.65rem 1rem 0.5rem; }
-  .em-search-bar { margin: 0.45rem 0.75rem 0; padding: 0.38rem 0.65rem; }
-  .em-filter-bar { padding: 0.4rem 0.75rem 0; }
+  /* Gmail-style floating compose button */
+  .em-fab {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed;
+    right: 18px;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0));
+    z-index: 50;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--nill-gold);
+    color: #1a1206;
+    box-shadow: 0 6px 20px rgba(197,165,114,0.45), 0 2px 8px rgba(0,0,0,0.35);
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .em-fab:active { transform: scale(0.93); }
+
+  /* Roomier, touch-friendly list items — Gmail-style rows */
+  .em-item { padding: 0.75rem 1rem; gap: 0.7rem; min-height: 64px; }
+  .em-avatar { width: 38px; height: 38px; font-size: 0.8rem; }
+  .em-item-sender { font-size: 0.85rem; max-width: 60vw; }
+  .em-item--unread .em-item-sender { font-weight: 700; }
+  .em-item-subject { font-size: 0.8rem; }
+  .em-item--unread .em-item-subject { font-weight: 500; }
+  .em-item-date { font-size: 0.7rem; }
+  .em-list-header { padding: 0.6rem 1rem 0.45rem; }
+  .em-list-title { font-size: 0.78rem; }
+  .em-search-bar { margin: 0.5rem 0.75rem 0; padding: 0.55rem 0.8rem; border-radius: 24px; }
+  .em-search-input { font-size: 0.85rem; }
+  .em-filter-bar { padding: 0.45rem 0.75rem 0; }
+  .em-filter-toggle { padding: 0.4rem 0.85rem; }
+
+  /* Bigger tap targets in the drawer nav */
+  .em-nav-item { padding: 0.65rem 0.9rem; font-size: 0.86rem; }
+  .em-compose { padding: 0.7rem 1rem; }
+  .em-provider-tab { padding: 7px 4px; font-size: 0.72rem; }
+
+  /* Sticky reply bar at the bottom of the detail view, like Gmail */
+  .em-detail-actions {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 40;
+    margin-top: 0;
+    padding: 0.7rem 0.85rem;
+    padding-bottom: calc(0.7rem + env(safe-area-inset-bottom, 0));
+    background: rgba(7,16,35,0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--nill-border);
+  }
+  .em-reply-btn { flex: 1; justify-content: center; padding: 0.7rem 1rem; }
 }
 
 /* ── Animationen ─────────────────────────────────────────── */

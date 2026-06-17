@@ -28,6 +28,7 @@ const OnboardingPage         = lazyWithRetry(() => import("./pages/OnboardingPag
 const DashboardLanding       = lazyWithRetry(() => import("./pages/DashboardLanding"));
 const EmailsPage             = lazyWithRetry(() => import("./pages/EmailsPage"));
 const SettingsPage           = lazyWithRetry(() => import("./pages/SettingsPage"));
+const AusweisPage            = lazyWithRetry(() => import("./pages/AusweisPage"));
 const AccountingPage         = lazyWithRetry(() => import("./pages/AccountingPage"));
 const KalenderLanding        = lazyWithRetry(() => import("./pages/KalenderLanding"));
 const WorkflowLanding        = lazyWithRetry(() => import("./pages/WorkflowLanding"));
@@ -158,37 +159,6 @@ function ConditionalFooter() {
   return <Footer />;
 }
 
-function StationBackButton() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const fromStation = sessionStorage.getItem("nill_from_station") === "1";
-  if (!fromStation || location.pathname.startsWith("/station")) return null;
-  return (
-    <button
-      onClick={() => { sessionStorage.removeItem("nill_from_station"); navigate("/station"); }}
-      style={{
-        position: "fixed", bottom: 24, right: 24, zIndex: 9998,
-        padding: "0.55rem 1.1rem",
-        background: "rgba(4,7,15,0.92)",
-        border: "1px solid rgba(197,165,114,0.35)",
-        borderRadius: 99,
-        color: "#c5a572",
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: "0.72rem",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        cursor: "pointer",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        display: "flex", alignItems: "center", gap: 6,
-        boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
-      }}
-    >
-      ← ArbeitsStation
-    </button>
-  );
-}
-
 function App() {
   return (
     <AuthProvider>
@@ -202,7 +172,6 @@ function App() {
               <CookieBanner />
               <TrialBanner />
               <PushNotification />
-              <StationBackButton />
               <Suspense fallback={<PageLoader />}>
                 <ErrorBoundary>
                 <Routes>
@@ -311,6 +280,11 @@ function App() {
 
                   <Route path="/redeem-coupon" element={
                     <ProtectedRoute><RedeemCoupon /></ProtectedRoute>
+                  }/>
+
+                  {/* Mitarbeiter-Ausweis — schneller Direktzugriff auf den QR-Badge */}
+                  <Route path="/ausweis" element={
+                    <ProtectedRoute><AusweisPage /></ProtectedRoute>
                   }/>
 
                   {/* Company Admin only */}

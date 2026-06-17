@@ -14,7 +14,7 @@
         { "key": "Permissions-Policy",         "value": "geolocation=(), microphone=(), camera=()" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.google-analytics.com; font-src 'self' data:; frame-src https://js.stripe.com; connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://api.nillai.de; base-uri 'self'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.google-analytics.com; font-src 'self' data:; frame-src https://js.stripe.com; connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://api.nillai.de https://api-staging.nillai.de; base-uri 'self'; form-action 'self';"
         }
       ]
     },

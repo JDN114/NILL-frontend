@@ -1,11 +1,33 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+// Buchhaltung is Work-In-Progress and disabled server-side — always flag it.
+function WipBadge({ compact = false }) {
+  return (
+    <span
+      style={{
+        marginLeft: compact ? "0.25rem" : "0.4rem",
+        fontSize: compact ? "0.55rem" : "0.6rem",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        padding: compact ? "0 0.2rem" : "0.05rem 0.3rem",
+        borderRadius: 4,
+        verticalAlign: "middle",
+        color: "var(--nill-gold, #c5a572)",
+        background: "var(--nill-gold-dim, rgba(197,165,114,0.15))",
+        border: "1px solid rgba(197,165,114,0.35)",
+      }}
+    >
+      WIP
+    </span>
+  );
+}
+
 const NAV_ITEMS = [
   { label: "Dashboard",      path: "/dashboard",               exact: true },
   { label: "Emails",         path: "/dashboard/emails" },
   { label: "Kalender",       path: "/dashboard/calendar" },
-  { label: "Buchhaltung",    path: "/dashboard/accounting" },
+  { label: "Buchhaltung",    path: "/dashboard/accounting",    wip: true },
   { label: "NILL",           disabled: true,                   gold: true },
   { label: "Einstellungen",  path: "/dashboard/settings" },
 ];
@@ -13,7 +35,7 @@ const NAV_ITEMS = [
 const BOTTOM_NAV = [
   { label: "Start",      path: "/dashboard",            exact: true,  icon: "◧" },
   { label: "E-Mails",    path: "/dashboard/emails",                   icon: "✉" },
-  { label: "Buchhaltung",path: "/dashboard/accounting",               icon: "◎" },
+  { label: "Buchhaltung",path: "/dashboard/accounting",               icon: "◎", wip: true },
   { label: "Workflow",   path: "/dashboard/workflow",                 icon: "⬡" },
   { label: "Mehr",       path: "/dashboard/settings",                 icon: "◉" },
 ];
@@ -256,7 +278,7 @@ export default function Navbar() {
                       textTransform: "uppercase", background: "rgba(197,165,114,0.12)",
                       border: "1px solid rgba(197,165,114,0.2)", borderRadius: 99,
                       padding: "1px 6px", color: "rgba(197,165,114,0.5)",
-                    }}>bald</span>
+                    }}>WIP</span>
                   </span>
                 ) : (
                   <Link
@@ -298,6 +320,7 @@ export default function Navbar() {
                   }}
                 >
                   {item.label}
+                  {item.wip && <WipBadge />}
                 </Link>
               );
             })}
@@ -326,7 +349,7 @@ export default function Navbar() {
                 className={`nill-mobile-nav-link${item.gold ? " gold" : ""}`}
                 style={{ opacity: 0.35, cursor: "not-allowed" }}>
                 {item.label}
-                <span style={{ marginLeft: "0.4rem", fontSize: "0.65rem", opacity: 0.7 }}>— bald</span>
+                <span style={{ marginLeft: "0.4rem", fontSize: "0.65rem", opacity: 0.7 }}>— WIP</span>
               </span>
             );
           }
@@ -339,6 +362,7 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               {item.label}
+              {item.wip && <WipBadge />}
             </Link>
           );
         })}
@@ -361,7 +385,9 @@ export default function Navbar() {
                 <div className="nill-bnav-icon-wrap">
                   <span className="nill-bnav-icon">{item.icon}</span>
                 </div>
-                <span className="nill-bnav-label">{item.label}</span>
+                <span className="nill-bnav-label">
+                  {item.label}{item.wip && <WipBadge compact />}
+                </span>
               </Link>
             );
           })}

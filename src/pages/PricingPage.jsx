@@ -30,7 +30,7 @@ const PLANS = [
       "E-Mail-Integration: Gmail, Outlook & IMAP",
       "E-Mail KI-Assistent: 10 Antworten / Tag",
       "Intelligenter Kalender & Aufgaben",
-      "Buchhaltung mit OCR-Belegerfassung",
+      "Buchhaltung mit OCR-Belegerfassung (WIP – in Entwicklung)",
       "Automatische Steuer- & Kategorieextraktion",
       "Rechnungserstellung & PDF-Export",
     ],
@@ -434,7 +434,7 @@ export default function PricingPage() {
           }}>
             {mode === "station"
               ? "Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Buchhaltung, ohne Ballast."
-              : "Von Einzelunternehmern bis zum wachsenden Team — die komplette NILL-Suite mit Buchhaltung & KI-Sekretärin. Transparent, monatlich kündbar."}
+              : "Von Einzelunternehmern bis zum wachsenden Team — die komplette NILL-Suite mit Buchhaltung (WIP – in Entwicklung) & KI-Sekretärin. Transparent, monatlich kündbar."}
           </p>
 
           {/* ── Probezeitraum-Hinweis (subtil) ── */}

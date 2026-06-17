@@ -749,6 +749,26 @@ function OverviewTab({ onNavigate, onUpload }) {
 
   return (
     <div>
+      {/* ─── WIP notice — Buchhaltung is Work-In-Progress and disabled server-side ─── */}
+      <div role="status" style={{
+        display:"flex",alignItems:"center",gap:10,
+        background:"rgba(197,165,114,0.12)",
+        border:"1px solid rgba(197,165,114,0.4)",
+        borderRadius:10,padding:"10px 14px",marginBottom:16,
+        color:"var(--ink2)",fontSize:".85rem",lineHeight:1.4,
+      }}>
+        <span style={{
+          fontSize:".62rem",fontWeight:700,letterSpacing:"0.04em",
+          padding:"0.1rem 0.4rem",borderRadius:4,whiteSpace:"nowrap",
+          color:"var(--nill-gold, #c5a572)",background:"rgba(197,165,114,0.18)",
+          border:"1px solid rgba(197,165,114,0.45)",
+        }}>WIP</span>
+        <span>
+          <strong>Buchhaltung ist in Entwicklung (Work-In-Progress)</strong> und derzeit
+          nicht freigeschaltet. Die Funktionen sind noch nicht produktiv nutzbar.
+        </span>
+      </div>
+
       {/* ─── Mode bar + Customize ─── */}
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,flexWrap:"wrap"}}>
         <div style={{display:"flex",gap:2,background:"var(--surface)",borderRadius:8,padding:3}}
