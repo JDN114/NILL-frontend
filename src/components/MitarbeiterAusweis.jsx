@@ -15,10 +15,10 @@ import { QRCodeSVG } from "qrcode.react";
 import api from "../services/api";
 
 // ─── Design Tokens (kept local so this component is self-contained) ──────────
-const surface = "rgba(255,255,255,0.03)";
-const border  = "rgba(239,237,231,0.07)";
+const surface = "rgba(var(--tint),0.03)";
+const border  = "rgba(var(--ink-tint),0.07)";
 const text    = "var(--nill-text,#efede7)";
-const dim     = "var(--nill-text-dim,rgba(239,237,231,.5))";
+const dim     = "var(--nill-text-dim,rgba(var(--ink-tint),.5))";
 const gold    = "var(--nill-gold,#c5a572)";
 const red     = "#f87171";
 
@@ -90,7 +90,7 @@ export default function MitarbeiterAusweis() {
   if (loading) return (
     <div style={{ padding: "3rem", display: "flex", justifyContent: "center" }}>
       <div style={{
-        width: 28, height: 28, border: "3px solid rgba(255,255,255,0.08)",
+        width: 28, height: 28, border: "3px solid rgba(var(--tint),0.08)",
         borderTopColor: gold, borderRadius: "50%", animation: "nill-spin 0.8s linear infinite",
       }} />
     </div>
@@ -197,7 +197,7 @@ export default function MitarbeiterAusweis() {
             <div style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
-              color: "rgba(239,237,231,0.35)", marginBottom: 4,
+              color: "rgba(var(--ink-tint),0.35)", marginBottom: 4,
             }}>
               Mitarbeiternummer
             </div>
@@ -215,7 +215,7 @@ export default function MitarbeiterAusweis() {
             <div style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
-              color: "rgba(239,237,231,0.35)", marginBottom: 2,
+              color: "rgba(var(--ink-tint),0.35)", marginBottom: 2,
             }}>Name</div>
             <div style={{
               fontFamily: "'Fraunces', Georgia, serif",
@@ -232,7 +232,7 @@ export default function MitarbeiterAusweis() {
                 <div style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
-                  color: "rgba(239,237,231,0.35)", marginBottom: 2,
+                  color: "rgba(var(--ink-tint),0.35)", marginBottom: 2,
                 }}>Unternehmen</div>
                 <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.88rem", color: dim }}>
                   {badge.org_name}
@@ -244,7 +244,7 @@ export default function MitarbeiterAusweis() {
                 <div style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase",
-                  color: "rgba(239,237,231,0.35)", marginBottom: 2,
+                  color: "rgba(var(--ink-tint),0.35)", marginBottom: 2,
                 }}>Rolle</div>
                 <div style={{
                   fontFamily: "'JetBrains Mono', monospace", fontSize: "0.82rem",
@@ -296,7 +296,7 @@ export default function MitarbeiterAusweis() {
         <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.8rem", color: dim, lineHeight: 1.6 }}>
           <strong style={{ color: text }}>Rechtsgrundlage:</strong> {badge?.legal_basis ?? "Art. 6 Abs. 1 lit. b DSGVO — Vertragserfüllung"}
         </div>
-        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.78rem", color: "rgba(239,237,231,0.3)", marginTop: 4, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.78rem", color: "rgba(var(--ink-tint),0.3)", marginTop: 4, lineHeight: 1.5 }}>
           Der QR-Code enthält ausschließlich deine NILL-Mitarbeiternummer (pseudonymisiert).
           Keine personenbezogenen Daten (Name, E-Mail) sind im Code gespeichert.
           Zeitstempel werden gem. § 16 ArbZG für 2 Jahre aufbewahrt und danach gelöscht.

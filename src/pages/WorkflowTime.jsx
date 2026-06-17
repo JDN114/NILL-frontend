@@ -17,7 +17,7 @@ const formatDecimal = (ms) => (ms / 1000 / 60 / 60).toFixed(2);
 function Panel({ children, style = {} }) {
   return (
     <div style={{
-      background: "rgba(255,255,255,0.025)",
+      background: "rgba(var(--tint),0.025)",
       border: "1px solid var(--nill-border)",
       borderRadius: 14,
       backdropFilter: "blur(6px)",
@@ -48,7 +48,7 @@ function Spinner() {
   return (
     <div style={{
       width: 18, height: 18,
-      border: "2px solid rgba(255,255,255,0.08)",
+      border: "2px solid rgba(var(--tint),0.08)",
       borderTopColor: "var(--nill-gold)",
       borderRadius: "50%",
       animation: "em-spin 0.75s linear infinite",
@@ -170,7 +170,7 @@ export default function WorkflowTimePage() {
             : "1px solid var(--nill-border)",
           background: activeEntry
             ? "rgba(134,239,172,0.04)"
-            : "rgba(255,255,255,0.025)",
+            : "rgba(var(--tint),0.025)",
         }}>
           <div style={{ padding: "1.25rem 1.5rem" }}>
             {activeEntry ? (
@@ -304,7 +304,7 @@ export default function WorkflowTimePage() {
                   onChange={e => setAutoHours(parseFloat(e.target.value))}
                   style={{
                     width: 64, padding: "0.35rem 0.65rem",
-                    background: "rgba(255,255,255,0.05)",
+                    background: "rgba(var(--tint),0.05)",
                     border: "1px solid var(--nill-border)",
                     borderRadius: 8, color: "var(--nill-text)",
                     fontSize: "0.82rem", textAlign: "center", outline: "none",

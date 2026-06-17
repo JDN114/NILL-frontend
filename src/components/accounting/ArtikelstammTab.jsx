@@ -77,7 +77,7 @@ function ArtikelKarte({ a, onEdit, onDelete, onSelect, mode }) {
         }}>
           <span style={{
             fontSize: ".68rem", padding: "1px 6px", borderRadius: 8,
-            background: "rgba(255,255,255,.07)", color: "var(--ink2)",
+            background: "rgba(var(--tint),.07)", color: "var(--ink2)",
           }}>
             {a.ust_satz} % MwSt
           </span>
@@ -423,7 +423,7 @@ export default function ArtikelstammTab({ mode = "verwaltung", onArtikelSelect }
           onClick={() => setAktiveWg(null)}
           style={{
             textAlign: "left", padding: "7px 14px", border: "none", cursor: "pointer",
-            background: aktiveWg === null ? "rgba(255,255,255,.07)" : "transparent",
+            background: aktiveWg === null ? "rgba(var(--tint),.07)" : "transparent",
             color: aktiveWg === null ? "var(--ink)" : "var(--ink2)",
             fontSize: ".83rem", fontWeight: aktiveWg === null ? 600 : 400,
             borderRadius: 6, margin: "0 6px",
@@ -442,7 +442,7 @@ export default function ArtikelstammTab({ mode = "verwaltung", onArtikelSelect }
                 style={{
                   flex: 1, textAlign: "left", padding: "7px 10px", border: "none",
                   cursor: "pointer",
-                  background: active ? "rgba(255,255,255,.07)" : "transparent",
+                  background: active ? "rgba(var(--tint),.07)" : "transparent",
                   color: active ? "var(--ink)" : "var(--ink2)",
                   fontSize: ".83rem", fontWeight: active ? 600 : 400, borderRadius: 6,
                   display: "flex", alignItems: "center", gap: 7,

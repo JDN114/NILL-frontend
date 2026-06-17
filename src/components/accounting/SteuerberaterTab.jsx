@@ -63,7 +63,7 @@ export default function SteuerberaterTab() {
             der Kanzlei auf sicherem Weg (nicht per unverschlüsselter E-Mail).
           </p>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <code style={{ fontFamily: "JetBrains Mono,monospace", fontSize: ".78rem", padding: "8px 12px", background: "rgba(255,255,255,.05)", borderRadius: 8, wordBreak: "break-all" }}>
+            <code style={{ fontFamily: "JetBrains Mono,monospace", fontSize: ".78rem", padding: "8px 12px", background: "rgba(var(--tint),.05)", borderRadius: 8, wordBreak: "break-all" }}>
               {erstellt.token}
             </code>
             <button className="ac-btn ac-btn-primary ac-btn-sm" onClick={() => copy(erstellt.token)}>Kopieren</button>

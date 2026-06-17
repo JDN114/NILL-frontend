@@ -173,12 +173,12 @@ export default function BankInsights() {
           <div className="ac-section-title">Monatliches Transaktionsvolumen</div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={chartData} barSize={22}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.05)" />
               <XAxis dataKey="name" tick={{ fill:"#9b9890", fontSize:11 }} />
               <YAxis tick={{ fill:"#9b9890", fontSize:11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
               <Tooltip
                 formatter={v => fmtEur(v)}
-                contentStyle={{ background:"#0d0d14", border:"1px solid rgba(239,237,231,.08)", borderRadius:8 }}
+                contentStyle={{ background:"#0d0d14", border:"1px solid rgba(var(--ink-tint),.08)", borderRadius:8 }}
               />
               <Bar dataKey="Umsatz" fill="#c6ff3c" radius={[4,4,0,0]} isAnimationActive />
             </BarChart>

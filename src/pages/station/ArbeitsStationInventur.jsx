@@ -8,7 +8,7 @@ function Spinner() {
   return (
     <div style={{
       width: 18, height: 18,
-      border: "2px solid rgba(255,255,255,0.08)",
+      border: "2px solid rgba(var(--tint),0.08)",
       borderTopColor: ACCENT, borderRadius: "50%",
       animation: "as-spin 0.75s linear infinite",
     }} />
@@ -71,11 +71,11 @@ export default function ArbeitsStationInventur() {
       ) : lists.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "4rem 2rem",
-          border: "1px solid rgba(239,237,231,0.06)", borderRadius: 20,
-          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(var(--ink-tint),0.06)", borderRadius: 20,
+          background: "rgba(var(--tint),0.02)",
         }}>
           <div style={{ fontSize: "2rem", opacity: 0.3, marginBottom: 12 }}>◫</div>
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(239,237,231,0.4)" }}>
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(var(--ink-tint),0.4)" }}>
             Keine Inventarlisten vorhanden
           </div>
         </div>
@@ -89,10 +89,10 @@ export default function ArbeitsStationInventur() {
                 padding: "12px 14px", borderRadius: 14, textAlign: "left", cursor: "pointer",
                 border: activeList?.id === list.id
                   ? "1px solid rgba(167,139,250,0.4)"
-                  : "1px solid rgba(239,237,231,0.07)",
+                  : "1px solid rgba(var(--ink-tint),0.07)",
                 background: activeList?.id === list.id
                   ? "rgba(167,139,250,0.1)"
-                  : "rgba(255,255,255,0.03)",
+                  : "rgba(var(--tint),0.03)",
                 transition: "background 0.15s, border-color 0.15s",
               }}>
                 <div style={{ fontSize: "1.2rem", marginBottom: 4 }}>{list.icon}</div>
@@ -102,7 +102,7 @@ export default function ArbeitsStationInventur() {
                 }}>{list.name}</div>
                 <div style={{
                   fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: "0.58rem", color: "rgba(239,237,231,0.35)", marginTop: 4,
+                  fontSize: "0.58rem", color: "rgba(var(--ink-tint),0.35)", marginTop: 4,
                 }}>{list.item_count || 0} Artikel</div>
               </button>
             ))}
@@ -134,10 +134,10 @@ export default function ArbeitsStationInventur() {
             ) : items.length === 0 ? (
               <div style={{
                 textAlign: "center", padding: "3rem 2rem",
-                border: "1px solid rgba(239,237,231,0.06)", borderRadius: 20,
-                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(var(--ink-tint),0.06)", borderRadius: 20,
+                background: "rgba(var(--tint),0.02)",
               }}>
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1rem", color: "rgba(239,237,231,0.4)" }}>
+                <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1rem", color: "rgba(var(--ink-tint),0.4)" }}>
                   Keine Artikel in dieser Liste
                 </div>
               </div>
@@ -151,7 +151,7 @@ export default function ArbeitsStationInventur() {
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: "0.56rem", fontWeight: 700,
                   textTransform: "uppercase", letterSpacing: "0.12em",
-                  color: "rgba(239,237,231,0.28)",
+                  color: "rgba(var(--ink-tint),0.28)",
                 }}>
                   <span>Artikel</span>
                   <span style={{ textAlign: "center" }}>Bestand</span>
@@ -171,8 +171,8 @@ export default function ArbeitsStationInventur() {
                       gridTemplateColumns: "1fr 170px 110px 110px",
                       gap: 12, alignItems: "center",
                       padding: "12px 16px", borderRadius: 14,
-                      border: `1px solid ${isLow ? "rgba(248,113,113,0.25)" : "rgba(239,237,231,0.07)"}`,
-                      background: isLow ? "rgba(248,113,113,0.04)" : "rgba(255,255,255,0.025)",
+                      border: `1px solid ${isLow ? "rgba(248,113,113,0.25)" : "rgba(var(--ink-tint),0.07)"}`,
+                      background: isLow ? "rgba(248,113,113,0.04)" : "rgba(var(--tint),0.025)",
                       transition: "border-color 0.15s",
                     }}>
                       <div>
@@ -183,7 +183,7 @@ export default function ArbeitsStationInventur() {
                         {item.sku && (
                           <div style={{
                             fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: "0.58rem", color: "rgba(239,237,231,0.28)", marginTop: 2,
+                            fontSize: "0.58rem", color: "rgba(var(--ink-tint),0.28)", marginTop: 2,
                           }}>SKU: {item.sku}</div>
                         )}
                       </div>
@@ -194,8 +194,8 @@ export default function ArbeitsStationInventur() {
                           onClick={() => updateQty(item, -1)} disabled={isBusy}
                           style={{
                             width: 28, height: 28, borderRadius: 8,
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            background: "rgba(255,255,255,0.04)", color: "#efede7",
+                            border: "1px solid rgba(var(--tint),0.1)",
+                            background: "rgba(var(--tint),0.04)", color: "#efede7",
                             cursor: isBusy ? "not-allowed" : "pointer",
                             fontSize: "1rem", lineHeight: 1,
                             display: "flex", alignItems: "center", justifyContent: "center",
@@ -211,15 +211,15 @@ export default function ArbeitsStationInventur() {
                           {qty.toLocaleString("de-DE")}
                           <span style={{
                             fontSize: "0.6rem", fontWeight: 400,
-                            color: "rgba(239,237,231,0.35)", marginLeft: 3,
+                            color: "rgba(var(--ink-tint),0.35)", marginLeft: 3,
                           }}>{item.unit}</span>
                         </span>
                         <button
                           onClick={() => updateQty(item, 1)} disabled={isBusy}
                           style={{
                             width: 28, height: 28, borderRadius: 8,
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            background: "rgba(255,255,255,0.04)", color: "#efede7",
+                            border: "1px solid rgba(var(--tint),0.1)",
+                            background: "rgba(var(--tint),0.04)", color: "#efede7",
                             cursor: isBusy ? "not-allowed" : "pointer",
                             fontSize: "1rem", lineHeight: 1,
                             display: "flex", alignItems: "center", justifyContent: "center",
@@ -230,12 +230,12 @@ export default function ArbeitsStationInventur() {
 
                       <div style={{
                         fontFamily: "'Inter', system-ui, sans-serif",
-                        fontSize: "0.72rem", color: "rgba(239,237,231,0.4)",
+                        fontSize: "0.72rem", color: "rgba(var(--ink-tint),0.4)",
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       }}>{item.category || "—"}</div>
                       <div style={{
                         fontFamily: "'Inter', system-ui, sans-serif",
-                        fontSize: "0.72rem", color: "rgba(239,237,231,0.4)",
+                        fontSize: "0.72rem", color: "rgba(var(--ink-tint),0.4)",
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       }}>{item.location || "—"}</div>
                     </div>

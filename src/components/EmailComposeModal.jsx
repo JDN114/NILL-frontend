@@ -17,15 +17,15 @@ function parseEmails(str) {
 
 const inputCls = [
   "w-full px-3 py-2 rounded-lg text-sm text-slate-200 outline-none transition-all",
-  "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)]",
+  "bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)]",
   "placeholder:text-slate-600",
-  "focus:bg-[rgba(255,255,255,0.06)] focus:border-[rgba(197,165,114,0.4)]",
+  "focus:bg-[rgba(var(--tint),0.06)] focus:border-[rgba(197,165,114,0.4)]",
 ].join(" ");
 
 function Toggle({ checked, onChange, label }) {
   return (
     <div className="flex items-center gap-2 cursor-pointer" onClick={onChange}>
-      <div className={`relative w-8 h-5 rounded-full border transition-all flex-shrink-0 ${checked ? "bg-[rgba(197,165,114,0.2)] border-[rgba(197,165,114,0.4)]" : "bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"}`}>
+      <div className={`relative w-8 h-5 rounded-full border transition-all flex-shrink-0 ${checked ? "bg-[rgba(197,165,114,0.2)] border-[rgba(197,165,114,0.4)]" : "bg-[rgba(var(--tint),0.05)] border-[rgba(var(--tint),0.1)]"}`}>
         <span className={`absolute top-0.5 w-3 h-3 rounded-full transition-transform ${checked ? "translate-x-3.5 bg-[#C5A572]" : "translate-x-0.5 bg-slate-500"}`} />
       </div>
       <span className="text-xs text-slate-500 select-none">{label}</span>
@@ -123,7 +123,7 @@ export default function EmailComposeModal({ open, onClose }) {
           </div>
         </div>
 
-        <div className="border-t border-[rgba(255,255,255,0.07)] pt-3 space-y-3">
+        <div className="border-t border-[rgba(var(--tint),0.07)] pt-3 space-y-3">
 
           <EmailTemplatePicker value={templateId} onChange={setTemplateId} body={body} />
 
@@ -132,7 +132,7 @@ export default function EmailComposeModal({ open, onClose }) {
             {files.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {files.map((f, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-full px-2.5 py-0.5 text-[11px] text-slate-400">
+                  <span key={i} className="inline-flex items-center gap-1.5 bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-full px-2.5 py-0.5 text-[11px] text-slate-400">
                     {f.name}
                     <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
                       className="text-slate-600 hover:text-red-400 transition-colors leading-none">×</button>
@@ -142,7 +142,7 @@ export default function EmailComposeModal({ open, onClose }) {
             )}
             <div onClick={() => fileRef.current.click()} onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
-              className="border border-dashed border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-center cursor-pointer hover:border-[rgba(197,165,114,0.35)] hover:bg-[rgba(197,165,114,0.05)] transition-all">
+              className="border border-dashed border-[rgba(var(--tint),0.1)] rounded-lg p-3 text-center cursor-pointer hover:border-[rgba(197,165,114,0.35)] hover:bg-[rgba(197,165,114,0.05)] transition-all">
               <div className="text-[12px] text-slate-500">Klicken oder Dateien hierher ziehen</div>
               <div className="text-[11px] text-slate-600 mt-0.5">Max. 25 MB pro Datei</div>
             </div>
@@ -152,7 +152,7 @@ export default function EmailComposeModal({ open, onClose }) {
 
         <div className="flex justify-end gap-2 pt-1">
           <button onClick={onClose} disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-40 transition-all">
+            className="px-4 py-2 rounded-lg text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] bg-[rgba(var(--tint),0.03)] hover:bg-[rgba(var(--tint),0.06)] disabled:opacity-40 transition-all">
             Abbrechen
           </button>
           <button onClick={handleSend} disabled={!canSend}

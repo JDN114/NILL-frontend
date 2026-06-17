@@ -98,7 +98,7 @@ function SlipEditModal({ slip, onSave, onClose }) {
             value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Interne Anmerkung…" />
         </div>
 
-        <div style={{ padding: "0.75rem", background: "rgba(255,255,255,0.03)", border: "1px solid var(--nill-border)", borderRadius: 8, fontSize: "0.78rem", color: "var(--nill-text-dim)" }}>
+        <div style={{ padding: "0.75rem", background: "rgba(var(--tint),0.03)", border: "1px solid var(--nill-border)", borderRadius: 8, fontSize: "0.78rem", color: "var(--nill-text-dim)" }}>
           Brutto: <strong style={{ color: "var(--nill-text)" }}>{fmt(slip.gross_salary)}</strong>
           {" "}→ Netto (geschätzt): <strong style={{ color: "var(--nill-gold)" }}>{fmt(estimatedNet)}</strong>
         </div>
@@ -199,7 +199,7 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
           { label: "Gesamtbrutto", value: fmt(run.total_gross) },
           { label: "Gesamtnetto (geschätzt)", value: fmt(run.total_net) },
         ].map(s => (
-          <div key={s.label} style={{ padding: "0.65rem 1rem", background: "rgba(255,255,255,0.025)", border: "1px solid var(--nill-border)", borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
+          <div key={s.label} style={{ padding: "0.65rem 1rem", background: "rgba(var(--tint),0.025)", border: "1px solid var(--nill-border)", borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{ fontSize: "0.68rem", color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>{s.label}</span>
             <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--nill-text)" }}>{s.value}</span>
           </div>
@@ -224,7 +224,7 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
             return (
               <div key={slip.id}
                 style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr auto", gap: "0.65rem", alignItems: "center", padding: "0.75rem 1rem", border: "1px solid var(--nill-border)", borderRadius: 10, background: "transparent", transition: "background 0.12s" }}
-                onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                onMouseOver={e => e.currentTarget.style.background = "rgba(var(--tint),0.02)"}
                 onMouseOut={e => e.currentTarget.style.background = "transparent"}
               >
                 <div>
@@ -337,7 +337,7 @@ export function LohnAbrechnungContent() {
       </div>
 
       {/* Neue Abrechnung */}
-      <div style={{ padding: "1.25rem 1.4rem", background: "rgba(255,255,255,0.025)", border: "1px solid var(--nill-border)", borderRadius: 14, marginBottom: "1.75rem" }}>
+      <div style={{ padding: "1.25rem 1.4rem", background: "rgba(var(--tint),0.025)", border: "1px solid var(--nill-border)", borderRadius: 14, marginBottom: "1.75rem" }}>
         <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.85rem" }}>
           Neue Abrechnung erstellen
         </div>
@@ -377,7 +377,7 @@ export function LohnAbrechnungContent() {
           {runs.map(run => (
             <div key={run.id} onClick={() => setSelectedRun(run)}
               style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1.5fr 1.5fr auto", gap: "1rem", alignItems: "center", padding: "0.9rem 1.2rem", border: "1px solid var(--nill-border)", borderRadius: 10, cursor: "pointer", transition: "background 0.12s, border-color 0.12s", background: "transparent" }}
-              onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(197,165,114,0.25)"; }}
+              onMouseOver={e => { e.currentTarget.style.background = "rgba(var(--tint),0.03)"; e.currentTarget.style.borderColor = "rgba(197,165,114,0.25)"; }}
               onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--nill-border)"; }}
             >
               <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--nill-text)" }}>{MONTHS[run.month]} {run.year}</span>

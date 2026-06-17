@@ -228,9 +228,9 @@ function InfoPill({ konto }) {
         aria-expanded={open}
         aria-label={`Kontoinfo für ${konto.name || konto.nummer || "Konto"} ${open ? "schließen" : "öffnen"}`}
         style={{
-          width:18, height:18, borderRadius:"50%", border:"1px solid rgba(239,237,231,.25)",
+          width:18, height:18, borderRadius:"50%", border:"1px solid rgba(var(--ink-tint),.25)",
           background: open ? "rgba(198,255,60,.15)" : "transparent",
-          color:"rgba(239,237,231,.5)", fontSize:".65rem", cursor:"pointer",
+          color:"rgba(var(--ink-tint),.5)", fontSize:".65rem", cursor:"pointer",
           display:"inline-flex", alignItems:"center", justifyContent:"center",
           transition:"all .15s", flexShrink:0,
         }}
@@ -239,16 +239,16 @@ function InfoPill({ konto }) {
       {open && (
         <div style={{
           position:"absolute", bottom:"calc(100% + 8px)", left:"50%", transform:"translateX(-50%)",
-          background:"#1a1a26", border:"1px solid rgba(239,237,231,.12)",
+          background:"#1a1a26", border:"1px solid rgba(var(--ink-tint),.12)",
           borderRadius:10, padding:"14px 16px", width:280, zIndex:50,
           boxShadow:"0 8px 32px rgba(0,0,0,.5)",
         }}>
-          <div style={{ fontSize:".78rem", color:"rgba(239,237,231,.9)", lineHeight:1.6, marginBottom:8 }}>
+          <div style={{ fontSize:".78rem", color:"rgba(var(--ink-tint),.9)", lineHeight:1.6, marginBottom:8 }}>
             <strong style={{ color:"#efede7" }}>Wann?</strong><br/>{konto.wann}
           </div>
           {konto.beispiele?.length > 0 && (
-            <div style={{ fontSize:".75rem", color:"rgba(239,237,231,.55)", lineHeight:1.5, marginBottom: konto.warnung ? 8 : 0 }}>
-              <strong style={{ color:"rgba(239,237,231,.7)" }}>z.B.:</strong> {konto.beispiele.join(" · ")}
+            <div style={{ fontSize:".75rem", color:"rgba(var(--ink-tint),.55)", lineHeight:1.5, marginBottom: konto.warnung ? 8 : 0 }}>
+              <strong style={{ color:"rgba(var(--ink-tint),.7)" }}>z.B.:</strong> {konto.beispiele.join(" · ")}
             </div>
           )}
           {konto.warnung && (
@@ -259,7 +259,7 @@ function InfoPill({ konto }) {
             }}>⚠ {konto.warnung}</div>
           )}
           <div style={{ position:"absolute", bottom:-5, left:"50%", transform:"translateX(-50%)",
-            width:8, height:8, background:"#1a1a26", border:"1px solid rgba(239,237,231,.12)",
+            width:8, height:8, background:"#1a1a26", border:"1px solid rgba(var(--ink-tint),.12)",
             borderTop:"none", borderLeft:"none", rotate:"45deg" }} />
         </div>
       )}
@@ -296,22 +296,22 @@ function Kontofinder({ saldoMap }) {
           value={q} onChange={e => setQ(e.target.value)}
           placeholder="Was habe ich gekauft / eingenommen? z.B. Tankquittung, Google Ads..."
           style={{
-            flex:1, background:"rgba(0,0,0,.3)", border:"1px solid rgba(239,237,231,.1)",
+            flex:1, background:"rgba(0,0,0,.3)", border:"1px solid rgba(var(--ink-tint),.1)",
             color:"#efede7", padding:"9px 14px", borderRadius:8,
             fontFamily:"Inter,sans-serif", fontSize:".85rem", outline:"none",
           }}
           onFocus={e => e.target.style.borderColor = "#c6ff3c"}
-          onBlur={e => e.target.style.borderColor = "rgba(239,237,231,.1)"}
+          onBlur={e => e.target.style.borderColor = "rgba(var(--ink-tint),.1)"}
         />
         {q && <button onClick={() => setQ("")} aria-label="Suche leeren" style={{
-          background:"transparent", border:"none", color:"rgba(239,237,231,.4)",
+          background:"transparent", border:"none", color:"rgba(var(--ink-tint),.4)",
           cursor:"pointer", fontSize:".9rem", padding:4,
         }}>✕</button>}
       </div>
       {q.trim().length >= 2 && (
         <div style={{ marginTop:12 }}>
           {treffer.length === 0 ? (
-            <div style={{ fontSize:".8rem", color:"rgba(239,237,231,.4)", padding:"8px 0" }}>
+            <div style={{ fontSize:".8rem", color:"rgba(var(--ink-tint),.4)", padding:"8px 0" }}>
               Kein passendes Konto gefunden — beschreib es anders oder leg ein eigenes an.
             </div>
           ) : treffer.map(k => (
@@ -321,19 +321,19 @@ function Kontofinder({ saldoMap }) {
               style={{
                 display:"flex", alignItems:"center", gap:10, padding:"10px 12px",
                 borderRadius:8, marginBottom:4, cursor:"default",
-                background: highlighted === k.nr ? "rgba(198,255,60,.06)" : "rgba(255,255,255,.02)",
-                border:"1px solid", borderColor: highlighted === k.nr ? "rgba(198,255,60,.2)" : "rgba(239,237,231,.06)",
+                background: highlighted === k.nr ? "rgba(198,255,60,.06)" : "rgba(var(--tint),.02)",
+                border:"1px solid", borderColor: highlighted === k.nr ? "rgba(198,255,60,.2)" : "rgba(var(--ink-tint),.06)",
                 transition:"all .15s",
               }}>
               <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:".78rem", color:"#c6ff3c", minWidth:36 }}>{k.nr}</span>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:".85rem", color:"#efede7", fontWeight:500 }}>{k.name}</div>
-                <div style={{ fontSize:".75rem", color:"rgba(239,237,231,.45)", marginTop:2 }}>{k.kurz}</div>
+                <div style={{ fontSize:".75rem", color:"rgba(var(--ink-tint),.45)", marginTop:2 }}>{k.kurz}</div>
               </div>
               <InfoPill konto={k} />
               {saldoMap[k.nr] !== undefined && (
                 <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:".78rem",
-                  color:"rgba(239,237,231,.5)", whiteSpace:"nowrap" }}>
+                  color:"rgba(var(--ink-tint),.5)", whiteSpace:"nowrap" }}>
                   {Number(saldoMap[k.nr]).toLocaleString("de-DE",{minimumFractionDigits:2})} €
                 </span>
               )}
@@ -362,13 +362,13 @@ function EinfachAnsicht({ saldoMap, kontenIdMap }) {
               width:"100%", display:"flex", alignItems:"center", gap:10, padding:"13px 18px",
               background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12,
               cursor:"pointer", textAlign:"left", transition:"border-color .15s",
-              borderColor: offeneGruppe[g.id] ? "rgba(239,237,231,.14)" : "var(--border)",
+              borderColor: offeneGruppe[g.id] ? "rgba(var(--ink-tint),.14)" : "var(--border)",
             }}>
             <span style={{ width:8, height:8, borderRadius:"50%", background:g.farbe, flexShrink:0 }} aria-hidden="true" />
             <span style={{ fontFamily:"Fraunces,serif", fontWeight:600, color:"#efede7", fontSize:"1rem", flex:1 }}>
               {g.label}
             </span>
-            <span style={{ fontSize:".78rem", color:"rgba(239,237,231,.35)" }} aria-hidden="true">
+            <span style={{ fontSize:".78rem", color:"rgba(var(--ink-tint),.35)" }} aria-hidden="true">
               {g.konten.length} Konten {offeneGruppe[g.id] ? "▲" : "▼"}
             </span>
           </button>
@@ -401,7 +401,7 @@ function EinfachAnsicht({ saldoMap, kontenIdMap }) {
                           )}
                           {k.warnung && <span style={{ fontSize:".68rem", color:"rgba(255,165,0,.7)" }}>⚠</span>}
                         </div>
-                        <div style={{ fontSize:".78rem", color:"rgba(239,237,231,.4)", marginTop:2 }}>{k.kurz}</div>
+                        <div style={{ fontSize:".78rem", color:"rgba(var(--ink-tint),.4)", marginTop:2 }}>{k.kurz}</div>
                       </div>
                       <InfoPill konto={k} />
                       {saldo !== undefined ? (
@@ -413,14 +413,14 @@ function EinfachAnsicht({ saldoMap, kontenIdMap }) {
                           {Number(saldo).toLocaleString("de-DE",{minimumFractionDigits:2})} €
                         </span>
                       ) : (
-                        <span style={{ fontSize:".75rem", color:"rgba(239,237,231,.2)", whiteSpace:"nowrap" }}>– €</span>
+                        <span style={{ fontSize:".75rem", color:"rgba(var(--ink-tint),.2)", whiteSpace:"nowrap" }}>– €</span>
                       )}
                       {dbId && (
                         <button
                           onClick={() => setOpenBuchungen(o => ({ ...o, [k.nr]: !o[k.nr] }))}
                           style={{
-                            background:"transparent", border:"1px solid rgba(239,237,231,.12)",
-                            borderRadius:6, color:"rgba(239,237,231,.4)", cursor:"pointer",
+                            background:"transparent", border:"1px solid rgba(var(--ink-tint),.12)",
+                            borderRadius:6, color:"rgba(var(--ink-tint),.4)", cursor:"pointer",
                             fontSize:".72rem", padding:"3px 8px", whiteSpace:"nowrap",
                           }}
                         >
@@ -439,7 +439,7 @@ function EinfachAnsicht({ saldoMap, kontenIdMap }) {
       <div style={{
         marginTop:20, padding:"12px 16px", borderRadius:10,
         background:"rgba(122,92,255,.05)", border:"1px solid rgba(122,92,255,.12)",
-        fontSize:".78rem", color:"rgba(239,237,231,.45)", lineHeight:1.6,
+        fontSize:".78rem", color:"rgba(var(--ink-tint),.45)", lineHeight:1.6,
       }}>
         <strong style={{ color:"rgba(122,92,255,.8)" }}>EÜR Tipp:</strong> Du buchst Einnahmen beim Geldeingang und Ausgaben beim Geldabgang.
         Eine eingehende Rechnung ist erst relevant, wenn sie bezahlt ist.
@@ -526,7 +526,7 @@ export default function KontenplanTab() {
               padding:"5px 16px", borderRadius:8, border:"none", cursor:"pointer",
               fontFamily:"Inter,sans-serif", fontSize:".8rem", fontWeight: modus===m ? 600 : 400,
               background: modus===m ? "#c6ff3c" : "transparent",
-              color: modus===m ? "#000" : "rgba(239,237,231,.55)",
+              color: modus===m ? "#000" : "rgba(var(--ink-tint),.55)",
               transition:"all .15s",
             }}>{label}</button>
           ))}

@@ -24,7 +24,7 @@ export default function TrialBanner() {
         gap: 16,
         fontSize: 13,
         fontFamily: "Inter, sans-serif",
-        color: "rgba(239,237,231,.8)",
+        color: "rgba(var(--ink-tint),.8)",
         flexWrap: "wrap",
       }}
     >

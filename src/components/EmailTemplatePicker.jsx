@@ -64,7 +64,7 @@ export default function EmailTemplatePicker({ value, onChange, body = "" }) {
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
               value === t.id
                 ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]"
-                : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-slate-500 hover:text-slate-300"
+                : "bg-[rgba(var(--tint),0.03)] border-[rgba(var(--tint),0.07)] text-slate-500 hover:text-slate-300"
             }`}>
             <span className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0"
               style={{background: t.brand_color}}/>
@@ -76,13 +76,13 @@ export default function EmailTemplatePicker({ value, onChange, body = "" }) {
 
       {/* Vorschau */}
       {value && selected && (
-        <div className="mt-2 rounded-xl overflow-hidden border border-[rgba(255,255,255,0.07)]">
+        <div className="mt-2 rounded-xl overflow-hidden border border-[rgba(var(--tint),0.07)]">
           {/* Toolbar */}
-          <div className="flex items-center justify-between px-3 py-2 bg-[rgba(255,255,255,0.03)] border-b border-[rgba(255,255,255,0.07)]">
+          <div className="flex items-center justify-between px-3 py-2 bg-[rgba(var(--tint),0.03)] border-b border-[rgba(var(--tint),0.07)]">
             <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
               Vorschau · {selected.name}
             </span>
-            <div className="flex items-center gap-1 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-full p-0.5">
+            <div className="flex items-center gap-1 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-full p-0.5">
               <button onClick={() => setDarkMode(false)}
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${!darkMode ? "bg-white text-black" : "text-slate-500 hover:text-slate-300"}`}>
                 ☀️ Hell

@@ -36,7 +36,7 @@ const dayOfYear  = d => { const s = new Date(d.getFullYear(),0,0); return Math.f
 function Spinner() {
   return <div style={{
     width:20, height:20,
-    border:"2px solid rgba(255,255,255,0.08)",
+    border:"2px solid rgba(var(--tint),0.08)",
     borderTopColor: ACCENT, borderRadius:"50%",
     animation:"as-spin 0.75s linear infinite",
   }} />;
@@ -46,7 +46,7 @@ function TabBar({ active, onChange }) {
   return (
     <div style={{
       display:"flex", gap:8, marginBottom:24,
-      borderBottom:"1px solid rgba(239,237,231,0.07)", paddingBottom:14,
+      borderBottom:"1px solid rgba(var(--ink-tint),0.07)", paddingBottom:14,
     }}>
       {[
         { key:"schicht", label:"Schichtplan" },
@@ -54,9 +54,9 @@ function TabBar({ active, onChange }) {
       ].map(({ key, label }) => (
         <button key={key} onClick={() => onChange(key)} style={{
           padding:"6px 18px", borderRadius:99, cursor:"pointer",
-          border: active===key ? "1px solid rgba(56,245,208,0.35)" : "1px solid rgba(239,237,231,0.08)",
-          background: active===key ? "rgba(56,245,208,0.08)" : "rgba(255,255,255,0.03)",
-          color: active===key ? ACCENT : "rgba(239,237,231,0.5)",
+          border: active===key ? "1px solid rgba(56,245,208,0.35)" : "1px solid rgba(var(--ink-tint),0.08)",
+          background: active===key ? "rgba(56,245,208,0.08)" : "rgba(var(--tint),0.03)",
+          color: active===key ? ACCENT : "rgba(var(--ink-tint),0.5)",
           fontFamily:"'JetBrains Mono', monospace", fontSize:"0.72rem",
           letterSpacing:"0.1em", textTransform:"uppercase", transition:"all 0.2s",
         }}>{label}</button>
@@ -101,8 +101,8 @@ function SchichtplanTab() {
         {[["‹",-7],["›",7]].map(([lbl,delta], i) => (
           <button key={i} onClick={() => setWeekStart(w => addDays(w, delta))} style={{
             width:32, height:32, borderRadius:8,
-            border:"1px solid rgba(239,237,231,0.1)",
-            background:"rgba(255,255,255,0.04)", color:"#efede7",
+            border:"1px solid rgba(var(--ink-tint),0.1)",
+            background:"rgba(var(--tint),0.04)", color:"#efede7",
             cursor:"pointer", fontSize:"1rem",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>{lbl}</button>
@@ -113,9 +113,9 @@ function SchichtplanTab() {
         }}>{weekLabel}</span>
         <button onClick={() => setWeekStart(monday())} style={{
           padding:"0.3rem 0.8rem", borderRadius:8,
-          border:"1px solid rgba(239,237,231,0.08)",
-          background:"rgba(255,255,255,0.03)",
-          color:"rgba(239,237,231,0.45)", cursor:"pointer",
+          border:"1px solid rgba(var(--ink-tint),0.08)",
+          background:"rgba(var(--tint),0.03)",
+          color:"rgba(var(--ink-tint),0.45)", cursor:"pointer",
           fontFamily:"'JetBrains Mono', monospace",
           fontSize:"0.68rem", letterSpacing:"0.08em", textTransform:"uppercase",
         }}>Heute</button>
@@ -126,11 +126,11 @@ function SchichtplanTab() {
       ) : members.length === 0 ? (
         <div style={{
           textAlign:"center", padding:"4rem 2rem",
-          border:"1px solid rgba(239,237,231,0.06)", borderRadius:20,
-          background:"rgba(255,255,255,0.02)",
+          border:"1px solid rgba(var(--ink-tint),0.06)", borderRadius:20,
+          background:"rgba(var(--tint),0.02)",
         }}>
           <div style={{ fontSize:"2rem", opacity:0.3, marginBottom:12 }}>⬡</div>
-          <div style={{ fontFamily:"'Fraunces', serif", fontSize:"1.1rem", color:"rgba(239,237,231,0.4)" }}>
+          <div style={{ fontFamily:"'Fraunces', serif", fontSize:"1.1rem", color:"rgba(var(--ink-tint),0.4)" }}>
             Keine Teammitglieder vorhanden
           </div>
         </div>
@@ -138,12 +138,12 @@ function SchichtplanTab() {
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", minWidth:620 }}>
             <thead>
-              <tr style={{ borderBottom:"1px solid rgba(239,237,231,0.08)" }}>
+              <tr style={{ borderBottom:"1px solid rgba(var(--ink-tint),0.08)" }}>
                 <th style={{
                   padding:"0.55rem 1rem", textAlign:"left", width:160,
                   fontFamily:"'JetBrains Mono', monospace", fontSize:"0.58rem",
                   fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em",
-                  color:"rgba(239,237,231,0.3)",
+                  color:"rgba(var(--ink-tint),0.3)",
                 }}>Mitarbeiter</th>
                 {weekDays.map((d, i) => {
                   const isToday = isoDate(d) === todayStr;
@@ -151,7 +151,7 @@ function SchichtplanTab() {
                     <th key={i} style={{
                       padding:"0.5rem 0.35rem", textAlign:"center", minWidth:86,
                       fontFamily:"'JetBrains Mono', monospace", fontSize:"0.65rem", fontWeight:700,
-                      color: isToday ? ACCENT : "rgba(239,237,231,0.35)",
+                      color: isToday ? ACCENT : "rgba(var(--ink-tint),0.35)",
                     }}>
                       <div>{DAY_LABELS[i]}</div>
                       <div style={{ fontSize:"0.58rem", fontWeight:400, opacity:0.7 }}>{fmtDay(d)}</div>
@@ -162,7 +162,7 @@ function SchichtplanTab() {
             </thead>
             <tbody>
               {members.map(member => (
-                <tr key={member.id} style={{ borderBottom:"1px solid rgba(239,237,231,0.04)" }}>
+                <tr key={member.id} style={{ borderBottom:"1px solid rgba(var(--ink-tint),0.04)" }}>
                   <td style={{ padding:"0.55rem 1rem" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:9 }}>
                       <div style={{
@@ -176,7 +176,7 @@ function SchichtplanTab() {
                           {dispName(member)}
                         </div>
                         {member.org_role_name && (
-                          <div style={{ fontSize:"0.6rem", color:"rgba(239,237,231,0.33)", marginTop:1 }}>
+                          <div style={{ fontSize:"0.6rem", color:"rgba(var(--ink-tint),0.33)", marginTop:1 }}>
                             {member.org_role_name}
                           </div>
                         )}
@@ -196,7 +196,7 @@ function SchichtplanTab() {
                       }}>
                         <div style={{ display:"flex", flexDirection:"column", gap:3, alignItems:"center" }}>
                           {shifts.length === 0 ? (
-                            <span style={{ fontSize:"0.55rem", color:"rgba(255,255,255,0.07)" }}>—</span>
+                            <span style={{ fontSize:"0.55rem", color:"rgba(var(--tint),0.07)" }}>—</span>
                           ) : shifts.map(a => (
                             <span key={a.id} style={{
                               display:"inline-flex", alignItems:"center", gap:3,
@@ -303,7 +303,7 @@ function UrlaubsTab() {
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <button onClick={() => setYear(y => y-1)} style={{
             width:30, height:30, borderRadius:8,
-            border:"1px solid rgba(239,237,231,0.1)", background:"rgba(255,255,255,0.04)",
+            border:"1px solid rgba(var(--ink-tint),0.1)", background:"rgba(var(--tint),0.04)",
             color:"#efede7", cursor:"pointer", fontSize:"1rem",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>‹</button>
@@ -313,7 +313,7 @@ function UrlaubsTab() {
           }}>{year}</span>
           <button onClick={() => setYear(y => y+1)} style={{
             width:30, height:30, borderRadius:8,
-            border:"1px solid rgba(239,237,231,0.1)", background:"rgba(255,255,255,0.04)",
+            border:"1px solid rgba(var(--ink-tint),0.1)", background:"rgba(var(--tint),0.04)",
             color:"#efede7", cursor:"pointer", fontSize:"1rem",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>›</button>
@@ -329,11 +329,11 @@ function UrlaubsTab() {
                 padding:"4px 12px", borderRadius:99, cursor:"pointer",
                 border: isActive
                   ? `1px solid rgba(${hexRgb(meta.bg)},0.5)`
-                  : "1px solid rgba(239,237,231,0.08)",
+                  : "1px solid rgba(var(--ink-tint),0.08)",
                 background: isActive
                   ? `rgba(${hexRgb(meta.bg)},0.12)`
-                  : "rgba(255,255,255,0.03)",
-                color: isActive ? meta.bg : "rgba(239,237,231,0.45)",
+                  : "rgba(var(--tint),0.03)",
+                color: isActive ? meta.bg : "rgba(var(--ink-tint),0.45)",
                 fontFamily:"'JetBrains Mono', monospace", fontSize:"0.68rem",
                 letterSpacing:"0.08em", textTransform:"uppercase", transition:"all 0.18s",
               }}>
@@ -365,7 +365,7 @@ function UrlaubsTab() {
                     position:"absolute", left:`${left}%`, width:`${width}%`,
                     textAlign:"center",
                     fontFamily:"'JetBrains Mono', monospace", fontSize:"0.55rem",
-                    color:"rgba(239,237,231,0.25)", letterSpacing:"0.06em", textTransform:"uppercase",
+                    color:"rgba(var(--ink-tint),0.25)", letterSpacing:"0.06em", textTransform:"uppercase",
                     overflow:"hidden",
                   }}>{m}</div>
                 );
@@ -388,11 +388,11 @@ function UrlaubsTab() {
           {sortedEmployees.length === 0 ? (
             <div style={{
               textAlign:"center", padding:"4rem 2rem",
-              border:"1px solid rgba(239,237,231,0.06)", borderRadius:20,
-              background:"rgba(255,255,255,0.02)", marginTop:8,
+              border:"1px solid rgba(var(--ink-tint),0.06)", borderRadius:20,
+              background:"rgba(var(--tint),0.02)", marginTop:8,
             }}>
               <div style={{ fontSize:"2rem", opacity:0.3, marginBottom:12 }}>✈️</div>
-              <div style={{ fontFamily:"'Fraunces', serif", fontSize:"1.1rem", color:"rgba(239,237,231,0.4)" }}>
+              <div style={{ fontFamily:"'Fraunces', serif", fontSize:"1.1rem", color:"rgba(var(--ink-tint),0.4)" }}>
                 Keine Abwesenheiten für {year}
               </div>
             </div>
@@ -405,9 +405,9 @@ function UrlaubsTab() {
             return (
               <div key={emp.id} style={{
                 display:"grid", gridTemplateColumns:"200px 1fr",
-                borderBottom:"1px solid rgba(239,237,231,0.05)",
+                borderBottom:"1px solid rgba(var(--ink-tint),0.05)",
                 padding:"10px 0",
-                background: ri % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
+                background: ri % 2 === 0 ? "transparent" : "rgba(var(--tint),0.01)",
               }}>
                 {/* Name + Urlaubsstatistik */}
                 <div style={{ paddingRight:16, display:"flex", flexDirection:"column", justifyContent:"center", gap:4 }}>
@@ -430,21 +430,21 @@ function UrlaubsTab() {
                       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
                         <span style={{
                           fontFamily:"'JetBrains Mono', monospace", fontSize:"0.6rem",
-                          color: pct !== null && pct >= 90 ? "#f87171" : "rgba(239,237,231,0.4)",
+                          color: pct !== null && pct >= 90 ? "#f87171" : "rgba(var(--ink-tint),0.4)",
                         }}>
                           {used}{annual ? `/${annual}` : ""} T
                         </span>
                         {pct !== null && (
                           <span style={{
                             fontFamily:"'JetBrains Mono', monospace", fontSize:"0.55rem",
-                            color:"rgba(239,237,231,0.25)",
+                            color:"rgba(var(--ink-tint),0.25)",
                           }}>Urlaub</span>
                         )}
                       </div>
                       {pct !== null && (
                         <div style={{
                           width:"100%", height:3, borderRadius:99,
-                          background:"rgba(255,255,255,0.07)",
+                          background:"rgba(var(--tint),0.07)",
                         }}>
                           <div style={{
                             height:"100%", borderRadius:99,
@@ -467,7 +467,7 @@ function UrlaubsTab() {
                     return (
                       <div key={i} style={{
                         position:"absolute", top:0, bottom:0, left:`${left}%`,
-                        width:1, background:"rgba(255,255,255,0.04)",
+                        width:1, background:"rgba(var(--tint),0.04)",
                       }} />
                     );
                   })}
@@ -524,7 +524,7 @@ function UrlaubsTab() {
           {/* Legende */}
           <div style={{
             display:"flex", gap:12, marginTop:20, flexWrap:"wrap",
-            paddingTop:12, borderTop:"1px solid rgba(239,237,231,0.06)",
+            paddingTop:12, borderTop:"1px solid rgba(var(--ink-tint),0.06)",
           }}>
             {Object.entries(ABSENCE_TYPE_COLOR).map(([type, { bg, label }]) => (
               <div key={type} style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -535,15 +535,15 @@ function UrlaubsTab() {
                 }} />
                 <span style={{
                   fontFamily:"'JetBrains Mono', monospace", fontSize:"0.62rem",
-                  color:"rgba(239,237,231,0.35)", letterSpacing:"0.06em",
+                  color:"rgba(var(--ink-tint),0.35)", letterSpacing:"0.06em",
                 }}>{label}</span>
               </div>
             ))}
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <div style={{ width:12, height:12, borderRadius:3, border:"1px dashed rgba(255,255,255,0.2)", opacity:0.5 }} />
+              <div style={{ width:12, height:12, borderRadius:3, border:"1px dashed rgba(var(--tint),0.2)", opacity:0.5 }} />
               <span style={{
                 fontFamily:"'JetBrains Mono', monospace", fontSize:"0.62rem",
-                color:"rgba(239,237,231,0.3)",
+                color:"rgba(var(--ink-tint),0.3)",
               }}>Ausstehend</span>
             </div>
             {new Date().getFullYear() === year && (
@@ -551,7 +551,7 @@ function UrlaubsTab() {
                 <div style={{ width:1, height:12, background: ACCENT, opacity:0.6 }} />
                 <span style={{
                   fontFamily:"'JetBrains Mono', monospace", fontSize:"0.62rem",
-                  color:"rgba(239,237,231,0.3)",
+                  color:"rgba(var(--ink-tint),0.3)",
                 }}>Heute</span>
               </div>
             )}

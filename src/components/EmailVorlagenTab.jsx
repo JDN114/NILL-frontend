@@ -86,12 +86,12 @@ function parseHtmlToFields(header_html, footer_html, brand_color) {
   return fields;
 }
 
-const inputCls = "w-full px-3 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
+const inputCls = "w-full px-3 py-2 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
 const labelCls = "block text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1";
 
 function Section({ title, children }) {
   return (
-    <div className="border border-[rgba(255,255,255,0.07)] rounded-xl p-4 space-y-3">
+    <div className="border border-[rgba(var(--tint),0.07)] rounded-xl p-4 space-y-3">
       <p className="text-xs font-bold uppercase tracking-widest text-[#C5A572]">{title}</p>
       {children}
     </div>
@@ -291,7 +291,7 @@ export default function EmailVorlagenTab() {
               {preview ? "Vorschau ausblenden" : "Vorschau anzeigen"}
             </button>
             {preview && (
-              <div className="flex items-center gap-1 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-full p-0.5">
+              <div className="flex items-center gap-1 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-full p-0.5">
                 <button onClick={() => setDarkMode(false)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${!darkMode ? "bg-white text-black" : "text-slate-500 hover:text-slate-300"}`}>
                   ☀️ Hell
@@ -304,7 +304,7 @@ export default function EmailVorlagenTab() {
             )}
           </div>
           {preview && (
-            <div className="rounded-xl overflow-hidden border border-[rgba(255,255,255,0.07)] shadow-lg">
+            <div className="rounded-xl overflow-hidden border border-[rgba(var(--tint),0.07)] shadow-lg">
               <iframe
                 srcDoc={previewHtml}
                 className="w-full transition-all"
@@ -317,9 +317,9 @@ export default function EmailVorlagenTab() {
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-between pt-2 border-t border-[rgba(255,255,255,0.07)]">
+        <div className="flex justify-between pt-2 border-t border-[rgba(var(--tint),0.07)]">
           <button onClick={() => setEditing(null)}
-            className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">
+            className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">
             Abbrechen
           </button>
           <button onClick={save} disabled={saving}
@@ -347,13 +347,13 @@ export default function EmailVorlagenTab() {
       {loading ? (
         <p className="text-slate-500 text-sm">Lädt...</p>
       ) : templates.length === 0 ? (
-        <div className="text-center py-10 text-slate-600 text-sm border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+        <div className="text-center py-10 text-slate-600 text-sm border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
           Noch keine Vorlagen. Erstelle deine erste Vorlage!
         </div>
       ) : (
         <div className="space-y-3">
           {templates.map(t => (
-            <div key={t.id} className="flex items-center justify-between p-4 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-xl hover:bg-[rgba(255,255,255,0.05)] transition-all">
+            <div key={t.id} className="flex items-center justify-between p-4 bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-xl hover:bg-[rgba(var(--tint),0.05)] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full flex-shrink-0 border border-white/10" style={{background: t.brand_color}}/>
                 <div>
@@ -373,7 +373,7 @@ export default function EmailVorlagenTab() {
                   </button>
                 )}
                 <button onClick={() => openEdit(t)}
-                  className="text-xs text-slate-400 hover:text-white border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-1.5 transition-all hover:bg-[rgba(255,255,255,0.05)]">
+                  className="text-xs text-slate-400 hover:text-white border border-[rgba(var(--tint),0.07)] rounded-lg px-3 py-1.5 transition-all hover:bg-[rgba(var(--tint),0.05)]">
                   Bearbeiten
                 </button>
                 {t.is_own !== false && <button onClick={() => deleteTemplate(t.id)} disabled={deleting === t.id}

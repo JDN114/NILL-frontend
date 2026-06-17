@@ -14,7 +14,7 @@ function Spinner() {
     <div
       style={{
         width: 22, height: 22,
-        border: "2px solid rgba(255,255,255,0.08)",
+        border: "2px solid rgba(var(--tint),0.08)",
         borderTopColor: "var(--nill-gold)",
         borderRadius: "50%",
         animation: "em-spin 0.75s linear infinite",
@@ -31,8 +31,8 @@ function StatChip({ label, value, accent }) {
       padding: "0.65rem 1.25rem",
       background: accent
         ? "rgba(197,165,114,0.07)"
-        : "rgba(255,255,255,0.03)",
-      border: `1px solid ${accent ? "rgba(197,165,114,0.18)" : "rgba(255,255,255,0.07)"}`,
+        : "rgba(var(--tint),0.03)",
+      border: `1px solid ${accent ? "rgba(197,165,114,0.18)" : "rgba(var(--tint),0.07)"}`,
       borderRadius: 12,
       gap: 2,
       minWidth: 80,
@@ -55,7 +55,7 @@ function Panel({ children, style = {}, className = "" }) {
     <div
       className={className}
       style={{
-        background: "rgba(255,255,255,0.025)",
+        background: "rgba(var(--tint),0.025)",
         border: "1px solid var(--nill-border)",
         borderRadius: 14,
         backdropFilter: "blur(6px)",

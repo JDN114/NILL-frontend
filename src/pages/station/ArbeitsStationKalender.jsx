@@ -8,7 +8,7 @@ function Spinner() {
   return (
     <div style={{
       width: 20, height: 20,
-      border: "2px solid rgba(255,255,255,0.08)",
+      border: "2px solid rgba(var(--tint),0.08)",
       borderTopColor: ACCENT,
       borderRadius: "50%",
       animation: "as-spin 0.75s linear infinite",
@@ -51,8 +51,8 @@ function EventItem({ event }) {
       gap: 16,
       padding: "14px 18px",
       borderRadius: 12,
-      border: `1px solid ${isNow ? `rgba(56,245,208,0.3)` : "rgba(239,237,231,0.06)"}`,
-      background: isNow ? "rgba(56,245,208,0.05)" : "rgba(255,255,255,0.02)",
+      border: `1px solid ${isNow ? `rgba(56,245,208,0.3)` : "rgba(var(--ink-tint),0.06)"}`,
+      background: isNow ? "rgba(56,245,208,0.05)" : "rgba(var(--tint),0.02)",
       transition: "background 0.2s",
     }}>
       {/* Time column */}
@@ -60,7 +60,7 @@ function EventItem({ event }) {
         minWidth: 70,
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: "0.72rem",
-        color: isNow ? ACCENT : "rgba(239,237,231,0.4)",
+        color: isNow ? ACCENT : "rgba(var(--ink-tint),0.4)",
         letterSpacing: "0.03em",
         paddingTop: 2,
         flexShrink: 0,
@@ -100,7 +100,7 @@ function EventItem({ event }) {
           <div style={{
             fontFamily: "'Inter', system-ui, sans-serif",
             fontSize: "0.73rem",
-            color: "rgba(239,237,231,0.4)",
+            color: "rgba(var(--ink-tint),0.4)",
             marginTop: 3,
           }}>📍 {event.location}</div>
         )}
@@ -156,15 +156,15 @@ export default function ArbeitsStationKalender() {
       ) : events.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "4rem 2rem",
-          border: "1px solid rgba(239,237,231,0.06)",
+          border: "1px solid rgba(var(--ink-tint),0.06)",
           borderRadius: 20,
-          background: "rgba(255,255,255,0.02)",
+          background: "rgba(var(--tint),0.02)",
         }}>
           <div style={{ fontSize: "2rem", opacity: 0.3, marginBottom: 12 }}>▦</div>
           <div style={{
             fontFamily: "'Fraunces', serif",
             fontSize: "1.1rem",
-            color: "rgba(239,237,231,0.4)",
+            color: "rgba(var(--ink-tint),0.4)",
           }}>Keine Termine in den nächsten 14 Tagen</div>
         </div>
       ) : (
@@ -188,7 +188,7 @@ export default function ArbeitsStationKalender() {
                       fontSize: "0.6rem",
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: isToday ? ACCENT : "rgba(239,237,231,0.35)",
+                      color: isToday ? ACCENT : "rgba(var(--ink-tint),0.35)",
                     }}>
                       {date.toLocaleDateString("de-DE", { weekday: "short" })}
                     </div>
@@ -206,7 +206,7 @@ export default function ArbeitsStationKalender() {
                     flex: 1, height: 1,
                     background: isToday
                       ? `linear-gradient(90deg, rgba(56,245,208,0.4), transparent)`
-                      : "rgba(239,237,231,0.06)",
+                      : "rgba(var(--ink-tint),0.06)",
                   }} />
                   {isToday && (
                     <span style={{

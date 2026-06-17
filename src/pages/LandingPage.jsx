@@ -303,9 +303,9 @@ function buildScene(canvas) {
   composer.addPass(new RenderPass(scene, camera))
   const bloomPass = new UnrealBloomPass(
     new T.Vector2(window.innerWidth, window.innerHeight),
-    1.1,   // strength
-    0.75,  // radius
-    0.12   // threshold — low so planets + atmosphere glow too
+    0.45,  // strength — was 1.1, halved+ to kill the blown-out hero glow
+    0.6,   // radius
+    0.55   // threshold — was 0.12 (everything bloomed); now only the sun core blooms
   )
   composer.addPass(bloomPass)
 
@@ -366,7 +366,7 @@ function buildScene(canvas) {
         col+=vec3(.80,1.,.28)*pow(max(gran-.5,0.),4.)*1.1;
         col=mix(col,vec3(.08,.03,.01),smoothstep(.4,.9,-n2)*.5);
         float limb=pow(max(dot(normalize(vN),vec3(0,0,1)),0.),.42);
-        col*=.3+limb*.95; col*=1.7;
+        col*=.3+limb*.95; col*=1.25;
         gl_FragColor=vec4(col,1.);
       }
     `

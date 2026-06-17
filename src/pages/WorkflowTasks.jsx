@@ -5,7 +5,7 @@ import api from "../services/api";
 
 /* ── Shared styles ─────────────────────────────────────── */
 const panelStyle = {
-  background: "rgba(255,255,255,0.025)",
+  background: "rgba(var(--tint),0.025)",
   border: "1px solid var(--nill-border)",
   borderRadius: 14,
   backdropFilter: "blur(6px)",
@@ -15,7 +15,7 @@ const panelStyle = {
 
 const inputBase = {
   width: "100%", padding: "0.6rem 0.9rem",
-  background: "rgba(255,255,255,0.04)",
+  background: "rgba(var(--tint),0.04)",
   border: "1px solid var(--nill-border)",
   borderRadius: 9, color: "var(--nill-text)",
   fontSize: "0.82rem", outline: "none",
@@ -33,7 +33,7 @@ function Spinner() {
   return (
     <div style={{
       width: 16, height: 16,
-      border: "2px solid rgba(255,255,255,0.08)",
+      border: "2px solid rgba(var(--tint),0.08)",
       borderTopColor: "var(--nill-gold)",
       borderRadius: "50%",
       animation: "em-spin 0.75s linear infinite",
@@ -300,7 +300,7 @@ export default function WorkflowTasksPage() {
         <div style={{
           display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap",
           padding: "0.7rem 1rem", marginBottom: "1.25rem", borderRadius: 12,
-          background: "rgba(255,255,255,0.02)", border: "1px solid var(--nill-border)",
+          background: "rgba(var(--tint),0.02)", border: "1px solid var(--nill-border)",
           fontSize: "0.82rem", color: "var(--nill-text-sub)",
         }}>
           <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
@@ -323,7 +323,7 @@ export default function WorkflowTasksPage() {
             onChange={e => setAutoDelDays(e.target.value)}
             style={{
               width: 64, padding: "0.3rem 0.5rem", textAlign: "center",
-              background: "rgba(255,255,255,0.04)", border: "1px solid var(--nill-border)",
+              background: "rgba(var(--tint),0.04)", border: "1px solid var(--nill-border)",
               borderRadius: 7, color: "var(--nill-text)", fontSize: "0.82rem",
               opacity: autoDelEnabled ? 1 : 0.4,
             }}
@@ -619,7 +619,7 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
       {/* Zuweisung aufklappen */}
       {assignOpen && isAdmin && (
         <div style={{ borderTop: "1px solid var(--nill-border)", padding: "0.85rem 1.25rem",
-          background: "rgba(255,255,255,0.015)", display: "flex", gap: "0.65rem", flexWrap: "wrap", alignItems: "flex-end" }}>
+          background: "rgba(var(--tint),0.015)", display: "flex", gap: "0.65rem", flexWrap: "wrap", alignItems: "flex-end" }}>
           <div style={{ flex: 1, minWidth: 160 }}>
             <label style={{ fontSize: "0.68rem", color: "var(--nill-text-mute)", marginBottom: 4, display: "block" }}>
               Mitarbeiter

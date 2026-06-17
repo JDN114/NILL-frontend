@@ -146,7 +146,7 @@ function AbsenceRow({ absence, isAdmin, onApprove, onReject, onDelete }) {
   const days = absence.days || workdays(absence.start_date, absence.end_date);
   return (
     <div style={{ display: "grid", gridTemplateColumns: isAdmin ? "2fr 1fr 1.5fr 1fr 1fr auto" : "1.5fr 1fr 1.5fr 1fr auto", gap: "0.75rem", alignItems: "center", padding: "0.8rem 1.1rem", border: "1px solid var(--nill-border)", borderRadius: 10, background: "transparent", transition: "background 0.12s" }}
-      onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+      onMouseOver={e => e.currentTarget.style.background = "rgba(var(--tint),0.02)"}
       onMouseOut={e => e.currentTarget.style.background = "transparent"}
     >
       {isAdmin && (
@@ -245,17 +245,17 @@ export function UrlaubsContent() {
 
       {/* Stats */}
       <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
-        <div style={{ padding: "0.65rem 1rem", background: "rgba(255,255,255,0.025)", border: "1px solid var(--nill-border)", borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ padding: "0.65rem 1rem", background: "rgba(var(--tint),0.025)", border: "1px solid var(--nill-border)", borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
           <span style={{ fontSize: "0.68rem", color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>Genommener Urlaub</span>
           <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--nill-text)" }}>{approvedVacationDays} Tage</span>
         </div>
         {isAdmin && (
-          <div style={{ padding: "0.65rem 1rem", background: pendingCount > 0 ? "rgba(251,191,36,0.08)" : "rgba(255,255,255,0.025)", border: `1px solid ${pendingCount > 0 ? "rgba(251,191,36,0.25)" : "var(--nill-border)"}`, borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ padding: "0.65rem 1rem", background: pendingCount > 0 ? "rgba(251,191,36,0.08)" : "rgba(var(--tint),0.025)", border: `1px solid ${pendingCount > 0 ? "rgba(251,191,36,0.25)" : "var(--nill-border)"}`, borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{ fontSize: "0.68rem", color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>Offene Anträge</span>
             <span style={{ fontSize: "1.15rem", fontWeight: 800, color: pendingCount > 0 ? "#fbbf24" : "var(--nill-text)" }}>{pendingCount}</span>
           </div>
         )}
-        <div style={{ padding: "0.65rem 1rem", background: "rgba(255,255,255,0.025)", border: "1px solid var(--nill-border)", borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ padding: "0.65rem 1rem", background: "rgba(var(--tint),0.025)", border: "1px solid var(--nill-border)", borderRadius: 9, display: "flex", flexDirection: "column", gap: 2 }}>
           <span style={{ fontSize: "0.68rem", color: "var(--nill-text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>Gesamt Einträge</span>
           <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--nill-text)" }}>{absences.length}</span>
         </div>

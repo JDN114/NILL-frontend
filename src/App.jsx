@@ -2,6 +2,8 @@
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
+import { ThemeProvider } from "./context/ThemeContext";
+import ThemeToggle from "./components/ThemeToggle";
 import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
 import { OutlookProvider } from "./context/OutlookContext";
@@ -164,6 +166,7 @@ function ConditionalFooter() {
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <GmailProvider>
         <OutlookProvider>
@@ -355,12 +358,14 @@ function App() {
                 </ErrorBoundary>
               </Suspense>
               <ConditionalFooter />
+              <ThemeToggle />
             </Router>
           </MailProvider>
           </ImapProvider>
         </OutlookProvider>
       </GmailProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

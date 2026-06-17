@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
+    <script>
+      /* Apply saved theme before paint to avoid a flash of the wrong mode. */
+      (function () {
+        try {
+          var t = localStorage.getItem("nill-theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>NILL</title>

@@ -26,7 +26,7 @@ function KonfidenzBar({ score = 0 }) {
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}
          aria-label={`Konfidenz: ${pct}% (${label})`}>
       <div style={{
-        flex: 1, height: 5, background: "rgba(255,255,255,.08)",
+        flex: 1, height: 5, background: "rgba(var(--tint),.08)",
         borderRadius: 3, overflow: "hidden",
       }} aria-hidden="true">
         <div style={{ width: `${pct}%`, height: "100%", background: col, borderRadius: 3 }} />
@@ -79,7 +79,7 @@ function KandidatenPanel({ tx, onMatched }) {
   const kandidaten = tx.kandidaten || [];
 
   return (
-    <div style={{ padding: "10px 14px", background: "rgba(255,255,255,.025)",
+    <div style={{ padding: "10px 14px", background: "rgba(var(--tint),.025)",
                   borderTop: "1px solid var(--border)" }}>
       {kandidaten.length === 0 ? (
         <div style={{ color: "var(--ink2)", fontSize: ".78rem", padding: "4px 0" }}>
@@ -94,7 +94,7 @@ function KandidatenPanel({ tx, onMatched }) {
             <div key={`${k.typ}-${k.id}`} style={{
               display: "flex", alignItems: "center", gap: 10,
               padding: "6px 10px", borderRadius: 6,
-              background: "rgba(255,255,255,.03)",
+              background: "rgba(var(--tint),.03)",
               border: "1px solid var(--border)",
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -257,7 +257,7 @@ export default function BankAbgleichTab() {
             style={{
               padding: "4px 12px", borderRadius: 20, border: "none", cursor: "pointer",
               fontSize: ".75rem", fontWeight: filter === f ? 700 : 400,
-              background: filter === f ? "var(--accent)" : "rgba(255,255,255,.06)",
+              background: filter === f ? "var(--accent)" : "rgba(var(--tint),.06)",
               color: filter === f ? "#000" : "var(--ink2)",
             }}
           >
@@ -304,7 +304,7 @@ export default function BankAbgleichTab() {
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
                   padding: "10px 14px", cursor: "pointer",
-                  background: expanded ? "rgba(255,255,255,.04)" : "transparent",
+                  background: expanded ? "rgba(var(--tint),.04)" : "transparent",
                 }}
               >
                 {/* Datum */}

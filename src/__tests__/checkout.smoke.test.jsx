@@ -44,14 +44,15 @@ describe("checkout flow — PricingPage", () => {
       </MemoryRouter>
     );
 
-    // First plan card is "Solo".
+    // Default mode is "Arbeitsstation" (the live product), so the first
+    // visible plan card is the Arbeitsstation.
     const buttons = screen.getAllByText("Jetzt starten");
     fireEvent.click(buttons[0]);
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith(
         "/billing/create-checkout-session",
-        { plan: "solo", billing_cycle: "monthly" }
+        { plan: "arbeitsstation", billing_cycle: "monthly" }
       );
     });
     expect(window.location.href).toBe("https://stripe.test/session");

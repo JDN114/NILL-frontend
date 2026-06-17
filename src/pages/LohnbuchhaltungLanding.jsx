@@ -106,7 +106,7 @@ const MODULES = [
 
 const cardStyle = {
   padding: "1.35rem 1.4rem",
-  background: "rgba(255,255,255,0.025)",
+  background: "rgba(var(--tint),0.025)",
   border: "1px solid var(--nill-border)",
   borderRadius: 14,
   backdropFilter: "blur(6px)",
@@ -129,7 +129,7 @@ function ModuleCard({ mod, onNavigate }) {
         e.currentTarget.style.transform = "translateY(-2px)";
       }}
       onMouseOut={e => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.025)";
+        e.currentTarget.style.background = "rgba(var(--tint),0.025)";
         e.currentTarget.style.borderColor = "var(--nill-border)";
         e.currentTarget.style.boxShadow = "none";
         e.currentTarget.style.transform = "translateY(0)";
@@ -181,7 +181,7 @@ function StatCard({ label, value, sub, color = "var(--nill-gold)" }) {
   return (
     <div style={{
       padding: "1.1rem 1.3rem",
-      background: "rgba(255,255,255,0.025)",
+      background: "rgba(var(--tint),0.025)",
       border: "1px solid var(--nill-border)",
       borderRadius: 12,
       display: "flex", flexDirection: "column", gap: 4,

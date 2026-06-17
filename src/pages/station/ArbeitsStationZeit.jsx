@@ -45,7 +45,7 @@ function Spinner() {
   return (
     <div style={{
       width: 22, height: 22,
-      border: "2.5px solid rgba(255,255,255,0.08)",
+      border: "2.5px solid rgba(var(--tint),0.08)",
       borderTopColor: ACCENT,
       borderRadius: "50%",
       animation: "as-spin 0.75s linear infinite",
@@ -70,10 +70,10 @@ function CountdownRing({ remainingMs, totalMs, onBack }) {
       }}
     >
       <svg width={54} height={54} viewBox="0 0 54 54">
-        <circle cx={27} cy={27} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={3} />
+        <circle cx={27} cy={27} r={r} fill="none" stroke="rgba(var(--tint),0.08)" strokeWidth={3} />
         <circle
           cx={27} cy={27} r={r} fill="none"
-          stroke="rgba(239,237,231,0.35)"
+          stroke="rgba(var(--ink-tint),0.35)"
           strokeWidth={3}
           strokeDasharray={circ}
           strokeDashoffset={circ * (1 - pct)}
@@ -82,12 +82,12 @@ function CountdownRing({ remainingMs, totalMs, onBack }) {
           style={{ transition: "stroke-dashoffset 0.5s linear" }}
         />
         <text x={27} y={32} textAnchor="middle"
-          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fill: "rgba(239,237,231,0.5)", fontWeight: 700 }}>
+          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fill: "rgba(var(--ink-tint),0.5)", fontWeight: 700 }}>
           {sec}
         </text>
       </svg>
       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: "0.55rem",
-        letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(239,237,231,0.3)" }}>
+        letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(var(--ink-tint),0.3)" }}>
         Zurück
       </span>
     </button>
@@ -154,7 +154,7 @@ function ResultScreen({ result, onBack }) {
               {isIn ? "Eingestempelt" : "Ausgestempelt"}
             </div>
             <div style={{
-              fontSize: "clamp(0.75rem,1.2vw,0.9rem)", color: "rgba(239,237,231,0.55)",
+              fontSize: "clamp(0.75rem,1.2vw,0.9rem)", color: "rgba(var(--ink-tint),0.55)",
               fontFamily: "'Inter',system-ui,sans-serif", marginTop: 3,
             }}>
               {emp?.name} · {fmtTime(new Date().toISOString())} Uhr
@@ -179,7 +179,7 @@ function ResultScreen({ result, onBack }) {
           }}>
             <div style={{
               fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase",
-              color: "rgba(239,237,231,0.4)", fontFamily: "'JetBrains Mono',monospace",
+              color: "rgba(var(--ink-tint),0.4)", fontFamily: "'JetBrains Mono',monospace",
               marginBottom: 4,
             }}>Eingestempelt seit</div>
             <div style={{
@@ -200,7 +200,7 @@ function ResultScreen({ result, onBack }) {
           }}>
             <div style={{
               fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase",
-              color: "rgba(239,237,231,0.4)", fontFamily: "'JetBrains Mono',monospace",
+              color: "rgba(var(--ink-tint),0.4)", fontFamily: "'JetBrains Mono',monospace",
               marginBottom: 4,
             }}>Arbeitszeit heute</div>
             <div style={{
@@ -219,27 +219,27 @@ function ResultScreen({ result, onBack }) {
       <div style={{
         flex: 1, minHeight: 0,
         display: "flex", flexDirection: "column",
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(var(--tint),0.025)",
+        border: "1px solid rgba(var(--tint),0.07)",
         borderRadius: 14, overflow: "hidden",
       }}>
         {/* Header */}
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
           padding: "10px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid rgba(var(--tint),0.06)",
           flexShrink: 0,
         }}>
           <div style={{
             fontFamily: "'JetBrains Mono',monospace", fontSize: "0.62rem",
             letterSpacing: "0.12em", textTransform: "uppercase",
-            color: "rgba(239,237,231,0.4)",
+            color: "rgba(var(--ink-tint),0.4)",
           }}>
             {monthLabel}
           </div>
           <div style={{
             fontFamily: "'JetBrains Mono',monospace", fontSize: "0.75rem",
-            fontWeight: 700, color: "rgba(239,237,231,0.7)",
+            fontWeight: 700, color: "rgba(var(--ink-tint),0.7)",
           }}>
             Gesamt: <span style={{ color: "#efede7" }}>{decimalToHm(monthlyHours)}</span>
           </div>
@@ -252,7 +252,7 @@ function ResultScreen({ result, onBack }) {
               display: "flex", alignItems: "center", justifyContent: "center",
               height: "100%", padding: "1rem",
               fontFamily: "'Inter',system-ui,sans-serif",
-              fontSize: "0.8rem", color: "rgba(239,237,231,0.3)",
+              fontSize: "0.8rem", color: "rgba(var(--ink-tint),0.3)",
             }}>
               Noch keine Einträge diesen Monat
             </div>
@@ -268,14 +268,14 @@ function ResultScreen({ result, onBack }) {
                   gridTemplateColumns: "1fr auto auto",
                   gap: "4px 12px",
                   padding: "7px 16px",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  borderBottom: "1px solid rgba(var(--tint),0.04)",
                   alignItems: "center",
                   background: isActive ? "rgba(255,77,141,0.05)" : "transparent",
                 }}>
                   {/* Date */}
                   <div style={{
                     fontFamily: "'Inter',system-ui,sans-serif",
-                    fontSize: "0.78rem", color: "rgba(239,237,231,0.65)",
+                    fontSize: "0.78rem", color: "rgba(var(--ink-tint),0.65)",
                   }}>
                     {fmtDate(e.clock_in)}
                     {isActive && (
@@ -290,7 +290,7 @@ function ResultScreen({ result, onBack }) {
                   {/* In → Out */}
                   <div style={{
                     fontFamily: "'JetBrains Mono',monospace",
-                    fontSize: "0.72rem", color: "rgba(239,237,231,0.45)",
+                    fontSize: "0.72rem", color: "rgba(var(--ink-tint),0.45)",
                     whiteSpace: "nowrap",
                   }}>
                     {fmtTime(e.clock_in)} → {isActive ? "läuft" : fmtTime(e.clock_out)}
@@ -300,7 +300,7 @@ function ResultScreen({ result, onBack }) {
                   <div style={{
                     fontFamily: "'JetBrains Mono',monospace",
                     fontSize: "0.75rem", fontWeight: 600,
-                    color: isActive ? ACCENT : "rgba(239,237,231,0.7)",
+                    color: isActive ? ACCENT : "rgba(var(--ink-tint),0.7)",
                     whiteSpace: "nowrap", textAlign: "right",
                     minWidth: 52,
                   }}>
@@ -346,7 +346,7 @@ function ScanScreen({ onResult }) {
         <div style={{
           fontFamily: "'JetBrains Mono',monospace", fontSize: "0.65rem",
           letterSpacing: "0.2em", textTransform: "uppercase",
-          color: "rgba(239,237,231,0.35)", marginBottom: 10,
+          color: "rgba(var(--ink-tint),0.35)", marginBottom: 10,
         }}>
           Zeiterfassung
         </div>
@@ -378,7 +378,7 @@ function ScanScreen({ onResult }) {
             <span style={{
               fontFamily: "'JetBrains Mono',monospace",
               fontSize: "0.65rem", letterSpacing: "0.15em",
-              color: "rgba(239,237,231,0.5)", textTransform: "uppercase",
+              color: "rgba(var(--ink-tint),0.5)", textTransform: "uppercase",
             }}>
               Prüfe Ausweis…
             </span>

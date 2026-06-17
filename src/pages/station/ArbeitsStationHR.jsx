@@ -17,7 +17,7 @@ function Spinner({ color = ACCENT, size = 20 }) {
   return (
     <div style={{
       width: size, height: size,
-      border: `2px solid rgba(255,255,255,0.08)`,
+      border: `2px solid rgba(var(--tint),0.08)`,
       borderTopColor: color, borderRadius: "50%",
       animation: "as-spin 0.75s linear infinite",
       flexShrink: 0,
@@ -29,14 +29,14 @@ function TabBar({ tabs, active, onChange }) {
   return (
     <div style={{
       display: "flex", gap: 8, marginBottom: 24,
-      borderBottom: "1px solid rgba(239,237,231,0.07)", paddingBottom: 16,
+      borderBottom: "1px solid rgba(var(--ink-tint),0.07)", paddingBottom: 16,
     }}>
       {tabs.map(({ key, label, count }) => (
         <button key={key} onClick={() => onChange(key)} style={{
           padding: "6px 18px", borderRadius: 99,
-          border: active === key ? "1px solid rgba(251,191,36,0.35)" : "1px solid rgba(239,237,231,0.08)",
-          background: active === key ? "rgba(251,191,36,0.1)" : "rgba(255,255,255,0.03)",
-          color: active === key ? ACCENT : "rgba(239,237,231,0.5)",
+          border: active === key ? "1px solid rgba(251,191,36,0.35)" : "1px solid rgba(var(--ink-tint),0.08)",
+          background: active === key ? "rgba(251,191,36,0.1)" : "rgba(var(--tint),0.03)",
+          color: active === key ? ACCENT : "rgba(var(--ink-tint),0.5)",
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase",
           cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
@@ -45,10 +45,10 @@ function TabBar({ tabs, active, onChange }) {
           {label}
           {count > 0 && (
             <span style={{
-              background: active === key ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
-              border: active === key ? "1px solid rgba(251,191,36,0.2)" : "1px solid rgba(255,255,255,0.08)",
+              background: active === key ? "rgba(251,191,36,0.15)" : "rgba(var(--tint),0.06)",
+              border: active === key ? "1px solid rgba(251,191,36,0.2)" : "1px solid rgba(var(--tint),0.08)",
               borderRadius: 99, padding: "0px 6px", fontSize: "0.65rem",
-              color: active === key ? ACCENT : "rgba(239,237,231,0.4)",
+              color: active === key ? ACCENT : "rgba(var(--ink-tint),0.4)",
             }}>{count}</span>
           )}
         </button>
@@ -98,9 +98,9 @@ function DocsTab() {
         {[{ key: "all", label: "Alle", count: docs.length }, { key: "unread", label: "Ungelesen", count: unread.length }].map(({ key, label, count }) => (
           <button key={key} onClick={() => setSubFilter(key)} style={{
             padding: "4px 14px", borderRadius: 99, cursor: "pointer",
-            border: subFilter === key ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(239,237,231,0.07)",
+            border: subFilter === key ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(var(--ink-tint),0.07)",
             background: subFilter === key ? "rgba(251,191,36,0.08)" : "transparent",
-            color: subFilter === key ? ACCENT : "rgba(239,237,231,0.45)",
+            color: subFilter === key ? ACCENT : "rgba(var(--ink-tint),0.45)",
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem",
             letterSpacing: "0.08em", textTransform: "uppercase",
             display: "flex", alignItems: "center", gap: 6,
@@ -124,8 +124,8 @@ function DocsTab() {
               <div key={doc.id} style={{
                 display: "flex", alignItems: "center", gap: 16,
                 padding: "16px 20px", borderRadius: 16,
-                border: `1px solid ${isNew ? "rgba(251,191,36,0.25)" : "rgba(239,237,231,0.07)"}`,
-                background: isNew ? "rgba(251,191,36,0.04)" : "rgba(255,255,255,0.025)",
+                border: `1px solid ${isNew ? "rgba(251,191,36,0.25)" : "rgba(var(--ink-tint),0.07)"}`,
+                background: isNew ? "rgba(251,191,36,0.04)" : "rgba(var(--tint),0.025)",
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: 12, flexShrink: 0,
@@ -145,8 +145,8 @@ function DocsTab() {
                     }}>Neu</span>}
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    {doc.document_type && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: "rgba(239,237,231,0.4)" }}>{doc.document_type}</span>}
-                    {doc.year && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: "rgba(239,237,231,0.3)" }}>· {doc.year}</span>}
+                    {doc.document_type && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: "rgba(var(--ink-tint),0.4)" }}>{doc.document_type}</span>}
+                    {doc.year && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: "rgba(var(--ink-tint),0.3)" }}>· {doc.year}</span>}
                   </div>
                 </div>
                 <button onClick={() => download(doc)} disabled={downloading === doc.id} style={{
@@ -216,7 +216,7 @@ function ListenTab() {
         <div style={{
           fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
           letterSpacing: "0.15em", textTransform: "uppercase",
-          color: "rgba(239,237,231,0.3)",
+          color: "rgba(var(--ink-tint),0.3)",
         }}>
           {notes.length} Liste{notes.length !== 1 ? "n" : ""}
           {pending.length > 0 && ` · ${pending.length} ausstehend`}
@@ -261,8 +261,8 @@ function ListenTab() {
             return (
               <div key={note.id} style={{
                 borderRadius: 16,
-                border: `1px solid ${isPending ? "rgba(251,191,36,0.2)" : "rgba(239,237,231,0.07)"}`,
-                background: isPending ? "rgba(251,191,36,0.03)" : "rgba(255,255,255,0.025)",
+                border: `1px solid ${isPending ? "rgba(251,191,36,0.2)" : "rgba(var(--ink-tint),0.07)"}`,
+                background: isPending ? "rgba(251,191,36,0.03)" : "rgba(var(--tint),0.025)",
                 overflow: "hidden",
                 transition: "border-color 0.2s",
               }}>
@@ -287,7 +287,7 @@ function ListenTab() {
                     </div>
                     <div style={{
                       fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
-                      color: "rgba(239,237,231,0.35)",
+                      color: "rgba(var(--ink-tint),0.35)",
                     }}>
                       {note.delivery_number ? `Nr. ${note.delivery_number} · ` : ""}
                       {note.delivery_date || new Date(note.created_at).toLocaleDateString("de-DE")}
@@ -298,7 +298,7 @@ function ListenTab() {
                   {items.length > 0 && (
                     <div style={{
                       width: 60, height: 4, borderRadius: 99,
-                      background: "rgba(255,255,255,0.07)", overflow: "hidden", flexShrink: 0,
+                      background: "rgba(var(--tint),0.07)", overflow: "hidden", flexShrink: 0,
                     }}>
                       <div style={{
                         height: "100%", borderRadius: 99,
@@ -310,16 +310,16 @@ function ListenTab() {
                   )}
                   <span style={{
                     fontFamily: "'JetBrains Mono', monospace", fontSize: "0.9rem",
-                    color: "rgba(239,237,231,0.3)", flexShrink: 0,
+                    color: "rgba(var(--ink-tint),0.3)", flexShrink: 0,
                     transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s",
                   }}>∨</span>
                 </button>
 
                 {/* Expanded items */}
                 {isOpen && (
-                  <div style={{ borderTop: "1px solid rgba(239,237,231,0.06)", padding: "12px 18px 16px" }}>
+                  <div style={{ borderTop: "1px solid rgba(var(--ink-tint),0.06)", padding: "12px 18px 16px" }}>
                     {items.length === 0 ? (
-                      <div style={{ fontSize: "0.8rem", color: "rgba(239,237,231,0.35)", fontStyle: "italic" }}>
+                      <div style={{ fontSize: "0.8rem", color: "rgba(var(--ink-tint),0.35)", fontStyle: "italic" }}>
                         Keine Positionen erkannt
                       </div>
                     ) : (
@@ -331,14 +331,14 @@ function ListenTab() {
                             <button key={i} onClick={() => toggle(note.id, i)} style={{
                               display: "flex", alignItems: "center", gap: 12,
                               padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                              border: `1px solid ${isDone ? "rgba(134,239,172,0.2)" : "rgba(255,255,255,0.06)"}`,
-                              background: isDone ? "rgba(134,239,172,0.04)" : "rgba(255,255,255,0.02)",
+                              border: `1px solid ${isDone ? "rgba(134,239,172,0.2)" : "rgba(var(--tint),0.06)"}`,
+                              background: isDone ? "rgba(134,239,172,0.04)" : "rgba(var(--tint),0.02)",
                               textAlign: "left", width: "100%",
                               transition: "background 0.15s, border-color 0.15s",
                             }}>
                               <div style={{
                                 width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                                border: `2px solid ${isDone ? "#86efac" : "rgba(255,255,255,0.2)"}`,
+                                border: `2px solid ${isDone ? "#86efac" : "rgba(var(--tint),0.2)"}`,
                                 background: isDone ? "rgba(134,239,172,0.2)" : "transparent",
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 color: "#86efac", fontSize: "0.7rem",
@@ -349,7 +349,7 @@ function ListenTab() {
                               <div style={{ flex: 1 }}>
                                 <span style={{
                                   fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.88rem",
-                                  color: isDone ? "rgba(239,237,231,0.4)" : "#efede7",
+                                  color: isDone ? "rgba(var(--ink-tint),0.4)" : "#efede7",
                                   textDecoration: isDone ? "line-through" : "none",
                                 }}>
                                   {item.name}
@@ -358,7 +358,7 @@ function ListenTab() {
                               {(item.quantity || item.unit) && (
                                 <span style={{
                                   fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
-                                  color: "rgba(239,237,231,0.4)", flexShrink: 0,
+                                  color: "rgba(var(--ink-tint),0.4)", flexShrink: 0,
                                 }}>
                                   {item.quantity} {item.unit}
                                 </span>
@@ -401,11 +401,11 @@ function Empty({ icon, text }) {
   return (
     <div style={{
       textAlign: "center", padding: "4rem 2rem",
-      border: "1px solid rgba(239,237,231,0.06)",
-      borderRadius: 20, background: "rgba(255,255,255,0.02)",
+      border: "1px solid rgba(var(--ink-tint),0.06)",
+      borderRadius: 20, background: "rgba(var(--tint),0.02)",
     }}>
       <div style={{ fontSize: "2rem", opacity: 0.3, marginBottom: 12 }}>{icon}</div>
-      <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(239,237,231,0.4)" }}>{text}</div>
+      <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(var(--ink-tint),0.4)" }}>{text}</div>
     </div>
   );
 }

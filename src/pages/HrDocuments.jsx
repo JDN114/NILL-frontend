@@ -108,7 +108,7 @@ function UploadForm({ users, onUploaded }) {
   return (
     <form onSubmit={handleSubmit} style={{
       padding: "1.4rem",
-      background: "rgba(255,255,255,0.025)",
+      background: "rgba(var(--tint),0.025)",
       border: "1px solid var(--nill-border)",
       borderRadius: 14,
       display: "flex", flexDirection: "column", gap: "0.85rem",

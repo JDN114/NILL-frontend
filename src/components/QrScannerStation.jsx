@@ -130,7 +130,7 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
           background: "#000",
           boxShadow: detected
             ? `0 0 0 3px ${accent}, 0 0 32px ${accent}55`
-            : "0 0 0 1px rgba(255,255,255,0.08)",
+            : "0 0 0 1px rgba(var(--tint),0.08)",
           transition: "box-shadow 0.15s",
         }}>
           {/* Live camera feed */}
@@ -158,7 +158,7 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
             <div style={{
               position: "relative",
               width: 200, height: 200,
-              border: `2px solid ${detected ? accent : "rgba(255,255,255,0.5)"}`,
+              border: `2px solid ${detected ? accent : "rgba(var(--tint),0.5)"}`,
               borderRadius: 16,
               transition: "border-color 0.15s",
             }}>
@@ -191,18 +191,18 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
       {camState === "requesting" && (
         <div style={{
           width: "100%", maxWidth: 480, aspectRatio: "4/3", borderRadius: 20,
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(var(--tint),0.03)",
+          border: "1px solid rgba(var(--tint),0.08)",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14,
         }}>
           <div style={{
             width: 36, height: 36,
-            border: `3px solid rgba(255,255,255,0.08)`,
+            border: `3px solid rgba(var(--tint),0.08)`,
             borderTopColor: accent,
             borderRadius: "50%",
             animation: "qr-spin 0.8s linear infinite",
           }} />
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem", color: "rgba(239,237,231,0.3)", letterSpacing: "0.1em" }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem", color: "rgba(var(--ink-tint),0.3)", letterSpacing: "0.1em" }}>
             Kamera wird geöffnet…
           </span>
         </div>
@@ -212,13 +212,13 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
       {camState === "denied" && (
         <div style={{
           width: "100%", maxWidth: 480, borderRadius: 20,
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(var(--tint),0.03)",
+          border: "1px solid rgba(var(--tint),0.08)",
           padding: "2.5rem 1.5rem",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center",
         }}>
           <div style={{ fontSize: "2.5rem", opacity: 0.4 }}>📷</div>
-          <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.82rem", color: "rgba(239,237,231,0.5)", lineHeight: 1.6 }}>
+          <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.82rem", color: "rgba(var(--ink-tint),0.5)", lineHeight: 1.6 }}>
             Kamerazugriff nicht möglich.<br />
             <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>
               Bitte Kamerazugriff im Browser erlauben oder<br />Hardware-Barcode-Scanner verwenden.
@@ -234,7 +234,7 @@ export default function QrScannerStation({ onScan, accent = "#c5a572", label = "
         fontSize: "0.65rem",
         letterSpacing: "0.12em",
         textTransform: "uppercase",
-        color: "rgba(239,237,231,0.3)",
+        color: "rgba(var(--ink-tint),0.3)",
         textAlign: "center",
       }}>
         {label}

@@ -12,7 +12,7 @@ const statusColor = {
 const LIST_ICONS = ["📦","🧴","🌲","🛒","🔧","⚗️","📋","🏭","🚗","💊","🎨","🔩","📏","🧪","🏪"];
 const DOC_ICONS  = ["📝","📊","🌡️","⚡","💧","🔬","📐","🗒️","📈","🔍","🧮","📉"];
 
-const inputCls = "w-full px-3 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
+const inputCls = "w-full px-3 py-2 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
 const labelCls = "block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1";
 
 function fmtUser(name) {
@@ -31,8 +31,8 @@ function Modal({ open, onClose, title, children, maxWidth="max-w-xl" }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className={`bg-[#0d1628] border border-[rgba(255,255,255,0.1)] rounded-xl w-full ${maxWidth} max-h-[90vh] flex flex-col shadow-2xl`} onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(255,255,255,0.07)] flex-shrink-0">
+      <div className={`bg-[#0d1628] border border-[rgba(var(--tint),0.1)] rounded-xl w-full ${maxWidth} max-h-[90vh] flex flex-col shadow-2xl`} onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(var(--tint),0.07)] flex-shrink-0">
           <h2 className="text-white font-bold text-base">{title}</h2>
           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">✕</button>
         </div>
@@ -48,7 +48,7 @@ function IconPicker({ value, onChange, icons }) {
     <div className="flex flex-wrap gap-2">
       {icons.map(ic => (
         <button key={ic} onClick={() => onChange(ic)}
-          className={`w-8 h-8 rounded-lg text-base transition-all ${value===ic ? "bg-[rgba(197,165,114,0.2)] border border-[rgba(197,165,114,0.4)]" : "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.08)]"}`}>
+          className={`w-8 h-8 rounded-lg text-base transition-all ${value===ic ? "bg-[rgba(197,165,114,0.2)] border border-[rgba(197,165,114,0.4)]" : "bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] hover:bg-[rgba(var(--tint),0.08)]"}`}>
           {ic}
         </button>
       ))}
@@ -77,7 +77,7 @@ function ConfirmModal({ note, inventoryItems, onConfirm, onReject, onClose }) {
       </p>
       <div className="space-y-3 mb-6">
         {items.map((item, idx) => (
-          <div key={idx} className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-xl p-3 space-y-2">
+          <div key={idx} className="bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-xl p-3 space-y-2">
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${item.matched?"bg-green-400":"bg-amber-400"}`}/>
               <span className="text-white text-sm font-medium">{item.name}</span>
@@ -110,7 +110,7 @@ function ConfirmModal({ note, inventoryItems, onConfirm, onReject, onClose }) {
           Ablehnen
         </button>
         <div className="flex gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
           <button onClick={()=>onConfirm(note.delivery_note_id||note.id, items)}
             className="px-4 py-2 text-sm font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg">
             ✓ Bestätigen & Inventar updaten
@@ -190,7 +190,7 @@ function InventoryTab() {
         {lists.length === 0 && <p className="text-slate-600 text-xs text-center py-4">Noch keine Listen</p>}
         {lists.map(list => (
           <div key={list.id} onClick={() => setActiveList(list)}
-            className={`cursor-pointer p-3 rounded-xl border transition-all group ${activeList?.id===list.id ? "border-[rgba(197,165,114,0.4)] bg-[rgba(197,165,114,0.1)]" : "border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.05)]"}`}>
+            className={`cursor-pointer p-3 rounded-xl border transition-all group ${activeList?.id===list.id ? "border-[rgba(197,165,114,0.4)] bg-[rgba(197,165,114,0.1)]" : "border-[rgba(var(--tint),0.07)] bg-[rgba(var(--tint),0.03)] hover:bg-[rgba(var(--tint),0.05)]"}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <span>{list.icon}</span>
@@ -212,7 +212,7 @@ function InventoryTab() {
       {/* Artikel-Bereich */}
       <div className="flex-1 min-w-0">
         {!activeList ? (
-          <div className="flex flex-col items-center justify-center h-64 text-slate-600 border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+          <div className="flex flex-col items-center justify-center h-64 text-slate-600 border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
             <span className="text-4xl mb-3">📦</span>
             <p className="text-sm">Wähle eine Liste aus</p>
           </div>
@@ -240,7 +240,7 @@ function InventoryTab() {
 
             {loading ? <p className="text-slate-500 text-sm">Lädt...</p> :
              items.length === 0 ? (
-              <div className="text-center py-10 text-slate-600 text-sm border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+              <div className="text-center py-10 text-slate-600 text-sm border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
                 Noch keine Artikel in dieser Liste
               </div>
             ) : (
@@ -254,17 +254,17 @@ function InventoryTab() {
                   <div className="col-span-2">Zuletzt geändert</div>
                 </div>
                 {items.map(item => (
-                  <div key={item.id} className={`grid grid-cols-12 gap-2 items-center p-3 rounded-xl border transition-all group ${parseFloat(item.quantity)<=parseFloat(item.min_quantity||0)&&item.min_quantity>0 ? "border-red-500/20 bg-red-500/5" : "border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.05)]"}`}>
+                  <div key={item.id} className={`grid grid-cols-12 gap-2 items-center p-3 rounded-xl border transition-all group ${parseFloat(item.quantity)<=parseFloat(item.min_quantity||0)&&item.min_quantity>0 ? "border-red-500/20 bg-red-500/5" : "border-[rgba(var(--tint),0.07)] bg-[rgba(var(--tint),0.03)] hover:bg-[rgba(var(--tint),0.05)]"}`}>
                     <div className="col-span-4">
                       <p className="text-white text-sm font-medium">{item.name}</p>
                       {item.sku && <p className="text-slate-600 text-[10px]">SKU: {item.sku}</p>}
                     </div>
                     <div className="col-span-2 flex items-center justify-center gap-1">
-                      <button onClick={()=>updateQty(item,-1)} className="w-6 h-6 rounded bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] text-slate-300 text-sm leading-none">−</button>
+                      <button onClick={()=>updateQty(item,-1)} className="w-6 h-6 rounded bg-[rgba(var(--tint),0.06)] hover:bg-[rgba(var(--tint),0.12)] text-slate-300 text-sm leading-none">−</button>
                       <span className={`text-sm font-bold mx-1 min-w-[40px] text-center ${parseFloat(item.quantity)<=parseFloat(item.min_quantity||0)&&item.min_quantity>0?"text-red-400":"text-white"}`}>
                         {parseFloat(item.quantity).toLocaleString("de-DE")} <span className="text-slate-500 font-normal text-xs">{item.unit}</span>
                       </span>
-                      <button onClick={()=>updateQty(item,1)} className="w-6 h-6 rounded bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] text-slate-300 text-sm leading-none">+</button>
+                      <button onClick={()=>updateQty(item,1)} className="w-6 h-6 rounded bg-[rgba(var(--tint),0.06)] hover:bg-[rgba(var(--tint),0.12)] text-slate-300 text-sm leading-none">+</button>
                     </div>
                     <div className="col-span-2 text-slate-500 text-xs">{item.category||"—"}</div>
                     <div className="col-span-2 text-slate-500 text-xs">{item.location||"—"}</div>
@@ -297,7 +297,7 @@ function InventoryTab() {
           <div className="flex justify-between pt-2">
             {listModal?.id && <button onClick={()=>deleteList(listModal.id)} className="px-3 py-2 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10">Löschen</button>}
             <div className="flex gap-2 ml-auto">
-              <button onClick={()=>setListModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
+              <button onClick={()=>setListModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
               <button onClick={saveList} disabled={!listForm.name.trim()} className="px-4 py-2 text-sm font-semibold bg-[#C5A572] hover:opacity-90 disabled:opacity-50 text-black rounded-lg">Speichern</button>
             </div>
           </div>
@@ -318,7 +318,7 @@ function InventoryTab() {
             <div className="col-span-2"><label className={labelCls}>Notizen</label><textarea value={itemForm.notes} onChange={e=>setItemForm(f=>({...f,notes:e.target.value}))} rows={2} className={`${inputCls} resize-none`}/></div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={()=>setItemModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
+            <button onClick={()=>setItemModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
             <button onClick={saveItem} disabled={!itemForm.name.trim()} className="px-4 py-2 text-sm font-semibold bg-[#C5A572] hover:opacity-90 disabled:opacity-50 text-black rounded-lg">Speichern</button>
           </div>
         </div>
@@ -437,7 +437,7 @@ function DocListsTab() {
         </button>
         {lists.map(list => (
           <div key={list.id} onClick={()=>setActiveList(list)}
-            className={`cursor-pointer p-3 rounded-xl border transition-all group ${activeList?.id===list.id?"border-blue-500/40 bg-blue-500/10":"border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.05)]"}`}>
+            className={`cursor-pointer p-3 rounded-xl border transition-all group ${activeList?.id===list.id?"border-blue-500/40 bg-blue-500/10":"border-[rgba(var(--tint),0.07)] bg-[rgba(var(--tint),0.03)] hover:bg-[rgba(var(--tint),0.05)]"}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span>{list.icon}</span>
@@ -455,7 +455,7 @@ function DocListsTab() {
       {/* Einträge */}
       <div className="flex-1 min-w-0">
         {!activeList ? (
-          <div className="flex flex-col items-center justify-center h-64 text-slate-600 border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+          <div className="flex flex-col items-center justify-center h-64 text-slate-600 border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
             <span className="text-4xl mb-3">📝</span>
             <p className="text-sm">Wähle eine Dokumentliste aus</p>
           </div>
@@ -474,18 +474,18 @@ function DocListsTab() {
             </div>
 
             {columns.length === 0 ? (
-              <div className="text-center py-8 text-slate-600 text-sm border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+              <div className="text-center py-8 text-slate-600 text-sm border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
                 Keine Spalten definiert. Bearbeite die Liste um Spalten hinzuzufügen.
               </div>
             ) : entries.length === 0 ? (
-              <div className="text-center py-8 text-slate-600 text-sm border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+              <div className="text-center py-8 text-slate-600 text-sm border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
                 Noch keine Einträge
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[rgba(255,255,255,0.07)]">
+                    <tr className="border-b border-[rgba(var(--tint),0.07)]">
                       {columns.map(col => (
                         <th key={col.name} className="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                           {col.name}
@@ -499,7 +499,7 @@ function DocListsTab() {
                   </thead>
                   <tbody>
                     {entries.map(entry => (
-                      <tr key={entry.id} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.03)]">
+                      <tr key={entry.id} className="border-b border-[rgba(var(--tint),0.05)] hover:bg-[rgba(var(--tint),0.03)]">
                         {columns.map(col => (
                           <td key={col.name} className="px-3 py-2.5 text-slate-300">
                             {renderCellValue(entry, col)}
@@ -533,7 +533,7 @@ function DocListsTab() {
             <label className={labelCls}>Spalten</label>
             <div className="space-y-2 mb-2">
               {(listForm.columns||[]).map((col,i) => (
-                <div key={i} className="flex items-center gap-2 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-lg px-3 py-2">
+                <div key={i} className="flex items-center gap-2 bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-lg px-3 py-2">
                   <span className="text-slate-300 text-sm flex-1">{col.name}</span>
                   <span className="text-slate-600 text-xs">{col.type==="file"?"📎 Datei":col.type}</span>
                   <button onClick={()=>setListForm(f=>({...f,columns:f.columns.filter((_,j)=>j!==i)}))} className="text-slate-600 hover:text-red-400 text-xs">✕</button>
@@ -543,7 +543,7 @@ function DocListsTab() {
             <div className="flex gap-2">
               <input value={newCol.name} onChange={e=>setNewCol(f=>({...f,name:e.target.value}))}
                 placeholder="Spaltenname z.B. Vertrag, Datum..." className={`${inputCls} flex-1`}/>
-              <select value={newCol.type} onChange={e=>setNewCol(f=>({...f,type:e.target.value}))} className="px-2 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-300 text-sm focus:outline-none">
+              <select value={newCol.type} onChange={e=>setNewCol(f=>({...f,type:e.target.value}))} className="px-2 py-2 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-300 text-sm focus:outline-none">
                 <option value="text">Text</option>
                 <option value="number">Zahl</option>
                 <option value="date">Datum</option>
@@ -555,7 +555,7 @@ function DocListsTab() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={()=>setListModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
+            <button onClick={()=>setListModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
             <button onClick={saveList} disabled={!listForm.name.trim()} className="px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg">Speichern</button>
           </div>
         </div>
@@ -590,7 +590,7 @@ function DocListsTab() {
             </div>
           ))}
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={()=>setEntryModal(false)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
+            <button onClick={()=>setEntryModal(false)} className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">Abbrechen</button>
             <button onClick={saveEntry} disabled={saving} className="px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg">
               {saving ? "Speichert…" : "Speichern"}
             </button>
@@ -690,7 +690,7 @@ export default function DeliveryNotesPage() {
       <div className="flex gap-2 mb-6">
         {TABS.map(t => (
           <button key={t.key} onClick={()=>setTab(t.key)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${tab===t.key ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-slate-500 hover:text-slate-300"}`}>
+            className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${tab===t.key ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]" : "bg-[rgba(var(--tint),0.03)] border-[rgba(var(--tint),0.07)] text-slate-500 hover:text-slate-300"}`}>
             {t.label}
           </button>
         ))}
@@ -708,14 +708,14 @@ export default function DeliveryNotesPage() {
             <div className="flex gap-2">
               {["","pending","confirmed","rejected"].map(s => (
                 <button key={s} onClick={()=>setStatusFilter(s)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${statusFilter===s?"bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]":"bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-slate-500 hover:text-slate-300"}`}>
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${statusFilter===s?"bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]":"bg-[rgba(var(--tint),0.03)] border-[rgba(var(--tint),0.07)] text-slate-500 hover:text-slate-300"}`}>
                   {s===""?"Alle":statusLabel[s]}
                 </button>
               ))}
             </div>
 
             {notes.length===0 ? (
-              <div className="text-center py-12 text-slate-600 border border-dashed border-[rgba(255,255,255,0.07)] rounded-xl">
+              <div className="text-center py-12 text-slate-600 border border-dashed border-[rgba(var(--tint),0.07)] rounded-xl">
                 <p className="text-4xl mb-3">📋</p>
                 <p className="text-sm">Noch keine Lieferscheine</p>
                 <p className="text-xs mt-1">Lade ein Foto hoch um einen Lieferschein zu analysieren</p>
@@ -723,7 +723,7 @@ export default function DeliveryNotesPage() {
             ) : (
               <div className="space-y-3">
                 {notes.map(note => (
-                  <div key={note.id} className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-xl p-4 hover:bg-[rgba(255,255,255,0.05)] transition-all">
+                  <div key={note.id} className="bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-xl p-4 hover:bg-[rgba(var(--tint),0.05)] transition-all">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
                         <span className="text-2xl">{note.source==="photo"?"📷":"✉️"}</span>
@@ -741,7 +741,7 @@ export default function DeliveryNotesPage() {
                           {note.items?.length>0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {note.items.slice(0,3).map((item,i)=>(
-                                <span key={i} className="text-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-full px-2 py-0.5 text-slate-400">
+                                <span key={i} className="text-[10px] bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-full px-2 py-0.5 text-slate-400">
                                   {item.quantity} {item.unit} {item.name}
                                 </span>
                               ))}

@@ -11,7 +11,7 @@ const RULE_TYPES = [
 
 const BLANK = { name: "", icon: "📁", color: "#C5A572", rules: [] };
 
-const inputCls = "w-full px-3 py-2 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
+const inputCls = "w-full px-3 py-2 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
 
 export default function SmartFolderModal({ open, folder, onClose, onSave, onDelete }) {
   const [form, setForm] = useState(BLANK);
@@ -72,7 +72,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
           <div className="flex flex-wrap gap-2">
             {ICONS.map(ic => (
               <button key={ic || "none"} onClick={() => set("icon", ic)}
-                className={`w-8 h-8 rounded-lg text-base transition-all ${form.icon === ic ? "bg-[rgba(197,165,114,0.2)] border border-[rgba(197,165,114,0.4)]" : "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] hover:bg-[rgba(255,255,255,0.08)]"}`}
+                className={`w-8 h-8 rounded-lg text-base transition-all ${form.icon === ic ? "bg-[rgba(197,165,114,0.2)] border border-[rgba(197,165,114,0.4)]" : "bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] hover:bg-[rgba(var(--tint),0.08)]"}`}
                 title={ic === "" ? "Kein Icon" : ic}>
                 {ic === "" ? <span className="text-slate-600 text-xs">∅</span> : ic}
               </button>
@@ -94,7 +94,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
           </p>
 
           {form.rules.length === 0 && (
-            <div className="text-center py-4 text-slate-600 text-xs border border-dashed border-[rgba(255,255,255,0.07)] rounded-lg">
+            <div className="text-center py-4 text-slate-600 text-xs border border-dashed border-[rgba(var(--tint),0.07)] rounded-lg">
               Noch keine Regeln – alle Emails werden angezeigt
             </div>
           )}
@@ -103,7 +103,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
             {form.rules.map((rule, i) => {
               const rtype = RULE_TYPES.find(t => t.value === rule.type);
               return (
-                <div key={i} className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] rounded-lg p-3 space-y-2">
+                <div key={i} className="bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
                       Regel {i + 1}
@@ -117,7 +117,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
                     <div>
                       <label className="block text-[10px] text-slate-600 mb-1">Filtertyp</label>
                       <select value={rule.type} onChange={e => updateRule(i, "type", e.target.value)}
-                        className="w-full px-2 py-1.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-300 text-xs focus:outline-none focus:border-[rgba(197,165,114,0.4)]">
+                        className="w-full px-2 py-1.5 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-300 text-xs focus:outline-none focus:border-[rgba(197,165,114,0.4)]">
                         {RULE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </select>
                     </div>
@@ -125,7 +125,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
                       <label className="block text-[10px] text-slate-600 mb-1">Wert</label>
                       <input value={rule.value} onChange={e => updateRule(i, "value", e.target.value)}
                         placeholder={rtype?.hint || "Wert eingeben..."}
-                        className="w-full px-2 py-1.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)]"/>
+                        className="w-full px-2 py-1.5 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)]"/>
                     </div>
                   </div>
                   {rtype && (
@@ -143,7 +143,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-between pt-2 border-t border-[rgba(255,255,255,0.07)]">
+        <div className="flex justify-between pt-2 border-t border-[rgba(var(--tint),0.07)]">
           <div>
             {folder && (
               <button onClick={() => onDelete(folder.id)}
@@ -154,7 +154,7 @@ export default function SmartFolderModal({ open, folder, onClose, onSave, onDele
           </div>
           <div className="flex gap-2">
             <button onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-400 border border-[rgba(255,255,255,0.07)] rounded-lg hover:bg-white/5">
+              className="px-4 py-2 text-sm text-slate-400 border border-[rgba(var(--tint),0.07)] rounded-lg hover:bg-white/5">
               Abbrechen
             </button>
             <button onClick={handleSave} disabled={saving || !form.name.trim()}

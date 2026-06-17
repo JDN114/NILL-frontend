@@ -101,8 +101,8 @@ const CSS = `
   .nim-input {
     width: 100%; box-sizing: border-box; outline: none;
     padding: 0.55rem 0.85rem;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(239,237,231,0.07);
+    background: rgba(var(--tint),0.04);
+    border: 1px solid rgba(var(--ink-tint),0.07);
     border-radius: 9px;
     color: #efede7; font-size: 0.83rem;
     transition: border-color 0.15s;
@@ -112,8 +112,8 @@ const CSS = `
   .nim-input-sm {
     width: 100%; box-sizing: border-box; outline: none;
     padding: 0.42rem 0.65rem;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(239,237,231,0.07);
+    background: rgba(var(--tint),0.04);
+    border: 1px solid rgba(var(--ink-tint),0.07);
     border-radius: 8px;
     color: #efede7; font-size: 0.8rem;
     transition: border-color 0.15s;
@@ -122,12 +122,12 @@ const CSS = `
   .nim-btn-ghost {
     padding: 0.5rem 1.1rem;
     background: transparent;
-    border: 1px solid rgba(239,237,231,0.07);
-    border-radius: 8px; color: rgba(239,237,231,.5);
+    border: 1px solid rgba(var(--ink-tint),0.07);
+    border-radius: 8px; color: rgba(var(--ink-tint),.5);
     font-size: 0.83rem; cursor: pointer;
     transition: border-color 0.15s, color 0.15s;
   }
-  .nim-btn-ghost:hover:not(:disabled) { border-color: rgba(239,237,231,0.18); color: #efede7; }
+  .nim-btn-ghost:hover:not(:disabled) { border-color: rgba(var(--ink-tint),0.18); color: #efede7; }
   .nim-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
   .nim-btn-primary {
     flex: 1; padding: 0.55rem 1rem;
@@ -142,13 +142,13 @@ const CSS = `
   .nim-toggle {
     background: none; border: none; cursor: pointer; padding: 0;
     display: flex; align-items: center; gap: 6px;
-    font-size: 0.75rem; color: rgba(239,237,231,.28);
+    font-size: 0.75rem; color: rgba(var(--ink-tint),.28);
     transition: color 0.15s;
   }
-  .nim-toggle:hover { color: rgba(239,237,231,.5); }
+  .nim-toggle:hover { color: rgba(var(--ink-tint),.5); }
   .nim-close {
     background: none; border: none; cursor: pointer; padding: 4px;
-    color: rgba(239,237,231,.28); line-height: 1; flex-shrink: 0;
+    color: rgba(var(--ink-tint),.28); line-height: 1; flex-shrink: 0;
     transition: color 0.15s;
   }
   .nim-close:hover { color: #efede7; }
@@ -159,9 +159,9 @@ const CSS = `
     visibility: hidden; opacity: 0;
     position: absolute; bottom: calc(100% + 6px); left: 50%;
     transform: translateX(-50%);
-    background: #1a1916; border: 1px solid rgba(239,237,231,0.1);
+    background: #1a1916; border: 1px solid rgba(var(--ink-tint),0.1);
     border-radius: 6px; padding: 5px 9px;
-    font-size: 0.71rem; color: rgba(239,237,231,.7);
+    font-size: 0.71rem; color: rgba(var(--ink-tint),.7);
     white-space: nowrap; pointer-events: none; z-index: 10;
     transition: opacity 0.15s;
   }
@@ -203,7 +203,7 @@ function Label({ children, hint }) {
   return (
     <label style={{
       fontSize: "0.72rem", fontWeight: 700,
-      color: "rgba(239,237,231,.5)",
+      color: "rgba(var(--ink-tint),.5)",
       textTransform: "uppercase", letterSpacing: "0.07em",
       display: "flex", alignItems: "center", gap: 5,
       marginBottom: 5,
@@ -212,7 +212,7 @@ function Label({ children, hint }) {
       {hint && (
         <Tip text={hint}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-            stroke="rgba(239,237,231,.3)" strokeWidth="2.2" style={{ cursor: "default" }}>
+            stroke="rgba(var(--ink-tint),.3)" strokeWidth="2.2" style={{ cursor: "default" }}>
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -363,7 +363,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
     }}>
       <div style={{
         background: "#0d0c0b",
-        border: "1px solid rgba(239,237,231,0.07)",
+        border: "1px solid rgba(var(--ink-tint),0.07)",
         borderRadius: 14,
         width: "100%", maxWidth: 480,
         maxHeight: "90vh", overflowY: "auto",
@@ -380,7 +380,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
               <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#efede7" }}>
                 {isReauth ? "Verbindung erneuern" : "Postfach verbinden"}
               </h2>
-              <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "rgba(239,237,231,.5)" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "rgba(var(--ink-tint),.5)" }}>
                 {isReauth
                   ? "Gib dein aktuelles Passwort ein."
                   : "Verbinde dein Business-Postfach (z.B. info@deine-firma.de)."}
@@ -455,7 +455,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                 {detected.name} erfordert bei 2FA ein <strong>App-Passwort</strong> — in den Sicherheitseinstellungen des Kontos erstellen.
               </p>
             )}
-            <p style={{ margin: "5px 0 0", fontSize: "0.71rem", color: "rgba(239,237,231,.22)" }}>
+            <p style={{ margin: "5px 0 0", fontSize: "0.71rem", color: "rgba(var(--ink-tint),.22)" }}>
               Verschlüsselt gespeichert. Wird nie lokal oder im Browser abgelegt.
             </p>
           </div>
@@ -464,7 +464,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
           <div>
             <Label hint="Wird als Absendername in ausgehenden E-Mails angezeigt">
               Anzeigename{" "}
-              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(239,237,231,.22)" }}>
+              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(var(--ink-tint),.22)" }}>
                 (optional)
               </span>
             </Label>
@@ -480,9 +480,9 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
           {/* Server settings — only shown for unknown providers or if manually expanded */}
           {showServerPanel && (
             <div style={{
-              border: "1px solid rgba(239,237,231,0.07)",
+              border: "1px solid rgba(var(--ink-tint),0.07)",
               borderRadius: 10, padding: "1rem",
-              background: "rgba(255,255,255,0.02)",
+              background: "rgba(var(--tint),0.02)",
               display: "flex", flexDirection: "column", gap: "1rem",
             }}>
 
@@ -491,7 +491,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                 <p style={{
                   margin: "0 0 10px", fontSize: "0.68rem", fontWeight: 700,
                   textTransform: "uppercase", letterSpacing: "0.1em",
-                  color: "rgba(239,237,231,.28)",
+                  color: "rgba(var(--ink-tint),.28)",
                 }}>
                   Eingang (IMAP)
                 </p>
@@ -513,14 +513,14 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                 </div>
                 <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
                   <Tip text="Empfohlen. Verschlüsselt von Beginn an (Port 993).">
-                    <label style={{ fontSize: "0.78rem", color: "rgba(239,237,231,.5)", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+                    <label style={{ fontSize: "0.78rem", color: "rgba(var(--ink-tint),.5)", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
                       <input type="checkbox" style={{ accentColor: "#c5a572" }} checked={form.imap_use_ssl}
                         onChange={e => update("imap_use_ssl", e.target.checked)} />
                       SSL/TLS
                     </label>
                   </Tip>
                   <Tip text="Startet unverschlüsselt, wechselt dann auf TLS (Port 143). Nur wenn SSL nicht funktioniert.">
-                    <label style={{ fontSize: "0.78rem", color: "rgba(239,237,231,.5)", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+                    <label style={{ fontSize: "0.78rem", color: "rgba(var(--ink-tint),.5)", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
                       <input type="checkbox" style={{ accentColor: "#c5a572" }} checked={form.imap_starttls}
                         onChange={e => update("imap_starttls", e.target.checked)} />
                       STARTTLS
@@ -534,7 +534,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                 <p style={{
                   margin: "0 0 10px", fontSize: "0.68rem", fontWeight: 700,
                   textTransform: "uppercase", letterSpacing: "0.1em",
-                  color: "rgba(239,237,231,.28)",
+                  color: "rgba(var(--ink-tint),.28)",
                 }}>
                   Ausgang (SMTP){" "}
                   <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>— optional</span>
@@ -555,7 +555,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                   </div>
                 </div>
                 <Tip text="Port 465 mit direkter SSL-Verschlüsselung. Alternativ: Port 587 mit STARTTLS.">
-                  <label style={{ fontSize: "0.78rem", color: "rgba(239,237,231,.5)", display: "flex", alignItems: "center", gap: 7, marginTop: 10, cursor: "pointer" }}>
+                  <label style={{ fontSize: "0.78rem", color: "rgba(var(--ink-tint),.5)", display: "flex", alignItems: "center", gap: 7, marginTop: 10, cursor: "pointer" }}>
                     <input type="checkbox" style={{ accentColor: "#c5a572" }} checked={!!form.smtp_use_ssl}
                       onChange={e => update("smtp_use_ssl", e.target.checked)} />
                     SSL auf Port 465
@@ -567,7 +567,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
               <div>
                 <Label hint="Nur ausfüllen wenn der Login-Name von der E-Mail-Adresse abweicht — bei den meisten Providern leer lassen.">
                   Login-Name{" "}
-                  <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(239,237,231,.22)" }}>
+                  <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(var(--ink-tint),.22)" }}>
                     (meist leer lassen)
                   </span>
                 </Label>

@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
+    <script>
+      /* Apply saved theme before paint to avoid a flash of the wrong mode. */
+      (function () {
+        try {
+          var t = localStorage.getItem("nill-theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>NILL</title>
@@ -104,12 +118,12 @@
         40%           { transform: scale(1);   opacity: 1;   }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-7yBLZ6KV.js"></script>
+    <script type="module" crossorigin src="/assets/index-CEfHhIuL.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react--hPKs4bs.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-misc-Mfy8f7jx.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-router-DAf3mJ4C.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-misc-CMqYbET0.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-BxWC8dWZ.js">
     <link rel="stylesheet" crossorigin href="/assets/vendor-misc-BK_H5ORi.css">
-    <link rel="stylesheet" crossorigin href="/assets/index-BQ_tB1-X.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BC97WhjU.css">
   </head>
   <body>
     <!-- Ladescreen — wird entfernt sobald React mountet -->

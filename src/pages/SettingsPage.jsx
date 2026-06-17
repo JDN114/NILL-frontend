@@ -16,12 +16,12 @@ import ImapConnectModal, { getImapSavedConfigs } from "../components/ImapConnect
 import MitarbeiterAusweis    from "../components/MitarbeiterAusweis";
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
-const surface  = "rgba(255,255,255,0.03)";
-const border   = "rgba(239,237,231,0.07)";
+const surface  = "rgba(var(--tint),0.03)";
+const border   = "rgba(var(--ink-tint),0.07)";
 const borderHi = "rgba(197,165,114,0.28)";
 const text     = "var(--nill-text,#efede7)";
-const dim      = "var(--nill-text-dim,rgba(239,237,231,.5))";
-const mute     = "var(--nill-text-mute,rgba(239,237,231,.28))";
+const dim      = "var(--nill-text-dim,rgba(var(--ink-tint),.5))";
+const mute     = "var(--nill-text-mute,rgba(var(--ink-tint),.28))";
 const gold     = "var(--nill-gold,#c5a572)";
 const goldDim  = "rgba(197,165,114,0.1)";
 const red      = "#f87171";
@@ -55,7 +55,7 @@ const rowStyle = {
 
 const inputStyle = {
   width: "100%", padding: "0.55rem 0.85rem",
-  background: "rgba(255,255,255,0.04)",
+  background: "rgba(var(--tint),0.04)",
   border: `1px solid ${border}`,
   borderRadius: 9, color: text,
   fontSize: "0.83rem", outline: "none",
@@ -114,7 +114,7 @@ function Toggle({ on, onChange, label, description }) {
         onClick={() => onChange(!on)}
         style={{
           width: 44, height: 24, borderRadius: 99, border: "none",
-          background: on ? gold : "rgba(255,255,255,0.1)",
+          background: on ? gold : "rgba(var(--tint),0.1)",
           cursor: "pointer", position: "relative", flexShrink: 0,
           transition: "background 0.2s",
         }}
@@ -122,7 +122,7 @@ function Toggle({ on, onChange, label, description }) {
         <span style={{
           position: "absolute", top: 3, left: on ? 23 : 3,
           width: 18, height: 18, borderRadius: "50%",
-          background: on ? "#000" : "rgba(255,255,255,0.5)",
+          background: on ? "#000" : "rgba(var(--tint),0.5)",
           transition: "left 0.2s",
         }} />
       </button>
@@ -434,7 +434,7 @@ function StationGuideTab({
               <div key={m.key} onClick={() => toggleModule(m.key)} style={{
                 display: "flex", alignItems: "center", gap: "1rem",
                 padding: "0.75rem 1rem", borderRadius: 10, cursor: "pointer",
-                background: active ? "rgba(197,165,114,0.07)" : "rgba(255,255,255,0.02)",
+                background: active ? "rgba(197,165,114,0.07)" : "rgba(var(--tint),0.02)",
                 border: `1px solid ${active ? "rgba(197,165,114,0.25)" : border}`,
                 transition: "all 0.15s",
               }}>
@@ -446,7 +446,7 @@ function StationGuideTab({
                 <div style={{
                   width: 18, height: 18, borderRadius: 4,
                   background: active ? gold : "transparent",
-                  border: `2px solid ${active ? gold : "rgba(255,255,255,0.2)"}`,
+                  border: `2px solid ${active ? gold : "rgba(var(--tint),0.2)"}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0, transition: "all 0.15s",
                 }}>
@@ -482,7 +482,7 @@ function StationGuideTab({
             <input type="password"
               placeholder={exitPwSet ? "Neues Passwort (zum Ändern)" : "Passwort setzen (min. 4 Zeichen)"}
               value={exitPwInput} onChange={e => setExitPwInput(e.target.value)}
-              style={{ flex: 1, padding: "0.55rem 0.75rem", background: "rgba(255,255,255,0.04)", border: `1px solid ${border}`, borderRadius: 8, color: text, fontSize: "0.88rem", fontFamily: "'JetBrains Mono', monospace", outline: "none", letterSpacing: "0.08em", boxSizing: "border-box" }}
+              style={{ flex: 1, padding: "0.55rem 0.75rem", background: "rgba(var(--tint),0.04)", border: `1px solid ${border}`, borderRadius: 8, color: text, fontSize: "0.88rem", fontFamily: "'JetBrains Mono', monospace", outline: "none", letterSpacing: "0.08em", boxSizing: "border-box" }}
             />
             <button onClick={onSetExitPw} disabled={exitPwLoading || exitPwInput.length < 4}
               style={{ ...btnPrimary, padding: "0.55rem 1.1rem", opacity: exitPwLoading || exitPwInput.length < 4 ? 0.5 : 1, whiteSpace: "nowrap" }}>
@@ -1163,7 +1163,7 @@ export default function SettingsPage() {
         .sp-content {
           flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1.25rem;
           overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0.1rem 0.1rem 1.5rem;
-          scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;
+          scrollbar-width: thin; scrollbar-color: rgba(var(--tint),0.08) transparent;
         }
 
         /* Mobile: sidebar becomes a clean horizontal pill tab strip; only
@@ -1245,7 +1245,7 @@ export default function SettingsPage() {
                     transition: "background 0.12s, color 0.12s",
                     borderLeft: active ? `2px solid ${gold}` : "2px solid transparent",
                   }}
-                  onMouseOver={e => { if (!active) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = text; } }}
+                  onMouseOver={e => { if (!active) { e.currentTarget.style.background = "rgba(var(--tint),0.04)"; e.currentTarget.style.color = text; } }}
                   onMouseOut={e =>  { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = dim; } }}
                 >
                   <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0 }}>{tab.icon}</span>
@@ -1270,7 +1270,7 @@ export default function SettingsPage() {
                 transition: "background 0.12s, color 0.12s",
                 borderLeft: "2px solid transparent",
               }}
-              onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = text; }}
+              onMouseOver={e => { e.currentTarget.style.background = "rgba(var(--tint),0.04)"; e.currentTarget.style.color = text; }}
               onMouseOut={e  => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = dim; }}
             >
               <span style={{ opacity: 0.7, flexShrink: 0 }}>{svgContact}</span>
@@ -1292,7 +1292,7 @@ export default function SettingsPage() {
                     <div style={{
                       display: "flex", alignItems: "center", gap: "1rem",
                       padding: "1rem 1.1rem",
-                      background: "rgba(255,255,255,0.03)",
+                      background: "rgba(var(--tint),0.03)",
                       border: `1px solid ${border}`, borderRadius: 10,
                     }}>
                       <div style={{
@@ -1386,7 +1386,7 @@ export default function SettingsPage() {
                   <div className="sp-grid-3" style={{
                     display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.65rem",
                     padding: "1rem 1.1rem",
-                    background: "rgba(255,255,255,0.03)",
+                    background: "rgba(var(--tint),0.03)",
                     border: `1px solid ${border}`, borderRadius: 10,
                   }}>
                     {[
@@ -1636,7 +1636,7 @@ export default function SettingsPage() {
                       <>
                         <div className="sp-grid-3" style={{
                           display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
-                          padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
+                          padding: "1rem 1.1rem", background: "rgba(var(--tint),0.03)",
                           border: `1px solid ${border}`, borderRadius: 10,
                         }}>
                           {[
@@ -1720,7 +1720,7 @@ export default function SettingsPage() {
                               <span>Tag {used} von 14</span>
                               <span>Frist: {new Date(refundEligibility.deadline).toLocaleDateString("de-DE")}</span>
                             </div>
-                            <div style={{ height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)" }}>
+                            <div style={{ height: 6, borderRadius: 99, background: "rgba(var(--tint),0.06)" }}>
                               <div style={{
                                 height: "100%", borderRadius: 99,
                                 width: `${pct}%`,
@@ -1932,7 +1932,7 @@ export default function SettingsPage() {
                   <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                     <div className="sp-grid-3" style={{
                       display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem",
-                      padding: "1rem 1.1rem", background: "rgba(255,255,255,0.03)",
+                      padding: "1rem 1.1rem", background: "rgba(var(--tint),0.03)",
                       border: `1px solid ${border}`, borderRadius: 10,
                     }}>
                       {[
@@ -1962,7 +1962,7 @@ export default function SettingsPage() {
                       return (
                         <div style={{
                           padding: "0.9rem 1rem", borderRadius: 10,
-                          background: "rgba(255,255,255,0.03)",
+                          background: "rgba(var(--tint),0.03)",
                           border: `1px solid ${at_capacity ? "rgba(248,113,113,0.25)" : border}`,
                         }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1972,7 +1972,7 @@ export default function SettingsPage() {
                             <span style={{
                               fontSize: "0.75rem", fontWeight: 700,
                               color: at_capacity ? red : slots_left <= 1 ? amber : dim,
-                              background: at_capacity ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.05)",
+                              background: at_capacity ? "rgba(248,113,113,0.1)" : "rgba(var(--tint),0.05)",
                               padding: "2px 9px", borderRadius: 20,
                             }}>
                               {at_capacity
@@ -1982,7 +1982,7 @@ export default function SettingsPage() {
                           </div>
 
                           {/* progress bar */}
-                          <div style={{ height: 6, borderRadius: 6, background: "rgba(255,255,255,0.07)", overflow: "hidden", marginBottom: 6 }}>
+                          <div style={{ height: 6, borderRadius: 6, background: "rgba(var(--tint),0.07)", overflow: "hidden", marginBottom: 6 }}>
                             <div style={{ height: "100%", borderRadius: 6, width: `${pct}%`, background: barColor, transition: "width 0.4s ease" }} />
                           </div>
 
@@ -2076,7 +2076,7 @@ export default function SettingsPage() {
                   <div style={{
                     width: 44, height: 44, borderRadius: 12, flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: pushSubscribed ? "rgba(197,165,114,0.15)" : "rgba(255,255,255,0.05)",
+                    background: pushSubscribed ? "rgba(197,165,114,0.15)" : "rgba(var(--tint),0.05)",
                     border: `1px solid ${pushSubscribed ? "rgba(197,165,114,0.3)" : border}`,
                     transition: "all 0.2s",
                   }}>
@@ -2147,9 +2147,9 @@ export default function SettingsPage() {
                           style={{
                             padding: "0.35rem 0.85rem", borderRadius: 7,
                             fontSize: "0.75rem", fontWeight: 600,
-                            background: "rgba(239,237,231,0.04)",
-                            border: "1px solid rgba(239,237,231,0.08)",
-                            color: "rgba(239,237,231,0.4)",
+                            background: "rgba(var(--ink-tint),0.04)",
+                            border: "1px solid rgba(var(--ink-tint),0.08)",
+                            color: "rgba(var(--ink-tint),0.4)",
                             cursor: pushLoading ? "not-allowed" : "pointer",
                             opacity: pushLoading ? 0.45 : 1,
                           }}
@@ -2163,20 +2163,20 @@ export default function SettingsPage() {
                     {pushSubscribed && /Mac|iPhone|iPad/.test(navigator.userAgent) && (
                       <div style={{
                         marginTop: "0.6rem", fontSize: "0.7rem", lineHeight: 1.6,
-                        color: "rgba(239,237,231,0.38)",
-                        background: "rgba(239,237,231,0.03)",
-                        border: "1px solid rgba(239,237,231,0.08)",
+                        color: "rgba(var(--ink-tint),0.38)",
+                        background: "rgba(var(--ink-tint),0.03)",
+                        border: "1px solid rgba(var(--ink-tint),0.08)",
                         borderRadius: 6, padding: "0.5rem 0.7rem",
                       }}>
-                        <strong style={{ color: "rgba(239,237,231,0.58)" }}>macOS PWA:</strong>{" "}
-                        Öffne <em>Systemeinstellungen → Mitteilungen → NILL</em> und setze den Stil auf <strong style={{ color: "rgba(239,237,231,0.5)" }}>Banner</strong>.
+                        <strong style={{ color: "rgba(var(--ink-tint),0.58)" }}>macOS PWA:</strong>{" "}
+                        Öffne <em>Systemeinstellungen → Mitteilungen → NILL</em> und setze den Stil auf <strong style={{ color: "rgba(var(--ink-tint),0.5)" }}>Banner</strong>.
                         Erscheint NILL dort nicht, deinstalliere und reinstalliere die App aus Safari, klicke dann auf <em>Token erneuern</em>.
                       </div>
                     )}
 
                     <div style={{
                       marginTop: "0.85rem", fontSize: "0.7rem",
-                      color: "rgba(239,237,231,0.28)", lineHeight: 1.5,
+                      color: "rgba(var(--ink-tint),0.28)", lineHeight: 1.5,
                     }}>
                       TTDSG §25 — Token wird ausschließlich zur Nachrichtenzustellung gespeichert.
                     </div>
@@ -2205,14 +2205,14 @@ export default function SettingsPage() {
                         cursor: "pointer",
                         transition: "background 0.12s",
                       }}
-                      onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                      onMouseOver={e => e.currentTarget.style.background = "rgba(var(--tint),0.02)"}
                       onMouseOut={e => e.currentTarget.style.background = "transparent"}
                     >
                       <span style={{
                         width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "0.9rem",
-                        background: notifs[key] ? "rgba(197,165,114,0.1)" : "rgba(255,255,255,0.04)",
+                        background: notifs[key] ? "rgba(197,165,114,0.1)" : "rgba(var(--tint),0.04)",
                         border: `1px solid ${notifs[key] ? "rgba(197,165,114,0.2)" : border}`,
                         color: notifs[key] ? gold : mute,
                         transition: "all 0.15s",
@@ -2228,8 +2228,8 @@ export default function SettingsPage() {
                       {/* Custom minimal toggle */}
                       <div style={{
                         width: 40, height: 22, borderRadius: 99, flexShrink: 0,
-                        background: notifs[key] ? gold : "rgba(255,255,255,0.08)",
-                        border: `1px solid ${notifs[key] ? "transparent" : "rgba(255,255,255,0.1)"}`,
+                        background: notifs[key] ? gold : "rgba(var(--tint),0.08)",
+                        border: `1px solid ${notifs[key] ? "transparent" : "rgba(var(--tint),0.1)"}`,
                         position: "relative", transition: "background 0.2s",
                         cursor: "pointer",
                       }}>
@@ -2237,7 +2237,7 @@ export default function SettingsPage() {
                           position: "absolute", top: 2,
                           left: notifs[key] ? 20 : 2,
                           width: 16, height: 16, borderRadius: "50%",
-                          background: notifs[key] ? "#000" : "rgba(255,255,255,0.35)",
+                          background: notifs[key] ? "#000" : "rgba(var(--tint),0.35)",
                           transition: "left 0.2s, background 0.2s",
                         }} />
                       </div>
@@ -2309,7 +2309,7 @@ export default function SettingsPage() {
                             <span style={{ fontSize: "0.72rem", color: mute, textTransform: "uppercase", letterSpacing: "0.07em" }}>
                               Manueller Key
                             </span>
-                            <code style={{ fontSize: "0.78rem", color: text, background: "rgba(255,255,255,0.05)",
+                            <code style={{ fontSize: "0.78rem", color: text, background: "rgba(var(--tint),0.05)",
                               padding: "0.4rem 0.6rem", borderRadius: 6, wordBreak: "break-all", letterSpacing: "0.12em" }}>
                               {twofaSecret}
                             </code>
@@ -2359,7 +2359,7 @@ export default function SettingsPage() {
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem 1rem" }}>
                             {twofaBackupCodes.map((c, i) => (
                               <code key={i} style={{ fontSize: "0.85rem", color: text, letterSpacing: "0.1em",
-                                background: "rgba(255,255,255,0.05)", padding: "0.3rem 0.5rem", borderRadius: 5 }}>
+                                background: "rgba(var(--tint),0.05)", padding: "0.3rem 0.5rem", borderRadius: 5 }}>
                                 {c}
                               </code>
                             ))}
@@ -2446,7 +2446,7 @@ export default function SettingsPage() {
                           <div key={c.id} style={{
                             display: "flex", alignItems: "center", justifyContent: "space-between",
                             padding: "0.55rem 0.85rem",
-                            background: "rgba(255,255,255,0.03)",
+                            background: "rgba(var(--tint),0.03)",
                             border: "1px solid var(--nill-border)",
                             borderRadius: 8,
                           }}>
@@ -2648,7 +2648,7 @@ export default function SettingsPage() {
                           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <span style={{ fontSize: "0.85rem", fontWeight: 600, color: text, display: "flex", gap: 6, alignItems: "center" }}>{icon} {label}</span>
-                              <span style={{ fontSize: "0.75rem", color: mute, background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 20 }}>Nicht verfügbar im Solo-Plan</span>
+                              <span style={{ fontSize: "0.75rem", color: mute, background: "rgba(var(--tint),0.05)", padding: "2px 8px", borderRadius: 20 }}>Nicht verfügbar im Solo-Plan</span>
                             </div>
                           </div>
                         );
@@ -2663,7 +2663,7 @@ export default function SettingsPage() {
                               </span>
                             </div>
                             {!unlimited && (
-                              <div style={{ height: 6, borderRadius: 6, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                              <div style={{ height: 6, borderRadius: 6, background: "rgba(var(--tint),0.07)", overflow: "hidden" }}>
                                 <div style={{
                                   height: "100%", borderRadius: 6,
                                   width: `${pct}%`,
@@ -2683,7 +2683,7 @@ export default function SettingsPage() {
                       return (
                         <>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-                            padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                            padding: "0.5rem 0.75rem", background: "rgba(var(--tint),0.03)", borderRadius: 8 }}>
                             <span style={{ fontSize: "0.78rem", color: dim }}>Aktueller Plan</span>
                             <span style={{ fontSize: "0.78rem", fontWeight: 700, color: gold }}>{planLabel}</span>
                           </div>

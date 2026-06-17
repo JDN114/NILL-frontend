@@ -18,60 +18,17 @@ const radius  = 28;
 const ease    = "cubic-bezier(.16,1,.3,1)";
 
 // ─── Plan data ────────────────────────────────────────────────────────────────
-const PLANS = [
-  {
-    id: "solo",
-    title: "Solo",
-    subtitle: "Für Einzelunternehmer & kleine Büros",
-    seats: "1–2 Personen",
-    monthlyPrice: 25,
-    yearlyPrice: 240,
-    features: [
-      "E-Mail-Integration: Gmail, Outlook & IMAP",
-      "E-Mail KI-Assistent: 10 Antworten / Tag",
-      "Intelligenter Kalender & Aufgaben",
-      "Buchhaltung mit OCR-Belegerfassung (WIP – in Entwicklung)",
-      "Automatische Steuer- & Kategorieextraktion",
-      "Rechnungserstellung & PDF-Export",
-    ],
-  },
-  {
-    id: "team",
-    title: "Team",
-    subtitle: "Für wachsende Teams & KMUs",
-    seats: "3–10 Personen",
-    monthlyPrice: 50,
-    yearlyPrice: 480,
-    pop: true,
-    features: [
-      "Alles aus Solo — für bis zu 10 Nutzer",
-      "NILL Sekretärin: 10 KI-Anfragen / Tag",
-      "E-Mail KI-Assistent: 30 Antworten / Tag",
-      "Tägliche KI-Zusammenfassung (immer inklusive)",
-      "Lohnbuchhaltung & Mitarbeiterverwaltung",
-      "Arbeitszeiterfassung & HR-Dokumente",
-    ],
-  },
-  {
-    id: "business",
-    title: "Business",
-    subtitle: "Für größere Unternehmen & Agenturen",
-    seats: "10+ Personen",
-    monthlyPrice: 90,
-    yearlyPrice: 864,
-    features: [
-      "Alles aus Team — unbegrenzte Nutzerzahl",
-      "NILL Sekretärin: 25 KI-Anfragen / Tag",
-      "E-Mail KI-Assistent: 100 Antworten / Tag",
-      "API-Zugang & Webhooks (folgt Q4 2026)",
-      "Priorisierter Support mit SLA-Garantie",
-      "Nutzungsanalysen & individuelle Berichte (folgt Q4 2026)",
-    ],
-  },
-];
 
-// Standalone "smart workstation" product — sold separately from the full suite.
-// Flat price, no seat tiers. No accounting, no NILL secretary.
+// Warte-Rabatt: Buchhaltung & NILL Sekretärin sind aktuell noch in Entwicklung
+// (server-seitig deaktiviert). Wer die Komplett-Suite jetzt bucht, zahlt
+// solange einen reduzierten Preis. 30 % auf alle Suite-Pläne.
+// WICHTIG: Muss als Stripe-Coupon STRIPE_WAIT_DISCOUNT_COUPON (30 % off,
+// recurring) hinterlegt sein, damit der Rabatt auch im Checkout greift.
+export const WAIT_DISCOUNT = 0.3;
+const discounted = (price) => Math.round(price * (1 - WAIT_DISCOUNT));
+
+// Standalone "smart workstation" product — the product that is live TODAY.
+// Flat price, no seat tiers. No accounting, no NILL secretary, kein Warte-Rabatt.
 const ARBEITSSTATION_PLAN = {
   id: "arbeitsstation",
   title: "Arbeitsstation",
@@ -80,6 +37,7 @@ const ARBEITSSTATION_PLAN = {
   monthlyPrice: 30,
   yearlyPrice: 300,
   pop: true,
+  chip: "Sofort verfügbar",
   features: [
     "Smarte Arbeitsstation — Tablet- & Kiosk-Modus",
     "Zeiterfassung mit QR-Mitarbeiterausweis",
@@ -90,7 +48,72 @@ const ARBEITSSTATION_PLAN = {
   ],
 };
 
+// Full NILL suite. Includes Buchhaltung & NILL Sekretärin, die noch in
+// Entwicklung sind (WIP) — daher der Warte-Rabatt auf alle Pläne.
+const PLANS = [
+  {
+    id: "solo",
+    title: "Solo",
+    subtitle: "Für Einzelunternehmer & kleine Büros",
+    seats: "1–2 Personen",
+    monthlyPrice: 25,
+    yearlyPrice: 240,
+    waitDiscount: true,
+    features: [
+      "E-Mail-Integration: Gmail, Outlook & IMAP",
+      "E-Mail KI-Assistent: 10 Antworten / Tag",
+      "Intelligenter Kalender & Aufgaben",
+      "Rechnungserstellung & PDF-Export",
+      { text: "Buchhaltung mit OCR-Belegerfassung", wip: true },
+      { text: "Automatische Steuer- & Kategorieextraktion", wip: true },
+    ],
+  },
+  {
+    id: "team",
+    title: "Team",
+    subtitle: "Für wachsende Teams & KMUs",
+    seats: "3–10 Personen",
+    monthlyPrice: 50,
+    yearlyPrice: 480,
+    pop: true,
+    waitDiscount: true,
+    features: [
+      "Alles aus Solo — für bis zu 10 Nutzer",
+      "E-Mail KI-Assistent: 30 Antworten / Tag",
+      "Tägliche KI-Zusammenfassung (immer inklusive)",
+      "Lohnbuchhaltung & Mitarbeiterverwaltung",
+      "Arbeitszeiterfassung & HR-Dokumente",
+      { text: "NILL Sekretärin: 10 KI-Anfragen / Tag", wip: true },
+    ],
+  },
+  {
+    id: "business",
+    title: "Business",
+    subtitle: "Für größere Unternehmen & Agenturen",
+    seats: "10+ Personen",
+    monthlyPrice: 90,
+    yearlyPrice: 864,
+    waitDiscount: true,
+    features: [
+      "Alles aus Team — unbegrenzte Nutzerzahl",
+      "E-Mail KI-Assistent: 100 Antworten / Tag",
+      "API-Zugang & Webhooks (folgt Q4 2026)",
+      "Priorisierter Support mit SLA-Garantie",
+      "Nutzungsanalysen & individuelle Berichte (folgt Q4 2026)",
+      { text: "NILL Sekretärin: 25 KI-Anfragen / Tag", wip: true },
+    ],
+  },
+];
+
 const FAQ = [
+  {
+    q: "Was ist die Arbeitsstation — und warum wird sie zuerst angeboten?",
+    a: "Die Arbeitsstation ist unser sofort einsatzbereites Produkt: Zeiterfassung, Taskmanagement, Lieferscheine und Inventur im Tablet- & Kiosk-Modus. Sie ist vollständig live und ohne Wartezeit nutzbar. Die Komplett-Suite mit Buchhaltung und NILL Sekretärin befindet sich aktuell noch in Entwicklung.",
+  },
+  {
+    q: "Buchhaltung & NILL Sekretärin sind als „WIP\" markiert — was heißt das?",
+    a: "Diese Module befinden sich in aktiver Entwicklung und sind noch nicht freigeschaltet. Wenn Sie eine Suite (Solo, Team oder Business) jetzt buchen, erhalten Sie einen dauerhaften Warte-Rabatt von 30 %, bis diese Funktionen live gehen — und werden als Erste freigeschaltet.",
+  },
   {
     q: "Kann ich den Plan jederzeit wechseln?",
     a: "Ja. Sie können jederzeit upgraden oder downgraden. Änderungen werden zum nächsten Abrechnungszeitraum wirksam.",
@@ -126,9 +149,27 @@ function CheckDot({ pop }) {
   );
 }
 
+function WipBadge() {
+  return (
+    <span style={{
+      marginLeft: 8, padding: "1px 7px", borderRadius: 99,
+      fontFamily: mono, fontSize: 9, letterSpacing: "0.12em",
+      textTransform: "uppercase", whiteSpace: "nowrap",
+      verticalAlign: "middle", display: "inline-block",
+      background: "rgba(198,255,60,0.08)",
+      border: "1px solid rgba(198,255,60,0.22)",
+      color: accent,
+    }}>
+      WIP · in Entwicklung
+    </span>
+  );
+}
+
 function PlanCard({ plan, cycle, loading, onCheckout }) {
   const [hov, setHov] = useState(false);
-  const price = cycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+  const fullPrice = cycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+  const hasDiscount = !!plan.waitDiscount;
+  const price = hasDiscount ? discounted(fullPrice) : fullPrice;
 
   return (
     <div
@@ -153,8 +194,8 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
         fontFamily: sans,
       }}
     >
-      {/* Popular chip */}
-      {plan.pop && (
+      {/* Popular / status chip */}
+      {(plan.pop || plan.chip) && (
         <div style={{
           position: "absolute", top: -12, left: 28,
           padding: "6px 14px", borderRadius: 99,
@@ -163,7 +204,7 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
           letterSpacing: "0.16em", textTransform: "uppercase",
           fontWeight: 600,
         }}>
-          Beliebteste Wahl
+          {plan.chip || "Beliebteste Wahl"}
         </div>
       )}
 
@@ -186,7 +227,15 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
       </div>
 
       {/* Price */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+        {hasDiscount && (
+          <span style={{
+            fontFamily: serif, fontSize: 30, letterSpacing: "-0.02em",
+            lineHeight: 1, color: inkDim, textDecoration: "line-through",
+          }}>
+            {fullPrice}€
+          </span>
+        )}
         <span style={{
           fontFamily: serif, fontSize: 68, letterSpacing: "-0.04em",
           lineHeight: 1, color: ink,
@@ -197,10 +246,23 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
           / {cycle === "yearly" ? "Jahr" : "Monat"}
         </span>
       </div>
-      {cycle === "yearly" && (
+      {hasDiscount && (
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 6,
           marginTop: -14,
+          padding: "4px 10px", borderRadius: 99,
+          background: "rgba(198,255,60,0.1)",
+          border: "1px solid rgba(198,255,60,0.25)",
+          color: accent, fontFamily: mono, fontSize: 11, letterSpacing: "0.08em",
+          width: "fit-content",
+        }}>
+          −{Math.round(WAIT_DISCOUNT * 100)}% Warte-Rabatt · bis Buchhaltung live geht
+        </div>
+      )}
+      {cycle === "yearly" && (
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          marginTop: hasDiscount ? 0 : -14,
           padding: "4px 10px", borderRadius: 99,
           background: "rgba(198,255,60,0.1)",
           border: "1px solid rgba(198,255,60,0.25)",
@@ -218,12 +280,19 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
         borderTop: `1px solid ${line}`,
         display: "flex", flexDirection: "column", gap: 10,
       }}>
-        {plan.features.map((f, i) => (
-          <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: ink, lineHeight: 1.45 }}>
-            <CheckDot pop={plan.pop} />
-            {f}
-          </li>
-        ))}
+        {plan.features.map((f, i) => {
+          const text = typeof f === "string" ? f : f.text;
+          const wip = typeof f === "object" && f.wip;
+          return (
+            <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: wip ? inkDim : ink, lineHeight: 1.45 }}>
+              <CheckDot pop={plan.pop && !wip} />
+              <span>
+                {text}
+                {wip && <WipBadge />}
+              </span>
+            </li>
+          );
+        })}
       </ul>
 
       {/* CTA */}
@@ -302,7 +371,7 @@ function FaqItem({ q, a }) {
 
 export default function PricingPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState("suite"); // "suite" = NILL Komplett · "station" = Arbeitsstation
+  const [mode, setMode] = useState("station"); // "station" = Arbeitsstation (live) · "suite" = NILL Komplett
   const [cycle, setCycle] = useState("monthly");
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [error, setError] = useState(null);
@@ -433,8 +502,8 @@ export default function PricingPage() {
             color: inkDim, maxWidth: "56ch", margin: "0 auto 40px",
           }}>
             {mode === "station"
-              ? "Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Buchhaltung, ohne Ballast."
-              : "Von Einzelunternehmern bis zum wachsenden Team — die komplette NILL-Suite mit Buchhaltung (WIP – in Entwicklung) & KI-Sekretärin. Transparent, monatlich kündbar."}
+              ? "Unser sofort verfügbares Produkt: Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Wartezeit."
+              : "Die komplette NILL-Suite. Buchhaltung & NILL Sekretärin sind aktuell noch in Entwicklung (WIP) — wer jetzt bucht, erhält bis zum Go-Live 30 % Warte-Rabatt."}
           </p>
 
           {/* ── Probezeitraum-Hinweis (subtil) ── */}
@@ -459,8 +528,8 @@ export default function PricingPage() {
               borderRadius: 99, padding: 5, gap: 5,
             }}>
               {[
-                { id: "suite",   label: "NILL Komplett" },
                 { id: "station", label: "Arbeitsstation" },
+                { id: "suite",   label: "NILL Komplett" },
               ].map(m => (
                 <button
                   key={m.id}
@@ -531,6 +600,42 @@ export default function PricingPage() {
               borderRadius: 12, color: "#f87171", fontSize: 14,
             }}>
               {error}
+            </div>
+          )}
+
+          {/* Warte-Rabatt-Hinweis (nur Suite) */}
+          {mode === "suite" && (
+            <div style={{
+              maxWidth: "64ch", margin: "0 auto 36px",
+              padding: "16px 22px", borderRadius: 16,
+              background: "rgba(198,255,60,0.05)",
+              border: "1px solid rgba(198,255,60,0.2)",
+              display: "flex", alignItems: "center", gap: 14,
+              textAlign: "left",
+            }}>
+              <span style={{
+                flexShrink: 0, fontFamily: mono, fontSize: 11, fontWeight: 600,
+                letterSpacing: "0.12em", textTransform: "uppercase",
+                padding: "6px 12px", borderRadius: 99,
+                background: accent, color: "#000",
+              }}>
+                −{Math.round(WAIT_DISCOUNT * 100)}%
+              </span>
+              <p style={{ margin: 0, fontSize: 14, color: inkDim, lineHeight: 1.5 }}>
+                <strong style={{ color: ink }}>Buchhaltung & NILL Sekretärin</strong> sind noch in
+                Entwicklung. Solange erhalten alle Suite-Pläne{" "}
+                <strong style={{ color: ink }}>30 % Warte-Rabatt</strong> — und werden bei
+                Go-Live als Erste freigeschaltet. Schon heute live:{" "}
+                <button
+                  onClick={() => setMode("station")}
+                  style={{
+                    background: "none", border: "none", padding: 0, cursor: "pointer",
+                    color: accent, font: "inherit", textDecoration: "underline",
+                  }}
+                >
+                  die Arbeitsstation
+                </button>.
+              </p>
             </div>
           )}
 

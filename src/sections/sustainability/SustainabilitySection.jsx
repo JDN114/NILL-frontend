@@ -692,7 +692,7 @@ export default function SustainabilitySection({ onCTA }) {
 
   return (
     <section id="nachhaltigkeit" className="nh2" data-screen-label="Nachhaltigkeit">
-      <LeafParticles count={14}/>
+      <LeafParticles count={10}/>
 
       <div className="wrap">
 

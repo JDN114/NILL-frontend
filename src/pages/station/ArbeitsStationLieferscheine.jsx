@@ -14,7 +14,7 @@ function Spinner() {
   return (
     <div style={{
       width: 18, height: 18,
-      border: "2px solid rgba(255,255,255,0.08)",
+      border: "2px solid rgba(var(--tint),0.08)",
       borderTopColor: ACCENT, borderRadius: "50%",
       animation: "as-spin 0.75s linear infinite", flexShrink: 0,
     }} />
@@ -88,9 +88,9 @@ export default function ArbeitsStationLieferscheine() {
               padding: "5px 14px", borderRadius: 99,
               border: filter === key
                 ? "1px solid rgba(251,146,60,0.35)"
-                : "1px solid rgba(239,237,231,0.08)",
-              background: filter === key ? "rgba(251,146,60,0.1)" : "rgba(255,255,255,0.03)",
-              color: filter === key ? ACCENT : "rgba(239,237,231,0.5)",
+                : "1px solid rgba(var(--ink-tint),0.08)",
+              background: filter === key ? "rgba(251,146,60,0.1)" : "rgba(var(--tint),0.03)",
+              color: filter === key ? ACCENT : "rgba(var(--ink-tint),0.5)",
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
@@ -98,10 +98,10 @@ export default function ArbeitsStationLieferscheine() {
               {label}
               {count != null && count > 0 && (
                 <span style={{
-                  background: filter === key ? "rgba(251,146,60,0.15)" : "rgba(255,255,255,0.06)",
-                  border: filter === key ? "1px solid rgba(251,146,60,0.2)" : "1px solid rgba(255,255,255,0.08)",
+                  background: filter === key ? "rgba(251,146,60,0.15)" : "rgba(var(--tint),0.06)",
+                  border: filter === key ? "1px solid rgba(251,146,60,0.2)" : "1px solid rgba(var(--tint),0.08)",
                   borderRadius: 99, padding: "0 5px", fontSize: "0.6rem",
-                  color: filter === key ? ACCENT : "rgba(239,237,231,0.4)",
+                  color: filter === key ? ACCENT : "rgba(var(--ink-tint),0.4)",
                 }}>{count}</span>
               )}
             </button>
@@ -137,11 +137,11 @@ export default function ArbeitsStationLieferscheine() {
       ) : shown.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "4rem 2rem",
-          border: "1px solid rgba(239,237,231,0.06)", borderRadius: 20,
-          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(var(--ink-tint),0.06)", borderRadius: 20,
+          background: "rgba(var(--tint),0.02)",
         }}>
           <div style={{ fontSize: "2rem", opacity: 0.3, marginBottom: 12 }}>📦</div>
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(239,237,231,0.4)" }}>
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(var(--ink-tint),0.4)" }}>
             {filter === "pending" ? "Keine ausstehenden Lieferscheine" : "Keine Lieferscheine vorhanden"}
           </div>
         </div>
@@ -152,8 +152,8 @@ export default function ArbeitsStationLieferscheine() {
             return (
               <div key={note.id} style={{
                 padding: "16px 20px", borderRadius: 16,
-                border: `1px solid ${note.status === "pending" ? "rgba(251,191,36,0.2)" : "rgba(239,237,231,0.07)"}`,
-                background: note.status === "pending" ? "rgba(251,191,36,0.03)" : "rgba(255,255,255,0.025)",
+                border: `1px solid ${note.status === "pending" ? "rgba(251,191,36,0.2)" : "rgba(var(--ink-tint),0.07)"}`,
+                background: note.status === "pending" ? "rgba(251,191,36,0.03)" : "rgba(var(--tint),0.025)",
                 display: "flex", alignItems: "flex-start", gap: 16,
               }}>
                 <div style={{
@@ -179,7 +179,7 @@ export default function ArbeitsStationLieferscheine() {
                   </div>
                   <div style={{
                     fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: "0.65rem", color: "rgba(239,237,231,0.4)", marginBottom: 8,
+                    fontSize: "0.65rem", color: "rgba(var(--ink-tint),0.4)", marginBottom: 8,
                   }}>
                     {note.delivery_number && `Nr. ${note.delivery_number} · `}
                     {note.delivery_date || fmtDate(note.created_at)}
@@ -190,13 +190,13 @@ export default function ArbeitsStationLieferscheine() {
                       {note.items.slice(0, 4).map((item, i) => (
                         <span key={i} style={{
                           fontFamily: "'Inter', system-ui, sans-serif",
-                          fontSize: "0.63rem", color: "rgba(239,237,231,0.45)",
-                          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+                          fontSize: "0.63rem", color: "rgba(var(--ink-tint),0.45)",
+                          background: "rgba(var(--tint),0.04)", border: "1px solid rgba(var(--tint),0.07)",
                           borderRadius: 99, padding: "1px 8px",
                         }}>{item.quantity} {item.unit} {item.name}</span>
                       ))}
                       {note.items.length > 4 && (
-                        <span style={{ fontSize: "0.63rem", color: "rgba(239,237,231,0.3)", alignSelf: "center" }}>
+                        <span style={{ fontSize: "0.63rem", color: "rgba(var(--ink-tint),0.3)", alignSelf: "center" }}>
                           +{note.items.length - 4} weitere
                         </span>
                       )}

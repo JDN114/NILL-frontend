@@ -235,7 +235,7 @@ function EmployeeRow({ employee, onEdit, onDelete }) {
       background: "transparent",
       transition: "background 0.12s",
     }}
-      onMouseOver={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+      onMouseOver={e => e.currentTarget.style.background = "rgba(var(--tint),0.03)"}
       onMouseOut={e => e.currentTarget.style.background = "transparent"}
     >
       <div>
@@ -385,7 +385,7 @@ export function MitarbeiterContent() {
         ].map(s => (
           <div key={s.label} style={{
             padding: "0.65rem 1rem",
-            background: "rgba(255,255,255,0.025)",
+            background: "rgba(var(--tint),0.025)",
             border: "1px solid var(--nill-border)",
             borderRadius: 9, display: "flex", flexDirection: "column", gap: 2,
           }}>

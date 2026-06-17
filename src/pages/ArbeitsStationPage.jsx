@@ -43,7 +43,7 @@ function Clock() {
       <div style={{
         fontFamily: "'Inter', system-ui, sans-serif",
         fontSize: "clamp(0.6rem, 0.9vw, 0.75rem)",
-        color: "rgba(239,237,231,0.5)",
+        color: "rgba(var(--ink-tint),0.5)",
         marginTop: 3,
         letterSpacing: "0.03em",
       }}>{dateStr}</div>
@@ -60,8 +60,8 @@ function ModuleCard({ moduleKey, onClick }) {
     <button
       onClick={() => onClick(meta.route)}
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: `1px solid rgba(255,255,255,0.08)`,
+        background: "rgba(var(--tint),0.04)",
+        border: `1px solid rgba(var(--tint),0.08)`,
         borderRadius: 14,
         padding: "12px 16px",
         display: "flex",
@@ -81,12 +81,12 @@ function ModuleCard({ moduleKey, onClick }) {
       onPointerUp={e => { e.currentTarget.style.transform = "scale(1)"; }}
       onPointerLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.background = "rgba(var(--tint),0.08)";
         e.currentTarget.style.borderColor = `${meta.color}44`;
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.background = "rgba(var(--tint),0.04)";
+        e.currentTarget.style.borderColor = "rgba(var(--tint),0.08)";
       }}
     >
       {/* Accent glow */}
@@ -128,7 +128,7 @@ function ModuleCard({ moduleKey, onClick }) {
         <div style={{
           fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "clamp(0.62rem, 0.9vw, 0.72rem)",
-          color: "rgba(239,237,231,0.45)",
+          color: "rgba(var(--ink-tint),0.45)",
           lineHeight: 1.3,
           marginTop: 2,
           whiteSpace: "nowrap",
@@ -196,7 +196,7 @@ export default function ArbeitsStationPage() {
       {/* ── Header ── */}
       <header style={{
         background: "rgba(4,7,15,0.95)",
-        borderBottom: "1px solid rgba(239,237,231,0.07)",
+        borderBottom: "1px solid rgba(var(--ink-tint),0.07)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         padding: "0 clamp(16px, 3vw, 40px)",
@@ -235,7 +235,7 @@ export default function ArbeitsStationPage() {
             <div style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "clamp(0.55rem, 0.75vw, 0.65rem)",
-              color: "rgba(239,237,231,0.4)",
+              color: "rgba(var(--ink-tint),0.4)",
               letterSpacing: "0.15em",
               textTransform: "uppercase",
               marginTop: 2,
@@ -253,10 +253,10 @@ export default function ArbeitsStationPage() {
           onClick={() => setShowExitModal(true)}
           style={{
             padding: "0.35rem 0.9rem",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(var(--tint),0.04)",
+            border: "1px solid rgba(var(--tint),0.1)",
             borderRadius: 7,
-            color: "rgba(239,237,231,0.6)",
+            color: "rgba(var(--ink-tint),0.6)",
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: "clamp(0.58rem, 0.8vw, 0.68rem)",
             letterSpacing: "0.1em",
@@ -288,7 +288,7 @@ export default function ArbeitsStationPage() {
             fontSize: "clamp(0.55rem, 0.75vw, 0.65rem)",
             letterSpacing: "0.2em",
             textTransform: "uppercase",
-            color: "rgba(239,237,231,0.35)",
+            color: "rgba(var(--ink-tint),0.35)",
             marginBottom: 4,
             display: "flex", alignItems: "center", gap: 8,
           }}>
@@ -320,8 +320,8 @@ export default function ArbeitsStationPage() {
             alignItems: "center",
             justifyContent: "center",
             gap: 12,
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(var(--tint),0.02)",
+            border: "1px solid rgba(var(--tint),0.06)",
             borderRadius: 16,
             textAlign: "center",
           }}>
@@ -330,7 +330,7 @@ export default function ArbeitsStationPage() {
               fontFamily: "'Fraunces', serif",
               fontSize: "1.1rem",
               fontWeight: 400,
-              color: "rgba(239,237,231,0.5)",
+              color: "rgba(var(--ink-tint),0.5)",
             }}>
               Keine Module konfiguriert
             </div>
@@ -374,7 +374,7 @@ export default function ArbeitsStationPage() {
 
       {/* ── Footer bar ── */}
       <footer style={{
-        borderTop: "1px solid rgba(239,237,231,0.06)",
+        borderTop: "1px solid rgba(var(--ink-tint),0.06)",
         padding: "clamp(8px, 1vw, 12px) clamp(16px, 3vw, 40px)",
         display: "flex",
         alignItems: "center",
@@ -385,7 +385,7 @@ export default function ArbeitsStationPage() {
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.62rem",
           letterSpacing: "0.1em",
-          color: "rgba(239,237,231,0.2)",
+          color: "rgba(var(--ink-tint),0.2)",
           textTransform: "uppercase",
         }}>
           Nill ArbeitsStation
@@ -394,7 +394,7 @@ export default function ArbeitsStationPage() {
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.62rem",
           letterSpacing: "0.1em",
-          color: "rgba(239,237,231,0.2)",
+          color: "rgba(var(--ink-tint),0.2)",
         }}>
           {user?.email}
         </span>

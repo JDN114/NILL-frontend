@@ -8,7 +8,7 @@ import PageLayout from "../components/layout/PageLayout";
 import MitarbeiterAusweis from "../components/MitarbeiterAusweis";
 
 const text = "var(--nill-text,#efede7)";
-const dim  = "var(--nill-text-dim,rgba(239,237,231,.5))";
+const dim  = "var(--nill-text-dim,rgba(var(--ink-tint),.5))";
 
 export default function AusweisPage() {
   return (

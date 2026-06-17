@@ -35,7 +35,7 @@ function Saldenliste({ von, bis }) {
           })}
         </tbody>
         <tfoot>
-          <tr style={{ borderTop:"1px solid rgba(239,237,231,.15)" }}>
+          <tr style={{ borderTop:"1px solid rgba(var(--ink-tint),.15)" }}>
             <td colSpan={2} style={{ padding:"12px 14px", fontWeight:600 }}>Summe</td>
             <td className="ac-mono" style={{textAlign:"right", padding:"12px 14px", fontWeight:600}}>{fmtEur(data.summe_soll)}</td>
             <td className="ac-mono" style={{textAlign:"right", padding:"12px 14px", fontWeight:600}}>{fmtEur(data.summe_haben)}</td>

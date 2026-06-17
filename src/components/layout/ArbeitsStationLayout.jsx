@@ -25,7 +25,7 @@ function Clock() {
       <div style={{
         fontFamily: "'Inter', system-ui, sans-serif",
         fontSize: "0.65rem",
-        color: "rgba(239,237,231,0.4)",
+        color: "rgba(var(--ink-tint),0.4)",
         letterSpacing: "0.04em",
         marginTop: 3,
       }}>
@@ -51,7 +51,7 @@ export default function ArbeitsStationLayout({ children, title, icon, accent = "
 
       <header style={{
         background: "rgba(4,7,15,0.96)",
-        borderBottom: "1px solid rgba(239,237,231,0.07)",
+        borderBottom: "1px solid rgba(var(--ink-tint),0.07)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         padding: "0 clamp(20px, 4vw, 48px)",
@@ -69,24 +69,24 @@ export default function ArbeitsStationLayout({ children, title, icon, accent = "
           <Link to="/station" style={{
             width: 34, height: 34,
             borderRadius: 9,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(var(--tint),0.04)",
+            border: "1px solid rgba(var(--tint),0.08)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: "rgba(239,237,231,0.55)",
+            color: "rgba(var(--ink-tint),0.55)",
             textDecoration: "none",
             fontSize: "0.95rem",
             flexShrink: 0,
             transition: "background 0.2s, border-color 0.2s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(var(--tint),0.08)"; e.currentTarget.style.borderColor = "rgba(var(--tint),0.18)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(var(--tint),0.04)"; e.currentTarget.style.borderColor = "rgba(var(--tint),0.08)"; }}
           >←</Link>
 
           <div>
             <div style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.6rem",
-              color: "rgba(239,237,231,0.35)",
+              color: "rgba(var(--ink-tint),0.35)",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               marginBottom: 2,
@@ -111,7 +111,7 @@ export default function ArbeitsStationLayout({ children, title, icon, accent = "
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.65rem",
-          color: "rgba(239,237,231,0.3)",
+          color: "rgba(var(--ink-tint),0.3)",
           letterSpacing: "0.12em",
           textTransform: "uppercase",
           textAlign: "right",

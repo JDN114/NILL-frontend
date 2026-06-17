@@ -1,0 +1,215 @@
+/* =============================================================================
+   theme-modes.css — light / dark design tokens for the dashboard
+   -----------------------------------------------------------------------------
+   Loaded last (see main.jsx) so it cascades over theme.css and index.css.
+
+   How it works
+   ------------
+   1. Dark is the default. Every dashboard surface is variable-driven; the
+      values in theme.css / index.css / per-page <style> blocks define dark.
+   2. The hundreds of hard-coded neutral overlays in the app
+      (rgba(255,255,255,a) "glass" tints and rgba(239,237,231,a) ink tints)
+      are rewritten to rgba(var(--tint),a) / rgba(var(--ink-tint),a). The two
+      channels below flip those for the entire dashboard in one move.
+   3. html[data-theme="light"] redefines the shared token sets to light values.
+      element+attribute specificity (0,1,1) beats the :root / .class (0,1,0)
+      definitions regardless of source order, so even the per-page palettes that
+      AccountingPage / DashboardLanding inject at runtime are overridden.
+   ========================================================================== */
+
+/* ── Literal-flip channels (dark defaults) ──────────────────────────────────
+   Dark: neutral overlays are white-on-dark, ink tints are the off-white ink. */
+:root {
+  --tint: 255, 255, 255;        /* neutral "glass" overlay base            */
+  --ink-tint: 239, 237, 231;    /* ink-derived borders / dim text base     */
+}
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+/* Smooth, contained cross-fade when toggling (only the cheap paint props). */
+body,
+.nd-root,
+.ac-shell,
+.em-shell,
+[class*="-shell"],
+[class*="-root"] {
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+/* ===========================================================================
+   LIGHT MODE
+   ======================================================================== */
+html[data-theme="light"] {
+  /* Flip the overlay channels: dark overlays on light surfaces, dark ink. */
+  --tint: 17, 19, 24;
+  --ink-tint: 26, 31, 41;
+
+  /* ── Shared NILL palette (defined in index.css) ────────────────────────── */
+  --nill-bg:        #f5f6f8;
+  --nill-bg-grad:   #eef1f5;
+  --nill-panel:     rgba(17, 19, 24, 0.035);
+  --nill-panel-hov: rgba(17, 19, 24, 0.065);
+  --nill-border:    rgba(17, 19, 24, 0.10);
+  --nill-border-lg: rgba(17, 19, 24, 0.16);
+
+  --nill-gold:      #8a6d2f;
+  --nill-gold-dim:  rgba(138, 109, 47, 0.14);
+  --nill-gold-glow: rgba(138, 109, 47, 0.28);
+
+  --nill-blue:      #2563eb;
+  --nill-blue-dim:  rgba(37, 99, 235, 0.10);
+  --nill-blue-glow: rgba(37, 99, 235, 0.28);
+
+  --nill-text:      #1a1f29;
+  --nill-text-sub:  #475569;
+  --nill-text-mute: #64748b;
+  --nill-text-dim:  #94a3b8;
+
+  /* Aliases also defined at :root in index.css */
+  --bg-main:        #f5f6f8;
+  --text-main:      #1a1f29;
+  --text-muted:     #475569;
+  --accent:         #8a6d2f;
+  --brand:          #eef1f5;
+
+  /* ── theme.css token set ───────────────────────────────────────────────── */
+  --bg-panel:       #ffffff;
+  --bg-panel-soft:  #f1f3f6;
+
+  /* ── Accounting / DashboardLanding shared token set ───────────────────────
+     (AccountingPage injects these at :root; overridden here globally.) */
+  --ink:       #1a1f29;
+  --ink2:      #5b6472;
+  --ink3:      #7b8494;
+  --ink-dim:   rgba(26, 31, 41, 0.60);
+  --ink-faint: rgba(26, 31, 41, 0.12);
+  --ink-40:    rgba(26, 31, 41, 0.40);
+  --ink-60:    rgba(26, 31, 41, 0.60);
+  --ink-90:    rgba(26, 31, 41, 0.90);
+  --bg:        #f5f6f8;
+  --bg2:       #eef1f5;
+  --surface:   #ffffff;
+  --surface2:  #f1f3f6;
+  --card:      #ffffff;
+  --border:    rgba(17, 19, 24, 0.10);
+  --line:      rgba(17, 19, 24, 0.08);
+  --glass:     rgba(17, 19, 24, 0.025);
+  --glass-strong: rgba(17, 19, 24, 0.05);
+  --muted:     #64748b;
+  --text:      #1a1f29;
+
+  /* Soften the heavy dark drop-shadows for a light surface. */
+  --shadow:        0 1px 2px rgba(17, 19, 24, 0.06), 0 8px 24px rgba(17, 19, 24, 0.08);
+  --shadow-glass:  0 1px 2px rgba(17, 19, 24, 0.05), 0 6px 20px rgba(17, 19, 24, 0.07);
+  --shadow-glass-hover: 0 2px 4px rgba(17, 19, 24, 0.07), 0 12px 32px rgba(17, 19, 24, 0.10);
+}
+
+/* The page chrome backgrounds are set with hard-coded Tailwind gradients on
+   <html>/<body> in index.css; override them for light mode. */
+html[data-theme="light"] {
+  background: #eef1f5;
+}
+html[data-theme="light"] body {
+  background-image: none;
+  background: #f5f6f8;
+  color: #1a1f29;
+}
+
+/* ── DashboardLanding (.nd-root) injects its own palette on the element
+   itself, so the global :root overrides above don't reach it — override the
+   element directly. The lime accent is darkened for legibility on white. */
+html[data-theme="light"] .nd-root {
+  --bg:        #f5f6f8;
+  --bg2:       #eef1f5;
+  --ink:       #1a1f29;
+  --ink-dim:   rgba(26, 31, 41, 0.55);
+  --ink-faint: rgba(26, 31, 41, 0.12);
+  --line:      rgba(17, 19, 24, 0.09);
+  --glass:     rgba(17, 19, 24, 0.025);
+  --accent:    #5c7a00;   /* dark lime — readable on light backgrounds */
+}
+
+/* AccountingPage darkens lime to the same legible tone. It defines --accent
+   at :root, so a plain html[data-theme] override (above) already wins; this
+   block just aligns the accounting accent with the dashboard. */
+html[data-theme="light"] .ac-shell {
+  --accent: #5c7a00;
+}
+
+/* Keep selection / scrollbar legible in light mode. */
+html[data-theme="light"] ::selection {
+  background: rgba(138, 109, 47, 0.22);
+}
+
+/* ===========================================================================
+   LIGHT MODE — fixed Tailwind neutral utilities
+   ---------------------------------------------------------------------------
+   Parts of the dashboard use fixed Tailwind neutrals (bg-gray-800, text-white,
+   bg-[#111827], bg-white/10 …) instead of tokens. These rules remap those
+   neutrals to light surfaces centrally — no per-component edits. Everything is
+   scoped under html[data-theme="light"] (specificity 0,2,1 beats the 0,1,0
+   utility), so dark mode renders byte-identically. Brand/semantic colours
+   (red/green/blue/gold …) are deliberately left intact.
+   ======================================================================== */
+
+/* Solid neutral surfaces → light */
+html[data-theme="light"] .bg-gray-950,
+html[data-theme="light"] .bg-gray-900,
+html[data-theme="light"] .bg-black            { background-color: #ffffff; }
+html[data-theme="light"] .bg-gray-800,
+html[data-theme="light"] .bg-gray-700,
+html[data-theme="light"] .bg-slate-800,
+html[data-theme="light"] .bg-slate-700        { background-color: #f1f3f6; }
+html[data-theme="light"] .bg-gray-600,
+html[data-theme="light"] .bg-gray-500,
+html[data-theme="light"] .bg-slate-500        { background-color: #e3e7ee; }
+
+/* Arbitrary dark navy surfaces used as panels */
+html[data-theme="light"] .bg-\[\#111827\],
+html[data-theme="light"] .bg-\[\#0b1220\],
+html[data-theme="light"] .bg-\[\#0f172a\],
+html[data-theme="light"] .bg-\[\#0d1628\],
+html[data-theme="light"] .bg-\[\#0a1120\],
+html[data-theme="light"] .bg-\[\#071023\]     { background-color: #ffffff; }
+
+/* White overlays → dark overlays (scrims bg-black/NN stay dark on purpose) */
+html[data-theme="light"] .bg-white\/5         { background-color: rgba(17, 19, 24, 0.05); }
+html[data-theme="light"] .bg-white\/8         { background-color: rgba(17, 19, 24, 0.06); }
+html[data-theme="light"] .bg-white\/10        { background-color: rgba(17, 19, 24, 0.08); }
+html[data-theme="light"] .border-white\/5     { border-color: rgba(17, 19, 24, 0.06); }
+html[data-theme="light"] .border-white\/10    { border-color: rgba(17, 19, 24, 0.10); }
+html[data-theme="light"] .border-white\/30    { border-color: rgba(17, 19, 24, 0.20); }
+
+/* Neutral borders */
+html[data-theme="light"] .border-gray-400,
+html[data-theme="light"] .border-gray-500,
+html[data-theme="light"] .border-gray-600,
+html[data-theme="light"] .border-gray-700,
+html[data-theme="light"] .border-gray-800     { border-color: rgba(17, 19, 24, 0.12); }
+
+/* Muted / body text that was light-on-dark → dark-on-light */
+html[data-theme="light"] .text-gray-100       { color: #1f2733; }
+html[data-theme="light"] .text-gray-200       { color: #334155; }
+html[data-theme="light"] .text-gray-300       { color: #475569; }
+html[data-theme="light"] .text-gray-400       { color: #64748b; }
+html[data-theme="light"] .text-gray-500       { color: #64748b; }
+html[data-theme="light"] .text-white          { color: #1a1f29; }
+
+/* …but keep white text on coloured / brand buttons & badges */
+html[data-theme="light"] [class*="bg-red-"].text-white,
+html[data-theme="light"] [class*="bg-green-"].text-white,
+html[data-theme="light"] [class*="bg-blue-"].text-white,
+html[data-theme="light"] [class*="bg-emerald-"].text-white,
+html[data-theme="light"] [class*="bg-orange-"].text-white,
+html[data-theme="light"] [class*="bg-amber-"].text-white,
+html[data-theme="light"] [class*="bg-indigo-"].text-white,
+html[data-theme="light"] [class*="bg-violet-"].text-white,
+html[data-theme="light"] [class*="bg-purple-"].text-white,
+html[data-theme="light"] [class*="bg-pink-"].text-white,
+html[data-theme="light"] [class*="bg-teal-"].text-white,
+html[data-theme="light"] .bg-\[var\(--brand\)\].text-white,
+html[data-theme="light"] .bg-\[var\(--accent\)\].text-white,
+html[data-theme="light"] .bg-\[var\(--nill-primary\)\].text-white,
+html[data-theme="light"] .bg-\[var\(--nill-gold\)\].text-white,
+html[data-theme="light"] .bg-\[\#C5A572\].text-white { color: #ffffff; }

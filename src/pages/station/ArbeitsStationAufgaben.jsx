@@ -15,7 +15,7 @@ function Spinner({ color = ACCENT, size = 20 }) {
   return (
     <div style={{
       width: size, height: size,
-      border: `2px solid rgba(255,255,255,0.08)`,
+      border: `2px solid rgba(var(--tint),0.08)`,
       borderTopColor: color, borderRadius: "50%",
       animation: "as-spin 0.75s linear infinite", flexShrink: 0,
     }} />
@@ -33,7 +33,7 @@ function deadlineInfo(due_at) {
   if (diffDays === 1) return { label: "Morgen", color: "#fbbf24", bg: "rgba(251,191,36,0.05)", border: "rgba(251,191,36,0.18)" };
   return {
     label: d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
-    color: "rgba(239,237,231,0.45)", bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.08)",
+    color: "rgba(var(--ink-tint),0.45)", bg: "rgba(var(--tint),0.04)", border: "rgba(var(--tint),0.08)",
   };
 }
 
@@ -46,7 +46,7 @@ function SignatureCanvas({ onSigned }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.fillStyle = "rgba(var(--tint),0.03)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "#efede7";
     ctx.lineWidth = 2;
@@ -87,7 +87,7 @@ function SignatureCanvas({ onSigned }) {
   const clear = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.fillStyle = "rgba(var(--tint),0.03)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     setHasLines(false);
     onSigned(null);
@@ -98,13 +98,13 @@ function SignatureCanvas({ onSigned }) {
       <div style={{
         fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
         letterSpacing: "0.15em", textTransform: "uppercase",
-        color: "rgba(239,237,231,0.35)", marginBottom: 8,
+        color: "rgba(var(--ink-tint),0.35)", marginBottom: 8,
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         Unterschrift
         {hasLines && (
           <button onClick={clear} style={{
-            background: "none", border: "none", color: "rgba(239,237,231,0.35)",
+            background: "none", border: "none", color: "rgba(var(--ink-tint),0.35)",
             fontSize: "0.65rem", cursor: "pointer", letterSpacing: "0.1em", textTransform: "uppercase",
           }}>Löschen</button>
         )}
@@ -116,15 +116,15 @@ function SignatureCanvas({ onSigned }) {
         onTouchStart={start} onTouchMove={move} onTouchEnd={stop}
         style={{
           width: "100%", maxWidth: 360, height: 120, borderRadius: 12,
-          border: `1px solid ${hasLines ? "rgba(198,255,60,0.25)" : "rgba(239,237,231,0.1)"}`,
-          background: "rgba(255,255,255,0.03)", cursor: "crosshair", display: "block",
+          border: `1px solid ${hasLines ? "rgba(198,255,60,0.25)" : "rgba(var(--ink-tint),0.1)"}`,
+          background: "rgba(var(--tint),0.03)", cursor: "crosshair", display: "block",
           touchAction: "none",
         }}
       />
       {!hasLines && (
         <div style={{
           marginTop: -68, textAlign: "center", fontSize: "0.75rem",
-          color: "rgba(239,237,231,0.2)", pointerEvents: "none",
+          color: "rgba(var(--ink-tint),0.2)", pointerEvents: "none",
           fontFamily: "'Inter', system-ui, sans-serif",
         }}>
           Hier unterschreiben
@@ -182,7 +182,7 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
     }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{
         background: "rgba(12,16,28,0.98)",
-        border: "1px solid rgba(239,237,231,0.1)",
+        border: "1px solid rgba(var(--ink-tint),0.1)",
         borderRadius: 20, padding: "1.75rem 2rem",
         width: "100%", maxWidth: 400,
         display: "flex", flexDirection: "column", gap: "1.25rem",
@@ -193,7 +193,7 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
           <div style={{
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
             letterSpacing: "0.18em", textTransform: "uppercase",
-            color: "rgba(239,237,231,0.3)", marginBottom: 6,
+            color: "rgba(var(--ink-tint),0.3)", marginBottom: 6,
           }}>
             Aufgabe bestätigen
           </div>
@@ -212,11 +212,11 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
             <div key={key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{
                 width: 24, height: 24, borderRadius: "50%",
-                background: step === key ? ACCENT : i < (step === "sign" ? 1 : 0) ? "rgba(198,255,60,0.2)" : "rgba(255,255,255,0.06)",
-                border: `1.5px solid ${step === key ? ACCENT : i < (step === "sign" ? 1 : 0) ? "rgba(198,255,60,0.35)" : "rgba(255,255,255,0.1)"}`,
+                background: step === key ? ACCENT : i < (step === "sign" ? 1 : 0) ? "rgba(198,255,60,0.2)" : "rgba(var(--tint),0.06)",
+                border: `1.5px solid ${step === key ? ACCENT : i < (step === "sign" ? 1 : 0) ? "rgba(198,255,60,0.35)" : "rgba(var(--tint),0.1)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "0.65rem", fontWeight: 700,
-                color: step === key ? "#000" : "rgba(239,237,231,0.4)",
+                color: step === key ? "#000" : "rgba(var(--ink-tint),0.4)",
                 fontFamily: "'JetBrains Mono', monospace",
               }}>
                 {step === "sign" && i === 0 ? "✓" : i + 1}
@@ -224,9 +224,9 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
               <span style={{
                 fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
                 letterSpacing: "0.1em", textTransform: "uppercase",
-                color: step === key ? ACCENT : "rgba(239,237,231,0.3)",
+                color: step === key ? ACCENT : "rgba(var(--ink-tint),0.3)",
               }}>{label}</span>
-              {i === 0 && <div style={{ width: 24, height: 1, background: "rgba(255,255,255,0.08)" }} />}
+              {i === 0 && <div style={{ width: 24, height: 1, background: "rgba(var(--tint),0.08)" }} />}
             </div>
           ))}
         </div>
@@ -276,15 +276,15 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => { setStep("scan"); setQrPayload(null); setSig(null); setError(""); }} style={{
                 flex: 1, padding: "0.65rem", borderRadius: 10,
-                border: "1px solid rgba(239,237,231,0.1)", background: "rgba(255,255,255,0.04)",
-                color: "rgba(239,237,231,0.55)", fontFamily: "'JetBrains Mono', monospace",
+                border: "1px solid rgba(var(--ink-tint),0.1)", background: "rgba(var(--tint),0.04)",
+                color: "rgba(var(--ink-tint),0.55)", fontFamily: "'JetBrains Mono', monospace",
                 fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase",
                 cursor: "pointer",
               }}>← Zurück</button>
               <button onClick={confirm} disabled={loading} style={{
                 flex: 2, padding: "0.65rem", borderRadius: 10, border: "none",
-                background: !loading ? ACCENT : "rgba(255,255,255,0.05)",
-                color: !loading ? "#000" : "rgba(239,237,231,0.25)",
+                background: !loading ? ACCENT : "rgba(var(--tint),0.05)",
+                color: !loading ? "#000" : "rgba(var(--ink-tint),0.25)",
                 fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
                 fontSize: "0.82rem", letterSpacing: "0.1em", textTransform: "uppercase",
                 cursor: !loading ? "pointer" : "not-allowed",
@@ -299,7 +299,7 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
 
         <button onClick={onClose} style={{
           background: "none", border: "none", padding: "0.2rem 0",
-          color: "rgba(239,237,231,0.3)", fontSize: "0.75rem", cursor: "pointer",
+          color: "rgba(var(--ink-tint),0.3)", fontSize: "0.75rem", cursor: "pointer",
           fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.1em",
           textTransform: "uppercase", textAlign: "center",
         }}>Abbrechen</button>
@@ -317,8 +317,8 @@ function TaskCard({ task, onOpenConfirm }) {
   return (
     <div style={{
       borderRadius: 16,
-      border: `1px solid ${isOverdue ? "rgba(248,113,113,0.25)" : "rgba(239,237,231,0.08)"}`,
-      background: isOverdue ? "rgba(248,113,113,0.03)" : "rgba(255,255,255,0.025)",
+      border: `1px solid ${isOverdue ? "rgba(248,113,113,0.25)" : "rgba(var(--ink-tint),0.08)"}`,
+      background: isOverdue ? "rgba(248,113,113,0.03)" : "rgba(var(--tint),0.025)",
       padding: "16px 18px",
       display: "flex", alignItems: "flex-start", gap: 14,
     }}>
@@ -341,7 +341,7 @@ function TaskCard({ task, onOpenConfirm }) {
         {task.description && (
           <p style={{
             fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.78rem",
-            color: "rgba(239,237,231,0.45)", margin: "0 0 8px", lineHeight: 1.45,
+            color: "rgba(var(--ink-tint),0.45)", margin: "0 0 8px", lineHeight: 1.45,
             overflow: "hidden", display: "-webkit-box",
             WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
           }}>{task.description}</p>
@@ -367,8 +367,8 @@ function TaskCard({ task, onOpenConfirm }) {
           {(task.assignee_name || task.assigned_role) && (
             <span style={{
               fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
-              color: "rgba(239,237,231,0.35)",
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+              color: "rgba(var(--ink-tint),0.35)",
+              background: "rgba(var(--tint),0.04)", border: "1px solid rgba(var(--tint),0.07)",
               borderRadius: 99, padding: "2px 8px",
             }}>👤 {task.assignee_name || task.assigned_role}</span>
           )}
@@ -451,7 +451,7 @@ export default function ArbeitsStationAufgaben() {
       {/* Status-Filter */}
       <div style={{
         display: "flex", gap: 8, marginBottom: 16,
-        borderBottom: "1px solid rgba(239,237,231,0.07)", paddingBottom: 14,
+        borderBottom: "1px solid rgba(var(--ink-tint),0.07)", paddingBottom: 14,
         flexWrap: "wrap",
       }}>
         {[
@@ -460,19 +460,19 @@ export default function ArbeitsStationAufgaben() {
         ].map(({ key, label, count }) => (
           <button key={key} onClick={() => setStatusFilter(key)} style={{
             padding: "5px 16px", borderRadius: 99,
-            border: statusFilter === key ? `1px solid rgba(198,255,60,0.35)` : "1px solid rgba(239,237,231,0.08)",
-            background: statusFilter === key ? "rgba(198,255,60,0.1)" : "rgba(255,255,255,0.03)",
-            color: statusFilter === key ? ACCENT : "rgba(239,237,231,0.5)",
+            border: statusFilter === key ? `1px solid rgba(198,255,60,0.35)` : "1px solid rgba(var(--ink-tint),0.08)",
+            background: statusFilter === key ? "rgba(198,255,60,0.1)" : "rgba(var(--tint),0.03)",
+            color: statusFilter === key ? ACCENT : "rgba(var(--ink-tint),0.5)",
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
             letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 7,
           }}>
             {label}
             <span style={{
-              background: statusFilter === key ? "rgba(198,255,60,0.15)" : "rgba(255,255,255,0.06)",
-              border: statusFilter === key ? "1px solid rgba(198,255,60,0.2)" : "1px solid rgba(255,255,255,0.08)",
+              background: statusFilter === key ? "rgba(198,255,60,0.15)" : "rgba(var(--tint),0.06)",
+              border: statusFilter === key ? "1px solid rgba(198,255,60,0.2)" : "1px solid rgba(var(--tint),0.08)",
               borderRadius: 99, padding: "0 5px", fontSize: "0.6rem",
-              color: statusFilter === key ? ACCENT : "rgba(239,237,231,0.4)",
+              color: statusFilter === key ? ACCENT : "rgba(var(--ink-tint),0.4)",
             }}>{count}</span>
           </button>
         ))}
@@ -498,18 +498,18 @@ export default function ArbeitsStationAufgaben() {
           <span style={{
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem",
             letterSpacing: "0.15em", textTransform: "uppercase",
-            color: "rgba(239,237,231,0.25)", marginRight: 4,
+            color: "rgba(var(--ink-tint),0.25)", marginRight: 4,
           }}>Rolle</span>
           {["all", ...roles].map(role => (
             <button key={role} onClick={() => setRoleFilter(role)} style={{
               padding: "4px 12px", borderRadius: 99, cursor: "pointer",
               border: roleFilter === role
                 ? "1px solid rgba(198,255,60,0.3)"
-                : "1px solid rgba(239,237,231,0.07)",
+                : "1px solid rgba(var(--ink-tint),0.07)",
               background: roleFilter === role
                 ? "rgba(198,255,60,0.08)"
-                : "rgba(255,255,255,0.02)",
-              color: roleFilter === role ? ACCENT : "rgba(239,237,231,0.4)",
+                : "rgba(var(--tint),0.02)",
+              color: roleFilter === role ? ACCENT : "rgba(var(--ink-tint),0.4)",
               fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
               letterSpacing: "0.06em", textTransform: "uppercase",
               transition: "all 0.18s",
@@ -531,11 +531,11 @@ export default function ArbeitsStationAufgaben() {
       ) : sorted.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "4rem 2rem",
-          border: "1px solid rgba(239,237,231,0.06)", borderRadius: 20,
-          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(var(--ink-tint),0.06)", borderRadius: 20,
+          background: "rgba(var(--tint),0.02)",
         }}>
           <div style={{ fontSize: "2rem", opacity: 0.3, marginBottom: 12 }}>⌘</div>
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(239,237,231,0.4)" }}>
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: "1.1rem", color: "rgba(var(--ink-tint),0.4)" }}>
             {statusFilter === "open" ? "Keine offenen Aufgaben" : "Noch nichts erledigt"}
           </div>
         </div>

@@ -63,7 +63,7 @@ const S = `
     --accent:#c6ff3c; --a2:#7a5cff; --a3:#ff4d8d;
     --ink:#efede7; --ink2:#9b9890; --bg:#040407;
     --surface:#0d0d14; --surface2:#16161f;
-    --border:rgba(239,237,231,.08); --radius:12px;
+    --border:rgba(var(--ink-tint),.08); --radius:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;}
@@ -115,7 +115,7 @@ const S = `
     text-align:left;transition:all .12s;
     margin-bottom:6px;
   }
-  .ac-nav-standalone:hover{background:rgba(255,255,255,.04);}
+  .ac-nav-standalone:hover{background:rgba(var(--tint),.04);}
   .ac-nav-standalone.active{background:rgba(198,255,60,.1);color:var(--accent);}
 
   .ac-nav-group{margin-bottom:2px;}
@@ -137,7 +137,7 @@ const S = `
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     min-height:32px;
   }
-  .ac-nav-item:hover{color:var(--ink);background:rgba(255,255,255,.04);}
+  .ac-nav-item:hover{color:var(--ink);background:rgba(var(--tint),.04);}
   .ac-nav-item.active{
     background:rgba(198,255,60,.1);
     color:var(--accent);font-weight:600;
@@ -241,7 +241,7 @@ const S = `
   .ac-table th{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--ink2);font-weight:500;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;}
   .ac-table td{padding:11px 14px;border-bottom:1px solid var(--border);}
   .ac-table tr:last-child td{border-bottom:none;}
-  .ac-table tr:hover td{background:rgba(255,255,255,.02);}
+  .ac-table tr:hover td{background:rgba(var(--tint),.02);}
 
   .ac-mono{font-family:JetBrains Mono,monospace;}
   .ac-input{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:9px 12px;border-radius:8px;font-family:Inter,sans-serif;font-size:.85rem;width:100%;}
@@ -324,7 +324,7 @@ function NillLoader({ text = "Wird geladen…" }) {
         NILL<span style={{color:"#c6ff3c"}}>.</span>
       </div>
       <div style={{
-        width:180, height:2, background:"rgba(239,237,231,.08)",
+        width:180, height:2, background:"rgba(var(--ink-tint),.08)",
         borderRadius:2, overflow:"hidden", marginBottom:28,
       }}>
         <div style={{
@@ -1022,7 +1022,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                       <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#c6ff3c" stopOpacity={0.25}/><stop offset="95%" stopColor="#c6ff3c" stopOpacity={0}/></linearGradient>
                       <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#7a5cff" stopOpacity={0.2}/><stop offset="95%" stopColor="#7a5cff" stopOpacity={0}/></linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                     <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                     <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                     <Tooltip content={({active,payload,label}) => {
@@ -1094,7 +1094,7 @@ function OverviewTab({ onNavigate, onUpload }) {
         <div className="ac-card" style={{marginBottom:16}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
             <div className="ac-section-title" style={{marginBottom:0}}>Kundenaktivität</div>
-            <div style={{display:"flex",gap:2,background:"rgba(255,255,255,.04)",borderRadius:8,padding:3}}>
+            <div style={{display:"flex",gap:2,background:"rgba(var(--tint),.04)",borderRadius:8,padding:3}}>
               {KUNDEN_PERIODS.map(p=>(
                 <button key={p.key} onClick={()=>setKundenPeriod(p.key)}
                   style={{padding:"4px 11px",borderRadius:6,border:"none",cursor:"pointer",
@@ -1131,7 +1131,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                           <span style={{color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"60%"}}>{k.name}</span>
                           <span style={{fontFamily:"JetBrains Mono,monospace",color:"var(--accent)",fontWeight:600,flexShrink:0}}>{fmtEur(k.umsatz)}</span>
                         </div>
-                        <div style={{height:4,background:"rgba(255,255,255,.06)",borderRadius:99}}>
+                        <div style={{height:4,background:"rgba(var(--tint),.06)",borderRadius:99}}>
                           <div style={{height:"100%",borderRadius:99,background:`rgba(198,255,60,${0.8-i*0.1})`,width:`${k.umsatz/maxU*100}%`,transition:"width .5s ease"}}/>
                         </div>
                         <div style={{fontSize:".68rem",color:"var(--ink2)",marginTop:2}}>{k.anzahl} Rechnung{k.anzahl!==1?"en":""}</div>
@@ -1165,7 +1165,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                 <XAxis type="number" hide/>
                 <YAxis type="category" dataKey="name" tick={{fill:"#9b9890",fontSize:11}} axisLine={false} tickLine={false} width={140}/>
                 <Tooltip
-                  cursor={{fill:"rgba(255,255,255,.03)"}}
+                  cursor={{fill:"rgba(var(--tint),.03)"}}
                   formatter={v=>[fmtEur(v),"Umsatz"]}
                   contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
                 />
@@ -1226,7 +1226,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                   <span style={{fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:"var(--accent)",fontSize:"1.1rem"}}>{fmtEur(dash.einnahmen||0)}</span>
                   <span style={{color:"var(--ink2)"}}>von {fmtEur(jahresZiel)}</span>
                 </div>
-                <div style={{height:10,background:"rgba(255,255,255,.06)",borderRadius:99,overflow:"hidden",marginBottom:8}}>
+                <div style={{height:10,background:"rgba(var(--tint),.06)",borderRadius:99,overflow:"hidden",marginBottom:8}}>
                   <div style={{
                     height:"100%",borderRadius:99,
                     background: pct>=100 ? "var(--accent)" : pct>=70 ? "rgba(198,255,60,.7)" : pct>=40 ? "#7a5cff" : "var(--a3)",
@@ -1265,11 +1265,11 @@ function OverviewTab({ onNavigate, onUpload }) {
           </div>
           <ResponsiveContainer width="100%" height={200} aria-label="Einnahmen Jahresvergleich">
             <BarChart data={jahresVglData.rows} margin={{top:4,right:4,left:0,bottom:0}} barGap={2} barCategoryGap="28%">
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
               <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
               <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={36}/>
               <Tooltip
-                cursor={{fill:"rgba(255,255,255,.03)"}}
+                cursor={{fill:"rgba(var(--tint),.03)"}}
                 content={({active,payload,label}) => {
                   if (!active||!payload?.length) return null;
                   return (
@@ -1277,7 +1277,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                       <div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>
                       {payload.map((p,i) => <div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>{p.dataKey}: {fmtEur(p.value)}</div>)}
                       {payload.length===2 && payload[1].value>0 && (
-                        <div style={{marginTop:6,paddingTop:6,borderTop:"1px solid rgba(255,255,255,.08)",color:"var(--ink2)",fontSize:".72rem"}}>
+                        <div style={{marginTop:6,paddingTop:6,borderTop:"1px solid rgba(var(--tint),.08)",color:"var(--ink2)",fontSize:".72rem"}}>
                           {payload[0].value >= payload[1].value
                             ? `▲ +${(((payload[0].value-payload[1].value)/payload[1].value)*100).toFixed(1)} % ggü. Vorjahr`
                             : `▼ ${(((payload[0].value-payload[1].value)/payload[1].value)*100).toFixed(1)} % ggü. Vorjahr`}
@@ -1306,7 +1306,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                   <XAxis type="number" hide tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                   <YAxis type="category" dataKey="name" tick={{fill:"#9b9890",fontSize:11}} axisLine={false} tickLine={false} width={110}/>
                   <Tooltip
-                    cursor={{fill:"rgba(255,255,255,.03)"}}
+                    cursor={{fill:"rgba(var(--tint),.03)"}}
                     formatter={v => [fmtEur(v), "Ausgaben"]}
                     contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
                   />
@@ -1362,7 +1362,7 @@ function OverviewTab({ onNavigate, onUpload }) {
                             <span style={{color:r.col,fontWeight:600}}>{r.label}</span>
                             <span style={{fontFamily:"JetBrains Mono,monospace",color:"var(--ink)"}}>{fmtEur(r.val)}</span>
                           </div>
-                          <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:99}}>
+                          <div style={{height:5,background:"rgba(var(--tint),.06)",borderRadius:99}}>
                             <div style={{height:"100%",borderRadius:99,background:r.col,width:`${r.pct}%`,transition:"width .5s ease"}}/>
                           </div>
                           <div style={{fontSize:".7rem",color:"var(--ink2)",marginTop:2}}>{r.pct.toFixed(0)} %</div>
@@ -1394,13 +1394,13 @@ function OverviewTab({ onNavigate, onUpload }) {
           </div>
           <ResponsiveContainer width="100%" height={200} aria-label="Monatlicher Gewinn und Verlust">
             <BarChart data={gewinnVerlauf} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="25%">
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
               <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
               <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
                 tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v>=0?v:`-${Math.abs(v)>=1000?(Math.abs(v)/1000).toFixed(0)+"k":Math.abs(v)}`} width={40}/>
-              <ReferenceLine y={0} stroke="rgba(239,237,231,.15)" strokeWidth={1}/>
+              <ReferenceLine y={0} stroke="rgba(var(--ink-tint),.15)" strokeWidth={1}/>
               <Tooltip
-                cursor={{fill:"rgba(255,255,255,.03)"}}
+                cursor={{fill:"rgba(var(--tint),.03)"}}
                 content={({active,payload,label})=>{
                   if(!active||!payload?.length) return null;
                   const v=payload[0].value;
@@ -1432,13 +1432,13 @@ function OverviewTab({ onNavigate, onUpload }) {
               </div>
               <ResponsiveContainer width="100%" height={200} aria-label="Umsatzprognose nächste 3 Monate">
                 <LineChart data={umsatzPrognose.data} margin={{top:4,right:4,left:0,bottom:0}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                   <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
                     tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={36}/>
                   {umsatzPrognose.pivot>0 && (
                     <ReferenceLine x={umsatzPrognose.data[umsatzPrognose.pivot-1]?.name}
-                      stroke="rgba(239,237,231,.15)" strokeDasharray="4 4" label={{value:"Heute",fill:"rgba(155,152,144,.5)",fontSize:9,position:"top"}}/>
+                      stroke="rgba(var(--ink-tint),.15)" strokeDasharray="4 4" label={{value:"Heute",fill:"rgba(155,152,144,.5)",fontSize:9,position:"top"}}/>
                   )}
                   <Tooltip
                     content={({active,payload,label})=>{
@@ -1481,7 +1481,7 @@ function OverviewTab({ onNavigate, onUpload }) {
               </div>
               <ResponsiveContainer width="100%" height={200} aria-label="Ausgabenentwicklung mit Trendlinie">
                 <LineChart data={ausgabenTrend} margin={{top:4,right:4,left:0,bottom:0}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                   <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}
                     tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={36}/>
@@ -1521,12 +1521,12 @@ function OverviewTab({ onNavigate, onUpload }) {
               {wochenData.some(d=>d.umsatz>0) ? (
                 <ResponsiveContainer width="100%" height={160} aria-label="Umsatz pro Wochentag">
                   <BarChart data={wochenData} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="30%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                     <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                     <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false}
                       tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={32}/>
                     <Tooltip
-                      cursor={{fill:"rgba(255,255,255,.03)"}}
+                      cursor={{fill:"rgba(var(--tint),.03)"}}
                       content={({active,payload,label}) => {
                         if(!active||!payload?.length) return null;
                         const d = payload[0];
@@ -1564,7 +1564,7 @@ function OverviewTab({ onNavigate, onUpload }) {
               {bonTrendData.length > 1 ? (
                 <ResponsiveContainer width="100%" height={160} aria-label="Durchschnittlicher Bonwert Trend">
                   <LineChart data={bonTrendData} margin={{top:4,right:4,left:0,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                     <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                     <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false}
                       tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={32}/>
@@ -1613,11 +1613,11 @@ function OverviewTab({ onNavigate, onUpload }) {
                   </div>
                   <ResponsiveContainer width="100%" height={130} aria-label="Stornoquote nach Wochentag">
                     <BarChart data={stornoquoteData.byDay} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="28%" barGap={2}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                       <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                       <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false} width={24} allowDecimals={false}/>
                       <Tooltip
-                        cursor={{fill:"rgba(255,255,255,.03)"}}
+                        cursor={{fill:"rgba(var(--tint),.03)"}}
                         contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
                       />
                       <Bar dataKey="aktiv"     name="Aktiv"     fill="rgba(198,255,60,.5)"  radius={[3,3,0,0]} stackId="a" animationDuration={600}/>
@@ -1636,12 +1636,12 @@ function OverviewTab({ onNavigate, onUpload }) {
               </div>
               <ResponsiveContainer width="100%" height={180} aria-label="Zahlungsarten nach Wochentag">
                 <BarChart data={zahlungsartenTagData.data} margin={{top:4,right:4,left:0,bottom:0}} barCategoryGap="28%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(239,237,231,.04)" vertical={false}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--ink-tint),.04)" vertical={false}/>
                   <XAxis dataKey="name" tick={{fill:"#9b9890",fontSize:10}} axisLine={false} tickLine={false}/>
                   <YAxis tick={{fill:"#9b9890",fontSize:9}} axisLine={false} tickLine={false}
                     tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v} width={32}/>
                   <Tooltip
-                    cursor={{fill:"rgba(255,255,255,.03)"}}
+                    cursor={{fill:"rgba(var(--tint),.03)"}}
                     formatter={(v,n)=>[fmtEur(v), ZAHLART_LABELS[n]||n]}
                     contentStyle={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:".82rem"}}
                   />
@@ -2055,9 +2055,9 @@ function ComingSoonTab({ title = "Dieses Feature", desc = "Demnächst verfügbar
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:320, gap:16, opacity:.7 }}>
       <div style={{ fontSize:36 }}></div>
-      <div style={{ fontFamily:"var(--mono,monospace)", fontSize:11, letterSpacing:".15em", textTransform:"uppercase", color:"var(--ink-dim,rgba(255,255,255,.4))" }}>In Entwicklung</div>
+      <div style={{ fontFamily:"var(--mono,monospace)", fontSize:11, letterSpacing:".15em", textTransform:"uppercase", color:"var(--ink-dim,rgba(var(--tint),.4))" }}>In Entwicklung</div>
       <div style={{ fontFamily:"var(--serif,serif)", fontSize:22, color:"var(--ink,#efede7)" }}>{title}</div>
-      <p style={{ fontSize:13, color:"var(--ink-dim,rgba(255,255,255,.5))", textAlign:"center", maxWidth:340 }}>{desc}</p>
+      <p style={{ fontSize:13, color:"var(--ink-dim,rgba(var(--tint),.5))", textAlign:"center", maxWidth:340 }}>{desc}</p>
     </div>
   );
 }
@@ -2467,7 +2467,7 @@ export default function AccountingPage() {
           <div className="ac-topbar-sep"/>
           <span className="ac-topbar-title">Buchhaltung</span>
           <div className="ac-topbar-right">
-            <div style={{display:"flex",background:"rgba(255,255,255,.04)",border:"1px solid var(--border)",borderRadius:7,overflow:"hidden"}}>
+            <div style={{display:"flex",background:"rgba(var(--tint),.04)",border:"1px solid var(--border)",borderRadius:7,overflow:"hidden"}}>
               {["einfach","doppelt"].map(m => (
                 <button key={m}
                   onClick={() => { setAccountingMode(m); localStorage.setItem("nill_accounting_mode",m); setTab("overview"); }}

@@ -210,7 +210,7 @@ function IntrastatPanel() {
           </div>
           <div style={{
             padding: "0.7rem 0.9rem",
-            background: data.schwelle_erreicht ? "rgba(248,113,113,0.07)" : "rgba(255,255,255,0.03)",
+            background: data.schwelle_erreicht ? "rgba(248,113,113,0.07)" : "rgba(var(--tint),0.03)",
             border: `1px solid ${data.schwelle_erreicht ? "rgba(248,113,113,0.25)" : "var(--border)"}`,
             borderRadius: 8,
             fontSize: ".78rem",

@@ -126,7 +126,7 @@
 
 /* ── Heute ──────────────────────────────────────────────── */
 .calendar-wrapper .react-calendar__tile--now {
-  background: rgba(255,255,255,0.05) !important;
+  background: rgba(var(--tint),0.05) !important;
   border-color: var(--nill-border-lg) !important;
   color: var(--nill-text) !important;
   font-weight: 700;

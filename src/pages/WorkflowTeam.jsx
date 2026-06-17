@@ -22,7 +22,7 @@ const ALL_PERMISSIONS = [
 
 /* ── Shared Styles ──────────────────────────────────────── */
 const panelStyle = {
-  background: "rgba(255,255,255,0.025)",
+  background: "rgba(var(--tint),0.025)",
   border: "1px solid var(--nill-border)",
   borderRadius: 14,
   backdropFilter: "blur(6px)",
@@ -32,7 +32,7 @@ const panelStyle = {
 
 const inputStyle = {
   width: "100%", padding: "0.6rem 0.9rem",
-  background: "rgba(255,255,255,0.04)",
+  background: "rgba(var(--tint),0.04)",
   border: "1px solid var(--nill-border)",
   borderRadius: 9, color: "var(--nill-text)",
   fontSize: "0.82rem", outline: "none",
@@ -50,7 +50,7 @@ function PermBadge({ label, active }) {
     <span style={{
       fontSize: "0.7rem", fontWeight: 600,
       padding: "0.2rem 0.6rem", borderRadius: 20,
-      background: active ? "rgba(134,239,172,0.08)" : "rgba(255,255,255,0.03)",
+      background: active ? "rgba(134,239,172,0.08)" : "rgba(var(--tint),0.03)",
       border: `1px solid ${active ? "rgba(134,239,172,0.2)" : "var(--nill-border)"}`,
       color: active ? "#86efac" : "var(--nill-text-dim)",
     }}>
@@ -134,7 +134,7 @@ function BtnSecondary({ children, onClick }) {
       onClick={onClick}
       style={{
         flex: 1, padding: "0.65rem",
-        background: "rgba(255,255,255,0.04)",
+        background: "rgba(var(--tint),0.04)",
         border: "1px solid var(--nill-border)",
         borderRadius: 10, cursor: "pointer",
         color: "var(--nill-text-sub)",
@@ -142,7 +142,7 @@ function BtnSecondary({ children, onClick }) {
         transition: "background 0.12s, color 0.12s",
       }}
       onMouseOver={e => { e.currentTarget.style.background = "var(--nill-panel-hov)"; e.currentTarget.style.color = "var(--nill-text)"; }}
-      onMouseOut={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--nill-text-sub)"; }}
+      onMouseOut={e => { e.currentTarget.style.background = "rgba(var(--tint),0.04)"; e.currentTarget.style.color = "var(--nill-text-sub)"; }}
     >
       {children}
     </button>
@@ -296,7 +296,7 @@ export default function WorkflowTeam() {
     <PageLayout>
       <div style={{ display: "flex", alignItems: "center", gap: "0.6rem",
         padding: "3rem 0", color: "var(--nill-text-mute)", fontSize: "0.82rem" }}>
-        <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.08)",
+        <div style={{ width: 18, height: 18, border: "2px solid rgba(var(--tint),0.08)",
           borderTopColor: "var(--nill-gold)", borderRadius: "50%",
           animation: "em-spin 0.75s linear infinite" }} />
         Lade Team…
@@ -406,7 +406,7 @@ export default function WorkflowTeam() {
             {/* Tab Bar */}
             <div style={{
               display: "flex", gap: "2px",
-              background: "rgba(255,255,255,0.03)",
+              background: "rgba(var(--tint),0.03)",
               border: "1px solid var(--nill-border)",
               borderRadius: 12, padding: 4, width: "fit-content",
             }}>
@@ -655,7 +655,7 @@ export default function WorkflowTeam() {
                                   ? "rgba(251,191,36,0.1)"
                                   : inv.status === "accepted"
                                   ? "rgba(134,239,172,0.08)"
-                                  : "rgba(255,255,255,0.04)",
+                                  : "rgba(var(--tint),0.04)",
                                 border: `1px solid ${inv.status === "pending"
                                   ? "rgba(251,191,36,0.2)"
                                   : inv.status === "accepted"
@@ -750,7 +750,7 @@ export default function WorkflowTeam() {
                 <label key={p.key} style={{
                   display: "flex", alignItems: "center", gap: "0.55rem",
                   cursor: "pointer", padding: "0.5rem 0.75rem",
-                  background: rolePerms.includes(p.key) ? "rgba(197,165,114,0.07)" : "rgba(255,255,255,0.02)",
+                  background: rolePerms.includes(p.key) ? "rgba(197,165,114,0.07)" : "rgba(var(--tint),0.02)",
                   border: `1px solid ${rolePerms.includes(p.key) ? "rgba(197,165,114,0.2)" : "var(--nill-border)"}`,
                   borderRadius: 8, transition: "all 0.12s",
                 }}>

@@ -195,7 +195,7 @@ function MemberShiftModal({ member, weekDays, templates, assignments, onSave, on
         )}
 
         {/* Neue Schicht */}
-        <div style={{ padding:"0.85rem", background:"rgba(255,255,255,0.025)", border:"1px solid var(--nill-border)", borderRadius:10 }}>
+        <div style={{ padding:"0.85rem", background:"rgba(var(--tint),0.025)", border:"1px solid var(--nill-border)", borderRadius:10 }}>
           <label style={LBL}>Neue Schicht hinzufügen</label>
           <div style={{ display:"flex", flexDirection:"column", gap:"0.65rem" }}>
             <Field label="Tag">
@@ -401,7 +401,7 @@ export function SchichtplanContent() {
   return (
     <>
       <style>{`
-        .sp-row:hover td { background: rgba(255,255,255,0.02); }
+        .sp-row:hover td { background: rgba(var(--tint),0.02); }
         .sp-chip {
           display:inline-flex; align-items:center; gap:3px;
           font-size:0.68rem; font-weight:700; padding:3px 7px;
@@ -442,7 +442,7 @@ export function SchichtplanContent() {
 
       {/* Vorlagen-Panel */}
       {showTplPanel && isAdmin && (
-        <div style={{ marginBottom:"1.25rem", padding:"1rem 1.25rem", background:"rgba(255,255,255,0.025)", border:"1px solid var(--nill-border)", borderRadius:12 }}>
+        <div style={{ marginBottom:"1.25rem", padding:"1rem 1.25rem", background:"rgba(var(--tint),0.025)", border:"1px solid var(--nill-border)", borderRadius:12 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"0.75rem" }}>
             <span style={{ fontSize:"0.82rem", fontWeight:700, color:"var(--nill-text)" }}>Schicht-Vorlagen</span>
             <button onClick={() => setTplModal("new")}
@@ -517,7 +517,7 @@ export function SchichtplanContent() {
             </thead>
             <tbody>
               {members.map(member => (
-                <tr key={member.id} className="sp-row" style={{ borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+                <tr key={member.id} className="sp-row" style={{ borderBottom:"1px solid rgba(var(--tint),0.05)" }}>
                   {/* Member name cell */}
                   <td style={{ padding:"0.6rem 0.85rem", verticalAlign:"middle" }}>
                     <button className="sp-name-btn" onClick={isAdmin ? () => setMemberModal(member) : undefined}
@@ -564,7 +564,7 @@ export function SchichtplanContent() {
                       >
                         <div style={{ display:"flex", flexDirection:"column", gap:3, alignItems:"center" }}>
                           {cellItems.length === 0 && getAbsencesForCell(member.id, dateStr).length === 0 && isAdmin && (
-                            <span style={{ fontSize:"0.65rem", color:"rgba(255,255,255,0.1)", userSelect:"none" }}>+</span>
+                            <span style={{ fontSize:"0.65rem", color:"rgba(var(--tint),0.1)", userSelect:"none" }}>+</span>
                           )}
                           {cellItems.map(a => (
                             <span

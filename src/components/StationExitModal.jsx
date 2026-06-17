@@ -14,7 +14,7 @@ const overlay = {
 
 const card = {
   background: "rgba(15,18,28,0.98)",
-  border: "1px solid rgba(239,237,231,0.1)",
+  border: "1px solid rgba(var(--ink-tint),0.1)",
   borderRadius: 20,
   padding: "2rem 2.25rem",
   width: "100%",
@@ -28,8 +28,8 @@ const card = {
 const inputStyle = {
   width: "100%",
   padding: "0.65rem 0.9rem",
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(var(--tint),0.04)",
+  border: "1px solid rgba(var(--tint),0.12)",
   borderRadius: 10,
   color: "#efede7",
   fontSize: "0.95rem",
@@ -54,7 +54,7 @@ const btnPrimary = {
 const btnGhost = {
   background: "none",
   border: "none",
-  color: "rgba(239,237,231,0.45)",
+  color: "rgba(var(--ink-tint),0.45)",
   fontSize: "0.8rem",
   cursor: "pointer",
   padding: "0.3rem 0",
@@ -134,7 +134,7 @@ export default function StationExitModal({ onClose, hasPassword }) {
             fontSize: "0.62rem",
             letterSpacing: "0.18em",
             textTransform: "uppercase",
-            color: "rgba(239,237,231,0.35)",
+            color: "rgba(var(--ink-tint),0.35)",
             marginBottom: 6,
           }}>
             ArbeitsStation
@@ -153,7 +153,7 @@ export default function StationExitModal({ onClose, hasPassword }) {
         {/* ── Password mode ── */}
         {mode === "password" && (
           <form onSubmit={handlePassword} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-            <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(239,237,231,0.5)", lineHeight: 1.55 }}>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(var(--ink-tint),0.5)", lineHeight: 1.55 }}>
               Bitte gib das Stations-Passwort ein, um den Kiosk-Modus zu beenden.
             </p>
             <input
@@ -183,11 +183,11 @@ export default function StationExitModal({ onClose, hasPassword }) {
         {mode === "otp" && (
           <form onSubmit={handleOtp} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
             {loading && !adminEmail ? (
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(239,237,231,0.5)", lineHeight: 1.55 }}>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(var(--ink-tint),0.5)", lineHeight: 1.55 }}>
                 Code wird gesendet…
               </p>
             ) : (
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(239,237,231,0.5)", lineHeight: 1.55 }}>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(var(--ink-tint),0.5)", lineHeight: 1.55 }}>
                 Ein 6-stelliger Code wurde an{adminEmail ? <> <strong style={{ color: "#efede7" }}>{adminEmail}</strong></> : " den Admin"} gesendet. Der Code ist 15 Minuten gültig.
               </p>
             )}

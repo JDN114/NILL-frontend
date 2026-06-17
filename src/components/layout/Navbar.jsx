@@ -313,7 +313,7 @@ export default function Navbar() {
                     fontSize: "0.82rem", fontWeight: active ? 600 : 500,
                     textDecoration: "none",
                     transition: "background 0.12s, color 0.12s",
-                    background: active ? "rgba(255,255,255,0.05)" : "transparent",
+                    background: active ? "rgba(var(--tint),0.05)" : "transparent",
                     color: active ? "var(--nill-text)" : "var(--nill-text-sub)",
                     borderBottom: active ? "1px solid rgba(197,165,114,0.35)" : "1px solid transparent",
                   }}
