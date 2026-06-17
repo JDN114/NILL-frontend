@@ -388,10 +388,9 @@ function buildScene(canvas) {
     s.scale.set(size, size, 1);
     sunGroup.add(s); return s;
   };
-  const flareTex   = mkGlowCanvas([[0,'rgba(255,240,190,1)'],[.2,'rgba(255,150,50,.5)'],[.55,'rgba(198,255,60,.12)'],[1,'rgba(0,0,0,0)']]);
+  // Bright flare halo removed — left the sun blown-out/too bright in the hero.
   const coronaTex1 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.55,'rgba(255,130,40,.08)'],[.75,'rgba(120,80,220,.12)'],[1,'rgba(0,0,0,0)']]);
   const coronaTex2 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.6,'rgba(80,60,180,.06)'],[.85,'rgba(198,255,60,.05)'],[1,'rgba(0,0,0,0)']]);
-  const flareSprite  = mkSprite(5.5,  flareTex,   .82);
   const corona1      = mkSprite(10.0, coronaTex1, .48);
   const corona2      = mkSprite(17.0, coronaTex2, .24);
 
@@ -533,7 +532,6 @@ function buildScene(canvas) {
     corona2.material.opacity = .22+Math.sin(t*.7+1.2)*.04;
     corona1.material.rotation = t*.02;
     corona2.material.rotation = -t*.015;
-    flareSprite.material.opacity = .80+Math.sin(t*1.2)*.07;
     sunGroup.getWorldPosition(sunWorldPos);
     stars.rotation.y = t*.003;
     starMat.uniforms.uTime.value = t;

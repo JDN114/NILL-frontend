@@ -221,7 +221,7 @@ export function Modal({ intent, onClose }) {
    Chrome for the spun-off marketing pages: vignette + nav +
    section(s) + footer + the shared contact modal. `render` gets
    an `onCTA(intent)` opener so sections keep working unchanged. */
-export function LandingPageShell({ title, render }) {
+export function LandingPageShell({ title, render, mainStyle, mainClassName }) {
   const [intent, setIntent] = useState(null);
   const openModal = useCallback((i) => setIntent(i || 'default'), []);
   const closeModal = useCallback(() => setIntent(null), []);
@@ -233,7 +233,7 @@ export function LandingPageShell({ title, render }) {
     <>
       <div className="vignette" aria-hidden="true"/>
       <LandingNav/>
-      <main style={{paddingTop:84}}>
+      <main className={mainClassName} style={{paddingTop:84, ...mainStyle}}>
         {render(openModal)}
       </main>
       <Footer/>
