@@ -23,19 +23,18 @@ function WipBadge({ compact = false }) {
   );
 }
 
+// Buchhaltung and NILL (Sekretärin) are WIP and hard-disabled server-side
+// (GLOBALLY_DISABLED_MODULES), so they are intentionally NOT linked here.
 const NAV_ITEMS = [
   { label: "Dashboard",      path: "/dashboard",               exact: true },
   { label: "Emails",         path: "/dashboard/emails" },
   { label: "Kalender",       path: "/dashboard/calendar" },
-  { label: "Buchhaltung",    path: "/dashboard/accounting",    wip: true },
-  { label: "NILL",           disabled: true,                   gold: true },
   { label: "Einstellungen",  path: "/dashboard/settings" },
 ];
 
 const BOTTOM_NAV = [
   { label: "Start",      path: "/dashboard",            exact: true,  icon: "◧" },
   { label: "E-Mails",    path: "/dashboard/emails",                   icon: "✉" },
-  { label: "Buchhaltung",path: "/dashboard/accounting",               icon: "◎", wip: true },
   { label: "Workflow",   path: "/dashboard/workflow",                 icon: "⬡" },
   { label: "Mehr",       path: "/dashboard/settings",                 icon: "◉" },
 ];

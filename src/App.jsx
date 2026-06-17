@@ -71,6 +71,9 @@ const ArbeitsStationInventur   = lazyWithRetry(() => import("./pages/station/Arb
 const Widerruf               = lazyWithRetry(() => import("./pages/Widerruf.jsx"));
 const Barrierefreiheit       = lazyWithRetry(() => import("./pages/Barrierefreiheit"));
 const CheckoutPage           = lazyWithRetry(() => import("./pages/CheckoutPage.jsx"));
+const WieEsArbeitetPage      = lazyWithRetry(() => import("./pages/WieEsArbeitetPage.jsx"));
+const AppPage                = lazyWithRetry(() => import("./pages/AppPage.jsx"));
+const NachhaltigkeitPage     = lazyWithRetry(() => import("./pages/NachhaltigkeitPage.jsx"));
 
 function PushNotification() {
   const [items, setItems] = useState([]);
@@ -206,6 +209,11 @@ function App() {
                   <Route path="/Widerruf" element={<Widerruf />} />
                   <Route path="/barrierefreiheit" element={<Barrierefreiheit />} />
 
+                  {/* Marketing-Sektionen, ausgelagert von der Landingpage */}
+                  <Route path="/wie-es-arbeitet" element={<WieEsArbeitetPage />} />
+                  <Route path="/app" element={<AppPage />} />
+                  <Route path="/nachhaltigkeit" element={<NachhaltigkeitPage />} />
+
                   {/* Öffentliche Checkout-Seite für Endkunden (Zahlungslink) */}
                   <Route path="/zahlen/:token" element={<CheckoutPage />} />
                   <Route path="/zahlen/:token/erfolg" element={<CheckoutPage />} />
@@ -299,10 +307,18 @@ function App() {
                     </ProtectedRoute>
                   }/>
                   <Route path="/dashboard/NILL-Secretary" element={
-                    <ProtectedRoute><NILLModule /></ProtectedRoute>
+                    <ProtectedRoute>
+                      <FeatureRoute module="nill">
+                        <NILLModule />
+                      </FeatureRoute>
+                    </ProtectedRoute>
                   }/>
                   <Route path="/dashboard/NILL-Secretary/Calls" element={
-                    <ProtectedRoute><CallsModule /></ProtectedRoute>
+                    <ProtectedRoute>
+                      <FeatureRoute module="nill">
+                        <CallsModule />
+                      </FeatureRoute>
+                    </ProtectedRoute>
                   }/>
 
                   {/* ArbeitsStation — tablet/kiosk interface */}
