@@ -129,9 +129,18 @@ export default function EmailComposeModal({ open, onClose, onSent }) {
       onSent?.();
       onClose();
     } catch (err) {
-      // A client-side timeout does NOT mean the send failed — the provider very
-      // often delivers the mail anyway. Don't scare the user with a red error.
-      const isTimeout = err?.code === "ECONNABORTED" || /timeout/i.test(err?.message || "");
+      // A timeout does NOT mean the send failed — the provider very often
+      // delivers the mail anyway. This covers both the client-side axios abort
+      // (ECONNABORTED) and the backend's deliberate 504 "DELIVERY_UNCERTAIN"
+      // (raised when Gmail/Graph itself times out mid-send). Don't scare the
+      // user with a red error in either case.
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      const isTimeout =
+        err?.code === "ECONNABORTED" ||
+        /timeout/i.test(err?.message || "") ||
+        status === 504 ||
+        detail === "DELIVERY_UNCERTAIN";
       if (isTimeout) {
         setWarning("Der Versand dauert länger als erwartet. Die E-Mail wurde vermutlich trotzdem zugestellt – bitte prüfen Sie Ihren Ordner „Gesendet“, bevor Sie erneut senden.");
       } else {

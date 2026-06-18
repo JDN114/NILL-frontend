@@ -27,18 +27,19 @@ export default function EmailTemplatePicker({ value, onChange, body = "", templa
     else setShowPreview(false);
   }, [value]);
 
-  const bg   = darkMode ? "#1a1a2e" : "#ffffff";
-  const text = darkMode ? "#e2e8f0" : "#333333";
+  const pageBg = darkMode ? "#15151f" : "#f4f4f5";
 
-  const previewHtml = selected ? `
-    <html><body style="margin:0;padding:0;background:${bg};">
-    <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:${bg};">
+  // Match the markup the backend (services/gmail_helper.py:apply_template) wraps
+  // the body in — 680px + colored border-left — so this preview is what the
+  // recipient actually receives.
+  const previewHtml = selected ? `<!doctype html><html><body style="margin:0;padding:20px;background:${pageBg};">
+    <div style="max-width:680px;margin:0 auto;font-family:sans-serif;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
       ${selected.header_html || ""}
-      <div style="padding:24px;color:${text};">
+      <div style="padding:24px;color:#333333;border-left:4px solid ${selected.brand_color || "#000000"};line-height:1.5;">
         ${body
-          ? `<div style="color:${text};">${body.replace(/\n/g, "<br/>")}</div>`
-          : `<p style="color:${text};margin:0 0 12px;">Sehr geehrte Damen und Herren,</p>
-             <p style="color:${text};margin:0 0 12px;">hier erscheint der Inhalt Ihrer E-Mail.</p>`
+          ? body.replace(/\n/g, "<br/>")
+          : `<p style="margin:0 0 12px;">Sehr geehrte Damen und Herren,</p>
+             <p style="margin:0;">hier erscheint der Inhalt Ihrer E-Mail.</p>`
         }
       </div>
       ${selected.footer_html || ""}
@@ -55,15 +56,22 @@ export default function EmailTemplatePicker({ value, onChange, body = "", templa
         <label className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
           Vorlage
         </label>
-        {value && (
-          <button onClick={() => onChange(null)}
-            className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
-            ✕ entfernen
-          </button>
+        {!value && (
+          <span className="text-[10px] text-slate-600">Wird ohne Vorlage versendet</span>
         )}
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {/* Explicit "no template" choice so it's unmistakable that the mail goes
+            out plain when nothing is selected. */}
+        <button onClick={() => onChange(null)}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+            !value
+              ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]"
+              : "bg-[rgba(var(--tint),0.03)] border-[rgba(var(--tint),0.07)] text-slate-500 hover:text-slate-300"
+          }`}>
+          Keine Vorlage
+        </button>
         {templates.map(t => (
           <button key={t.id} onClick={() => onChange(value === t.id ? null : t.id)}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
@@ -101,10 +109,10 @@ export default function EmailTemplatePicker({ value, onChange, body = "", templa
           {/* iFrame */}
           <iframe
             srcDoc={previewHtml}
-            className="w-full"
-            style={{height: "300px", background: bg}}
+            className="w-full block"
+            style={{height: "300px", background: pageBg}}
             title="E-Mail Vorschau"
-            sandbox="allow-same-origin"
+            sandbox=""
           />
         </div>
       )}

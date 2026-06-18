@@ -151,9 +151,15 @@ export default function EmailVorlagenTab() {
   async function fetchTemplates() {
     setLoading(true);
     try {
-      const res = await api.get("/gmail/templates");
+      const res = await api.get("/gmail/templates", { timeout: 60000 });
       setTemplates(res.data?.templates || []);
-    } catch { setTemplates([]); }
+      setError(null);
+    } catch (err) {
+      // Don't silently show an empty list on a real failure — the user would
+      // think their templates vanished. Surface the actual reason.
+      setTemplates([]);
+      setError(err?.response?.data?.detail || "Vorlagen konnten nicht geladen werden.");
+    }
     finally { setLoading(false); }
   }
 
@@ -197,18 +203,29 @@ export default function EmailVorlagenTab() {
     finally { setSaving(false); }
   }
 
+  // Shared error classifier — a timeout doesn't mean the op failed, so show it
+  // as an amber warning; otherwise surface the real backend reason.
+  function reportError(err, fallback) {
+    const isTimeout = err?.code === "ECONNABORTED" || /timeout/i.test(err?.message || "");
+    if (isTimeout) {
+      setWarning("Die Aktion dauert länger als erwartet – bitte die Liste prüfen, bevor Sie es erneut versuchen.");
+    } else {
+      setError(err?.response?.data?.detail || err?.response?.data?.message || fallback);
+    }
+  }
+
   async function deleteTemplate(id) {
     if (!window.confirm("Vorlage wirklich löschen?")) return;
-    setDeleting(id); setError(null);
-    try { await api.delete(`/gmail/templates/${id}`); await fetchTemplates(); }
-    catch (err) { setError(err?.response?.data?.detail || "Löschen fehlgeschlagen."); }
+    setDeleting(id); setError(null); setWarning(null);
+    try { await api.delete(`/gmail/templates/${id}`, { timeout: 60000 }); await fetchTemplates(); }
+    catch (err) { reportError(err, "Löschen fehlgeschlagen."); }
     finally { setDeleting(null); }
   }
 
   async function setDefault(id) {
-    setError(null);
-    try { await api.patch(`/gmail/templates/${id}`, { is_default: true }); await fetchTemplates(); }
-    catch (err) { setError(err?.response?.data?.detail || "Standard konnte nicht gesetzt werden."); }
+    setError(null); setWarning(null);
+    try { await api.patch(`/gmail/templates/${id}`, { is_default: true }, { timeout: 60000 }); await fetchTemplates(); }
+    catch (err) { reportError(err, "Standard konnte nicht gesetzt werden."); }
   }
 
   const { header_html: prevHeader, footer_html: prevFooter } = buildHtml(form);
@@ -387,6 +404,9 @@ export default function EmailVorlagenTab() {
         Erstelle Vorlagen mit deinem Unternehmensbranding – Logo, Farben, Signatur und rechtliche Links.
         Diese Vorlagen kannst du beim Verfassen und Antworten auf E-Mails auswählen.
       </p>
+
+      {error && <div className="mb-4 text-red-400 text-xs bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.2)] px-3 py-2 rounded-lg">{error}</div>}
+      {warning && <div className="mb-4 text-amber-300 text-xs bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.25)] px-3 py-2 rounded-lg">{warning}</div>}
 
       <button onClick={openNew}
         className="mb-5 px-4 py-2 text-sm font-semibold bg-[#C5A572] hover:opacity-90 text-black rounded-lg flex items-center gap-2">
