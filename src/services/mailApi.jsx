@@ -17,13 +17,17 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "";
  *              reply_to_id?, use_template?, template_id?}
  */
 export async function sendEmail({ provider, accountId, payload }) {
+  // Sending can legitimately take >15s (token refresh + provider API + attachment
+  // scan). The global axios default is 15s, which aborts mid-flight and surfaces a
+  // false "konnte nicht gesendet werden" even though the mail was delivered.
+  // Always give send/reply a generous 60s window.
   if (provider === "imap") {
     return api.post("/imap/send", { account_id: accountId, ...payload }, { timeout: 60000 });
   }
   if (provider === "outlook") {
-    return api.post("/outlook/send", payload);
+    return api.post("/outlook/send", payload, { timeout: 60000 });
   }
-  return api.post("/gmail/send", payload);
+  return api.post("/gmail/send", payload, { timeout: 60000 });
 }
 
 /** Form-Data Variante für Anhänge. files = UploadFile[] vom Input. */

@@ -447,12 +447,22 @@ export default function EmailsPage() {
   useEffect(() => { activeEmailRef.current = activeEmail; }, [activeEmail]);
   useEffect(() => { openEmailRef.current = openEmail; }, [openEmail]);
 
-  // Smart-Folders sind provider-agnostisch (filtern user-level Email-Rows).
+  // Smart-Folders sind provider-gebunden: ein für Gmail angelegter Ordner
+  // erscheint nur im Gmail-Postfach (plus Alt-Ordner ohne Bindung). Bei
+  // Provider-Wechsel neu laden.
+  const prevProviderRef = useRef(provider);
   useEffect(() => {
-    if (connected) {
-      api.get("/gmail/folders").then(r => setFolders(r.data?.folders || [])).catch(() => {});
+    if (connected && provider) {
+      // Provider gewechselt → evtl. aktiven (fremden) Ordner verlassen.
+      if (prevProviderRef.current !== provider) {
+        setActiveFolder(null);
+        prevProviderRef.current = provider;
+      }
+      api.get("/gmail/folders", { params: { provider } })
+        .then(r => setFolders(r.data?.folders || []))
+        .catch(() => {});
     }
-  }, [connected]);
+  }, [connected, provider]);
 
   useEffect(() => { if (!user) navigate("/login", { replace: true }); }, [user, navigate]);
 
@@ -901,7 +911,7 @@ export default function EmailsPage() {
 
       {/* Provider-aware Modals */}
       <ReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
-      <ComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} />
+      <ComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} onSent={() => fetchEmails?.("sent")} />
 
       <SmartFolderModal
         open={folderModalOpen}
@@ -911,15 +921,16 @@ export default function EmailsPage() {
           if (editingFolder) {
             await api.patch(`/gmail/folders/${editingFolder.id}`, data);
           } else {
-            await api.post("/gmail/folders", data);
+            // Neuer Ordner wird an den aktuell offenen Provider gebunden.
+            await api.post("/gmail/folders", { ...data, provider });
           }
-          const r = await api.get("/gmail/folders");
+          const r = await api.get("/gmail/folders", { params: { provider } });
           setFolders(r.data?.folders || []);
           setFolderModalOpen(false);
         }}
         onDelete={async (id) => {
           await api.delete(`/gmail/folders/${id}`);
-          const r = await api.get("/gmail/folders");
+          const r = await api.get("/gmail/folders", { params: { provider } });
           setFolders(r.data?.folders || []);
           if (activeFolder === id) setActiveFolder(null);
           setFolderModalOpen(false);

@@ -1,18 +1,23 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 
-export default function EmailTemplatePicker({ value, onChange, body = "" }) {
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading]     = useState(true);
+export default function EmailTemplatePicker({ value, onChange, body = "", templates: templatesProp }) {
+  const [templatesState, setTemplates] = useState([]);
+  const [loading, setLoading]     = useState(!templatesProp);
   const [darkMode, setDarkMode]   = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  // When the parent already fetched the templates, reuse that list instead of
+  // issuing a second /gmail/templates request.
+  const templates = templatesProp ?? templatesState;
+
   useEffect(() => {
+    if (templatesProp) { setLoading(false); return; }
     api.get("/gmail/templates")
       .then(r => setTemplates(r.data?.templates || []))
       .catch(() => setTemplates([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [templatesProp]);
 
   const selected = templates.find(t => t.id === value);
 

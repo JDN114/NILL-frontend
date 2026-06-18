@@ -1,6 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import api from "../services/api";
 import Card from "./ui/Card";
+import { GmailContext } from "../context/GmailContext";
+
+// Renders the template exactly the way the recipient's mail client will, using the
+// same markup the backend (services/gmail_helper.py:apply_template) wraps the body
+// in — max-width:680px + a colored border-left on the content. The tab's own
+// preview previously used a different wrapper, so it didn't match what was sent.
+function buildRecipientHtml({ header, footer, color, body, dark }) {
+  const pageBg = dark ? "#15151f" : "#f4f4f5";
+  return `<!doctype html><html><body style="margin:0;padding:20px;background:${pageBg};">
+    <div style="max-width:680px;margin:0 auto;font-family:sans-serif;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+      ${header || ""}
+      <div style="padding:24px;color:#333333;border-left:4px solid ${color || "#000000"};line-height:1.5;">
+        ${body}
+      </div>
+      ${footer || ""}
+    </div>
+  </body></html>`;
+}
+
+const SAMPLE_BODY = `
+  <p style="margin:0 0 12px;">Sehr geehrte Damen und Herren,</p>
+  <p style="margin:0 0 12px;">dies ist eine Vorschau Ihrer E-Mail-Vorlage. An dieser Stelle erscheint später der eigentliche Inhalt Ihrer Nachricht.</p>
+  <p style="margin:0;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
+`;
 
 const BLANK = {
   name: "Neue Vorlage",
@@ -98,7 +122,17 @@ function Section({ title, children }) {
   );
 }
 
+function HdrField({ label, value, strong }) {
+  return (
+    <div className="flex text-[12px] py-1.5 border-b border-[rgba(var(--tint),0.06)] last:border-0">
+      <span className="w-20 flex-shrink-0 text-slate-500 font-semibold uppercase tracking-wider text-[10px] pt-0.5">{label}</span>
+      <span className={`break-all ${strong ? "text-slate-100 font-semibold" : "text-slate-300"}`}>{value}</span>
+    </div>
+  );
+}
+
 export default function EmailVorlagenTab() {
+  const gmail = useContext(GmailContext);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [editing, setEditing]     = useState(null);
@@ -106,8 +140,11 @@ export default function EmailVorlagenTab() {
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState(null);
   const [error, setError]         = useState(null);
+  const [warning, setWarning]     = useState(null);
   const [preview, setPreview]     = useState(true);  // direkt sichtbar
   const [darkMode, setDarkMode]   = useState(false);
+
+  const fromEmail = gmail?.connected?.email || "ihr-postfach@firma.de";
 
   useEffect(() => { fetchTemplates(); }, []);
 
@@ -121,20 +158,20 @@ export default function EmailVorlagenTab() {
   }
 
   function openNew() {
-    setForm(BLANK); setEditing("new"); setError(null); setPreview(false);
+    setForm(BLANK); setEditing("new"); setError(null); setWarning(null); setPreview(false);
   }
 
   function openEdit(t) {
     const fields = parseHtmlToFields(t.header_html, t.footer_html, t.brand_color);
     setForm({ ...fields, name: t.name, is_default: t.is_default });
-    setEditing(t); setError(null); setPreview(false);
+    setEditing(t); setError(null); setWarning(null); setPreview(false);
   }
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })); }
 
   async function save() {
     if (!form.name.trim()) { setError("Name ist Pflichtfeld."); return; }
-    setSaving(true); setError(null);
+    setSaving(true); setError(null); setWarning(null);
     try {
       const { header_html, footer_html } = buildHtml(form);
       const payload = {
@@ -142,47 +179,49 @@ export default function EmailVorlagenTab() {
         is_default: form.is_default, header_html, footer_html,
       };
       if (editing === "new") {
-        await api.post("/gmail/templates", payload);
+        await api.post("/gmail/templates", payload, { timeout: 60000 });
       } else {
-        await api.patch(`/gmail/templates/${editing.id}`, payload);
+        await api.patch(`/gmail/templates/${editing.id}`, payload, { timeout: 60000 });
       }
       await fetchTemplates(); setEditing(null);
-    } catch { setError("Speichern fehlgeschlagen."); }
+    } catch (err) {
+      // A client-side timeout doesn't mean the save failed — surface that as a soft
+      // warning rather than a hard error, and otherwise show the real backend reason.
+      const isTimeout = err?.code === "ECONNABORTED" || /timeout/i.test(err?.message || "");
+      if (isTimeout) {
+        setWarning("Das Speichern dauert länger als erwartet. Die Vorlage wurde möglicherweise trotzdem gespeichert – bitte die Liste prüfen, bevor Sie erneut speichern.");
+      } else {
+        setError(err?.response?.data?.detail || err?.response?.data?.message || "Speichern fehlgeschlagen.");
+      }
+    }
     finally { setSaving(false); }
   }
 
   async function deleteTemplate(id) {
     if (!window.confirm("Vorlage wirklich löschen?")) return;
-    setDeleting(id);
+    setDeleting(id); setError(null);
     try { await api.delete(`/gmail/templates/${id}`); await fetchTemplates(); }
-    catch { } finally { setDeleting(null); }
+    catch (err) { setError(err?.response?.data?.detail || "Löschen fehlgeschlagen."); }
+    finally { setDeleting(null); }
   }
 
   async function setDefault(id) {
+    setError(null);
     try { await api.patch(`/gmail/templates/${id}`, { is_default: true }); await fetchTemplates(); }
-    catch { }
+    catch (err) { setError(err?.response?.data?.detail || "Standard konnte nicht gesetzt werden."); }
   }
 
   const { header_html: prevHeader, footer_html: prevFooter } = buildHtml(form);
-  const previewBg   = darkMode ? "#1a1a2e" : "#ffffff";
-  const previewText = darkMode ? "#e2e8f0" : "#333333";
-  const previewHtml = `
-    <html><body style="margin:0;padding:0;background:${previewBg};">
-    <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:${previewBg};">
-      ${prevHeader}
-      <div style="padding:24px;color:${previewText};">
-        <p style="margin:0 0 12px;">Sehr geehrte Damen und Herren,</p>
-        <p style="margin:0 0 12px;">dies ist eine Vorschau Ihrer E-Mail-Vorlage. Der eigentliche Inhalt Ihrer E-Mail erscheint an dieser Stelle.</p>
-        <p style="margin:0;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
-      </div>
-      ${prevFooter}
-    </div>
-    </body></html>`;
+  const previewHtml = buildRecipientHtml({
+    header: prevHeader, footer: prevFooter, color: form.brand_color,
+    body: SAMPLE_BODY, dark: darkMode,
+  });
 
   if (editing) return (
     <Card title={editing === "new" ? "Neue Vorlage erstellen" : `Vorlage bearbeiten`} className="rounded-2xl shadow-md">
       <div className="space-y-4">
         {error && <div className="text-red-400 text-xs bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.2)] px-3 py-2 rounded-lg">{error}</div>}
+        {warning && <div className="text-amber-300 text-xs bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.25)] px-3 py-2 rounded-lg">{warning}</div>}
 
         {/* Name + Standard */}
         <div className="grid grid-cols-2 gap-3">
@@ -283,7 +322,7 @@ export default function EmailVorlagenTab() {
           </div>
         </Section>
 
-        {/* Vorschau */}
+        {/* Vorschau – so kommt die E-Mail beim Empfänger an */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <button onClick={() => setPreview(v => !v)}
@@ -305,12 +344,23 @@ export default function EmailVorlagenTab() {
           </div>
           {preview && (
             <div className="rounded-xl overflow-hidden border border-[rgba(var(--tint),0.07)] shadow-lg">
+              <div className="px-3 py-1.5 bg-[rgba(var(--tint),0.03)] border-b border-[rgba(var(--tint),0.07)]">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                  So sieht der Empfänger Ihre E-Mail mit dieser Vorlage
+                </span>
+              </div>
+              {/* Kopfzeilen wie im Posteingang (Beispieldaten) */}
+              <div className="px-4 py-2 bg-[rgba(var(--tint),0.02)]">
+                <HdrField label="Von"     value={fromEmail} />
+                <HdrField label="An"      value="max.mustermann@kunde.de" />
+                <HdrField label="Betreff" value="Ihre Anfrage" strong />
+              </div>
               <iframe
                 srcDoc={previewHtml}
-                className="w-full transition-all"
-                style={{height: "320px", background: darkMode ? "#1a1a2e" : "#ffffff"}}
+                className="w-full block transition-all"
+                style={{height: "320px", background: darkMode ? "#15151f" : "#f4f4f5"}}
                 title="Vorschau"
-                sandbox="allow-same-origin"
+                sandbox=""
               />
             </div>
           )}

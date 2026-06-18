@@ -41,105 +41,111 @@ body,
    LIGHT MODE
    ======================================================================== */
 html[data-theme="light"] {
-  /* Flip the overlay channels: dark overlays on light surfaces, dark ink. */
-  --tint: 17, 19, 24;
-  --ink-tint: 26, 31, 41;
+  /* Flip the overlay channels: warm dark overlays on warm light surfaces.
+     Tint is intentionally warm (not neutral grey) so borders / glass tints
+     read as "bone" rather than cold slate. */
+  --tint: 42, 36, 24;
+  --ink-tint: 48, 42, 30;
 
-  /* ── Shared NILL palette (defined in index.css) ────────────────────────── */
-  --nill-bg:        #f5f6f8;
-  --nill-bg-grad:   #eef1f5;
-  --nill-panel:     rgba(17, 19, 24, 0.035);
-  --nill-panel-hov: rgba(17, 19, 24, 0.065);
-  --nill-border:    rgba(17, 19, 24, 0.10);
-  --nill-border-lg: rgba(17, 19, 24, 0.16);
+  /* ── Shared NILL palette (defined in index.css) ──────────────────────────
+     Bone-white field: warmer + a touch darker than the old cold #f5f6f8 so
+     white cards lift off the page and the surface separation is visible. */
+  --nill-bg:        #eae3d4;   /* bone white — main page field            */
+  --nill-bg-grad:   #e1d8c6;   /* deeper warm — gradient / chrome edge    */
+  --nill-panel:     rgba(42, 36, 24, 0.045);
+  --nill-panel-hov: rgba(42, 36, 24, 0.075);
+  --nill-border:    rgba(42, 36, 24, 0.14);
+  --nill-border-lg: rgba(42, 36, 24, 0.20);
 
-  --nill-gold:      #8a6d2f;
-  --nill-gold-dim:  rgba(138, 109, 47, 0.14);
-  --nill-gold-glow: rgba(138, 109, 47, 0.28);
+  --nill-gold:      #806228;
+  --nill-gold-dim:  rgba(128, 98, 40, 0.15);
+  --nill-gold-glow: rgba(128, 98, 40, 0.30);
 
-  --nill-blue:      #2563eb;
-  --nill-blue-dim:  rgba(37, 99, 235, 0.10);
-  --nill-blue-glow: rgba(37, 99, 235, 0.28);
+  --nill-blue:      #1f5fe0;
+  --nill-blue-dim:  rgba(31, 95, 224, 0.11);
+  --nill-blue-glow: rgba(31, 95, 224, 0.28);
 
-  --nill-text:      #1a1f29;
-  --nill-text-sub:  #475569;
-  --nill-text-mute: #64748b;
-  --nill-text-dim:  #94a3b8;
+  /* Text — warm near-black, all four tiers darkened so every tier clears
+     WCAG AA on the bone field (the old #94a3b8 dim tier failed contrast). */
+  --nill-text:      #201d15;   /* ~14:1 on cards                          */
+  --nill-text-sub:  #423d31;   /* ~9:1                                    */
+  --nill-text-mute: #5f5946;   /* ~5.3:1 — body muted                     */
+  --nill-text-dim:  #756f5b;   /* ~4.0:1 — faint labels (was 2.0:1)       */
 
   /* Aliases also defined at :root in index.css */
-  --bg-main:        #f5f6f8;
-  --text-main:      #1a1f29;
-  --text-muted:     #475569;
-  --accent:         #8a6d2f;
-  --brand:          #eef1f5;
+  --bg-main:        #eae3d4;
+  --text-main:      #201d15;
+  --text-muted:     #423d31;
+  --accent:         #806228;
+  --brand:          #e1d8c6;
 
   /* ── theme.css token set ───────────────────────────────────────────────── */
-  --bg-panel:       #ffffff;
-  --bg-panel-soft:  #f1f3f6;
+  --bg-panel:       #faf6ec;   /* warm off-white card (not pure #fff)      */
+  --bg-panel-soft:  #f1ebdd;
 
   /* ── Accounting / DashboardLanding shared token set ───────────────────────
      (AccountingPage injects these at :root; overridden here globally.) */
-  --ink:       #1a1f29;
-  --ink2:      #5b6472;
-  --ink3:      #7b8494;
-  --ink-dim:   rgba(26, 31, 41, 0.60);
-  --ink-faint: rgba(26, 31, 41, 0.12);
-  --ink-40:    rgba(26, 31, 41, 0.40);
-  --ink-60:    rgba(26, 31, 41, 0.60);
-  --ink-90:    rgba(26, 31, 41, 0.90);
-  --bg:        #f5f6f8;
-  --bg2:       #eef1f5;
-  --surface:   #ffffff;
-  --surface2:  #f1f3f6;
-  --card:      #ffffff;
-  --border:    rgba(17, 19, 24, 0.10);
-  --line:      rgba(17, 19, 24, 0.08);
-  --glass:     rgba(17, 19, 24, 0.025);
-  --glass-strong: rgba(17, 19, 24, 0.05);
-  --muted:     #64748b;
-  --text:      #1a1f29;
+  --ink:       #201d15;
+  --ink2:      #534d3e;
+  --ink3:      #756f5b;   /* darkened from #7b8494 for contrast           */
+  --ink-dim:   rgba(32, 29, 21, 0.62);
+  --ink-faint: rgba(32, 29, 21, 0.14);
+  --ink-40:    rgba(32, 29, 21, 0.40);
+  --ink-60:    rgba(32, 29, 21, 0.62);
+  --ink-90:    rgba(32, 29, 21, 0.90);
+  --bg:        #eae3d4;
+  --bg2:       #e1d8c6;
+  --surface:   #faf6ec;   /* bone-white card                              */
+  --surface2:  #f1ebdd;
+  --card:      #faf6ec;
+  --border:    rgba(42, 36, 24, 0.14);
+  --line:      rgba(42, 36, 24, 0.10);
+  --glass:     rgba(42, 36, 24, 0.03);
+  --glass-strong: rgba(42, 36, 24, 0.06);
+  --muted:     #5f5946;
+  --text:      #201d15;
 
-  /* Soften the heavy dark drop-shadows for a light surface. */
-  --shadow:        0 1px 2px rgba(17, 19, 24, 0.06), 0 8px 24px rgba(17, 19, 24, 0.08);
-  --shadow-glass:  0 1px 2px rgba(17, 19, 24, 0.05), 0 6px 20px rgba(17, 19, 24, 0.07);
-  --shadow-glass-hover: 0 2px 4px rgba(17, 19, 24, 0.07), 0 12px 32px rgba(17, 19, 24, 0.10);
+  /* Soften the heavy dark drop-shadows for a light surface (warm-toned). */
+  --shadow:        0 1px 2px rgba(42, 36, 24, 0.07), 0 8px 24px rgba(42, 36, 24, 0.10);
+  --shadow-glass:  0 1px 2px rgba(42, 36, 24, 0.06), 0 6px 20px rgba(42, 36, 24, 0.08);
+  --shadow-glass-hover: 0 2px 4px rgba(42, 36, 24, 0.08), 0 12px 32px rgba(42, 36, 24, 0.12);
 }
 
 /* The page chrome backgrounds are set with hard-coded Tailwind gradients on
    <html>/<body> in index.css; override them for light mode. */
 html[data-theme="light"] {
-  background: #eef1f5;
+  background: #e1d8c6;
 }
 html[data-theme="light"] body {
   background-image: none;
-  background: #f5f6f8;
-  color: #1a1f29;
+  background: #eae3d4;
+  color: #201d15;
 }
 
 /* ── DashboardLanding (.nd-root) injects its own palette on the element
    itself, so the global :root overrides above don't reach it — override the
    element directly. The lime accent is darkened for legibility on white. */
 html[data-theme="light"] .nd-root {
-  --bg:        #f5f6f8;
-  --bg2:       #eef1f5;
-  --ink:       #1a1f29;
-  --ink-dim:   rgba(26, 31, 41, 0.55);
-  --ink-faint: rgba(26, 31, 41, 0.12);
-  --line:      rgba(17, 19, 24, 0.09);
-  --glass:     rgba(17, 19, 24, 0.025);
-  --accent:    #5c7a00;   /* dark lime — readable on light backgrounds */
+  --bg:        #eae3d4;
+  --bg2:       #e1d8c6;
+  --ink:       #201d15;
+  --ink-dim:   rgba(32, 29, 21, 0.58);
+  --ink-faint: rgba(32, 29, 21, 0.14);
+  --line:      rgba(42, 36, 24, 0.11);
+  --glass:     rgba(42, 36, 24, 0.03);
+  --accent:    #556d00;   /* dark lime — readable on bone backgrounds */
 }
 
 /* AccountingPage darkens lime to the same legible tone. It defines --accent
    at :root, so a plain html[data-theme] override (above) already wins; this
    block just aligns the accounting accent with the dashboard. */
 html[data-theme="light"] .ac-shell {
-  --accent: #5c7a00;
+  --accent: #556d00;
 }
 
 /* Keep selection / scrollbar legible in light mode. */
 html[data-theme="light"] ::selection {
-  background: rgba(138, 109, 47, 0.22);
+  background: rgba(128, 98, 40, 0.24);
 }
 
 /* ===========================================================================
@@ -153,17 +159,17 @@ html[data-theme="light"] ::selection {
    (red/green/blue/gold …) are deliberately left intact.
    ======================================================================== */
 
-/* Solid neutral surfaces → light */
+/* Solid neutral surfaces → bone white */
 html[data-theme="light"] .bg-gray-950,
 html[data-theme="light"] .bg-gray-900,
-html[data-theme="light"] .bg-black            { background-color: #ffffff; }
+html[data-theme="light"] .bg-black            { background-color: #faf6ec; }
 html[data-theme="light"] .bg-gray-800,
 html[data-theme="light"] .bg-gray-700,
 html[data-theme="light"] .bg-slate-800,
-html[data-theme="light"] .bg-slate-700        { background-color: #f1f3f6; }
+html[data-theme="light"] .bg-slate-700        { background-color: #f1ebdd; }
 html[data-theme="light"] .bg-gray-600,
 html[data-theme="light"] .bg-gray-500,
-html[data-theme="light"] .bg-slate-500        { background-color: #e3e7ee; }
+html[data-theme="light"] .bg-slate-500        { background-color: #e4ddcc; }
 
 /* Arbitrary dark navy surfaces used as panels */
 html[data-theme="light"] .bg-\[\#111827\],
@@ -171,30 +177,38 @@ html[data-theme="light"] .bg-\[\#0b1220\],
 html[data-theme="light"] .bg-\[\#0f172a\],
 html[data-theme="light"] .bg-\[\#0d1628\],
 html[data-theme="light"] .bg-\[\#0a1120\],
-html[data-theme="light"] .bg-\[\#071023\]     { background-color: #ffffff; }
+html[data-theme="light"] .bg-\[\#071023\]     { background-color: #faf6ec; }
 
-/* White overlays → dark overlays (scrims bg-black/NN stay dark on purpose) */
-html[data-theme="light"] .bg-white\/5         { background-color: rgba(17, 19, 24, 0.05); }
-html[data-theme="light"] .bg-white\/8         { background-color: rgba(17, 19, 24, 0.06); }
-html[data-theme="light"] .bg-white\/10        { background-color: rgba(17, 19, 24, 0.08); }
-html[data-theme="light"] .border-white\/5     { border-color: rgba(17, 19, 24, 0.06); }
-html[data-theme="light"] .border-white\/10    { border-color: rgba(17, 19, 24, 0.10); }
-html[data-theme="light"] .border-white\/30    { border-color: rgba(17, 19, 24, 0.20); }
+/* White overlays → warm dark overlays (scrims bg-black/NN stay dark on purpose) */
+html[data-theme="light"] .bg-white\/5         { background-color: rgba(42, 36, 24, 0.05); }
+html[data-theme="light"] .bg-white\/8         { background-color: rgba(42, 36, 24, 0.07); }
+html[data-theme="light"] .bg-white\/10        { background-color: rgba(42, 36, 24, 0.09); }
+html[data-theme="light"] .border-white\/5     { border-color: rgba(42, 36, 24, 0.07); }
+html[data-theme="light"] .border-white\/10    { border-color: rgba(42, 36, 24, 0.12); }
+html[data-theme="light"] .border-white\/30    { border-color: rgba(42, 36, 24, 0.22); }
 
 /* Neutral borders */
 html[data-theme="light"] .border-gray-400,
 html[data-theme="light"] .border-gray-500,
 html[data-theme="light"] .border-gray-600,
 html[data-theme="light"] .border-gray-700,
-html[data-theme="light"] .border-gray-800     { border-color: rgba(17, 19, 24, 0.12); }
+html[data-theme="light"] .border-gray-800     { border-color: rgba(42, 36, 24, 0.14); }
 
-/* Muted / body text that was light-on-dark → dark-on-light */
-html[data-theme="light"] .text-gray-100       { color: #1f2733; }
-html[data-theme="light"] .text-gray-200       { color: #334155; }
-html[data-theme="light"] .text-gray-300       { color: #475569; }
-html[data-theme="light"] .text-gray-400       { color: #64748b; }
-html[data-theme="light"] .text-gray-500       { color: #64748b; }
-html[data-theme="light"] .text-white          { color: #1a1f29; }
+/* Muted / body text that was light-on-dark → warm dark-on-bone.
+   All tiers darkened so even the faintest clears AA on the bone field. */
+html[data-theme="light"] .text-gray-100       { color: #211e16; }
+html[data-theme="light"] .text-gray-200       { color: #2e2a20; }
+html[data-theme="light"] .text-gray-300       { color: #423d31; }
+html[data-theme="light"] .text-gray-400       { color: #5f5946; }
+html[data-theme="light"] .text-gray-500       { color: #5f5946; }
+html[data-theme="light"] .text-white          { color: #201d15; }
+
+/* Same remap for the slate family (used across the email / accounting pages). */
+html[data-theme="light"] .text-slate-100      { color: #211e16; }
+html[data-theme="light"] .text-slate-200      { color: #2e2a20; }
+html[data-theme="light"] .text-slate-300      { color: #423d31; }
+html[data-theme="light"] .text-slate-400      { color: #5f5946; }
+html[data-theme="light"] .text-slate-500      { color: #5f5946; }
 
 /* …but keep white text on coloured / brand buttons & badges */
 html[data-theme="light"] [class*="bg-red-"].text-white,
