@@ -1146,36 +1146,37 @@ export default function SettingsPage() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <PageLayout noScroll>
+    <PageLayout noScrollMobileOnly>
       <style>{`
-        /* Fixed shell: header + tab strip never move, only the active tab's
-           content scrolls internally. Keeps the page itself (and the bottom
-           tab bar / nav) free of document-level scroll on every screen size. */
-        .sp-layout { max-width: 1100px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; min-height: 0; }
-        .sp-header { margin-bottom: 1.5rem; flex-shrink: 0; }
-        .sp-body { display: flex; gap: 1.75rem; align-items: flex-start; flex: 1; min-height: 0; overflow: hidden; }
+        /* Desktop: the page scrolls normally with the document; the sidebar
+           sticks alongside so the tab strip stays in view while you scroll.
+           On mobile we switch to a fixed shell where only the content pane
+           scrolls (keeps the bottom tab bar / nav stable) — see @media below. */
+        .sp-layout { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; }
+        .sp-header { margin-bottom: 1.5rem; }
+        .sp-body { display: flex; gap: 1.75rem; align-items: flex-start; }
         .sp-sidebar {
           width: 188px; flex-shrink: 0;
-          max-height: 100%; overflow-y: auto; scrollbar-width: none;
+          position: sticky; top: 80px; align-self: flex-start;
           display: flex; flex-direction: column; gap: 2px;
         }
         .sp-sidebar::-webkit-scrollbar { display: none; }
         .sp-content {
-          flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1.25rem;
-          overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0.1rem 0.1rem 1.5rem;
-          scrollbar-width: thin; scrollbar-color: rgba(var(--tint),0.08) transparent;
+          flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.25rem;
+          padding: 0.1rem 0.1rem 1.5rem;
         }
 
-        /* Mobile: sidebar becomes a clean horizontal pill tab strip; only
-           the content pane below it scrolls. */
+        /* Mobile: fixed shell — sidebar becomes a horizontal pill tab strip and
+           only the content pane below it scrolls. */
         @media (max-width: 700px) {
-          .sp-layout { gap: 0; }
-          .sp-header { margin-bottom: 0.6rem; }
+          .sp-layout { gap: 0; height: 100%; min-height: 0; }
+          .sp-header { margin-bottom: 0.6rem; flex-shrink: 0; }
           .sp-header h1 { font-size: clamp(1.15rem, 5vw, 1.4rem) !important; }
           .sp-header-breadcrumb { display: none; }
           .sp-header-sub { display: none; }
-          .sp-body { flex-direction: column; gap: 0; flex: 1; min-height: 0; }
+          .sp-body { flex-direction: column; gap: 0; flex: 1; min-height: 0; overflow: hidden; }
           .sp-sidebar {
+            position: static;
             width: 100%; max-height: none;
             flex-direction: row; flex-shrink: 0;
             overflow-x: auto; overflow-y: hidden;
@@ -1193,7 +1194,11 @@ export default function SettingsPage() {
           }
           .sp-sidebar-btn span { display: none; }
           .sp-sidebar-divider { display: none; }
-          .sp-content { gap: 0.75rem; flex: 1; min-height: 0; padding: 0.1rem 0.1rem 1rem; }
+          .sp-content {
+            gap: 0.75rem; flex: 1; min-height: 0; padding: 0.1rem 0.1rem 1rem;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin; scrollbar-color: rgba(var(--tint),0.08) transparent;
+          }
         }
 
         /* Compact settings rows on mobile */
