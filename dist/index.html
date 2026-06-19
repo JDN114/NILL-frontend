@@ -19,8 +19,31 @@
         }
       })();
     </script>
+    <script>
+      /* Installed PWA only: iOS Safari (browser tab) deliberately ignores
+         user-scalable=no for accessibility, but the installed standalone PWA
+         respects it. Block the residual iOS pinch gesture so the app feels
+         native. Gated to standalone + coarse pointer so neither the regular
+         mobile browser nor a desktop-installed PWA is affected. */
+      (function () {
+        try {
+          var standalone =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            window.matchMedia("(display-mode: fullscreen)").matches ||
+            window.navigator.standalone === true;
+          var touch = window.matchMedia("(pointer: coarse)").matches;
+          if (standalone && touch) {
+            document.addEventListener("gesturestart", function (e) { e.preventDefault(); }, { passive: false });
+            document.addEventListener("gesturechange", function (e) { e.preventDefault(); }, { passive: false });
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- maximum-scale/user-scalable lock pinch-zoom on MOBILE only (native feel,
+         esp. installed PWA). Desktop Cmd/Ctrl+ zoom is NOT governed by this tag,
+         so MacBook browser zoom is unaffected. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>NILL</title>
 
     <!-- PWA manifest -->
@@ -44,6 +67,12 @@
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100%; background: #040407; }
+
+      /* Touch devices only (mobile): kill double-tap-to-zoom and the 300ms tap
+         delay for a native feel. Desktop (fine pointer) is untouched. */
+      @media (pointer: coarse) {
+        html { touch-action: manipulation; }
+      }
 
       #nill-boot {
         position: fixed;
@@ -122,12 +151,12 @@
         40%           { transform: scale(1);   opacity: 1;   }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-BJdKv5wE.js"></script>
+    <script type="module" crossorigin src="/assets/index-DsTSGAHm.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react--hPKs4bs.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-misc-CMqYbET0.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-router-BxWC8dWZ.js">
     <link rel="stylesheet" crossorigin href="/assets/vendor-misc-BK_H5ORi.css">
-    <link rel="stylesheet" crossorigin href="/assets/index-B9l7V8Rn.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DdpZHFfu.css">
   </head>
   <body>
     <!-- Ladescreen — wird entfernt sobald React mountet -->

@@ -776,6 +776,20 @@ body {
     border-top: 1px solid var(--nill-border);
   }
   .em-reply-btn { flex: 1; justify-content: center; padding: 0.7rem 1rem; }
+
+  /* Native scroll feel on phones. min-height:0 fixes the flexbox scroll-clip
+     bug — without it a flex:1/overflow:auto child won't shrink, so the list
+     and the open email overflow their overflow:hidden parent and the bottom
+     (load-more button / reply bar) gets cut off instead of scrolling.
+     -webkit-overflow-scrolling adds iOS momentum; overscroll-behavior:contain
+     stops the rubber-band from chaining to the page behind it. */
+  .em-list,
+  .em-detail-inner {
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .em-shell { overscroll-behavior: none; }
 }
 
 /* ── Animationen ─────────────────────────────────────────── */
@@ -1061,9 +1075,13 @@ body {
 }
 
 /* ── Fix: Page füllt den ganzen Screen ──────────────────── */
+/* 100dvh (not 100vh): on mobile the dynamic viewport unit accounts for the
+   iOS/Android toolbar, so the shell never runs taller than the visible screen
+   (which clipped the FAB, the sticky reply bar and the last emails). On
+   desktop 100dvh === 100vh, so nothing changes there. */
 .em-shell {
-  height: 100vh !important;
-  max-height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
 }
 
 /* ── Attachments ─────────────────────────────────────────── */
@@ -1113,9 +1131,10 @@ body {
 }
 
 /* ── Fix: Shell füllt ganzen Screen ─────────────────────── */
+/* See note above — 100dvh keeps the mobile shell within the visible viewport. */
 .em-shell {
-  height: 100vh !important;
-  max-height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
   overflow: hidden;
 }
 
@@ -1237,9 +1256,12 @@ body { min-height: -webkit-fill-available; }
   .em-badge, .em-dot, .em-category, .em-priority,
   .em-sentiment, .nill-hamburger-bar { min-height: unset; }
 
-  /* Email shell must reserve space for bottom nav */
+  /* EmailsPage is a standalone full-screen mail client — it has NO app navbar
+     and NO bottom tab bar (it doesn't use PageLayout), so the shell must fill
+     the whole dynamic viewport. The old calc() reserved 64px+54px for chrome
+     that isn't on this page, leaving a large empty gap at the bottom. */
   .em-shell {
-    height: calc(100dvh - 64px - 54px - env(safe-area-inset-bottom, 0));
+    height: 100dvh;
   }
 
   /* Prevent card grids from overflowing on narrow phones */
