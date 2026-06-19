@@ -359,8 +359,14 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReana
         <div className="em-detail-meta">
           <Avatar name={s.name} />
           <div className="em-detail-meta-info">
-            <span className="em-detail-meta-name">{s.name}</span>
-            <span className="em-detail-meta-email">&lt;{s.email}&gt;</span>
+            <span className="em-detail-meta-name">
+              {s.name} <span className="em-detail-meta-email">&lt;{s.email}&gt;</span>
+            </span>
+            {email.to_address && (
+              <span className="em-detail-meta-to" title={email.to_address}>
+                <span className="em-detail-meta-label">An:</span> {email.to_address}
+              </span>
+            )}
           </div>
           <span className="em-detail-meta-date">{fmtLong(email.received_at)}</span>
         </div>

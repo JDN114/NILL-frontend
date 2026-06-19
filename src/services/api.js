@@ -48,6 +48,11 @@ export async function logoutUser() {
   await api.post("/auth/logout");
 }
 
+// Log out on ALL devices: revokes every active session server-side.
+export async function logoutAllDevices() {
+  await api.post("/auth/logout-all");
+}
+
 export async function getCurrentUser() {
   try {
     const res = await api.get("/auth/me");

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import Modal from "./ui/Modal";
 import api from "../services/api";
 import EmailTemplatePicker from "./EmailTemplatePicker";
+import RecipientSuggestInput from "./RecipientSuggestInput";
 import { useMailApi } from "../context/MailContext";
 import { GmailContext } from "../context/GmailContext";
 import { textToHtml, buildPreviewHtml, isValidEmail, isUncertainDelivery, MAX_BODY_LENGTH } from "../utils/mailBody";
@@ -131,7 +132,8 @@ export default function EmailComposeModal({ open, onClose, onSent }) {
         {/* To + Cc/Bcc links */}
         <div className={line}>
           <span className={recipLabel}>An</span>
-          <input value={to} onChange={e => setTo(e.target.value)} placeholder="Empfänger" className={field} autoFocus />
+          <RecipientSuggestInput value={to} onChange={setTo} placeholder="Empfänger"
+            inputClassName={field} wrapperClassName="flex-1 min-w-0" autoFocus />
           <div className="flex items-center gap-2 flex-shrink-0 text-[13px]">
             {!showCc  && <button onClick={() => setShowCc(true)}  className="text-slate-500 hover:text-slate-200 transition-colors">Cc</button>}
             {!showBcc && <button onClick={() => setShowBcc(true)} className="text-slate-500 hover:text-slate-200 transition-colors">Bcc</button>}
@@ -141,14 +143,16 @@ export default function EmailComposeModal({ open, onClose, onSent }) {
         {showCc && (
           <div className={line}>
             <span className={recipLabel}>Cc</span>
-            <input value={cc} onChange={e => setCc(e.target.value)} placeholder="Cc" className={field} />
+            <RecipientSuggestInput value={cc} onChange={setCc} placeholder="Cc"
+              inputClassName={field} wrapperClassName="flex-1 min-w-0" />
             <button onClick={() => { setShowCc(false); setCc(""); }} className="text-slate-600 hover:text-red-400 text-base px-1 flex-shrink-0">×</button>
           </div>
         )}
         {showBcc && (
           <div className={line}>
             <span className={recipLabel}>Bcc</span>
-            <input value={bcc} onChange={e => setBcc(e.target.value)} placeholder="Bcc" className={field} />
+            <RecipientSuggestInput value={bcc} onChange={setBcc} placeholder="Bcc"
+              inputClassName={field} wrapperClassName="flex-1 min-w-0" />
             <button onClick={() => { setShowBcc(false); setBcc(""); }} className="text-slate-600 hover:text-red-400 text-base px-1 flex-shrink-0">×</button>
           </div>
         )}

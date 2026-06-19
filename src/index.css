@@ -452,6 +452,8 @@ body {
 .em-detail-meta-info { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
 .em-detail-meta-name  { font-size: 0.83rem; font-weight: 600; color: var(--nill-text); }
 .em-detail-meta-email { font-size: 0.73rem; color: var(--nill-text-mute); }
+.em-detail-meta-to    { font-size: 0.73rem; color: var(--nill-text-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.em-detail-meta-label { color: var(--nill-text-dim); font-weight: 600; }
 .em-detail-meta-date  { font-size: 0.73rem; color: var(--nill-text-mute); white-space: nowrap; flex-shrink: 0; }
 
 .em-detail-body { width: 100%; }

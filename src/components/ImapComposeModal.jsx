@@ -10,6 +10,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ImapContext } from "../context/ImapContext";
 import { sendEmail, sendEmailWithAttachments } from "../services/mailApi";
+import RecipientSuggestInput from "./RecipientSuggestInput";
+
+const imapInput = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500";
 
 export default function ImapComposeModal({ open, onClose, onSent }) {
   const imap = useContext(ImapContext);
@@ -100,29 +103,28 @@ export default function ImapComposeModal({ open, onClose, onSent }) {
 
           <div>
             <label className="text-gray-400 text-xs mb-1 block">An</label>
-            <input
-              type="text" value={to} onChange={e => setTo(e.target.value)}
+            <RecipientSuggestInput
+              value={to} onChange={setTo}
               placeholder="empfaenger@example.com"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
-              required
+              inputClassName={imapInput}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-gray-400 text-xs mb-1 block">CC</label>
-              <input
-                type="text" value={cc} onChange={e => setCc(e.target.value)}
+              <RecipientSuggestInput
+                value={cc} onChange={setCc}
                 placeholder="komma-getrennt"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
+                inputClassName={imapInput}
               />
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">BCC</label>
-              <input
-                type="text" value={bcc} onChange={e => setBcc(e.target.value)}
+              <RecipientSuggestInput
+                value={bcc} onChange={setBcc}
                 placeholder="komma-getrennt"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500"
+                inputClassName={imapInput}
               />
             </div>
           </div>

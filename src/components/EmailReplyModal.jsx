@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import api from "../services/api";
 import EmailTemplatePicker from "./EmailTemplatePicker";
+import RecipientSuggestInput from "./RecipientSuggestInput";
 import { useMailApi } from "../context/MailContext";
 import { textToHtml, buildPreviewHtml, isUncertainDelivery, MAX_BODY_LENGTH } from "../utils/mailBody";
 
@@ -118,7 +119,8 @@ export default function EmailReplyModal({ emailId, open, onClose, onSent }) {
         {showCc && (
           <div className={line}>
             <span className={recipLabel}>Cc</span>
-            <input value={cc} onChange={e => setCc(e.target.value)} placeholder="Cc" className={field} />
+            <RecipientSuggestInput value={cc} onChange={setCc} placeholder="Cc"
+              inputClassName={field} wrapperClassName="flex-1 min-w-0" />
             <button onClick={() => { setShowCc(false); setCc(""); }} className="text-slate-600 hover:text-red-400 text-base px-1 flex-shrink-0">×</button>
           </div>
         )}

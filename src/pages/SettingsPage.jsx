@@ -8,7 +8,7 @@ import { GmailContext }   from "../context/GmailContext";
 import { OutlookContext } from "../context/OutlookContext";
 import { ImapContext }    from "../context/ImapContext";
 import { useAuth }        from "../context/AuthContext";
-import api, { logoutUser } from "../services/api";
+import api, { logoutUser, logoutAllDevices } from "../services/api";
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal  from "../components/DeleteAccountModal";
 import EmailVorlagenTab    from "../components/EmailVorlagenTab";
@@ -764,6 +764,15 @@ export default function SettingsPage() {
     navigate("/login");
   };
 
+  const [logoutAllLoading, setLogoutAllLoading] = useState(false);
+  const handleLogoutAll = async () => {
+    if (!window.confirm("Auf allen Geräten abmelden? Bestehende Sitzungen auf anderen Geräten werden sofort beendet.")) return;
+    setLogoutAllLoading(true);
+    try { await logoutAllDevices(); } catch {}
+    localStorage.removeItem("nill_imap_saved");
+    navigate("/login");
+  };
+
   const handleSaveOrg = async () => {
     if (!orgName.trim()) { setOrgError("Unternehmensname darf nicht leer sein."); return; }
     setOrgError(""); setOrgSaving(true); setOrgSuccess(false);
@@ -1326,6 +1335,13 @@ export default function SettingsPage() {
                     </button>
                     <button style={btnGhost} onClick={handleLogout}>
                       Ausloggen
+                    </button>
+                    <button
+                      style={{ ...btnGhost, color: red, borderColor: "rgba(248,113,113,0.25)", opacity: logoutAllLoading ? 0.5 : 1 }}
+                      onClick={handleLogoutAll}
+                      disabled={logoutAllLoading}
+                    >
+                      {logoutAllLoading ? "Wird abgemeldet…" : "Auf allen Geräten abmelden"}
                     </button>
                   </div>
                 </div>
