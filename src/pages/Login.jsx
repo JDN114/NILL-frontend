@@ -10,6 +10,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
   // 2FA state
   const [step, setStep]           = useState("credentials"); // "credentials" | "2fa"
@@ -32,6 +33,7 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+    setEmailNotVerified(false);
     if (!emailRegex.test(email)) {
       setError("Bitte eine gültige E-Mail-Adresse eingeben.");
       return;
@@ -56,7 +58,12 @@ export default function Login() {
       navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Login Fehler:", err);
-      setError("E-Mail oder Passwort ungültig.");
+      if (err?.response?.status === 403) {
+        setEmailNotVerified(true);
+        setError("E-Mail-Adresse noch nicht bestätigt. Bitte prüfe deinen Posteingang.");
+      } else {
+        setError("E-Mail oder Passwort ungültig.");
+      }
     } finally {
       setLoading(false);
     }
@@ -432,7 +439,21 @@ export default function Login() {
                   />
                 </div>
 
-                {error && <div className="nill-error">{error}</div>}
+                {error && (
+                  <div className="nill-error">
+                    {error}
+                    {emailNotVerified && (
+                      <div style={{ marginTop: 8 }}>
+                        <span
+                          style={{ color: "#c6ff3c", cursor: "pointer", textDecoration: "underline" }}
+                          onClick={() => navigate("/resend-verification", { state: { email } })}
+                        >
+                          Bestätigungs-E-Mail erneut senden
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <button className="nill-btn-primary" type="submit" disabled={loading}>
                   {loading ? "Anmelden…" : "Anmelden →"}

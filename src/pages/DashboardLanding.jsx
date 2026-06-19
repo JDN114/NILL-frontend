@@ -123,11 +123,11 @@ const S = `
   .nd-feed-empty { padding:48px 20px; text-align:center; color:var(--ink-dim); font-size:13px; }
 
   @media(max-width:768px) {
-    /* Safety net only — the tile grid below is sized to fit one screen, so
-       this should rarely engage. Keeps the page from ever leaking into a
-       document-level scroll if content is unexpectedly tall (long org name,
-       many notifications, …). The page itself stays non-scrolling. */
-    .nd-root { overflow-y:auto; -webkit-overflow-scrolling:touch; height:100%; padding-bottom:env(safe-area-inset-bottom,0); display:flex; flex-direction:column; }
+    /* On phones the whole page scrolls naturally with the document (see
+       PageLayout .nill-shell-noscroll). The root is a normal block in that
+       flow — no nested scroll container, no body lock — so it feels native
+       and nothing gets clipped behind the bottom tab bar. */
+    .nd-root { padding-bottom:env(safe-area-inset-bottom,0); }
 
     .nd-welcome { padding:14px 16px; margin-bottom:10px; }
     .nd-welcome h1 { font-size:clamp(18px,5vw,26px); margin-bottom:2px; }
@@ -275,11 +275,15 @@ export default function DashboardLanding() {
     setAccountingMode(next);
   };
 
+  // Lock the background only while the activity feed slide-over is open, so the
+  // page behind it can't scroll under the panel. The dashboard itself scrolls
+  // naturally (no global body lock — that caused the non-native rubber-band).
   useEffect(() => {
+    if (!feedOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
-  }, []);
+  }, [feedOpen]);
 
   useEffect(() => {
     api.get("/me/profile").then(r => setUserName(r.data.name || null)).catch(() => {});

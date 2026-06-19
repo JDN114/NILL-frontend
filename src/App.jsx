@@ -51,6 +51,7 @@ const VerifyEmail            = lazyWithRetry(() => import("./pages/VerifyEmail")
 const ResetPasswordPage      = lazyWithRetry(() => import("./pages/ResetPasswordPage"));
 const VerificationSuccess    = lazyWithRetry(() => import("./pages/VerificationSuccess"));
 const VerificationFailed     = lazyWithRetry(() => import("./pages/VerificationFailed"));
+const ResendVerification     = lazyWithRetry(() => import("./pages/ResendVerification"));
 const InviteAcceptPage       = lazyWithRetry(() => import("./pages/InviteAcceptPage"));
 const UpgradePage            = lazyWithRetry(() => import("./pages/UpgradePage"));
 const AGB                    = lazyWithRetry(() => import("./pages/AGB"));
@@ -197,6 +198,7 @@ function App() {
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/verification-success" element={<VerificationSuccess />} />
                   <Route path="/verification-failed" element={<VerificationFailed />} />
+                  <Route path="/resend-verification" element={<ResendVerification />} />
                   <Route path="/Impressum" element={<Impressum />} />
                   <Route path="/Datenschutz" element={<Datenschutz />} />
                   <Route path="/agb" element={<AGB />} />

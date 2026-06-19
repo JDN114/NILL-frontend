@@ -24,9 +24,29 @@ export default function PageLayout({ children, noScroll, noScrollMobileOnly, foo
           .nill-shell-mobilefixed { height: 100dvh !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; }
           .nill-main-mobilefixed { flex: 1 !important; min-height: 0 !important; overflow: hidden !important; }
         }
+        /* Dashboard (noScroll) shell: on phones, stop fighting the viewport.
+           Instead of clipping content with a fixed 100dvh / overflow:hidden
+           shell — which cuts off the lower module tiles and hides the footer
+           behind the bottom tab bar — let the page scroll naturally with the
+           document. Sticky navbar + fixed bottom nav stay as chrome; content is
+           padded to clear the tab bar. One scroll container = native feel. */
+        @media (max-width: 768px) {
+          .nill-shell-noscroll {
+            height: auto !important;
+            min-height: 100dvh !important;
+            overflow: visible !important;
+            padding-bottom: calc(62px + env(safe-area-inset-bottom, 0)) !important;
+          }
+          .nill-shell-noscroll .nill-page-main {
+            overflow: visible !important;
+            min-height: 0 !important;
+            flex: 0 0 auto !important;
+            padding-bottom: 0 !important;
+          }
+        }
       `}</style>
       <div
-        className={`min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] ${noScrollMobileOnly ? "nill-shell-mobilefixed" : ""}`}
+        className={`min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] ${noScrollMobileOnly ? "nill-shell-mobilefixed" : ""} ${noScroll && !noPadding ? "nill-shell-noscroll" : ""}`}
         style={fixedHeight ? {display:"flex",flexDirection:"column",height:"100dvh",overflow:"hidden"} : {}}
       >
         <Navbar />
