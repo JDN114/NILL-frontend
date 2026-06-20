@@ -16,11 +16,15 @@ export default function ProtectedRoute({ children }) {
       return;
     }
 
+    const trialExpired =
+      org?.plan_status === "trial" &&
+      org?.trial_ends_at &&
+      new Date(org.trial_ends_at) <= new Date();
     const planOk =
       org?.plan_status === "active" ||
-      (org?.plan_status === "trial" && org?.trial_ends_at && new Date(org.trial_ends_at) > new Date());
+      (org?.plan_status === "trial" && !trialExpired);
     if (!planOk || org?.plan_status === "canceled") {
-      navigate("/pricing", { replace: true });
+      navigate(trialExpired ? "/pricing?trial_expired=1" : "/pricing", { replace: true });
       return;
     }
 
@@ -41,9 +45,11 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) return null;
   if (!user) return null;
-  const _planOk =
-    org?.plan_status === "active" ||
-    (org?.plan_status === "trial" && org?.trial_ends_at && new Date(org.trial_ends_at) > new Date());
+  const _trialExpired =
+    org?.plan_status === "trial" &&
+    org?.trial_ends_at &&
+    new Date(org.trial_ends_at) <= new Date();
+  const _planOk = org?.plan_status === "active" || (org?.plan_status === "trial" && !_trialExpired);
   if (!_planOk || org?.plan_status === "canceled") return null;
   if (!org?.name) return null;
 

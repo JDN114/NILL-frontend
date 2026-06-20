@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 
 // ─── Design tokens (matches LandingPage) ─────────────────────────────────────
@@ -322,7 +322,7 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
           else { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = line; }
         }}
       >
-        {loading === plan.id ? "Weiterleitung…" : "Jetzt starten"}
+        {loading === plan.id ? "Weiterleitung…" : "Zahlungspflichtig abonnieren"}
         {!loading && (
           <span style={{ display: "inline-block", transition: `transform 0.3s ${ease}` }}
             onMouseOver={e => e.currentTarget.style.transform = "translateX(4px)"}
@@ -371,11 +371,23 @@ function FaqItem({ q, a }) {
 
 export default function PricingPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [mode, setMode] = useState("station"); // "station" = Arbeitsstation (live) · "suite" = NILL Komplett
   const [cycle, setCycle] = useState("monthly");
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [error, setError] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  const [showExpiredModal, setShowExpiredModal] = useState(
+    () => searchParams.get("trial_expired") === "1"
+  );
+
+  // Param aus URL entfernen, sobald Modal angezeigt wird (kein Reload-Spam)
+  useEffect(() => {
+    if (searchParams.get("trial_expired") === "1") {
+      searchParams.delete("trial_expired");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
 
   // Track scroll for nav blur
   useState(() => {
@@ -407,6 +419,122 @@ export default function PricingPage() {
 
   return (
     <div style={{ background: bg, color: ink, fontFamily: sans, minHeight: "100vh", overflowX: "hidden" }}>
+
+      {/* ── Trial-Expired-Modal ───────────────────────────────────────── */}
+      {showExpiredModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="trial-expired-title"
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(4,4,7,0.85)",
+            backdropFilter: "blur(6px)",
+            padding: "1rem",
+          }}
+        >
+          <div style={{
+            background: "#0d0d12",
+            border: "1px solid rgba(239,237,231,0.1)",
+            borderRadius: 20,
+            padding: "2.25rem 2rem",
+            maxWidth: 480,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.1rem",
+            boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+          }}>
+            {/* Icon */}
+            <div style={{ fontSize: "2rem", textAlign: "center" }}>⏰</div>
+
+            <h2
+              id="trial-expired-title"
+              style={{
+                margin: 0, textAlign: "center",
+                fontFamily: serif, fontSize: "1.45rem",
+                fontWeight: 700, color: ink, lineHeight: 1.25,
+              }}
+            >
+              Dein kostenloser Testzeitraum ist abgelaufen
+            </h2>
+
+            <p style={{ margin: 0, fontSize: "0.88rem", color: inkDim, lineHeight: 1.6, textAlign: "center" }}>
+              Deine Daten bleiben noch <strong style={{ color: ink }}>30 Tage</strong> sicher gespeichert.
+              Wähle jetzt einen Plan, um sofort wieder vollen Zugriff zu erhalten — ohne Datenverlust.
+            </p>
+
+            {/* Info-Box */}
+            <div style={{
+              background: "rgba(198,255,60,0.06)",
+              border: "1px solid rgba(198,255,60,0.15)",
+              borderRadius: 10,
+              padding: "0.85rem 1rem",
+              fontSize: "0.8rem",
+              color: inkDim,
+              lineHeight: 1.6,
+            }}>
+              <strong style={{ color: ink }}>Was passiert mit deinen Daten?</strong><br />
+              Alle Daten (E-Mails, Zeiterfassungen, HR-Dokumente) bleiben 30 Tage nach Ablauf des
+              Testzeitraums gespeichert. Danach werden sie gemäß unserer{" "}
+              <Link to="/datenschutz" style={{ color: "#c6ff3c", textDecoration: "none" }}
+                onClick={() => setShowExpiredModal(false)}>
+                Datenschutzerklärung
+              </Link>{" "}
+              unwiderruflich gelöscht.
+            </div>
+
+            {/* §312j-konformer CTA */}
+            <button
+              onClick={() => {
+                setShowExpiredModal(false);
+                handleCheckout("arbeitsstation");
+              }}
+              disabled={loadingPlan === "arbeitsstation"}
+              style={{
+                background: accent, color: "#000",
+                border: "none", borderRadius: 99,
+                padding: "0.85rem 1.5rem",
+                fontWeight: 700, fontSize: "0.9rem",
+                cursor: "pointer", textAlign: "center",
+                opacity: loadingPlan === "arbeitsstation" ? 0.6 : 1,
+              }}
+            >
+              {loadingPlan === "arbeitsstation"
+                ? "Weiterleitung…"
+                : "Jetzt kostenpflichtig abonnieren — Arbeitsstation 30 €/Monat"}
+            </button>
+
+            <button
+              onClick={() => setShowExpiredModal(false)}
+              style={{
+                background: "transparent",
+                border: `1px solid ${inkFaint}`,
+                borderRadius: 99,
+                padding: "0.65rem 1.5rem",
+                color: inkDim,
+                fontSize: "0.85rem",
+                cursor: "pointer",
+              }}
+            >
+              Pläne vergleichen
+            </button>
+
+            {/* Rechtliche Pflichtangaben §312j BGB */}
+            <p style={{ margin: 0, fontSize: "0.7rem", color: "rgba(239,237,231,0.3)", textAlign: "center", lineHeight: 1.5 }}>
+              Mit „Jetzt kostenpflichtig abonnieren" wirst du zu Stripe weitergeleitet.
+              Es gilt unser{" "}
+              <Link to="/agb" style={{ color: "rgba(239,237,231,0.4)" }}
+                onClick={() => setShowExpiredModal(false)}>AGB</Link>{" "}
+              und{" "}
+              <Link to="/widerruf" style={{ color: "rgba(239,237,231,0.4)" }}
+                onClick={() => setShowExpiredModal(false)}>Widerrufsrecht (14 Tage)</Link>.
+              Monatlich kündbar.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Nav ───────────────────────────────────────────────────────── */}
       <nav style={{
