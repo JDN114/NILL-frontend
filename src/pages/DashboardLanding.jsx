@@ -173,6 +173,74 @@ const S = `
     .nd-grid { gap:6px; }
     .nd-nill-modules { grid-template-columns:repeat(3,1fr); }
   }
+
+  /* ── Light-mode overrides ──────────────────────────────────────────
+     Flip all hardcoded dark tokens so the page reads on bone white.  */
+  html[data-theme="light"] .nd-root {
+    --ink:       #201d15;
+    --ink-dim:   rgba(var(--ink-tint), .55);
+    --ink-faint: rgba(var(--ink-tint), .22);
+    --line:      rgba(var(--ink-tint), .14);
+    --glass:     rgba(var(--tint), .05);
+    --accent:    #806228;
+    --a2:        #1f5fe0;
+    --a3:        #be3c28;
+    --bg:        #eae3d4;
+    --bg2:       #ddd6c6;
+  }
+
+  /* Welcome banner — warm gold glow instead of neon-purple */
+  html[data-theme="light"] .nd-welcome {
+    background: linear-gradient(135deg, rgba(128,98,40,.1), rgba(128,98,40,.04));
+  }
+  html[data-theme="light"] .nd-welcome::before {
+    background: radial-gradient(50% 40% at 30% 30%, rgba(128,98,40,.12), transparent 60%);
+  }
+
+  /* NILL card — blue accent fits bone white better than purple */
+  html[data-theme="light"] .nd-card-nill {
+    border-color: rgba(31,95,224,.2);
+    background: linear-gradient(135deg, rgba(31,95,224,.07), rgba(31,95,224,.03));
+  }
+  html[data-theme="light"] .nd-card-nill:hover {
+    border-color: rgba(31,95,224,.35);
+    background: linear-gradient(135deg, rgba(31,95,224,.11), rgba(31,95,224,.06));
+  }
+  html[data-theme="light"] .nd-card-nill .nd-card-icon {
+    background: rgba(31,95,224,.1); border-color: rgba(31,95,224,.2);
+  }
+  html[data-theme="light"] .nd-nill-badge {
+    background: rgba(31,95,224,.1); border-color: rgba(31,95,224,.2);
+  }
+  html[data-theme="light"] .nd-nill-module {
+    background: rgba(31,95,224,.07); border-color: rgba(31,95,224,.13);
+  }
+  html[data-theme="light"] .nd-nill-module-label { color: rgba(31,95,224,.8); }
+  html[data-theme="light"] .nd-notif-nill {
+    background: rgba(31,95,224,.06); border-color: rgba(31,95,224,.18);
+  }
+  html[data-theme="light"] .nd-notif-nill:hover {
+    background: rgba(31,95,224,.11); border-color: rgba(31,95,224,.3);
+  }
+
+  /* Mode pills */
+  html[data-theme="light"] .nd-mode-pill-doppelt { background: rgba(128,98,40,.15); }
+  html[data-theme="light"] .nd-mode-pill-einfach { background: rgba(31,95,224,.12); }
+
+  /* Action dot — gold glow, no neon */
+  html[data-theme="light"] .nd-action-dot { box-shadow: 0 0 8px rgba(128,98,40,.5); }
+
+  /* Feed read-btn hover */
+  html[data-theme="light"] .nd-feed-read-btn:hover {
+    color: var(--accent); border-color: rgba(128,98,40,.3);
+  }
+
+  /* Activity feed slide-over */
+  html[data-theme="light"] .nd-feed-panel { background: var(--bg2); }
+  html[data-theme="light"] .nd-feed-backdrop { background: rgba(30,24,14,.3); }
+
+  /* AI banner CTA — gold readable on bone white */
+  html[data-theme="light"] .nd-ai-banner-cta { color: #6b5120; }
 `;
 
 const ICONS = {
