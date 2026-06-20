@@ -1,11 +1,4 @@
-// src/components/layout/ArbeitsStationLayout.jsx
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-
-/* ─── Design tokens ───────────────────────────────────────────────────────────
-   Same flip pattern as ArbeitsStationPage — dark default, light override.     */
-const S = `
+import{j as a,a as t}from"./vendor-react--hPKs4bs.js";import{L as o}from"./vendor-router-B9EJrQcr.js";import{u as c}from"./index-TQlu1-jl.js";const d=`
   .asl-root {
     --asl-bg:        #040817;
     --asl-hdr-bg:    rgba(4,8,23,.96);
@@ -95,54 +88,4 @@ const S = `
     padding: clamp(20px,3vw,40px) clamp(20px,4vw,48px);
     width:100%; margin:0 auto; box-sizing:border-box;
   }
-`;
-
-function Clock() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <div className="asl-clock">
-      <div className="asl-clock-time">
-        {now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-      </div>
-      <div className="asl-clock-date">
-        {now.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" })}
-      </div>
-    </div>
-  );
-}
-
-export default function ArbeitsStationLayout({ children, title, icon, accent = "#c5a572", maxWidth = 900 }) {
-  const { org } = useAuth();
-
-  return (
-    <>
-      <style>{S}</style>
-      <div className="asl-root">
-        <header className="asl-hdr">
-          <div className="asl-hdr-left">
-            <Link to="/station" className="asl-back">←</Link>
-            <div>
-              <div className="asl-breadcrumb">ArbeitsStation</div>
-              <div className="asl-title">
-                {icon && <span style={{ color: accent, fontSize: "0.9em" }}>{icon}</span>}
-                {title}
-              </div>
-            </div>
-          </div>
-
-          <Clock />
-
-          <div className="asl-org">{org?.name ?? "Nill"}</div>
-        </header>
-
-        <main className="asl-main" style={{ maxWidth }}>
-          {children}
-        </main>
-      </div>
-    </>
-  );
-}
+`;function m(){const[s,l]=t.useState(new Date);return t.useEffect(()=>{const e=setInterval(()=>l(new Date),1e3);return()=>clearInterval(e)},[]),a.jsxs("div",{className:"asl-clock",children:[a.jsx("div",{className:"asl-clock-time",children:s.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}),a.jsx("div",{className:"asl-clock-date",children:s.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"})})]})}function b({children:s,title:l,icon:e,accent:i="#c5a572",maxWidth:n=900}){const{org:r}=c();return a.jsxs(a.Fragment,{children:[a.jsx("style",{children:d}),a.jsxs("div",{className:"asl-root",children:[a.jsxs("header",{className:"asl-hdr",children:[a.jsxs("div",{className:"asl-hdr-left",children:[a.jsx(o,{to:"/station",className:"asl-back",children:"←"}),a.jsxs("div",{children:[a.jsx("div",{className:"asl-breadcrumb",children:"ArbeitsStation"}),a.jsxs("div",{className:"asl-title",children:[e&&a.jsx("span",{style:{color:i,fontSize:"0.9em"},children:e}),l]})]})]}),a.jsx(m,{}),a.jsx("div",{className:"asl-org",children:(r==null?void 0:r.name)??"Nill"})]}),a.jsx("main",{className:"asl-main",style:{maxWidth:n},children:s})]})]})}export{b as A};
