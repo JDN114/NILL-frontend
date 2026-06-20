@@ -16,7 +16,10 @@ export default function ProtectedRoute({ children }) {
       return;
     }
 
-    if (!org?.plan || org?.plan_status === "inactive" || org?.plan_status === "canceled") {
+    const planOk =
+      org?.plan_status === "active" ||
+      (org?.plan_status === "trial" && org?.trial_ends_at && new Date(org.trial_ends_at) > new Date());
+    if (!planOk || org?.plan_status === "canceled") {
       navigate("/pricing", { replace: true });
       return;
     }
@@ -38,7 +41,10 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) return null;
   if (!user) return null;
-  if (!org?.plan || org?.plan_status === "inactive" || org?.plan_status === "canceled") return null;
+  const _planOk =
+    org?.plan_status === "active" ||
+    (org?.plan_status === "trial" && org?.trial_ends_at && new Date(org.trial_ends_at) > new Date());
+  if (!_planOk || org?.plan_status === "canceled") return null;
   if (!org?.name) return null;
 
   return <>{children}</>;
