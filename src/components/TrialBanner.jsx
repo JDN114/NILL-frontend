@@ -1,14 +1,25 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function TrialBanner() {
-  const { isTrialActive, trialDaysRemaining } = useAuth();
-  const navigate = useNavigate();
+const DISMISS_KEY = "nill_trial_banner_dismissed";
 
-  if (!isTrialActive()) return null;
+export default function TrialBanner() {
+  const { isTrialActive, trialDaysRemaining, org } = useAuth();
+  const navigate = useNavigate();
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem(DISMISS_KEY) === "1"
+  );
+
+  if (!isTrialActive() || dismissed) return null;
 
   const days = trialDaysRemaining();
   const isUrgent = days <= 3;
+
+  const dismiss = () => {
+    localStorage.setItem(DISMISS_KEY, "1");
+    setDismissed(true);
+  };
 
   return (
     <div
@@ -20,7 +31,7 @@ export default function TrialBanner() {
         padding: "9px 20px",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         gap: 16,
         fontSize: 13,
         fontFamily: "Inter, sans-serif",
@@ -28,31 +39,49 @@ export default function TrialBanner() {
         flexWrap: "wrap",
       }}
     >
-      <span>
-        {isUrgent ? "⚠️ " : ""}
-        <strong style={{ color: isUrgent ? "#ff4d8d" : "#c6ff3c" }}>
-          {days === 0
-            ? "Dein Testzeitraum endet heute"
-            : `Noch ${days} Tag${days !== 1 ? "e" : ""} im kostenlosen Test`}
-        </strong>
-        {" "}— danach werden deine Daten 30 Tage lang gespeichert.
-      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <span>
+          {isUrgent ? "⚠️ " : ""}
+          <strong style={{ color: isUrgent ? "#ff4d8d" : "#c6ff3c" }}>
+            {days === 0
+              ? "Dein Testzeitraum endet heute"
+              : `Noch ${days} Tag${days !== 1 ? "e" : ""} im kostenlosen Test`}
+          </strong>
+          {" "}— danach werden deine Daten 30 Tage lang gespeichert.
+        </span>
+        <button
+          onClick={() => navigate("/settings?tab=abonnement")}
+          style={{
+            background: isUrgent ? "#ff4d8d" : "#c6ff3c",
+            color: "#050505",
+            border: "none",
+            borderRadius: 99,
+            padding: "5px 14px",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            fontFamily: "Inter, sans-serif",
+          }}
+        >
+          Plan wählen →
+        </button>
+      </div>
       <button
-        onClick={() => navigate("/pricing")}
+        onClick={dismiss}
+        aria-label="Banner schließen"
         style={{
-          background: isUrgent ? "#ff4d8d" : "#c6ff3c",
-          color: "#050505",
+          background: "none",
           border: "none",
-          borderRadius: 99,
-          padding: "5px 14px",
-          fontSize: 12,
-          fontWeight: 600,
+          color: "rgba(var(--ink-tint),.4)",
           cursor: "pointer",
-          whiteSpace: "nowrap",
-          fontFamily: "Inter, sans-serif",
+          fontSize: 18,
+          lineHeight: 1,
+          padding: "0 4px",
+          flexShrink: 0,
         }}
       >
-        Plan wählen →
+        ×
       </button>
     </div>
   );

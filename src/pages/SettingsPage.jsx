@@ -524,7 +524,7 @@ function StationGuideTab({
 export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, org, updateOrg, isSolo, isCompanyAdmin } = useAuth();
+  const { user, org, updateOrg, isSolo, isCompanyAdmin, isTrialActive, trialDaysRemaining } = useAuth();
   const showTeamTab = !isSolo() && org?.plan != null;
   const isAdmin = isCompanyAdmin();
 
@@ -562,6 +562,8 @@ export default function SettingsPage() {
   const [cancelLoading,     setCancelLoading]     = useState(false);
   const [cancelDone,        setCancelDone]        = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [trialCheckoutLoading, setTrialCheckoutLoading] = useState(false);
+  const [trialCheckoutError,   setTrialCheckoutError]   = useState(null);
 
   // ── AI Usage ────────────────────────────────────────────────────────────
   const [aiUsage,     setAiUsage]     = useState(null);
@@ -661,7 +663,7 @@ export default function SettingsPage() {
         if (typeof fetchGmailStatus   === "function") await fetchGmailStatus();
         if (typeof fetchOutlookStatus === "function") await fetchOutlookStatus();
         if (typeof imap?.fetchStatus  === "function") await imap.fetchStatus();
-      } catch {}
+      } catch { /* ignore */ }
       finally { if (mounted) setLoadingStatus(false); }
     };
     load();
@@ -719,7 +721,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("nill_notif_prefs");
-    if (saved) { try { setNotifs(JSON.parse(saved)); } catch {} }
+    if (saved) { try { setNotifs(JSON.parse(saved)); } catch { /* ignore */ } }
     // Also load from backend if available
     api.get("/me/notification-preferences").then(r => {
       setNotifs(p => ({ ...p, ...r.data }));
@@ -759,7 +761,7 @@ export default function SettingsPage() {
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleLogout = async () => {
-    try { await logoutUser(); } catch {}
+    try { await logoutUser(); } catch { /* ignore */ }
     localStorage.removeItem("nill_imap_saved");
     navigate("/login");
   };
@@ -768,7 +770,7 @@ export default function SettingsPage() {
   const handleLogoutAll = async () => {
     if (!window.confirm("Auf allen Geräten abmelden? Bestehende Sitzungen auf anderen Geräten werden sofort beendet.")) return;
     setLogoutAllLoading(true);
-    try { await logoutAllDevices(); } catch {}
+    try { await logoutAllDevices(); } catch { /* ignore */ }
     localStorage.removeItem("nill_imap_saved");
     navigate("/login");
   };
@@ -911,12 +913,12 @@ export default function SettingsPage() {
     try {
       await api.delete(`/me/sessions/${id}`);
       setSessions(s => s.filter(x => x.id !== id));
-    } catch {}
+    } catch { /* ignore */ }
   };
 
   const handleRevokeAll = async () => {
     if (!window.confirm("Alle anderen Sitzungen beenden?")) return;
-    try { await api.delete("/me/sessions"); } catch {}
+    try { await api.delete("/me/sessions"); } catch { /* ignore */ }
     navigate("/login");
   };
 
@@ -1183,7 +1185,7 @@ export default function SettingsPage() {
           .sp-header h1 { font-size: clamp(1.15rem, 5vw, 1.4rem) !important; }
           .sp-header-breadcrumb { display: none; }
           .sp-header-sub { display: none; }
-          .sp-body { flex-direction: column; gap: 0; flex: 1; min-height: 0; overflow: hidden; }
+          .sp-body { flex-direction: column; gap: 0; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
           .sp-sidebar {
             position: static;
             width: 100%; max-height: none;
@@ -1205,9 +1207,19 @@ export default function SettingsPage() {
           .sp-sidebar-divider { display: none; }
           .sp-content {
             gap: 0.75rem; flex: 1; min-height: 0; padding: 0.1rem 0.1rem 1rem;
-            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            /* width:100% + min-width:0 stop the content pane from being inflated
+               past the viewport by a wide child (e.g. the min-width:480 member
+               table) — which the fixed mobile shell would then clip off-screen
+               with no way to scroll to it. */
+            width: 100%; max-width: 100%; min-width: 0;
+            overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
             scrollbar-width: thin; scrollbar-color: rgba(var(--tint),0.08) transparent;
           }
+          /* Cards/panels are flex items of .sp-content; without min-width:0 they
+             inherit min-width:auto (= their content's min size) and refuse to
+             shrink, pushing everything off the right edge. */
+          .sp-content > * { min-width: 0; max-width: 100%; }
         }
 
         /* Compact settings rows on mobile */
@@ -1216,7 +1228,7 @@ export default function SettingsPage() {
           .sp-grid-3 { grid-template-columns: 1fr !important; }
           .sp-grid-zip { grid-template-columns: 1fr !important; }
           .sp-row-flex { flex-direction: column !important; align-items: flex-start !important; }
-          .sp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .sp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; max-width: 100%; }
         }
       `}</style>
 
@@ -1648,6 +1660,135 @@ export default function SettingsPage() {
             {/* ══ ABONNEMENT ═════════════════════════════════════════════ */}
             {activeTab === "abonnement" && isAdmin && (
               <>
+                {/* ── Trial-Block ──────────────────────────────────────── */}
+                {isTrialActive() && (() => {
+                  const days = trialDaysRemaining();
+                  const expiresAt = org?.trial_ends_at ? new Date(org.trial_ends_at) : null;
+                  const isUrgent = days <= 3;
+                  const handleTrialCheckout = async () => {
+                    setTrialCheckoutError(null);
+                    setTrialCheckoutLoading(true);
+                    try {
+                      const res = await api.post("/billing/create-checkout-session", {
+                        plan: "arbeitsstation", billing_cycle: "monthly",
+                      });
+                      if (res?.data?.checkout_url) {
+                        window.location.href = res.data.checkout_url;
+                      } else {
+                        setTrialCheckoutError("Checkout konnte nicht gestartet werden.");
+                      }
+                    } catch (e) {
+                      const detail = e.response?.data?.error || e.response?.data?.detail;
+                      setTrialCheckoutError(detail || "Zahlungsvorgang derzeit nicht verfügbar.");
+                    } finally {
+                      setTrialCheckoutLoading(false);
+                    }
+                  };
+                  return (
+                    <div style={{ ...panelStyle, borderColor: isUrgent ? "rgba(248,113,113,0.3)" : "rgba(198,255,60,0.18)" }}>
+                      <SectionHead
+                        title="Kostenloser Testzeitraum"
+                        action={<Badge label={`${days} Tag${days !== 1 ? "e" : ""} verbleibend`} color={isUrgent ? red : green} />}
+                      />
+                      <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+                        {/* Status-Grid */}
+                        <div style={{
+                          display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem",
+                          padding: "1rem 1.1rem", background: "rgba(var(--tint),0.03)",
+                          border: `1px solid ${border}`, borderRadius: 10,
+                        }}>
+                          {[
+                            { label: "Status", value: "Kostenloser Test", color: green },
+                            { label: "Verbleibende Tage", value: `${days} Tag${days !== 1 ? "e" : ""}` },
+                            ...(expiresAt ? [{
+                              label: "Endet am",
+                              value: expiresAt.toLocaleDateString("de-DE", {
+                                day: "2-digit", month: "2-digit", year: "numeric",
+                              }),
+                            }, {
+                              label: "Uhrzeit",
+                              value: expiresAt.toLocaleTimeString("de-DE", {
+                                hour: "2-digit", minute: "2-digit",
+                              }) + " Uhr",
+                            }] : []),
+                          ].map(({ label, value, color }) => (
+                            <div key={label}>
+                              <div style={{ fontSize: "0.67rem", color: mute, textTransform: "uppercase",
+                                letterSpacing: "0.07em", fontWeight: 700, marginBottom: 4 }}>{label}</div>
+                              {color
+                                ? <Badge label={value} color={color} />
+                                : <span style={{ fontSize: "0.83rem", fontWeight: 600, color: text }}>{value}</span>}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Fortschrittsbalken */}
+                        {expiresAt && (() => {
+                          const total = 14;
+                          const used  = Math.max(0, total - days);
+                          const pct   = Math.min(100, (used / total) * 100);
+                          return (
+                            <div>
+                              <div style={{ display: "flex", justifyContent: "space-between",
+                                fontSize: "0.72rem", color: mute, marginBottom: 4 }}>
+                                <span>Tag {used} von 14</span>
+                                <span>Endet: {expiresAt.toLocaleDateString("de-DE")}</span>
+                              </div>
+                              <div style={{ height: 5, borderRadius: 99, background: "rgba(var(--tint),0.08)" }}>
+                                <div style={{
+                                  height: "100%", borderRadius: 99,
+                                  width: `${pct}%`,
+                                  background: isUrgent ? red : green,
+                                  transition: "width 0.4s",
+                                }} />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
+                          Nach Ablauf des Testzeitraums werden deine Daten 30 Tage lang aufbewahrt.
+                          Starte jetzt ein Abonnement, um unterbrechungsfreien Zugriff zu behalten.
+                        </p>
+
+                        {/* §312j-konformer Kauf-Button */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                          <div style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap", alignItems: "center" }}>
+                            <button
+                              onClick={handleTrialCheckout}
+                              disabled={trialCheckoutLoading}
+                              style={{
+                                ...btnPrimary,
+                                background: isUrgent ? red : gold,
+                                color: isUrgent ? "#fff" : "#000",
+                                opacity: trialCheckoutLoading ? 0.6 : 1,
+                              }}
+                            >
+                              {trialCheckoutLoading
+                                ? "Weiterleitung…"
+                                : "Jetzt kostenpflichtig abonnieren — Arbeitsstation 30 €/Monat"}
+                            </button>
+                            <Link to="/pricing" style={{ ...btnGhost, display: "inline-block", textDecoration: "none" }}>
+                              Alle Pläne vergleichen
+                            </Link>
+                          </div>
+                          <p style={{ fontSize: "0.72rem", color: mute, margin: 0 }}>
+                            Mit Klick auf „Jetzt kostenpflichtig abonnieren" wirst du zu Stripe weitergeleitet.
+                            Es gilt unser <Link to="/agb" style={{ color: mute }}>AGB</Link> und{" "}
+                            <Link to="/widerruf" style={{ color: mute }}>Widerrufsrecht</Link> (14 Tage).
+                            Monatlich kündbar.
+                          </p>
+                        </div>
+
+                        {trialCheckoutError && (
+                          <div style={{ fontSize: "0.82rem", color: red }}>{trialCheckoutError}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── Aktiver Plan (nur wenn kein Trial) ──────────────── */}
                 <div style={panelStyle}>
                   <SectionHead title="Aktueller Plan" />
                   <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -1688,6 +1829,10 @@ export default function SettingsPage() {
                           </Link>
                         </div>
                       </>
+                    ) : isTrialActive() ? (
+                      <div style={{ fontSize: "0.82rem", color: dim }}>
+                        Kein aktives Abonnement — du befindest dich im Testzeitraum.
+                      </div>
                     ) : (
                       <div style={{ fontSize: "0.82rem", color: red }}>
                         Abonnement-Daten konnten nicht geladen werden.
