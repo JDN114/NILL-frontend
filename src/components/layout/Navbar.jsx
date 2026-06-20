@@ -58,6 +58,9 @@ export default function Navbar() {
           top: 0;
           z-index: 50;
         }
+        html[data-theme="light"] .nill-navbar {
+          background: rgba(234,227,212,0.92);
+        }
         .nill-navbar-inner {
           max-width: 1280px;
           margin: 0 auto;
@@ -135,6 +138,9 @@ export default function Navbar() {
           padding: 0.75rem 1rem;
           gap: 0.25rem;
         }
+        html[data-theme="light"] .nill-mobile-menu {
+          background: rgba(234,227,212,0.99);
+        }
         .nill-mobile-menu.open { display: flex; }
         .nill-mobile-nav-link {
           display: flex;
@@ -181,6 +187,9 @@ export default function Navbar() {
           -webkit-backdrop-filter: blur(20px);
           padding-bottom: env(safe-area-inset-bottom, 0);
         }
+        html[data-theme="light"] .nill-bottom-nav {
+          background: rgba(234,227,212,0.97);
+        }
         .nill-bottom-nav-inner {
           display: flex;
           align-items: stretch;
@@ -194,7 +203,7 @@ export default function Navbar() {
           padding: 0.5rem 0.25rem 0.45rem;
           min-height: 54px;
           text-decoration: none;
-          color: rgba(148,163,184,0.7);
+          color: rgba(var(--ink-tint), 0.38);
           transition: color 0.15s;
           position: relative;
           -webkit-tap-highlight-color: transparent;
