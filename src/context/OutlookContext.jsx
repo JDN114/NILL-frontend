@@ -1,9 +1,12 @@
-import React, { createContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { createContext, useState, useEffect, useCallback, useRef, useMemo, useContext } from "react";
 import api from "../services/api";
+import { AuthContext } from "./AuthContext";
 
 export const OutlookContext = createContext();
 
 export const OutlookProvider = ({ children }) => {
+  const { user } = useContext(AuthContext) || {};
+
   const [connected, setConnected] = useState(null);
   const [emails, setEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
@@ -155,13 +158,25 @@ export const OutlookProvider = ({ children }) => {
   }, []);
 
   // =========================
-  // Auto-fetch status
+  // Auto-fetch status — nur für eingeloggte User.
+  // Anonyme Besucher auf der Landingpage dürfen weder /outlook/status
+  // abfragen noch einen 60s-Poll-Timer starten (kein Zombie-Interval).
   // =========================
   useEffect(() => {
+    if (!user) {
+      // De-Auth / Logout: laufenden Status zurücksetzen, damit keine
+      // verbundenen Daten eines vorigen Users im State hängen bleiben.
+      connectedRef.current = null;
+      lastStatusFetch.current = 0;
+      setConnected(null);
+      setEmails([]);
+      setActiveEmail(null);
+      return;
+    }
     fetchStatus();
     const interval = setInterval(fetchStatus, 60000);
     return () => clearInterval(interval);
-  }, [fetchStatus]);
+  }, [user, fetchStatus]);
 
   const value = useMemo(() => ({
     connected,

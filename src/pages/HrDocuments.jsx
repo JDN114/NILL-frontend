@@ -216,7 +216,7 @@ function DocRow({ doc, isAdmin, users, onDelete, onRead }) {
     try {
       await api.post(`/hr/documents/${doc.id}/read`);
       onRead(doc.id);
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   return (
@@ -351,7 +351,7 @@ export function HrDocsContent({ defaultFilterType = "" }) {
       const res = await api.get("/hr/users");
       const raw = res.data?.items ?? res.data ?? [];
       setUsers(Array.isArray(raw) ? raw : []);
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   useEffect(() => { fetchUsers(); }, [isAdmin]);

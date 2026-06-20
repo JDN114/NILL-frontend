@@ -32,8 +32,8 @@ function calcUst(positionen) {
   let u19 = 0, u7 = 0, u0 = 0;
   (positionen || []).forEach((p) => {
     const gp = (parseFloat(p.menge) || 0) * (parseFloat(p.einzelpreis_brutto) || 0);
-    if (p.ust_satz == 19) u19 += gp;
-    else if (p.ust_satz == 7) u7 += gp;
+    if (Number(p.ust_satz) === 19) u19 += gp;
+    else if (Number(p.ust_satz) === 7) u7 += gp;
     else u0 += gp;
   });
   const ust19 = u19 - u19 / 1.19;

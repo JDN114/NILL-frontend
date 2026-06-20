@@ -85,7 +85,7 @@ function SchichtplanTab() {
       ]);
       setMembers(Array.isArray(mR.data) ? mR.data : []);
       setAssignments(aR.data?.assignments ?? []);
-    } catch {}
+    } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [weekStart]);
 

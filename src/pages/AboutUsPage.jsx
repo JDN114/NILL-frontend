@@ -94,7 +94,7 @@ export default function AboutUsPage() {
                 margin: 0, fontStyle: "italic", color: "var(--ink-dim)",
                 fontSize: "0.95rem", lineHeight: 1.6,
               }}>
-                „Mensch &amp; Maschine — gemeinsam stärker als allein."
+                „Mensch &amp; Maschine — gemeinsam stärker als allein.&quot;
               </blockquote>
             </div>
 

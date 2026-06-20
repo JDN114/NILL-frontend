@@ -54,7 +54,7 @@ export default function KassenmeldungTab() {
         </span>
       </div>
       <p style={{ margin: "0 0 16px", fontSize: ".78rem", color: "var(--ink2)", maxWidth: 760 }}>
-        Seit 1.1.2025 müssen elektronische Kassen mit TSE über „Mein ELSTER" gemeldet werden.
+        Seit 1.1.2025 müssen elektronische Kassen mit TSE über „Mein ELSTER&quot; gemeldet werden.
         NILL stellt alle Pflichtangaben vorbefüllt bereit und protokolliert Ihre Meldung als Nachweis.
       </p>
 
@@ -84,7 +84,7 @@ export default function KassenmeldungTab() {
         <div className="ac-card" style={{ marginBottom: 16 }}>
           <div className="ac-section-title">Ihre Daten für das ELSTER-Formular</div>
           <p style={{ fontSize: ".76rem", color: "var(--ink2)", margin: "0 0 12px" }}>
-            Formular: „{vorlage.formular}" — {vorlage.portal}
+            Formular: „{vorlage.formular}&quot; — {vorlage.portal}
           </p>
           <table className="ac-table" aria-label="ELSTER-Meldedaten">
             <tbody>

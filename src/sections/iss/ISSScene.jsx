@@ -405,6 +405,15 @@ function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrus
 
 /* ─── Public component ───────────────────────────────────────────── */
 export function ISSScene({ active = true, issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onLoaded }) {
+  // Only hold a live WebGL context while the section is (near) the viewport.
+  // The landing hero runs its own raw-three WebGL context; mounting both at
+  // once janks the page and can exceed the browser's per-page context cap on
+  // mobile. When `active` is false we unmount the <Canvas> entirely — r3f then
+  // disposes the renderer and releases the GL context — and show a matching
+  // backdrop so the section never reads as a blank hole.
+  if (!active) {
+    return <div style={{ width: '100%', height: '100%', background: '#02030a' }} aria-hidden="true" />
+  }
   return (
     <Canvas
       frameloop={active ? 'always' : 'never'}

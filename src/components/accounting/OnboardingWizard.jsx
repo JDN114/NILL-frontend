@@ -240,8 +240,8 @@ export default function OnboardingWizard({ onClose, onComplete }) {
                 {form.rechtsform !== "einzelunternehmen" && (
                   <li>Geschäftspartner unter dem Tab <em>Geschäftspartner</em> anlegen</li>
                 )}
-                <li>Belege über den <em>„+ Beleg"-Button</em> oben rechts hochladen</li>
-                <li>Setup jederzeit über den <em>„Setup"-Button</em> oben rechts erneut aufrufen</li>
+                <li>Belege über den <em>„+ Beleg&quot;-Button</em> oben rechts hochladen</li>
+                <li>Setup jederzeit über den <em>„Setup&quot;-Button</em> oben rechts erneut aufrufen</li>
               </ul>
             </div>
           </div>

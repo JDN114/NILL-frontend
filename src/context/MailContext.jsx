@@ -54,7 +54,7 @@ export const MailProvider = ({ children }) => {
     try {
       if (p) localStorage.setItem(PROVIDER_KEY, p);
       else   localStorage.removeItem(PROVIDER_KEY);
-    } catch {}
+    } catch { /* ignore */ }
     setExplicit(p);
   }, []);
 

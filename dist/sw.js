@@ -86,7 +86,7 @@ self.addEventListener("push", (e) => {
   if (e.data) {
     try {
       data = { ...data, ...JSON.parse(e.data.text()) };
-    } catch {}
+    } catch { /* ignore malformed push payload */ }
   }
 
   // Broadcast to any open clients so the app can show an in-app toast

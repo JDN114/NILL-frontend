@@ -46,7 +46,7 @@ describe("checkout flow — PricingPage", () => {
 
     // Default mode is "Arbeitsstation" (the live product), so the first
     // visible plan card is the Arbeitsstation.
-    const buttons = screen.getAllByText("Jetzt starten");
+    const buttons = screen.getAllByText("Zahlungspflichtig abonnieren");
     fireEvent.click(buttons[0]);
 
     await waitFor(() => {
@@ -67,7 +67,7 @@ describe("checkout flow — PricingPage", () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getAllByText("Jetzt starten")[0]);
+    fireEvent.click(screen.getAllByText("Zahlungspflichtig abonnieren")[0]);
 
     expect(await screen.findByText("Zahlung nicht verfügbar")).toBeInTheDocument();
   });

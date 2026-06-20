@@ -240,7 +240,7 @@ function DetailModal({ gutschein, onClose }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", marginBottom: 16 }}>
           {[
             ["Bezeichnung", gutschein.bezeichnung || "—"],
-            ["Status", <span className={STATUS_META[gutschein.status]?.cls}>{STATUS_META[gutschein.status]?.label}</span>],
+            ["Status", <span key="status" className={STATUS_META[gutschein.status]?.cls}>{STATUS_META[gutschein.status]?.label}</span>],
             ["Nennwert", fmtEur(gutschein.nennwert)],
             ["Verbleibend", fmtEur(gutschein.verbleibend)],
             ["Ausgestellt", gutschein.ausgabe_datum || "—"],

@@ -280,7 +280,7 @@ export default function SerienrechnungTab() {
         <div className="ac-card" style={{ padding:"20px 24px" }}>
           <div style={{ marginBottom:8, fontWeight:600 }}>Noch keine Serienrechnungen konfiguriert.</div>
           <p style={{ fontSize:".85rem", color:"var(--ink2)", lineHeight:1.6, marginBottom:0 }}>
-            Eine <strong>Serienrechnung</strong> ist eine wiederkehrende Rechnung, die automatisch in einem festen Intervall (täglich, monatlich, jährlich) erstellt wird — zum Beispiel für Abonnements, Mieten oder monatliche Dienstleistungen. Klicke auf „+ Neue Serienrechnung" um loszulegen.
+            Eine <strong>Serienrechnung</strong> ist eine wiederkehrende Rechnung, die automatisch in einem festen Intervall (täglich, monatlich, jährlich) erstellt wird — zum Beispiel für Abonnements, Mieten oder monatliche Dienstleistungen. Klicke auf „+ Neue Serienrechnung&quot; um loszulegen.
           </p>
         </div>
       ) : list.length > 0 && (

@@ -45,11 +45,8 @@ const FONT_BODY    = "'Syne', sans-serif";
 const FM = FONT_MONO;
 const FB = FONT_BODY;
 const FD = FONT_DISPLAY;
-const GOOGLE_FONTS = "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap";
-
 // ─── Global styles (idempotent) ──────────────────────────────────────────────
 const GLOBAL_CSS = `
-@import url('${GOOGLE_FONTS}');
 .nill-root * { box-sizing: border-box; }
 .nill-root input, .nill-root textarea, .nill-root select {
   background: ${T.bg2}; color: ${T.textPri};

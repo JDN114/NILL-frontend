@@ -479,7 +479,7 @@ export default function TagesabschlussTab() {
       {entwuerfe > 0 && (
         <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 12 }}>
           {entwuerfe} Entwurf{entwuerfe > 1 ? "e" : ""} noch nicht gebucht —
-          bitte „Buchen" klicken, um den Buchungssatz zu erzeugen.
+          bitte „Buchen&quot; klicken, um den Buchungssatz zu erzeugen.
         </div>
       )}
 

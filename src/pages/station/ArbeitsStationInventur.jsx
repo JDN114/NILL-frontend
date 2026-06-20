@@ -54,7 +54,7 @@ export default function ArbeitsStationInventur() {
     try {
       await api.patch(`/inventory/items/${item.id}/quantity`, { quantity: newQty });
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
-    } catch {}
+    } catch { /* ignore */ }
     finally { setBusy(null); }
   }
 

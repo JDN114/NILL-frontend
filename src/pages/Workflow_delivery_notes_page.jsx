@@ -626,7 +626,7 @@ export default function DeliveryNotesPage() {
 
   async function fetchAllInventory() {
     try { const r = await api.get("/inventory/items"); setInventoryItems(r.data?.items||[]); }
-    catch { }
+    catch { /* ignore */ }
   }
 
   async function handleImageUpload(e) {

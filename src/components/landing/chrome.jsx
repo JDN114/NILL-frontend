@@ -197,7 +197,7 @@ export function Modal({ intent, onClose }) {
               </div>
               <div className="form-field"><label htmlFor="mm">Nachricht</label><textarea id="mm" name="message" placeholder="Welches Modul interessiert dich?"/></div>
               <div className="modal-actions">
-                <small>Per Klick auf „Senden" wird dein Mailprogramm geöffnet.</small>
+                <small>Per Klick auf „Senden&quot; wird dein Mailprogramm geöffnet.</small>
                 <MagBtn className="btn btn-primary"><span>Senden</span><span className="arrow">→</span></MagBtn>
               </div>
             </form>

@@ -1,11 +1,14 @@
-import React, { createContext, useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, { createContext, useState, useCallback, useEffect, useRef, useMemo, useContext } from "react";
 import api from "../services/api";
+import { AuthContext } from "./AuthContext";
 
 export const GmailContext = createContext();
 
 const INBOX_TTL_MS = 30_000; // 30 s before re-fetching inbox on remount
 
 export const GmailProvider = ({ children }) => {
+  const { user } = useContext(AuthContext) || {};
+
   const [connected, setConnected]       = useState(null);
   const [emails, setEmails]             = useState([]);
   const [sentEmails, setSentEmails]     = useState([]);
@@ -164,7 +167,21 @@ export const GmailProvider = ({ children }) => {
 
   const closeEmail = useCallback(() => setActiveEmail(null), []);
 
-  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+  // Status nur für eingeloggte User abfragen. Anonyme Besucher auf der
+  // Landingpage dürfen /gmail/status nicht treffen. Bei De-Auth/Logout
+  // Status und Listen zurücksetzen, damit keine alten Daten hängen bleiben.
+  useEffect(() => {
+    if (!user) {
+      setConnected(null);
+      setEmails([]); setSentEmails([]); setActiveEmail(null);
+      _setInboxNextToken(null); _setSentNextToken(null);
+      lastStatusFetch.current = 0;
+      lastInboxFetch.current  = 0;
+      setInitializing(false);
+      return;
+    }
+    fetchStatus();
+  }, [user, fetchStatus, _setInboxNextToken, _setSentNextToken]);
 
   const value = useMemo(() => ({
     connected, connectGmail, disconnectGmail, fetchStatus,

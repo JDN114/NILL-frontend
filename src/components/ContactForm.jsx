@@ -22,7 +22,9 @@ function sanitizeInput(text, maxLength) {
   if (!text || typeof text !== "string") return "";
 
   const withoutHtml = text.replace(/<\/?[^>]+(>|$)/g, "");
+  // Intentionally strips control characters as part of input sanitization.
   const withoutControlChars = withoutHtml.replace(
+    // eslint-disable-next-line no-control-regex
     /[\u0000-\u001F\u007F]/g,
     ""
   );

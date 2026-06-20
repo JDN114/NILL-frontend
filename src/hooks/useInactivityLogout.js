@@ -6,7 +6,7 @@ const CHECK_INTERVAL = 30 * 1000;       // poll every 30 s
 const LS_KEY         = "nill_last_activity";
 
 async function doLogout() {
-  try { await api.post("/auth/logout"); } catch {}
+  try { await api.post("/auth/logout"); } catch { /* ignore */ }
   localStorage.removeItem("nill_imap_saved");
   window.location.href = "/login?reason=inactivity";
 }

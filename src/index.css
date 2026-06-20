@@ -1,6 +1,3 @@
-/* Import font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
 /* Tailwind Direktiven */
 @tailwind base;
 @tailwind components;
@@ -790,6 +787,31 @@ body {
     overscroll-behavior: contain;
   }
   .em-shell { overscroll-behavior: none; }
+
+  /* Wide HTML emails (fixed-width newsletters, nowrap lines, big headings):
+     don't clip them to the viewport — overflow:hidden hid the right half and
+     pinch-zoom is now disabled, so the content was unreachable. Instead let the
+     message keep its real width and pan horizontally inside its own box. The
+     page itself never scrolls sideways (html,body keep overflow-x:clip). */
+  .em-detail-body {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .em-detail-body .email-body-render { overflow: visible; }
+  .em-detail-body .email-body-render * { max-width: none !important; }
+  .em-detail-body .email-body-render table {
+    display: table !important;
+    table-layout: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+  /* Images/figures still cap to the screen so a single photo can't force a
+     huge horizontal scroll — only genuine fixed-width layouts pan. */
+  .em-detail-body .email-body-render img,
+  .em-detail-body .email-body-render figure { max-width: 100% !important; height: auto !important; }
 }
 
 /* ── Animationen ─────────────────────────────────────────── */

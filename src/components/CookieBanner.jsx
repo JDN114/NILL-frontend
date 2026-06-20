@@ -111,7 +111,7 @@ export default function CookieBanner() {
         .cb-btn-ghost {
           padding: .5rem 1rem; border-radius: 8px;
           border: 1px solid rgba(239,237,231,0.13);
-          background: transparent; color: rgba(239,237,231,0.5);
+          background: transparent; color: rgba(239,237,231,0.72);
           font-size: .8rem; cursor: pointer;
           transition: border-color .15s, color .15s;
         }

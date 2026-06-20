@@ -606,9 +606,9 @@ export default function TrinkgeldTab() {
           <div>
             <strong>⚖️ Trinkgeld-Dokumentation nach §3 Nr. 51 EStG</strong><br />
             <span style={{ fontSize: ".8rem" }}>
-              <strong>Modus „Direkt":</strong> Trinkgelder sind steuerfrei wenn direkt vom Kunden an Mitarbeiter.
+              <strong>Modus „Direkt&quot;:</strong> Trinkgelder sind steuerfrei wenn direkt vom Kunden an Mitarbeiter.
               Dieses Protokoll dokumentiert die Weitergabe und schützt vor steuerrechtlichen Risiken.{" "}
-              <strong>Modus „Pool":</strong> Arbeitgeberverwaltete Trinkgelder → lohnsteuerpflichtig.
+              <strong>Modus „Pool&quot;:</strong> Arbeitgeberverwaltete Trinkgelder → lohnsteuerpflichtig.
             </span>
           </div>
           <button

@@ -64,7 +64,7 @@ export default function ArbeitsStationLieferscheine() {
     try {
       await api.post(`/inventory/delivery-notes/${noteId}/confirm`, { items: [] });
       setNotes(prev => prev.map(n => n.id === noteId ? { ...n, status: "confirmed" } : n));
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   const pending = notes.filter(n => n.status === "pending");

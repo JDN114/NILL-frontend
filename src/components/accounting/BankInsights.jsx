@@ -55,13 +55,13 @@ export default function BankInsights() {
 
   const disconnectBank = async () => {
     setActionLoading(true);
-    try { await api.post("/bank/disconnect"); setConnected(false); setSoftDisc(true); } catch {}
+    try { await api.post("/bank/disconnect"); setConnected(false); setSoftDisc(true); } catch { /* ignore */ }
     setActionLoading(false);
   };
 
   const reconnectBank = async () => {
     setActionLoading(true);
-    try { await api.post("/bank/reconnect"); setConnected(true); setSoftDisc(false); load(); } catch {}
+    try { await api.post("/bank/reconnect"); setConnected(true); setSoftDisc(false); load(); } catch { /* ignore */ }
     setActionLoading(false);
   };
 

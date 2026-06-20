@@ -591,12 +591,43 @@ function buildScene(canvas) {
 }
 
 function HeroCanvas() {
-  const ref = useRef(null);
+  const wrapRef = useRef(null);
+  const canvasRef = useRef(null);
+  // Mount the WebGL canvas only while the hero is (near) the viewport. The ISS
+  // section lower on the page runs its own r3f WebGL context — keeping both
+  // contexts alive at once janks the page and can hit the browser's per-page
+  // context cap on mobile. By unmounting offscreen, buildScene's cleanup runs
+  // (disposes renderer/composer, drops the GL context) so only ONE of the two
+  // hero/ISS contexts is ever live at a time.
+  const [mounted, setMounted] = useState(true);
+
   useEffect(() => {
-    if (!ref.current) return;
-    return buildScene(ref.current);
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => setMounted(e.isIntersecting),
+      { rootMargin: '25% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
-  return <canvas ref={ref} style={{position:'absolute',inset:0,zIndex:0,display:'block',width:'100%',height:'100%'}}/>;
+
+  useEffect(() => {
+    if (!mounted || !canvasRef.current) return;
+    return buildScene(canvasRef.current);
+  }, [mounted]);
+
+  return (
+    <div
+      ref={wrapRef}
+      style={{position:'absolute',inset:0,zIndex:0,background:'#02030a'}}
+      aria-hidden="true"
+    >
+      {mounted && (
+        <canvas ref={canvasRef} style={{position:'absolute',inset:0,zIndex:0,display:'block',width:'100%',height:'100%'}}/>
+      )}
+    </div>
+  );
 }
 
 /* ─── HERO ───────────────────────────────────────────────── */

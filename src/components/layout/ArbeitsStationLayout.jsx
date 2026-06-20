@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');`;
-
 function Clock() {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -47,8 +45,6 @@ export default function ArbeitsStationLayout({ children, title, icon, accent = "
       flexDirection: "column",
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
-      <style>{FONTS}</style>
-
       <header style={{
         background: "rgba(4,7,15,0.96)",
         borderBottom: "1px solid rgba(var(--ink-tint),0.07)",

@@ -243,7 +243,7 @@ export default function TaxDashboard() {
         </div>
       )}
       <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginTop:16 }}>
-        Steuerliche Angaben ohne Gewähr. Für offizielle Steuererklärungen: ELSTER.de nutzen (Tab „Steuern → UStVA") oder Steuerberater beauftragen.
+        Steuerliche Angaben ohne Gewähr. Für offizielle Steuererklärungen: ELSTER.de nutzen (Tab „Steuern → UStVA&quot;) oder Steuerberater beauftragen.
       </div>
 
       {/* GoBD Betriebsprüfungsexport */}

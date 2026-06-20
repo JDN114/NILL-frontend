@@ -35,11 +35,8 @@ const FONT_BODY    = "'Syne', sans-serif";
 const FM = FONT_MONO;
 const FB = FONT_BODY;
 
-const GOOGLE_FONTS = "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap";
-
 // ─── Global Styles injected once ─────────────────────────────────────────────
 const GLOBAL_CSS = `
-@import url('${GOOGLE_FONTS}');
 .nill-root * { box-sizing: border-box; }
 .nill-root input, .nill-root textarea, .nill-root select {
   background: ${T.bg2};
@@ -482,7 +479,7 @@ function ApplicationsModule() {
       const res = await api.patch(`/nill/applications/${id}/status`, { status });
       setApplications(prev => prev.map(a => a.id === id ? res.data : a));
       if (selected?.id === id) setSelected(res.data);
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   const filters = ["", "new", "interesting", "interview", "rejected", "hired"];
@@ -1133,7 +1130,7 @@ function ContractsModule() {
       const form = new FormData(); form.append("file", file);
       const r = await api.post("/nill/contracts/upload", form, { headers: { "Content-Type": "multipart/form-data" } });
       setContracts(p => [r.data, ...p]);
-    } catch {} finally { setUploading(false); }
+    } catch { /* ignore */ } finally { setUploading(false); }
   }
 
   const URGENCY = {
@@ -1207,14 +1204,14 @@ function OnboardingModule() {
       const r = await api.post("/nill/onboarding", form);
       setEmployees(p => [r.data, ...p]);
       setShowForm(false); setForm({ name: "", role: "", start_date: "", email: "" });
-    } catch {} finally { setSubmitting(false); }
+    } catch { /* ignore */ } finally { setSubmitting(false); }
   }
 
   async function toggleTask(eid, tid) {
     try {
       const r = await api.patch(`/nill/onboarding/${eid}/tasks/${tid}/toggle`);
       setEmployees(p => p.map(e => e.id === eid ? r.data : e));
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   return (
@@ -1287,7 +1284,7 @@ function CompetitorsModule() {
   async function triggerRefresh() {
     setRefreshing(true);
     try { const r = await api.post("/nill/competitors/refresh"); setReports(r.data); }
-    catch {} finally { setRefreshing(false); }
+    catch { /* ignore */ } finally { setRefreshing(false); }
   }
 
   const SENT = {
@@ -1366,7 +1363,7 @@ function MeetingsModule() {
       const r = await api.post("/nill/meetings", form);
       setMeetings(p => [r.data, ...p]);
       setShowForm(false); setForm({ title: "", date: "", participants: "", agenda: "", context: "" });
-    } catch {} finally { setSubmitting(false); }
+    } catch { /* ignore */ } finally { setSubmitting(false); }
   }
 
   return (

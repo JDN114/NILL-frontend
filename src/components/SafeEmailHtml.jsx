@@ -1,5 +1,5 @@
 // src/components/SafeEmailHtml.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useState, useLayoutEffect } from "react";
 import DOMPurify from "dompurify";
 
 // ─────────────────────────────────────────────
@@ -122,7 +122,7 @@ export default function SafeEmailHtml({ html }) {
         "onmouseover", "onfocus", "onmouseenter",
       ],
       ALLOWED_URI_REGEXP:
-        /^(?:(?:https?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+        /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
     });
 
     if (isPlainText) return dirty;
@@ -148,6 +148,63 @@ export default function SafeEmailHtml({ html }) {
     return doc.body.innerHTML;
   }, [html, isPlainText]);
 
+  // ── Scale-to-fit (mobile) ──────────────────────────────────────────────
+  // Fixed-width HTML newsletters (600–700px tables) don't reflow to a phone.
+  // Rather than clip them (right half hidden — and pinch-zoom is disabled) or
+  // force an awkward horizontal scroll, we measure the email's real width and
+  // shrink the whole thing with a CSS transform so it fits the screen, exactly
+  // like Apple Mail / Gmail. On desktop (wide pane) this is a no-op.
+  const wrapRef  = useRef(null);
+  const innerRef = useRef(null);
+  const [scale, setScale]     = useState(1);
+  const [wrapH, setWrapH]     = useState(null);
+  const lastWidth = useRef(0);
+
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current, inner = innerRef.current;
+    if (!wrap || !inner) return;
+
+    const fit = () => {
+      const avail = wrap.clientWidth;
+      if (!avail) return;
+      // Reset before measuring so we read the email's natural width, not a
+      // previously-scaled one.
+      inner.style.transform = "none";
+      inner.style.width = "";
+      const onMobile = window.matchMedia("(max-width: 768px)").matches;
+      const natural = inner.scrollWidth;
+      if (onMobile && natural > avail + 2) {
+        const s = avail / natural;
+        inner.style.width = natural + "px";
+        inner.style.transform = `scale(${s})`;
+        inner.style.transformOrigin = "top left";
+        setScale(s);
+        setWrapH(inner.scrollHeight * s);
+      } else {
+        inner.style.width = "";
+        inner.style.transform = "none";
+        setScale(1);
+        setWrapH(null);
+      }
+      lastWidth.current = avail;
+    };
+
+    fit();
+    // Re-fit on container width changes (rotation, split-view) — guarded so the
+    // height we set doesn't retrigger an infinite loop (width stays the same).
+    const ro = new ResizeObserver(() => {
+      if (wrap.clientWidth !== lastWidth.current) fit();
+    });
+    ro.observe(wrap);
+    // Images load asynchronously and change the natural size — re-fit then.
+    const imgs = inner.querySelectorAll("img");
+    imgs.forEach((img) => { if (!img.complete) img.addEventListener("load", fit, { once: true }); });
+    return () => {
+      ro.disconnect();
+      imgs.forEach((img) => img.removeEventListener("load", fit));
+    };
+  }, [cleanHtml]);
+
   if (!html) return <i className="text-gray-400">Kein Inhalt</i>;
 
   if (isPlainText) {
@@ -160,8 +217,14 @@ export default function SafeEmailHtml({ html }) {
 
   return (
     <div
-      className="email-body-render html-mail"
-      dangerouslySetInnerHTML={{ __html: cleanHtml }}
-    />
+      ref={wrapRef}
+      style={{ width: "100%", overflow: wrapH ? "hidden" : undefined, height: wrapH ? `${wrapH}px` : undefined }}
+    >
+      <div
+        ref={innerRef}
+        className="email-body-render html-mail"
+        dangerouslySetInnerHTML={{ __html: cleanHtml }}
+      />
+    </div>
   );
 }

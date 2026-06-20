@@ -61,19 +61,45 @@ export default [
       'no-undef': 'error',
       'prefer-const': 'warn',
       'no-var': 'error',
-      'eqeqeq': ['error', 'always'],
+      // Enforce strict equality everywhere EXCEPT `== null` / `!= null`, which is
+      // the intentional nullish dual-check idiom (matches both null and undefined)
+      // used throughout this codebase. Switching those to `===`/`!==` would change
+      // runtime behavior, so they are allowed; all other comparisons stay strict.
+      'eqeqeq': ['error', 'always', { null: 'ignore' }],
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',
     },
   },
 
-  // Test files — relax some rules
+  // react-three-fiber primitives use lowercase intrinsic props (position, args,
+  // intensity, attach, ...) that react/no-unknown-property cannot recognize.
+  // These are valid R3F props, so disable the rule narrowly for R3F scenes.
   {
-    files: ['src/**/*.{test,spec}.{js,jsx}', 'tests/**/*.{js,jsx}'],
+    files: ['src/sections/iss/**/*.{js,jsx}'],
+    rules: {
+      'react/no-unknown-property': 'off',
+    },
+  },
+
+  // Service-worker files need service-worker + browser globals.
+  {
+    files: ['public/sw.js', 'public/registerSW.js'],
     languageOptions: {
       globals: {
         ...globals.browser,
+        ...globals.serviceworker,
+      },
+    },
+  },
+
+  // Test files — relax some rules
+  {
+    files: ['src/**/*.{test,spec}.{js,jsx}', 'tests/**/*.{js,jsx,mjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
         ...globals.jest,
         vi: 'readonly',
         describe: 'readonly',
@@ -92,7 +118,17 @@ export default [
     },
   },
 
-  // Ignore build output and config files
+  // Root config + node tooling files (run under Node).
+  {
+    files: ['*.config.{js,mjs}', 'playwright.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
+  // Ignore build output, minified vendor, and config files
   {
     ignores: [
       'dist/**',
@@ -101,6 +137,14 @@ export default [
       'playwright-report/**',
       'test-results/**',
       '.lighthouseci/**',
+      'public/**/*.min.js',  // minified vendor (e.g. three.min.js) — not app code
+      // Orphaned TypeScript files mislabeled .jsx — not imported anywhere, cannot
+      // parse as JS/JSX (use `interface` + type annotations). Excluded so the JS
+      // parser does not choke; they are dead and never bundled by Vite.
+      'src/components/Feature.jsx',
+      'src/components/Features-Grid.jsx',
+      'src/components/FloatingMenu.jsx',
+      'src/components/GmailInbox.jsx',
       'vite.config.js',  // uses require-like patterns for manualChunks
     ],
   },

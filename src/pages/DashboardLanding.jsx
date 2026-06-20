@@ -12,8 +12,6 @@ import GuidedTourModal from "../components/GuidedTourModal";
 
 /* ─── Design Tokens (inline, kein Tailwind-Konflikt) ────────────── */
 const S = `
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-
   .nd-root { --bg:#040407; --bg2:#08080c; --ink:#efede7; --ink-dim:rgba(var(--ink-tint),.5); --ink-faint:rgba(var(--ink-tint),.12); --line:rgba(var(--ink-tint),.07); --glass:rgba(var(--tint),.035); --accent:#c6ff3c; --a2:#7a5cff; --a3:#ff4d8d; --a4:#38f5d0; --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",monospace; --r:14px; --r2:20px; }
 
   /* Welcome strip */

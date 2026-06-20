@@ -878,7 +878,7 @@ function VorlagenTab() {
   return (
     <div>
       <div role="status" aria-live="polite" className="ac-alert ac-alert-warn" style={{ marginBottom: 16 }}>
-        💡 Vorlagen erstellst du im Rechnungsformular über "Als Vorlage speichern".
+        💡 Vorlagen erstellst du im Rechnungsformular über &quot;Als Vorlage speichern&quot;.
         Sie enthalten deine Absender-Stammdaten und können für jede neue Rechnung wiederverwendet werden.
       </div>
       {vorlagen.length === 0 ? (

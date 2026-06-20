@@ -32,7 +32,7 @@ async function saveImapConfig(form) {
     smtp_use_ssl: !!form.smtp_use_ssl,
     savedAt: new Date().toISOString(),
   });
-  try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 20))); } catch {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 20))); } catch { /* ignore */ }
 }
 
 // ── Provider presets ────────────────────────────────────────────────────────

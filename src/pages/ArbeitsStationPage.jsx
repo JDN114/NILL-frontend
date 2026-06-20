@@ -189,10 +189,6 @@ export default function ArbeitsStationPage() {
       flexDirection: "column",
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-      `}</style>
-
       {/* ── Header ── */}
       <header style={{
         background: "rgba(4,7,15,0.95)",

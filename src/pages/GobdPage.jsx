@@ -99,13 +99,13 @@ export default function GobdPage() {
 
       <p style={{ color: inkDim, fontSize: 15, lineHeight: 1.75, marginBottom: 12, marginTop: 0 }}>
         Die <strong style={{ color: ink }}>GoBD</strong> („Grundsätze zur ordnungsmäßigen Führung und Aufbewahrung
-        von Büchern, Aufzeichnungen und Unterlagen in elektronischer Form sowie zum Datenzugriff",
+        von Büchern, Aufzeichnungen und Unterlagen in elektronischer Form sowie zum Datenzugriff&quot;,
         BMF-Schreiben vom 28.11.2019) sind der Maßstab, an dem das Finanzamt jede digitale
         Buchführung misst. Wer dagegen verstößt, riskiert Hinzuschätzungen bei der Betriebsprüfung.
       </p>
       <p style={{ color: inkDim, fontSize: 15, lineHeight: 1.75, marginBottom: 44 }}>
         NILL wurde von Grund auf entlang dieser Anforderungen gebaut — nicht nachträglich
-        „GoBD-ready" gemacht. Hier ist, wie jede Anforderung konkret umgesetzt ist.
+        „GoBD-ready&quot; gemacht. Hier ist, wie jede Anforderung konkret umgesetzt ist.
       </p>
 
       {/* Pillar grid */}
@@ -154,7 +154,7 @@ export default function GobdPage() {
       }}>
         <h3 style={h3Style}>Wichtig zu wissen</h3>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.75, color: inkDim }}>
-          Es gibt keine offizielle „GoBD-Zertifizierung" durch die Finanzverwaltung — entsprechende
+          Es gibt keine offizielle „GoBD-Zertifizierung&quot; durch die Finanzverwaltung — entsprechende
           Werbeversprechen anderer Anbieter sind rechtlich ohne Bindungswirkung (GoBD Rz. 179 ff.).
           GoBD-Konformität entsteht immer aus dem Zusammenspiel von Software{' '}
           <em style={{ color: ink }}>und</em> ihrer korrekten Nutzung: zeitnahe Belegerfassung,

@@ -278,7 +278,7 @@ export default function BankAbgleichTab() {
           padding: "40px 20px", textAlign: "center",
           color: "var(--ink2)", fontSize: ".85rem",
         }}>
-          Keine Transaktionen mit Status "{STATUS_BADGE[filter]?.label || filter || "Alle"}".
+          Keine Transaktionen mit Status &quot;{STATUS_BADGE[filter]?.label || filter || "Alle"}&quot;.
         </div>
       )}
 

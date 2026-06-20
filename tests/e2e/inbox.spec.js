@@ -13,7 +13,7 @@ async function loginAndGo(page, path = '/emails') {
 }
 
 test.describe('Email Inbox', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     test.skip(!HAS_CREDS, 'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set');
   });
 

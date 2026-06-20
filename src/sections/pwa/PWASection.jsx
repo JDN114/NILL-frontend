@@ -230,7 +230,7 @@ const OS_CARDS = [
     steps: [
       <>NILL in <kbd>Safari</kbd> öffnen — <span style={{fontFamily:'var(--mono)',fontSize:12}}>nillai.de</span></>,
       <>Unten auf das <kbd className="accent"><Icon.Share/>Teilen</kbd>-Icon tippen</>,
-      <>„<kbd className="accent">Zum Home-Bildschirm</kbd>" wählen — fertig.</>,
+      <>„<kbd className="accent">Zum Home-Bildschirm</kbd>&quot; wählen — fertig.</>,
     ],
   },
   {
@@ -361,7 +361,7 @@ export default function PWASection({ onCTA }) {
           <div className="pwa-feature">
             <div className="pwa-feature-ico"><Icon.Bell/></div>
             <div>
-              <h4>Benachrichtigungen, wenn's zählt</h4>
+              <h4>Benachrichtigungen, wenn&apos;s zählt</h4>
               <p>Neue Mail mit Freigabe? Beleg vom Steuerberater? Push direkt auf Handy oder Desktop.</p>
             </div>
           </div>

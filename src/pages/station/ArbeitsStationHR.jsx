@@ -85,7 +85,7 @@ function DocsTab() {
       a.href = url; a.download = doc.file_name || "dokument.pdf"; a.click();
       URL.revokeObjectURL(url);
       setDocs(p => p.map(d => d.id === doc.id ? { ...d, read_at: new Date().toISOString() } : d));
-    } catch {}
+    } catch { /* ignore */ }
     finally { setDl(null); }
   }
 
@@ -375,7 +375,7 @@ function ListenTab() {
                         try {
                           await api.post(`/inventory/delivery-notes/${note.id}/confirm`, { items: [] });
                           setNotes(p => p.map(n => n.id === note.id ? { ...n, status: "confirmed" } : n));
-                        } catch {}
+                        } catch { /* ignore */ }
                       }} style={{
                         marginTop: 12, width: "100%", padding: "0.6rem",
                         borderRadius: 10, border: "1px solid rgba(134,239,172,0.3)",

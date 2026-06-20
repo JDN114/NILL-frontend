@@ -304,7 +304,7 @@ body,
 
 /* ════════ Part 2 — authoritative (was injected __css) ════════ */
 :root{
-  --bg:#02030a;--bg-2:#06070f;--ink:#efede7;--ink-dim:rgba(239,237,231,.5);--ink-faint:rgba(239,237,231,.14);
+  --bg:#02030a;--bg-2:#06070f;--ink:#efede7;--ink-dim:rgba(239,237,231,.62);--ink-faint:rgba(239,237,231,.14);
   --line:rgba(239,237,231,.07);--glass:rgba(255,255,255,.035);--glass-strong:rgba(255,255,255,.06);
   --accent:#c6ff3c;--accent-2:#7a5cff;--accent-3:#ff4d8d;--accent-4:#38f5d0;
   --serif:"Fraunces","Iowan Old Style",Georgia,serif;
@@ -343,7 +343,7 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 .brand-mark::before{content:"";position:absolute;inset:-50%;background:conic-gradient(from 0deg,transparent 0 340deg,rgba(255,255,255,.6) 355deg,transparent 360deg);animation:spin 6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .nav ul{display:flex;gap:8px;list-style:none}
-.nav ul a{font-size:13px;color:var(--ink-dim);padding:8px 14px;border-radius:99px;transition:color .25s,background .25s}
+.nav ul a{font-size:13px;color:rgba(239,237,231,.82);padding:8px 14px;border-radius:99px;transition:color .25s,background .25s}
 .nav ul a:hover{color:var(--ink);background:var(--glass)}
 .nav-auth{display:flex;align-items:center;gap:8px}
 .btn-auth{font-size:13px;color:var(--ink);padding:9px 16px;border-radius:99px;border:1px solid var(--line);background:transparent;transition:border-color .25s,background .25s,color .25s}

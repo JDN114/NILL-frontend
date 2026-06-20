@@ -460,7 +460,7 @@ function useLStorage(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
     catch { return fallback; }
   });
-  const save = (v) => { setVal(v); try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
+  const save = (v) => { setVal(v); try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* ignore */ } };
   return [val, save];
 }
 
@@ -797,7 +797,7 @@ function OverviewTab({ onNavigate, onUpload }) {
       {showCustom && (
         <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10,padding:"16px 20px",marginBottom:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <div style={{fontWeight:600,fontSize:".88rem"}}>Widgets für Modus „{DASH_MODES.find(m2=>m2.key===mode)?.label}"</div>
+            <div style={{fontWeight:600,fontSize:".88rem"}}>Widgets für Modus „{DASH_MODES.find(m2=>m2.key===mode)?.label}&quot;</div>
             <button onClick={resetWidgets}
               style={{fontSize:".75rem",padding:"3px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--ink2)",cursor:"pointer"}}>
               Zurücksetzen
@@ -1428,7 +1428,7 @@ function OverviewTab({ onNavigate, onUpload }) {
             <div className="ac-card">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                 <div className="ac-section-title" style={{marginBottom:0}}>Umsatzprognose</div>
-                <span style={{fontSize:".72rem",color:"var(--ink2)",padding:"2px 8px",borderRadius:20,background:"rgba(122,92,255,.12)",border:"1px solid rgba(122,92,255,.2)",color:"#a585ff"}}>Trendbasiert</span>
+                <span style={{fontSize:".72rem",padding:"2px 8px",borderRadius:20,background:"rgba(122,92,255,.12)",border:"1px solid rgba(122,92,255,.2)",color:"#a585ff"}}>Trendbasiert</span>
               </div>
               <ResponsiveContainer width="100%" height={200} aria-label="Umsatzprognose nächste 3 Monate">
                 <LineChart data={umsatzPrognose.data} margin={{top:4,right:4,left:0,bottom:0}}>

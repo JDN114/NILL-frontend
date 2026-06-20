@@ -187,6 +187,9 @@ const EmailListItem = memo(function EmailListItem({
     <li
       onClick={() => onOpen(id)}
       className={`em-item${isActive ? " em-item--active" : ""}${isUnread ? " em-item--unread" : ""}`}
+      // Skip layout/paint for offscreen rows in large inboxes (zero-dep virtualization).
+      // contain-intrinsic-size matches the row height (~72px desktop, 64px mobile min-height).
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 72px" }}
     >
       <Avatar name={senderName} />
       <div className="em-item-body">
@@ -867,7 +870,7 @@ export default function EmailsPage() {
           {(isSearching || activeFilter !== "all") && !loading && (
             <p className="em-result-info">
               {displayEmails.length} Ergebnis{displayEmails.length !== 1 ? "se" : ""}
-              {isSearching && <> für „<strong>{search}</strong>"</>}
+              {isSearching && <> für „<strong>{search}</strong>&quot;</>}
               {activeFilter !== "all" && <> · {filterLabel}</>}
               {isSearching && searchResults !== null && !searching && (
                 <span className="em-result-scope"> (inkl. älterer E-Mails)</span>

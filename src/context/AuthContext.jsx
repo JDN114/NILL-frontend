@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout", {}, { withCredentials: true });
-    } catch (_) {}
+    } catch (_) { /* ignore */ }
     localStorage.removeItem("nill_imap_saved");
     setUser(null);
     setOrg(null);
@@ -132,7 +132,7 @@ export function AuthProvider({ children }) {
           ))}
         </div>
         <div style={{
-          color:"rgba(155,152,144,.6)", fontSize:".72rem",
+          color:"rgba(155,152,144,.9)", fontSize:".72rem",
           letterSpacing:".08em", textTransform:"uppercase",
           fontFamily:"Inter,sans-serif",
         }}>

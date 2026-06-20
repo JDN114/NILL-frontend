@@ -2,7 +2,7 @@ import React from "react";
 import LegalLayout from "../components/LegalLayout";
 
 const ink    = "#efede7";
-const inkDim = "rgba(239,237,231,0.5)";
+const inkDim = "rgba(239,237,231,0.62)";
 const accent = "#c6ff3c";
 const serif  = "'Fraunces','Iowan Old Style',Georgia,serif";
 const mono   = "'JetBrains Mono',monospace";

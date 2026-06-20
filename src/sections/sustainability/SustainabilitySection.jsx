@@ -305,7 +305,7 @@ function ImpactCalculator() {
       <div className="nh2-calc-head">
         <span className="eyebrow" style={{color:'var(--accent)'}}>Dein Impact · interaktiv</span>
         <h3 style={{marginTop:18}}>Wie viel CO₂ <em>sparst</em> du<br/>mit NILL?</h3>
-        <p>Im Schnitt spart ein Mitarbeiter ~28&nbsp;kg CO₂ pro Jahr — verglichen mit einem typischen Multi-Tool-SaaS-Stack. Schieb den Regler und sieh's live.</p>
+        <p>Im Schnitt spart ein Mitarbeiter ~28&nbsp;kg CO₂ pro Jahr — verglichen mit einem typischen Multi-Tool-SaaS-Stack. Schieb den Regler und sieh&apos;s live.</p>
 
         <div className="nh2-slider-wrap">
           <div className="nh2-slider-label">
@@ -704,7 +704,7 @@ export default function SustainabilitySection({ onCTA }) {
               Software, die <em>nicht heizt.</em>
             </h2>
             <p className="lead">
-              KI verbraucht Strom — daran führt kein Weg vorbei. Also nehmen wir's ernst:
+              KI verbraucht Strom — daran führt kein Weg vorbei. Also nehmen wir&apos;s ernst:
               NILL läuft auf erneuerbarer Energie, misst jede Anfrage in g CO₂ und
               kompensiert den Rest mit Überdeckung.
             </p>
