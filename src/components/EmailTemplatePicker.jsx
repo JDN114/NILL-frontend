@@ -5,7 +5,7 @@ export default function EmailTemplatePicker({ value, onChange, body = "", templa
   const [templatesState, setTemplates] = useState([]);
   const [loading, setLoading]     = useState(!templatesProp);
   const [darkMode, setDarkMode]   = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [, setShowPreview] = useState(false);
 
   // When the parent already fetched the templates, reuse that list instead of
   // issuing a second /gmail/templates request.

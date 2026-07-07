@@ -536,7 +536,6 @@ function ApplicationsModule() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {applications.map((app, i) => {
-            const cfg = STATUS_APP[app.status] || STATUS_APP.new;
             return (
               <div
                 key={app.id}
@@ -613,15 +612,6 @@ const TRAVEL_STATUS = {
   booked:           { label: "GEBUCHT",   color: T.info,   dim: T.infoDim   },
   cancelled:        { label: "ABGELEHNT", color: T.danger, dim: T.dangerDim },
 };
-
-function Row({ label, value, valueColor = T.textPri, mono = false }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${T.border}` }}>
-      <span style={{ fontFamily: FM, fontSize: 11, color: T.textTer }}>{label}</span>
-      <span style={{ fontFamily: mono ? FM : FB, fontSize: mono ? 12 : 13, color: valueColor, fontWeight: 500 }}>{value}</span>
-    </div>
-  );
-}
 
 function Block({ label, children, accent, aiGenerated = false }) {
   return (
@@ -942,7 +932,7 @@ function TravelModule() {
   const [submitting,  setSubmitting]  = useState(false);
   const [selected,    setSelected]    = useState(null);
   const [showReject,  setShowReject]  = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
+  const [, setRegenerating] = useState(false);
   const [form, setForm] = useState({ destination: "", origin: "", purpose: "", departure_date: "", return_date: "", budget: "", notes: "" });
 
   useEffect(() => {

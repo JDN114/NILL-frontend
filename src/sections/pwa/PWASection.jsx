@@ -312,7 +312,7 @@ function QRBlock() {
 }
 
 /* ── Main section ─────────────────────────────────────── */
-export default function PWASection({ onCTA }) {
+export default function PWASection() {
   const [headRef, headVis] = useReveal()
   const [gridRef, gridVis] = useReveal(0.04)
 

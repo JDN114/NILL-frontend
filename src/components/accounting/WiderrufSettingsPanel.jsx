@@ -23,7 +23,7 @@ Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die 
 Folgen des Widerrufs: Wenn Sie diesen Vertrag widerrufen, haben wir alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist.`;
 
 export default function WiderrufSettingsPanel() {
-  const [cfg, setCfg]       = useState(null);
+  const [, setCfg]       = useState(null);
   const [form, setForm]     = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);

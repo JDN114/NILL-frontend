@@ -29,6 +29,111 @@ const red      = "#f87171";
 const green    = "#34d399";
 const amber    = "#fbbf24";
 
+// ─── Settings search index ──────────────────────────────────────────────────
+// Each entry maps a searchable setting to the tab it lives on (and an optional
+// element id to scroll to). `keywords` intentionally include German + English
+// synonyms and common wordings so a search "covers similar terms" — e.g. a user
+// typing "abmelden", "logout", "timeout" or "session" all find the same setting.
+const SETTINGS_SEARCH_INDEX = [
+  // Konto
+  { tab: "konto", title: "Account & Profil",
+    keywords: ["konto", "account", "profil", "benutzer", "user", "email", "e-mail", "avatar", "rolle", "name"] },
+  { tab: "konto", title: "Passwort ändern",
+    keywords: ["passwort", "password", "kennwort", "passwort ändern", "passwort aendern", "credentials", "zugangsdaten", "login"] },
+  { tab: "konto", title: "Ausloggen",
+    keywords: ["ausloggen", "abmelden", "logout", "sign out", "abmeldung", "log out"] },
+  { tab: "konto", title: "Auf allen Geräten abmelden",
+    keywords: ["alle geräte", "alle geraete", "logout all", "geräte abmelden", "sitzungen beenden", "sessions beenden", "überall abmelden", "ueberall abmelden", "logout all devices"] },
+  { tab: "konto", title: "Datenschutz & DSGVO – Datenexport", anchor: "set-dsgvo",
+    keywords: ["dsgvo", "gdpr", "datenschutz", "datenexport", "daten exportieren", "export", "auskunft", "art 20", "art 15", "download daten", "privacy", "meine daten"] },
+  { tab: "konto", title: "Account löschen",
+    keywords: ["account löschen", "account loeschen", "konto löschen", "konto loeschen", "delete account", "profil löschen", "daten löschen"] },
+  // Sicherheit
+  { tab: "sicherheit", title: "Automatische Abmeldung bei Inaktivität", anchor: "set-inactivity",
+    keywords: ["inaktivität", "inaktivitaet", "automatische abmeldung", "auto logout", "automatisch abmelden", "session timeout", "sitzung", "session", "timeout", "idle", "leerlauf", "abmeldung nach zeit", "logout nach zeit", "sitzungsdauer", "abmeldezeit", "inactivity", "auto abmeldung", "ausloggen zeit"] },
+  { tab: "sicherheit", title: "Passwort & Anmeldung",
+    keywords: ["sicherheit", "security", "passwort", "anmeldung", "login", "kennwort", "passwort ändern"] },
+  { tab: "sicherheit", title: "Zwei-Faktor-Authentifizierung (2FA)", anchor: "set-2fa",
+    keywords: ["2fa", "zwei faktor", "zwei-faktor", "two factor", "totp", "authenticator", "google authenticator", "authy", "mfa", "backup codes", "backup-codes", "qr code", "zweiter faktor"] },
+  { tab: "sicherheit", title: "Aktive Sitzungen & Geräte",
+    keywords: ["aktive sitzungen", "sessions", "geräte", "geraete", "devices", "login aktivität", "anmeldeaktivität", "sitzungen", "eingeloggte geräte"] },
+  // Benachrichtigungen
+  { tab: "benachrichtigungen", title: "Benachrichtigungen",
+    keywords: ["benachrichtigungen", "notifications", "push", "push benachrichtigung", "alerts", "hinweise", "email benachrichtigung", "mitteilungen", "erinnerungen"] },
+  // Sicherheit-adjacent tabs (admin/others filtered at render by available tabs)
+  { tab: "unternehmen", title: "Unternehmen / Firma",
+    keywords: ["unternehmen", "firma", "company", "organisation", "adresse", "steuernummer", "ust-id", "impressum", "firmendaten", "logo"] },
+  { tab: "integrationen", title: "E-Mail Integrationen (Gmail / Outlook / IMAP)",
+    keywords: ["integrationen", "gmail", "outlook", "imap", "email verbinden", "postfach", "connect", "oauth", "mail konto", "email konto verbinden", "provider"] },
+  { tab: "abonnement", title: "Abonnement & Rechnungen",
+    keywords: ["abonnement", "abo", "subscription", "plan", "rechnung", "rechnungen", "invoice", "zahlung", "billing", "kündigen", "kuendigen", "upgrade", "stripe", "tarif", "bezahlung"] },
+  { tab: "team", title: "Mein Team",
+    keywords: ["team", "mitglieder", "einladen", "invite", "rollen", "mitarbeiter", "kollegen", "nutzer verwalten", "team verwalten"] },
+  { tab: "ausweis", title: "Mein Ausweis",
+    keywords: ["ausweis", "badge", "mitarbeiterausweis", "id karte", "qr code", "arbeitsausweis"] },
+  { tab: "nutzung", title: "Nutzung & KI-Verbrauch",
+    keywords: ["nutzung", "usage", "verbrauch", "ki nutzung", "ai usage", "limit", "kontingent", "tokens", "verbrauchsübersicht"] },
+  { tab: "hilfe", title: "Hilfe & Support",
+    keywords: ["hilfe", "help", "support", "faq", "kontakt", "anleitung", "fragen", "hilfestellung"] },
+];
+
+// Fold umlauts/ß + case + diacritics so search is accent-insensitive.
+function normalizeSearch(s) {
+  return (s || "")
+    .toLowerCase()
+    .replace(/ß/g, "ss")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+// Cheap Levenshtein with a hard cap of 1 — just enough to tolerate a single typo
+// on longer query tokens without matching everything.
+function withinOneEdit(a, b) {
+  if (a === b) return true;
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, edits = 0;
+  while (i < la && j < lb) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++edits > 1) return false;
+    if (la > lb) i++;
+    else if (lb > la) j++;
+    else { i++; j++; }
+  }
+  if (i < la || j < lb) edits++;
+  return edits <= 1;
+}
+
+// Rank index entries against a query. Every query token must match some field
+// (title or a keyword) — via prefix, substring, or a 1-edit fuzzy fallback.
+function searchSettingsIndex(query, entries) {
+  const tokens = normalizeSearch(query).split(" ").filter(Boolean);
+  if (!tokens.length) return [];
+  const out = [];
+  for (const e of entries) {
+    const title = normalizeSearch(e.title);
+    const keys = e.keywords.map(normalizeSearch);
+    let score = 0, allMatched = true;
+    for (const qt of tokens) {
+      let best = 0;
+      if (title.startsWith(qt)) best = Math.max(best, 6);
+      else if (title.includes(qt)) best = Math.max(best, 4);
+      for (const k of keys) {
+        if (k === qt) best = Math.max(best, 5);
+        else if (k.startsWith(qt)) best = Math.max(best, 4);
+        else if (k.includes(qt)) best = Math.max(best, 3);
+        else if (qt.length >= 4 && k.split(" ").some((w) => withinOneEdit(w, qt))) best = Math.max(best, 1);
+      }
+      if (best === 0) { allMatched = false; break; }
+      score += best;
+    }
+    if (allMatched) out.push({ ...e, score });
+  }
+  out.sort((a, b) => b.score - a.score);
+  return out.slice(0, 8);
+}
+
 // ─── Shared primitives ──────────────────────────────────────────────────────
 const panelStyle = {
   background: surface,
@@ -551,6 +656,10 @@ export default function SettingsPage() {
   const [showKontakt,      setShowKontakt]       = useState(false);
   const [loadingStatus,    setLoadingStatus]     = useState(false);
 
+  // Settings search box
+  const [search,      setSearch]      = useState("");
+  const [searchFocus, setSearchFocus] = useState(false);
+
   // ── Subscription ────────────────────────────────────────────────────────
   const [subscription,     setSubscription]     = useState(null);
   const [loadingSub,       setLoadingSub]       = useState(true);
@@ -634,7 +743,7 @@ export default function SettingsPage() {
   const [webauthnError,      setWebauthnError]      = useState("");
 
   // ── ArbeitsStation ────────────────────────────────────────────────────────
-  const [stationEnabled,  setStationEnabled]  = useState(false);
+  const [, setStationEnabled]  = useState(false);
   const [stationModules,  setStationModules]  = useState([]);
   const [stationSaving,   setStationSaving]   = useState(false);
   const [stationSuccess,  setStationSuccess]  = useState(false);
@@ -1164,6 +1273,34 @@ export default function SettingsPage() {
     { id: "hilfe",           label: "Hilfe",              icon: svgHelp },
   ];
 
+  // ── Settings search ────────────────────────────────────────────────────────
+  // Only search settings whose tab is actually visible to this user (admin-only
+  // tabs are filtered out of TABS above, so filter the index the same way).
+  const availableTabIds = new Set(TABS.map((t) => t.id));
+  const searchEntries   = SETTINGS_SEARCH_INDEX.filter((e) => availableTabIds.has(e.tab));
+  const searchResults   = search.trim() ? searchSettingsIndex(search, searchEntries) : [];
+  const tabLabelOf = (id) => TABS.find((t) => t.id === id)?.label ?? id;
+
+  // Jump to a matched setting: switch tab, then scroll to + briefly highlight
+  // its panel (if it exposes an id anchor).
+  const goToSetting = (entry) => {
+    setActiveTab(entry.tab);
+    setSearch("");
+    setSearchFocus(false);
+    if (entry.anchor) {
+      setTimeout(() => {
+        const el = document.getElementById(entry.anchor);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("set-flash");
+          setTimeout(() => el.classList.remove("set-flash"), 1600);
+        }
+      }, 90);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <PageLayout noScrollMobileOnly>
@@ -1174,6 +1311,12 @@ export default function SettingsPage() {
            scrolls (keeps the bottom tab bar / nav stable) — see @media below. */
         .sp-layout { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; }
         .sp-header { margin-bottom: 1.5rem; }
+        /* Brief highlight ring when the search jumps to a setting. */
+        .set-flash { animation: setFlash 1.5s ease; border-radius: 14px; }
+        @keyframes setFlash {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(197,165,114,0); }
+          18%      { box-shadow: 0 0 0 2px rgba(197,165,114,0.65); }
+        }
         .sp-body { display: flex; gap: 1.75rem; align-items: flex-start; }
         .sp-sidebar {
           width: 188px; flex-shrink: 0;
@@ -1256,6 +1399,74 @@ export default function SettingsPage() {
           <p className="sp-header-sub" style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
             Konto, Unternehmen, Integrationen & mehr
           </p>
+
+          {/* Search: finds settings by name or related terms and jumps to them */}
+          <div style={{ position: "relative", marginTop: "0.9rem", maxWidth: 440 }}>
+            <span style={{
+              position: "absolute", left: "0.85rem", top: "50%", transform: "translateY(-50%)",
+              display: "flex", opacity: 0.45, pointerEvents: "none",
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchFocus(true)}
+              onBlur={() => setTimeout(() => setSearchFocus(false), 150)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchResults[0]) goToSetting(searchResults[0]);
+                else if (e.key === "Escape") { setSearch(""); e.currentTarget.blur(); }
+              }}
+              placeholder="Einstellungen durchsuchen…"
+              aria-label="Einstellungen durchsuchen"
+              style={{
+                width: "100%", padding: "0.6rem 0.8rem 0.6rem 2.3rem", borderRadius: 10,
+                background: "rgba(var(--tint),0.04)", border: `1px solid ${border}`,
+                color: text, fontSize: "0.85rem", outline: "none",
+              }}
+            />
+            {searchFocus && search.trim() && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 40,
+                // Opaque, theme-aware base (--nill-bg flips light/dark) with a subtle
+                // tint overlay so the dropdown reads as elevated over the page.
+                background: "linear-gradient(rgba(var(--tint),0.05), rgba(var(--tint),0.05)), var(--nill-bg, #0a0a12)",
+                border: `1px solid ${border}`,
+                borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,0.35)", overflow: "hidden",
+              }}>
+                {searchResults.length === 0 ? (
+                  <div style={{ padding: "0.75rem 0.9rem", fontSize: "0.8rem", color: dim }}>
+                    Keine Treffer für „{search.trim()}“
+                  </div>
+                ) : (
+                  searchResults.map((r) => (
+                    <button
+                      key={`${r.tab}-${r.title}`}
+                      // onMouseDown fires before the input's onBlur, so the click lands.
+                      onMouseDown={(e) => { e.preventDefault(); goToSetting(r); }}
+                      style={{
+                        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                        gap: 10, padding: "0.6rem 0.9rem", background: "transparent", border: "none",
+                        borderBottom: `1px solid ${border}`, cursor: "pointer", textAlign: "left",
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = "rgba(var(--tint),0.05)"; }}
+                      onMouseOut={(e)  => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <span style={{ fontSize: "0.84rem", color: text, fontWeight: 500 }}>{r.title}</span>
+                      <span style={{ fontSize: "0.7rem", color: gold, background: goldDim,
+                        padding: "0.15rem 0.5rem", borderRadius: 20, whiteSpace: "nowrap", flexShrink: 0 }}>
+                        {tabLabelOf(r.tab)}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="sp-body">
@@ -1355,30 +1566,6 @@ export default function SettingsPage() {
                       Passwort ändern
                     </button>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.25rem" }}>
-                      <label htmlFor="nill-inactivity" style={{ fontSize: "0.8rem", fontWeight: 600, color: text }}>
-                        Automatische Abmeldung bei Inaktivität
-                      </label>
-                      <select
-                        id="nill-inactivity"
-                        value={inactivityPref}
-                        onChange={handleInactivityChange}
-                        style={{
-                          width: "100%", padding: "0.6rem 0.7rem", borderRadius: 10,
-                          background: "rgba(var(--tint),0.03)", border: `1px solid ${border}`,
-                          color: text, fontSize: "0.85rem", cursor: "pointer",
-                        }}
-                      >
-                        {INACTIVITY_OPTIONS.map((o) => (
-                          <option key={o.id} value={o.id}>{o.label}</option>
-                        ))}
-                      </select>
-                      <p style={{ fontSize: "0.72rem", color: dim, margin: 0 }}>
-                        Nach dieser Zeit ohne Aktivität wirst du aus Sicherheitsgründen automatisch abgemeldet.
-                        Die Einstellung gilt für diesen Browser.
-                      </p>
-                    </div>
-
                     <button style={btnGhost} onClick={handleLogout}>
                       Ausloggen
                     </button>
@@ -1393,7 +1580,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* DSGVO / Datenschutz */}
-                <div style={panelStyle}>
+                <div id="set-dsgvo" style={panelStyle}>
                   <SectionHead title="Datenschutz & DSGVO" />
                   <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                     <p style={{ fontSize: "0.82rem", color: dim, margin: 0 }}>
@@ -1807,7 +1994,7 @@ export default function SettingsPage() {
                             </Link>
                           </div>
                           <p style={{ fontSize: "0.72rem", color: mute, margin: 0 }}>
-                            Mit Klick auf „Jetzt kostenpflichtig abonnieren" wirst du zu Stripe weitergeleitet.
+                            Mit Klick auf „Jetzt kostenpflichtig abonnieren“ wirst du zu Stripe weitergeleitet.
                             Es gilt unser <Link to="/agb" style={{ color: mute }}>AGB</Link> und{" "}
                             <Link to="/widerruf" style={{ color: mute }}>Widerrufsrecht</Link> (14 Tage).
                             Monatlich kündbar.
@@ -2462,7 +2649,36 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div style={panelStyle}>
+                {/* Automatische Abmeldung bei Inaktivität */}
+                <div id="set-inactivity" style={panelStyle}>
+                  <SectionHead title="Automatische Abmeldung" />
+                  <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                    <label htmlFor="nill-inactivity" style={{ fontSize: "0.8rem", fontWeight: 600, color: text }}>
+                      Abmelden bei Inaktivität
+                    </label>
+                    <select
+                      id="nill-inactivity"
+                      value={inactivityPref}
+                      onChange={handleInactivityChange}
+                      style={{
+                        width: "100%", maxWidth: 340, padding: "0.6rem 0.7rem", borderRadius: 10,
+                        background: "rgba(var(--tint),0.03)", border: `1px solid ${border}`,
+                        color: text, fontSize: "0.85rem", cursor: "pointer",
+                      }}
+                    >
+                      {INACTIVITY_OPTIONS.map((o) => (
+                        <option key={o.id} value={o.id}>{o.label}</option>
+                      ))}
+                    </select>
+                    <p style={{ fontSize: "0.75rem", color: dim, margin: 0, lineHeight: 1.55 }}>
+                      Nach dieser Zeit ohne Aktivität wirst du aus Sicherheitsgründen automatisch abgemeldet.
+                      Aktive Sitzungen werden im Hintergrund verlängert, damit du während der Arbeit nicht
+                      unterbrochen wirst. Die Einstellung gilt für diesen Browser.
+                    </p>
+                  </div>
+                </div>
+
+                <div id="set-2fa" style={panelStyle}>
                   <SectionHead
                     title="Zwei-Faktor-Authentifizierung"
                     action={

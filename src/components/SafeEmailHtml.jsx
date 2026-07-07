@@ -156,7 +156,7 @@ export default function SafeEmailHtml({ html }) {
   // like Apple Mail / Gmail. On desktop (wide pane) this is a no-op.
   const wrapRef  = useRef(null);
   const innerRef = useRef(null);
-  const [scale, setScale]     = useState(1);
+  const [, setScale]     = useState(1);
   const [wrapH, setWrapH]     = useState(null);
   const lastWidth = useRef(0);
 

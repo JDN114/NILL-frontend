@@ -183,7 +183,7 @@ function GrowingPlant({ play = true }) {
 /* ── Live power-mix widget ───────────────────────────── */
 function PowerMixWidget() {
   const [mix, setMix] = useState({ wind: 64, sun: 28, hydro: 8 })
-  const [tick, setTick] = useState(0)
+  const [, setTick] = useState(0)
 
   useEffect(() => {
     let t
@@ -413,7 +413,7 @@ function CarbonJourney() {
       </div>
 
       <div className="nh2-journey-stages" role="list">
-        {STAGES.map((s, i) => (
+        {STAGES.map((s) => (
           <div key={s.num} className="nh2-stage" role="listitem">
             <div className="nh2-stage-orb" aria-hidden="true">
               {s.icon}

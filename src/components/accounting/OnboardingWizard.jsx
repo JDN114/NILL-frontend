@@ -43,7 +43,7 @@ export default function OnboardingWizard({ onClose, onComplete }) {
     onClose();
   };
 
-  const [finishError, setFinishError] = useState("");
+  const [, setFinishError] = useState("");
 
   const finish = async () => {
     setSaving(true);

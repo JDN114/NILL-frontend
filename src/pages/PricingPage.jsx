@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 
 // ─── Design tokens (matches LandingPage) ─────────────────────────────────────
 const bg      = "#040407";
-const bg2     = "#08080c";
 const ink     = "#efede7";
 const inkDim  = "rgba(239,237,231,0.5)";
 const inkFaint= "rgba(239,237,231,0.14)";
@@ -370,7 +369,6 @@ function FaqItem({ q, a }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PricingPage() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [mode, setMode] = useState("station"); // "station" = Arbeitsstation (live) · "suite" = NILL Komplett
   const [cycle, setCycle] = useState("monthly");
@@ -523,7 +521,7 @@ export default function PricingPage() {
 
             {/* Rechtliche Pflichtangaben §312j BGB */}
             <p style={{ margin: 0, fontSize: "0.7rem", color: "rgba(239,237,231,0.3)", textAlign: "center", lineHeight: 1.5 }}>
-              Mit „Jetzt kostenpflichtig abonnieren" wirst du zu Stripe weitergeleitet.
+              Mit „Jetzt kostenpflichtig abonnieren“ wirst du zu Stripe weitergeleitet.
               Es gilt unser{" "}
               <Link to="/agb" style={{ color: "rgba(239,237,231,0.4)" }}
                 onClick={() => setShowExpiredModal(false)}>AGB</Link>{" "}

@@ -13,7 +13,7 @@
 // automatisch das Routing zum richtigen Backend.
 
 import React, {
-  createContext, useCallback, useContext, useEffect, useMemo, useState,
+  createContext, useCallback, useContext, useMemo, useState,
 } from "react";
 import { GmailContext }   from "./GmailContext";
 import { OutlookContext } from "./OutlookContext";

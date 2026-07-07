@@ -100,7 +100,6 @@ function Schritt1({ data, jahr, onDone }) {
 }
 
 function Schritt2({ data, jahr, onDone }) {
-  const yr = new Date().getFullYear();
   const [form, setForm] = useState({
     gewinn:          String(data?.guv_jahresueberschuss ?? data?.eur_gewinn_verlust ?? 0),
     hinzurechnungen: String(data?.kst_hinzurechnungen ?? 0),

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { Suspense, useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { ThemeProvider, ThemeApplier } from "./context/ThemeContext";

@@ -6,7 +6,6 @@ const inkDim = 'rgba(239,237,231,0.5)';
 const line   = 'rgba(239,237,231,0.07)';
 const accent = '#c6ff3c';
 const serif  = "'Fraunces','Iowan Old Style',Georgia,serif";
-const mono   = "'JetBrains Mono',monospace";
 
 const cardStyle = {
   background: 'linear-gradient(180deg,#0c0d08,#070805)',

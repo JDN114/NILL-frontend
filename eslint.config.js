@@ -41,7 +41,10 @@ export default [
       ...reactHooksPlugin.configs.recommended.rules,
 
       // Security — catch common vulnerabilities
-      'security/detect-object-injection': 'warn',
+      // detect-object-injection flags every `obj[key]` / `arr[i]` access. In an
+      // app that indexes arrays and reads dynamic-but-known object keys all over
+      // the place it is ~100% false positives (181 in this tree), so it is off.
+      'security/detect-object-injection': 'off',
       'security/detect-non-literal-regexp': 'warn',
       'security/detect-unsafe-regex': 'error',
       'security/detect-buffer-noassert': 'error',
@@ -50,14 +53,19 @@ export default [
       'security/detect-eval-with-expression': 'error',
       'security/detect-new-buffer': 'error',
       'security/detect-no-csrf-before-method-override': 'error',
-      'security/detect-possible-timing-attacks': 'warn',
+      // Timing-attack detection is a server-side concern; client-side string
+      // compares of tokens/flags are not exploitable the same way. False
+      // positives here, so off.
+      'security/detect-possible-timing-attacks': 'off',
       'security/detect-pseudoRandomBytes': 'error',
       'security/detect-non-literal-fs-filename': 'warn',
 
       // Code quality
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // caughtErrors:'none' — an unused `catch (e)` binding is idiomatic (we
+      // catch to swallow/branch without inspecting the error); don't flag it.
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
       'no-undef': 'error',
       'prefer-const': 'warn',
       'no-var': 'error',

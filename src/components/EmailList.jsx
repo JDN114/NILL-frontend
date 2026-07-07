@@ -39,7 +39,7 @@ export default function EmailList() {
     };
     loadEmails();
     return () => { cancelled = true; };
-  }, [providerKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [providerKey]);
 
   if (!providerKey) return <p className="text-gray-400">Kein E-Mail-Konto verbunden.</p>;
   if (loading) return <p className="text-gray-400">E-Mails werden geladen…</p>;

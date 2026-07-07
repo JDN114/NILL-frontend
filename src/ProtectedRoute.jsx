@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const { user, org, loading, isCompanyAdmin } = useAuth();
+  const { user, org, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 

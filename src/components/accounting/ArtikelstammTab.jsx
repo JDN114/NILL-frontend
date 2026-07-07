@@ -400,12 +400,6 @@ export default function ArtikelstammTab({ mode = "verwaltung", onArtikelSelect }
     loadData();
   };
 
-  const handleDeleteWg = async (wg) => {
-    if (!window.confirm(`Warengruppe "${wg.bezeichnung}" deaktivieren?`)) return;
-    await api.delete(`/api/v1/artikel/warengruppen/${wg.id}`);
-    loadData();
-  };
-
   const handleSelect = (a) => {
     if (onArtikelSelect) onArtikelSelect(a);
   };

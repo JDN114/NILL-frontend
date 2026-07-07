@@ -2,7 +2,7 @@
 // Öffentliche Checkout-Seite für Endkunden
 // §§ 312g, 355 BGB — AGB + Widerrufsbelehrung vor Zahlungsabschluss
 import React, { useState, useEffect } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 
 // Public checkout endpoints routed through the single api.js instance
@@ -193,7 +193,6 @@ function WiderrufFormular({ token, verkäufer, onClose }) {
 export default function CheckoutPage() {
   const { token } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const [info, setInfo]       = useState(null);
   const [loading, setLoading] = useState(true);

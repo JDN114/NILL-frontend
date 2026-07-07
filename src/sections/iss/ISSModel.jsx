@@ -327,7 +327,7 @@ function buildISSIntoGroup(rootGroup) {
 }
 
 /* ─── ISSModel — R3F component ─────────────────────────────────── */
-export const ISSModel = forwardRef(function ISSModel({ thrusterProxy, focusProxy, stationProxy }, ref) {
+export const ISSModel = forwardRef(function ISSModel({ thrusterProxy, focusProxy }, ref) {
   const groupRef = useRef()
   const internalsRef = useRef(null)
 

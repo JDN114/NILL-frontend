@@ -29,16 +29,6 @@ function dayKey(date) {
   return new Date(date).toDateString();
 }
 
-function relativeLabel(dateStr) {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const d = new Date(dateStr); d.setHours(0, 0, 0, 0);
-  const diff = Math.round((d - today) / 86400000);
-  if (diff === 0) return "Heute";
-  if (diff === 1) return "Morgen";
-  if (diff === 2) return "Übermorgen";
-  return new Date(dateStr).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
-}
-
 function EventItem({ event }) {
   const hasTime = event.start && !event.all_day;
   const isNow = event.start && event.end &&
@@ -140,7 +130,6 @@ export default function ArbeitsStationKalender() {
 
   const days = Object.values(grouped).sort((a, b) => a.date - b.date);
   const today = dayKey(new Date());
-  const todayGroup = grouped[today];
 
   return (
     <ArbeitsStationLayout title="Kalender" icon="▦" accent={ACCENT} maxWidth={780}>

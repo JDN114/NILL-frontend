@@ -78,7 +78,7 @@ function Bilanz({ stichtag }) {
     <div className="ac-grid-2">
       <div className="ac-card">
         <div className="ac-section-title">Aktiva (§266 Abs. 2 HGB)</div>
-        {(data.aktiva || []).map((abschnitt, i) => renderSection(abschnitt.titel, abschnitt.positionen, "var(--accent)"))}
+        {(data.aktiva || []).map((abschnitt) => renderSection(abschnitt.titel, abschnitt.positionen, "var(--accent)"))}
         <div style={{ borderTop:"2px solid var(--accent)", paddingTop:12, display:"flex", justifyContent:"space-between" }}>
           <span style={{ fontFamily:"Fraunces,serif", fontWeight:700 }}>Bilanzsumme Aktiva</span>
           <span className="ac-mono" style={{ color:"var(--accent)", fontWeight:700, fontSize:"1.1rem" }}>{fmtEur(data.summe_aktiva)}</span>
@@ -86,7 +86,7 @@ function Bilanz({ stichtag }) {
       </div>
       <div className="ac-card">
         <div className="ac-section-title">Passiva (§266 Abs. 3 HGB)</div>
-        {(data.passiva || []).map((abschnitt, i) => renderSection(abschnitt.titel, abschnitt.positionen, "var(--a2)"))}
+        {(data.passiva || []).map((abschnitt) => renderSection(abschnitt.titel, abschnitt.positionen, "var(--a2)"))}
         <div style={{ borderTop:"2px solid var(--a2)", paddingTop:12, display:"flex", justifyContent:"space-between" }}>
           <span style={{ fontFamily:"Fraunces,serif", fontWeight:700 }}>Bilanzsumme Passiva</span>
           <span className="ac-mono" style={{ color:"var(--a2)", fontWeight:700, fontSize:"1.1rem" }}>{fmtEur(data.summe_passiva)}</span>

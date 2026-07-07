@@ -15,7 +15,7 @@ export default function InviteAcceptPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm]   = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess]   = useState(false);
+  const [success]   = useState(false);
 
   useEffect(() => {
     const load = async () => {

@@ -368,35 +368,6 @@ const PIE_COLORS = [
   "rgba(155,152,144,0.20)",
 ];
 
-const PieActiveShape = (props) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
-  return (
-    <g>
-      <text x={cx} y={cy - 10} textAnchor="middle" fill="var(--ink)" fontSize={13} fontWeight={600}
-        fontFamily="JetBrains Mono,monospace">{fmtEur(value)}</text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--ink2)" fontSize={10}>{payload.name}</text>
-      <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 6}
-        startAngle={startAngle} endAngle={endAngle} fill={fill} />
-      <Sector cx={cx} cy={cy} innerRadius={outerRadius + 10} outerRadius={outerRadius + 13}
-        startAngle={startAngle} endAngle={endAngle} fill={fill} opacity={0.5} />
-    </g>
-  );
-};
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",fontSize:".82rem"}}>
-      <div style={{color:"var(--ink2)",marginBottom:6,fontSize:".75rem"}}>{label}</div>
-      {payload.map((p,i) => (
-        <div key={i} style={{color:p.color,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}>
-          {p.name}: {fmtEur(p.value)}
-        </div>
-      ))}
-    </div>
-  );
-};
-
 // ── Übersicht ─────────────────────────────────────────────────────────────────────────────────
 
 const DASH_MODES = [
@@ -639,10 +610,9 @@ function OverviewTab({ onNavigate, onUpload }) {
     const ys = mv.map(m => m.einnahmen||0);
     const meanX = (n-1)/2;
     const meanY = ys.reduce((s,y)=>s+y,0)/n;
-    const denom = ys.reduce((_,__,i)=>(i-meanX)**2,0) || 1;
     const slope = ys.reduce((s,y,i)=>s+(i-meanX)*(y-meanY),0) / mv.reduce((s,_,i)=>s+(i-meanX)**2,0);
     const intercept = meanY - slope*meanX;
-    const hist = mv.map((m,i) => ({ name:fmtMonat(m.monat), Einnahmen:m.einnahmen, prognose:null }));
+    const hist = mv.map((m) => ({ name:fmtMonat(m.monat), Einnahmen:m.einnahmen, prognose:null }));
     const [lastY, lastMo] = mv[mv.length-1].monat.split("-");
     const proj = [1,2,3].map(i => {
       const d = new Date(parseInt(lastY), parseInt(lastMo)-1+i);
@@ -1716,7 +1686,6 @@ function ExportTab() {
   const [steuernummer, setSteuernummer]   = useState("");
   const [finanzamtId, setFinanzamtId]     = useState("9300");
   const [zeitraum, setZeitraum]           = useState(String(today.getMonth()+1).padStart(2,"0"));
-  const [testModus, setTestModus]         = useState(true);
   const [loadingE, setLoadingE]           = useState(false);
   const [msg, setMsg]                     = useState(null);
 
@@ -1911,6 +1880,8 @@ function ExportTab() {
 }
 
 // ── Rechnungen (Eingehend + Ausgehend) ───────────────────────────────────────
+// Dead component — no longer rendered; retained pending deletion.
+// eslint-disable-next-line no-unused-vars
 function RechnungenTab({ onUpload, onRefresh, refreshKey }) {
   const [sub, setSub] = useState("eingehend");
   return (
@@ -2051,6 +2022,8 @@ const HELP_MODULES = [
   },
 ];
 
+// Dead component — no longer rendered; retained pending deletion.
+// eslint-disable-next-line no-unused-vars
 function ComingSoonTab({ title = "Dieses Feature", desc = "Demnächst verfügbar." }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:320, gap:16, opacity:.7 }}>

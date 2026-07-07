@@ -10,7 +10,7 @@ export const OutlookProvider = ({ children }) => {
   const [connected, setConnected] = useState(null);
   const [emails, setEmails] = useState([]);
   const [activeEmail, setActiveEmail] = useState(null);
-  const [initializing, setInitializing] = useState(false);
+  const [initializing] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 
   const lastStatusFetch = useRef(0);

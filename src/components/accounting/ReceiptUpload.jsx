@@ -5,7 +5,7 @@ import { useState } from "react";
 import api from "../../services/api";
 
 export default function ReceiptUploadModal({ open, onClose, onCreated }) {
-  const [file, setFile] = useState(null);
+  const [, setFile] = useState(null);
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

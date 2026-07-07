@@ -48,7 +48,7 @@ function groupByDay(events) {
 // -------------------------
 // COMPONENT
 // -------------------------
-export default function EventList({ events = [], onSelect, onDelete, onUpdated }) {
+export default function EventList({ events = [], onSelect, onDelete }) {
   const [localEvents, setLocalEvents] = useState(events);
 
   // 🔥 Sync props -> local state
@@ -57,11 +57,6 @@ export default function EventList({ events = [], onSelect, onDelete, onUpdated }
   }, [events]);
 
   // 🔥 Update einzelner Event direkt in der Liste
-  const handleUpdated = (updatedEvent) => {
-    setLocalEvents((prev) => prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
-    onUpdated?.(updatedEvent); // callback an Parent
-  };
-
   if (!localEvents.length) {
     return <p className="text-gray-400 text-sm">Keine Termine</p>;
   }

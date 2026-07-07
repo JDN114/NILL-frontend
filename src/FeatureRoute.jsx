@@ -21,7 +21,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 export default function FeatureRoute({ feature, module: mod, children }) {
-  const { user, org, isCompanyAdmin, isSolo, hasFeature, hasModule } = useAuth();
+  const { hasFeature, hasModule } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 

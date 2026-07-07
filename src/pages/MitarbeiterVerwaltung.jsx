@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import api from "../services/api";
-import { useAuth } from "../context/AuthContext";
 
 const CONTRACT_TYPES = ["Vollzeit", "Teilzeit", "Minijob", "Werkstudent", "Praktikant", "Freiberuflich"];
 const TAX_CLASSES = [1, 2, 3, 4, 5, 6];
@@ -304,8 +303,6 @@ function EmployeeRow({ employee, onEdit, onDelete }) {
 }
 
 export function MitarbeiterContent() {
-  const { isCompanyAdmin } = useAuth();
-  const isAdmin = Boolean(isCompanyAdmin());
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);

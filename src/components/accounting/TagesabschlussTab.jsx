@@ -6,7 +6,6 @@ import api from "../../services/api";
 const EUR = (n) =>
   `${Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 const today = () => new Date().toISOString().slice(0, 10);
-const f = (v) => Number(v || 0).toFixed(2);
 
 const STATUS_LABEL = { entwurf: "Entwurf", gebucht: "Gebucht", storniert: "Storniert" };
 const STATUS_CLASS = { entwurf: "ac-badge-gray", gebucht: "ac-badge-green", storniert: "ac-badge-pink" };

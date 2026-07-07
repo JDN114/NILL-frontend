@@ -374,7 +374,7 @@ function CameraRig({ cameraProxy, lookProxy, fovProxy, thrusterProxy }) {
 }
 
 /* ─── Scene — flat hierarchy, no nested function components ─────── */
-function SceneContent({ issGroupRef, stationProxy, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onReady }) {
+function SceneContent({ issGroupRef, cameraProxy, lookProxy, thrusterProxy, fovProxy, focusProxy, onReady }) {
   useEffect(() => { onReady?.() }, [onReady])
 
   return (

@@ -805,7 +805,7 @@ function PricingCard({tier,sub,price,per,items,pop}) {
     </article>
   );
 }
-function Pricing({ onCTA }) {
+function Pricing() {
   const [ref, vis] = useReveal();
   return (
     <section id="preise">
