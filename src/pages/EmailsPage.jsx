@@ -712,6 +712,9 @@ export default function EmailsPage() {
 
   const filterLabel = FILTERS.find(f => f.key === activeFilter)?.label;
   const isSearching = search.trim().length > 0;
+  const listTitle = activeFolder
+    ? `${folders.find(f => f.id === activeFolder)?.icon ?? ""} ${folders.find(f => f.id === activeFolder)?.name ?? ""}`.trim()
+    : mailbox === "inbox" ? "Posteingang" : "Gesendet";
 
   return (
     <>
@@ -803,16 +806,16 @@ export default function EmailsPage() {
 
         {/* ── Liste ── */}
         <div className={`em-list-col ${activeEmail ? "em-list-col--pushed" : ""}`}>
-          {/* Mobile-only top bar: hamburger + logo */}
+          {/* Mobile-only top bar: menu · title · refresh (single clean header) */}
           <div className="em-mobile-bar">
             <button onClick={() => setDrawerOpen(true)} className="em-hamburger" aria-label="Menü öffnen">
               {IC.menu}
             </button>
-            <a href="/dashboard" className="em-logo">
-              <span className="em-logo-mark">N</span>
-              <span className="em-logo-label">NILL</span>
-            </a>
-            <span style={{ width: 36 }} />
+            <span className="em-mobile-title">{listTitle}</span>
+            <button onClick={loadEmails} disabled={loading} aria-label="Aktualisieren"
+              className={`em-mobile-refresh ${loading ? "em-refresh--spin" : ""}`}>
+              {IC.refresh}
+            </button>
           </div>
 
           {/* Mobile-only floating compose button (Gmail-style FAB) */}
@@ -820,11 +823,7 @@ export default function EmailsPage() {
             {IC.plus}
           </button>
           <div className="em-list-header">
-            <span className="em-list-title">
-              {activeFolder
-                ? (folders.find(f => f.id === activeFolder)?.icon + " " + folders.find(f => f.id === activeFolder)?.name)
-                : mailbox === "inbox" ? "Posteingang" : "Gesendet"}
-            </span>
+            <span className="em-list-title">{listTitle}</span>
             <button onClick={loadEmails} disabled={loading} title="Aktualisieren"
               className={`em-refresh ${loading ? "em-refresh--spin" : ""}`}>
               {IC.refresh}
@@ -864,6 +863,17 @@ export default function EmailsPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Mobile-only: horizontal quick-filter chips (touch-friendly Ersatz für das Dropdown) */}
+          <div className="em-filter-chips">
+            {FILTERS.filter(f => aiEnabled || f.key !== "withAI").map(f => (
+              <button key={f.key}
+                onClick={() => setActiveFilter(f.key)}
+                className={`em-chip ${activeFilter === f.key ? "em-chip--active" : ""}`}>
+                {f.label}
+              </button>
+            ))}
           </div>
 
           {/* Ergebnis-Info */}

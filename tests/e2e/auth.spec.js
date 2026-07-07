@@ -4,7 +4,7 @@ const HAS_CREDS = !!(process.env.TEST_EMAIL && process.env.TEST_PASSWORD);
 
 test.describe('Authentication', () => {
   test('login page loads and shows email + password fields', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     // Accept either a dedicated /login route or the root landing with login form
     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
     await expect(emailInput).toBeVisible({ timeout: 8000 });
@@ -13,7 +13,7 @@ test.describe('Authentication', () => {
   });
 
   test('submitting empty form shows validation feedback', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     const submitBtn = page.locator('button[type="submit"]').first();
     await submitBtn.click();
     // Either HTML5 validation or an app-level error message
@@ -26,7 +26,7 @@ test.describe('Authentication', () => {
   });
 
   test('wrong credentials shows error message', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     await page.fill('input[type="email"], input[name="email"]', 'nobody@nowhere.invalid');
     await page.fill('input[type="password"]', 'definitelywrong123');
     await page.click('button[type="submit"]');
@@ -39,7 +39,7 @@ test.describe('Authentication', () => {
   test('successful login lands on dashboard', async ({ page }) => {
     test.skip(!HAS_CREDS, 'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set');
 
-    await page.goto('/');
+    await page.goto('/login');
     await page.fill('input[type="email"], input[name="email"]', process.env.TEST_EMAIL);
     await page.fill('input[type="password"]', process.env.TEST_PASSWORD);
     await page.click('button[type="submit"]');
@@ -51,7 +51,7 @@ test.describe('Authentication', () => {
     test.skip(!HAS_CREDS, 'E2E_TEST_EMAIL / E2E_TEST_PASSWORD not set');
 
     // Login
-    await page.goto('/');
+    await page.goto('/login');
     await page.fill('input[type="email"], input[name="email"]', process.env.TEST_EMAIL);
     await page.fill('input[type="password"]', process.env.TEST_PASSWORD);
     await page.click('button[type="submit"]');
@@ -80,7 +80,7 @@ test.describe('Authentication', () => {
   });
 
   test('forgot password link is present', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     const forgotLink = page.locator('a:has-text("Passwort"), a:has-text("Forgot"), a:has-text("forgot")').first();
     // It might not exist — just log, not fail
     const visible = await forgotLink.isVisible().catch(() => false);

@@ -40,10 +40,11 @@
       })();
     </script>
     <meta charset="UTF-8" />
-    <!-- maximum-scale/user-scalable lock pinch-zoom on MOBILE only (native feel,
-         esp. installed PWA). Desktop Cmd/Ctrl+ zoom is NOT governed by this tag,
-         so MacBook browser zoom is unaffected. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- Zoom stays enabled for accessibility (WCAG 1.4.4 / Lighthouse meta-viewport).
+         The residual iOS pinch gesture on the INSTALLED standalone PWA is blocked via
+         the gesturestart/gesturechange handler above (standalone + coarse pointer only),
+         so the app still feels native without penalising regular-browser users. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>NILL</title>
 
     <!-- PWA manifest -->
@@ -130,7 +131,9 @@
       .nb-dot:nth-child(3) { animation-delay: 0.4s; }
 
       .nb-text {
-        color: rgba(155,152,144,0.6);
+        /* raised from 0.6 → 0.85 alpha so the loading label clears the WCAG AA
+           4.5:1 contrast ratio on the #040407 backdrop (Lighthouse color-contrast) */
+        color: rgba(155,152,144,0.85);
         font-size: 0.72rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;

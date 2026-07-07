@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Keine Internetverbindung. Gecachte NILL-Seiten sind weiterhin verfügbar — bitte Verbindung prüfen und erneut versuchen." />
   <title>NILL – Kein Internet</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -84,7 +85,7 @@
 
     p {
       font-size: 0.875rem;
-      color: rgba(239, 237, 231, 0.5);
+      color: rgba(239, 237, 231, 0.65);
       line-height: 1.6;
       margin-bottom: 2rem;
     }
@@ -110,7 +111,8 @@
     .hint {
       margin-top: 1.5rem;
       font-size: 0.75rem;
-      color: rgba(239, 237, 231, 0.25);
+      /* 0.25 → 0.6 alpha: the previous value sat at ~1.9:1 and failed WCAG AA */
+      color: rgba(239, 237, 231, 0.6);
     }
 
     @media (max-width: 480px) {

@@ -85,7 +85,7 @@ async function checkA11y(page, testInfo, label) {
 }
 
 async function login(page) {
-  await page.goto('/');
+  await page.goto('/login');
   await page.fill('input[type="email"], input[name="email"]', process.env.TEST_EMAIL);
   await page.fill('input[type="password"]', process.env.TEST_PASSWORD);
   await page.click('button[type="submit"]');

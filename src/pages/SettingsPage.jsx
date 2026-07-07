@@ -13,6 +13,7 @@ import ChangePasswordModal from "../components/ChangePasswordModal";
 import DeleteAccountModal  from "../components/DeleteAccountModal";
 import EmailVorlagenTab    from "../components/EmailVorlagenTab";
 import ImapConnectModal, { getImapSavedConfigs } from "../components/ImapConnectModal";
+import { INACTIVITY_OPTIONS, getInactivityPref, setInactivityPref } from "../hooks/useInactivityLogout";
 import MitarbeiterAusweis    from "../components/MitarbeiterAusweis";
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
@@ -766,6 +767,14 @@ export default function SettingsPage() {
     navigate("/login");
   };
 
+  // Automatische Abmeldung bei Inaktivität (per-Browser gespeichert)
+  const [inactivityPref, setInactivityPrefState] = useState(getInactivityPref());
+  const handleInactivityChange = (e) => {
+    const id = e.target.value;
+    setInactivityPrefState(id);
+    setInactivityPref(id);   // persists + re-scopes the server session
+  };
+
   const [logoutAllLoading, setLogoutAllLoading] = useState(false);
   const handleLogoutAll = async () => {
     if (!window.confirm("Auf allen Geräten abmelden? Bestehende Sitzungen auf anderen Geräten werden sofort beendet.")) return;
@@ -1345,6 +1354,31 @@ export default function SettingsPage() {
                     <button style={btnGhost} onClick={() => setShowPasswordModal(true)}>
                       Passwort ändern
                     </button>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.25rem" }}>
+                      <label htmlFor="nill-inactivity" style={{ fontSize: "0.8rem", fontWeight: 600, color: text }}>
+                        Automatische Abmeldung bei Inaktivität
+                      </label>
+                      <select
+                        id="nill-inactivity"
+                        value={inactivityPref}
+                        onChange={handleInactivityChange}
+                        style={{
+                          width: "100%", padding: "0.6rem 0.7rem", borderRadius: 10,
+                          background: "rgba(var(--tint),0.03)", border: `1px solid ${border}`,
+                          color: text, fontSize: "0.85rem", cursor: "pointer",
+                        }}
+                      >
+                        {INACTIVITY_OPTIONS.map((o) => (
+                          <option key={o.id} value={o.id}>{o.label}</option>
+                        ))}
+                      </select>
+                      <p style={{ fontSize: "0.72rem", color: dim, margin: 0 }}>
+                        Nach dieser Zeit ohne Aktivität wirst du aus Sicherheitsgründen automatisch abgemeldet.
+                        Die Einstellung gilt für diesen Browser.
+                      </p>
+                    </div>
+
                     <button style={btnGhost} onClick={handleLogout}>
                       Ausloggen
                     </button>

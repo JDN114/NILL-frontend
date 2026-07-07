@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 const HAS_CREDS = !!(process.env.TEST_EMAIL && process.env.TEST_PASSWORD);
 
 async function login(page) {
-  await page.goto('/');
+  await page.goto('/login');
   await page.fill('input[type="email"], input[name="email"]', process.env.TEST_EMAIL);
   await page.fill('input[type="password"]', process.env.TEST_PASSWORD);
   await page.click('button[type="submit"]');
@@ -15,7 +15,7 @@ async function login(page) {
 
 test.describe('Visual Regression', () => {
   test('login page', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     await page.waitForLoadState('networkidle');
     // Hide any dynamic elements (dates, counters) to reduce snapshot noise
     await page.addStyleTag({

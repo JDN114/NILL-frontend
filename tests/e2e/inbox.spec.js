@@ -4,7 +4,7 @@ const HAS_CREDS = !!(process.env.TEST_EMAIL && process.env.TEST_PASSWORD);
 
 // Helper: login and return to a given path
 async function loginAndGo(page, path = '/emails') {
-  await page.goto('/');
+  await page.goto('/login');
   await page.fill('input[type="email"], input[name="email"]', process.env.TEST_EMAIL);
   await page.fill('input[type="password"]', process.env.TEST_PASSWORD);
   await page.click('button[type="submit"]');

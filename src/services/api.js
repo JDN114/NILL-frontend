@@ -48,6 +48,15 @@ export async function logoutUser() {
   await api.post("/auth/logout");
 }
 
+// Slide the server session forward and align its cookie/JWT lifetime to the
+// user's inactivity-logout choice. Best-effort — never throws to the caller;
+// the existing cookie/JWT TTL is the backstop if this fails.
+export async function refreshSession(idleSeconds) {
+  try {
+    await api.post("/auth/refresh", { idle_seconds: idleSeconds ?? null });
+  } catch { /* ignore — cookie/JWT TTL remains the backstop */ }
+}
+
 // Log out on ALL devices: revokes every active session server-side.
 export async function logoutAllDevices() {
   await api.post("/auth/logout-all");

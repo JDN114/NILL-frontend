@@ -227,3 +227,60 @@ html[data-theme="light"] .bg-\[var\(--accent\)\].text-white,
 html[data-theme="light"] .bg-\[var\(--nill-primary\)\].text-white,
 html[data-theme="light"] .bg-\[var\(--nill-gold\)\].text-white,
 html[data-theme="light"] .bg-\[\#C5A572\].text-white { color: #ffffff; }
+
+/* ===========================================================================
+   LIGHT MODE — EmailsPage (.em-*)
+   ---------------------------------------------------------------------------
+   The email page (index.css `.em-*` block) is only partly variable-driven.
+   Many surfaces hard-code dark navy literals (rgba(7,16,35,·), #0d1628,
+   #131318, #0a1322) and several foregrounds hard-code light/pastel literals
+   (#f8fafc subject, #cbd5e1 body, #93c5fd links, #f87171/#fbbf24/#86efac
+   badge text). None of these respond to the --tint / token flip, so in light
+   mode they either put warm-dark text on a dark surface or faint pastel text
+   on the bone field — both fail contrast. Remap them here; scoped under
+   html[data-theme="light"] so dark mode renders byte-identically.
+   ======================================================================== */
+
+/* — Dark navy surfaces → warm light panels (so the dark-remapped text reads) — */
+html[data-theme="light"] .em-sidebar        { background: var(--bg-panel-soft); }
+html[data-theme="light"] .em-list-col       { background: transparent; }
+html[data-theme="light"] .em-detail-topbar  { background: transparent; }
+html[data-theme="light"] .em-filter-dropdown {
+  background: var(--bg-panel);
+  box-shadow: 0 8px 24px rgba(42, 36, 24, 0.14);
+}
+html[data-theme="light"] .em-preview-modal  { background: var(--bg-panel); }
+
+/* — Hard-coded light foregrounds → warm dark text on the bone field — */
+html[data-theme="light"] .em-detail-subject { color: var(--nill-text); }
+html[data-theme="light"] .email-body-render,
+html[data-theme="light"] .email-body-render.plain-text pre { color: var(--nill-text-sub); }
+html[data-theme="light"] .email-body-render h1,
+html[data-theme="light"] .email-body-render h2,
+html[data-theme="light"] .email-body-render h3,
+html[data-theme="light"] .email-body-render h4 { color: var(--nill-text); }
+html[data-theme="light"] .email-body-render a        { color: var(--nill-blue); }
+html[data-theme="light"] .email-body-render a:hover  { color: #1a4fbf; }
+
+/* — Pastel accent text → AA-clearing tones on bone — */
+html[data-theme="light"] .em-reply-btn,
+html[data-theme="light"] .em-ai-date-chip    { color: var(--nill-blue); }
+html[data-theme="light"] .em-preview-dl-btn  { color: var(--nill-gold); }
+html[data-theme="light"] .em-priority--high  { color: #b42318; }
+html[data-theme="light"] .em-priority--medium { color: #92600a; }
+html[data-theme="light"] .em-sentiment--pos  { color: #166534; }
+html[data-theme="light"] .em-sentiment--neg  { color: #b42318; }
+html[data-theme="light"] .em-state--error,
+html[data-theme="light"] .em-ai-failed-label { color: #b42318; }
+html[data-theme="light"] .em-disconnect:hover { color: #b42318; }
+
+/* — Status dots are graphical objects (need ≥3:1); darken the faint ones — */
+html[data-theme="light"] .em-dot--high   { background: #dc2626; }
+html[data-theme="light"] .em-dot--medium { background: #a16207; }
+
+/* — Mobile: slide-in drawer + sticky bars hard-code dark navy — */
+@media (max-width: 768px) {
+  html[data-theme="light"] .em-sidebar    { background: var(--bg-panel-soft); }
+  html[data-theme="light"] .em-mobile-bar { background: var(--bg-panel-soft); }
+  html[data-theme="light"] .em-detail-actions { background: rgba(250, 246, 236, 0.92); }
+}
