@@ -1,6 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const STAGING_URL = process.env.STAGING_URL || 'http://localhost:5173';
+// Only treat STAGING_URL as a real external target when it points at a remote
+// host. An empty value or a localhost placeholder (CI often injects
+// vars.STAGING_URL = http://localhost:5173) must NOT disable the local
+// webServer — otherwise nothing serves the app and every test fails with
+// net::ERR_CONNECTION_REFUSED.
+const RAW_STAGING_URL = (process.env.STAGING_URL || '').trim();
+const EXTERNAL_URL =
+  RAW_STAGING_URL && !/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|\/|$)/i.test(RAW_STAGING_URL)
+    ? RAW_STAGING_URL
+    : undefined;
+const STAGING_URL = EXTERNAL_URL || 'http://localhost:5173';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -59,6 +69,20 @@ export default defineConfig({
     },
   ],
 
-  // Skip E2E entirely if no staging URL is configured
-  // Tests individually guard with test.skip() when env vars are missing
+  // When a real (remote) STAGING_URL is provided, tests run against it
+  // directly. Otherwise — including when STAGING_URL is empty or a localhost
+  // placeholder — Playwright builds the app and serves it locally so there is
+  // always a target — vite preview defaults to 4173, so pin 5173 to match
+  // the baseURL fallback above.
+  webServer: EXTERNAL_URL
+    ? undefined
+    : {
+        command: 'npm run build && npm run preview -- --port 5173 --strictPort',
+        url: 'http://localhost:5173',
+        // build alone is ~80s; leave generous headroom for a cold CI runner
+        timeout: 240_000,
+        reuseExistingServer: !process.env.CI,
+      },
+
+  // Tests individually guard with test.skip() when credential env vars are missing
 });
