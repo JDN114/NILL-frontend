@@ -122,55 +122,63 @@ const S = `
 
   @media(max-width:768px) {
     /* On phones the whole page scrolls naturally with the document (see
-       PageLayout .nill-shell-noscroll). The root is a normal block in that
-       flow — no nested scroll container, no body lock — so it feels native
-       and nothing gets clipped behind the bottom tab bar. */
+       PageLayout .nill-shell-noscroll). Rather than cramming modules into a
+       2-col app-launcher grid, we mirror the *desktop* card anatomy — icon ·
+       serif title · one-line description · chevron — as a single clean column.
+       Roomy, editorial, minimal: the same feeling as the web layout. */
     .nd-root { padding-bottom:env(safe-area-inset-bottom,0); }
 
-    .nd-welcome { padding:14px 16px; margin-bottom:10px; }
-    .nd-welcome h1 { font-size:clamp(18px,5vw,26px); margin-bottom:2px; }
-    .nd-welcome-sub { font-size:11.5px; }
-    .nd-welcome-eyebrow { font-size:9px; margin-bottom:6px; }
-    .nd-bell-btn { width:30px; height:30px; top:14px; right:14px; }
+    /* Welcome — the big serif greeting stays the hero, just tightened. */
+    .nd-welcome { padding:22px 20px; margin-bottom:18px; border-radius:16px; }
+    .nd-welcome h1 { font-size:clamp(22px,6.5vw,30px); margin-bottom:6px; }
+    .nd-welcome-sub { font-size:13px; }
+    .nd-welcome-eyebrow { font-size:9px; margin-bottom:10px; }
+    .nd-bell-btn { width:32px; height:32px; top:16px; right:16px; }
 
-    /* Module grid becomes a compact icon-tile grid (Google-style app
-       launcher) — title only, no description/arrow — so all modules fit
-       on one screen without scrolling. */
-    .nd-section-label { font-size:9px; margin-bottom:8px; }
-    .nd-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
-    .nd-card { padding:12px; gap:4px; flex-direction:row; align-items:center; }
-    .nd-card-icon { width:30px; height:30px; font-size:13px; border-radius:8px; margin-bottom:0; }
-    .nd-card > div:nth-child(2) { flex:1; min-width:0; }
-    .nd-card-title { font-size:13.5px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .nd-card-desc { display:none; }
-    .nd-card-arrow { display:none; }
-    .nd-soon-badge { font-size:8px; padding:1px 6px; }
-    .nd-mode-toggle { margin-top:4px; padding:2px 2px 2px 7px; }
+    .nd-section-label { font-size:9px; margin-bottom:12px; }
+
+    /* One comfortable column of full-width cards — same parts as desktop,
+       laid out as a calm row (icon left · text · chevron right). */
+    .nd-grid { grid-template-columns:1fr; gap:10px; }
+    .nd-card { padding:16px 18px; gap:14px; flex-direction:row; align-items:center; border-radius:16px; }
+    .nd-card:active { background:rgba(var(--tint),.06); }   /* tap feedback, no hover-lift */
+    .nd-card-icon { width:38px; height:38px; font-size:15px; border-radius:10px; margin-bottom:0; }
+    .nd-card > div:nth-child(2) { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+    .nd-card-title { font-size:15px; line-height:1.2; }
+    /* Description returns (web feeling) but stays a single muted line. */
+    .nd-card-desc { display:block; font-size:11.5px; line-height:1.4; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    /* Keep only the chevron — hide the "Öffnen" label via zero font-size. */
+    .nd-card-arrow { display:flex; align-items:center; margin-top:0; gap:0; font-size:0; color:var(--ink-faint); flex-shrink:0; }
+    .nd-card-arrow span { font-size:16px; }
+    .nd-soon-badge { font-size:8px; padding:1px 7px; align-self:flex-start; }
+    .nd-mode-toggle { margin-top:2px; padding:2px 2px 2px 8px; align-self:flex-start; }
     .nd-mode-toggle-label { display:none; }
 
-    .nd-ai-banner { padding:12px; gap:8px; margin-bottom:10px; }
-    .nd-ai-banner-icon { width:30px; height:30px; font-size:13px; border-radius:8px; }
-    .nd-ai-banner-title { font-size:12.5px; }
-    .nd-ai-banner-desc { font-size:10.5px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .nd-ai-banner-cta { font-size:10px; padding:6px 12px; }
+    .nd-ai-banner { padding:16px 18px; gap:12px; margin-bottom:16px; border-radius:16px; }
+    .nd-ai-banner-icon { width:34px; height:34px; font-size:15px; border-radius:10px; }
+    .nd-ai-banner-title { font-size:13px; }
+    .nd-ai-banner-desc { font-size:11px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .nd-ai-banner-cta { font-size:10px; padding:7px 13px; }
 
-    .nd-nill-modules { gap:4px; }
-    .nd-nill-module { padding:6px 3px; }
-    .nd-nill-module-icon { font-size:12px; }
+    .nd-nill-modules { gap:5px; }
+    .nd-nill-module { padding:7px 3px; }
+    .nd-nill-module-icon { font-size:13px; }
     .nd-nill-module-label { font-size:8px; }
-    .nd-notif { padding:7px 10px; font-size:11.5px; }
+    .nd-notif { padding:9px 12px; font-size:12px; }
     .nd-feed-panel { width:100vw; }
 
     /* Footer stays attached at the bottom, compacted so it never forces
-       the page (or .nd-root) into scroll territory on small screens. */
+       the page into scroll territory on small screens. */
     footer { flex-shrink:0; }
-    footer > div { padding:8px 0 !important; gap:4px 10px !important; }
+    footer > div { padding:10px 0 !important; gap:6px 12px !important; }
     footer a, footer button { font-size:9px !important; letter-spacing:.08em !important; }
   }
   @media(max-width:420px) {
-    .nd-welcome { padding:12px 14px; margin-bottom:8px; }
-    .nd-card { padding:10px; }
-    .nd-grid { gap:6px; }
+    .nd-welcome { padding:18px 16px; margin-bottom:14px; }
+    .nd-welcome h1 { font-size:clamp(20px,7vw,26px); }
+    .nd-card { padding:14px 15px; gap:12px; }
+    .nd-card-icon { width:34px; height:34px; }
+    .nd-grid { gap:8px; }
     .nd-nill-modules { grid-template-columns:repeat(3,1fr); }
   }
 
