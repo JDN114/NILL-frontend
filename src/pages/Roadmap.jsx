@@ -41,9 +41,6 @@ export default function Roadmap() {
       className="relative min-h-screen w-full pt-32 pb-24 bg-black text-white overflow-hidden"
       ref={containerRef}
     >
-      {/* Glow */}
-      <div className="absolute top-0 left-1/3 w-80 h-80 bg-primary/20 blur-[150px] rounded-full"></div>
-
       {/* Heading */}
       <motion.h2
         initial={{ opacity: 0, y: 30 }}
@@ -55,7 +52,7 @@ export default function Roadmap() {
         Roadmap
       </motion.h2>
       <p className="text-center text-gray-300 mt-3">
-        Die Zukunft von NILL — Schritt für Schritt Realität ✨
+        Die Zukunft von NILL — Schritt für Schritt Realität.
       </p>
 
       {/* Timeline Container */}
@@ -120,7 +117,7 @@ export default function Roadmap() {
                 initial={{ scale: 0 }}
                 transition={{ duration: 0.4 }}
                 className="absolute left-1/2 -translate-x-1/2 top-6
-                  w-5 h-5 rounded-full bg-primary shadow-[0_0_20px] shadow-primary/40"
+                  w-5 h-5 rounded-full bg-primary"
               ></motion.div>
             </motion.div>
           ))}

@@ -55,7 +55,7 @@ export default function AboutUsPage() {
             Technologie, die <em style={{ fontStyle: "italic", color: "var(--accent)" }}>arbeitet.</em>
           </h1>
           <p className="lead" style={{ margin: "0 auto", textAlign: "center" }}>
-            NILL ist das KI-Betriebssystem für Unternehmen — gebaut von einem Gründer,
+            NILL ist die smarte Arbeitsstation für Betriebe — gebaut von einem Gründer,
             der glaubt, dass gute Technologie Arbeit nicht ersetzt, sondern zurückgibt.
           </p>
         </div>
@@ -190,7 +190,7 @@ export default function AboutUsPage() {
             KI soll nicht ersetzen, sondern befähigen.
           </p>
           <p>
-            Postfach, Buchhaltung, Inventur, Zeiterfassung und Teamverwaltung in einem System.
+            Postfach, Aufgaben, Inventur, Zeiterfassung und Teamverwaltung in einem System.
             Gebaut in Deutschland. Gehostet in Frankfurt. Klimaneutral.
           </p>
 

@@ -17,9 +17,9 @@ const ENTRIES = [
     date: 'April 2026',
     badge: 'Verbesserung',
     items: [
-      'KI-Sekretärin: Antwortvorschläge im E-Mail-Postfach',
+      'E-Mail KI-Assistent: Antwortvorschläge im Postfach',
       'Kalendermodul: wiederkehrende Aufgaben mit Deadline-Erinnerung',
-      'Buchhaltungs-Export jetzt als DATEV-kompatible CSV',
+      'Zeiterfassung: QR-Mitarbeiterausweis zum Ein- und Ausstempeln',
     ],
   },
   {
@@ -47,8 +47,8 @@ const ENTRIES = [
     date: 'Januar 2026',
     badge: 'Launch',
     items: [
-      'NILL geht live — alle sechs Kernmodule verfügbar',
-      'E-Mail, Buchhaltung, Kalender, Workflows, Zeiterfassung, HR',
+      'NILL geht live — die smarte Arbeitsstation ist da',
+      'E-Mail, Kalender, Aufgaben, Zeiterfassung, Inventur, HR',
       'Hosting in Frankfurt (100 % Ökostrom)',
     ],
   },
@@ -56,8 +56,8 @@ const ENTRIES = [
 
 const BADGE_STYLE = {
   Neu: { background: 'rgba(198,255,60,.15)', color: '#c6ff3c', border: '1px solid rgba(198,255,60,.3)' },
-  Verbesserung: { background: 'rgba(56,245,208,.1)', color: '#38f5d0', border: '1px solid rgba(56,245,208,.25)' },
-  Sicherheit: { background: 'rgba(122,92,255,.12)', color: '#a78bfa', border: '1px solid rgba(122,92,255,.3)' },
+  Verbesserung: { background: 'rgba(255,255,255,.07)', color: 'rgba(239,237,231,.75)', border: '1px solid rgba(255,255,255,.15)' },
+  Sicherheit: { background: 'rgba(255,255,255,.07)', color: 'rgba(239,237,231,.75)', border: '1px solid rgba(255,255,255,.15)' },
   Launch: { background: 'rgba(255,255,255,.07)', color: '#efede7', border: '1px solid rgba(255,255,255,.15)' },
 }
 
@@ -83,11 +83,11 @@ export default function ChangelogPage() {
         </div>
 
         <div style={{ position: 'relative', paddingLeft: 28 }}>
-          <div style={{ position: 'absolute', left: 0, top: 8, bottom: 0, width: 1, background: 'linear-gradient(to bottom, #c6ff3c, rgba(198,255,60,.1) 80%, transparent)' }} />
+          <div style={{ position: 'absolute', left: 0, top: 8, bottom: 0, width: 1, background: 'rgba(239,237,231,.12)' }} />
 
           {ENTRIES.map((entry, i) => (
             <div key={entry.version} style={{ position: 'relative', marginBottom: i < ENTRIES.length - 1 ? 56 : 0 }}>
-              <div style={{ position: 'absolute', left: -34, top: 4, width: 12, height: 12, borderRadius: '50%', background: i === 0 ? '#c6ff3c' : '#1a1f2e', border: `2px solid ${i === 0 ? '#c6ff3c' : 'rgba(255,255,255,.15)'}`, boxShadow: i === 0 ? '0 0 12px rgba(198,255,60,.6)' : 'none' }} />
+              <div style={{ position: 'absolute', left: -34, top: 4, width: 12, height: 12, borderRadius: '50%', background: i === 0 ? '#c6ff3c' : '#1a1f2e', border: `2px solid ${i === 0 ? '#c6ff3c' : 'rgba(255,255,255,.15)'}` }} />
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600, color: '#efede7' }}>{entry.version}</span>

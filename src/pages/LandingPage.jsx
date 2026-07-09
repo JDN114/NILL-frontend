@@ -43,28 +43,11 @@ function ScrollProgress() {
   return <div className="scroll-progress" aria-hidden="true"><span ref={ref}/></div>;
 }
 
-function useTilt(ref) {
-  useEffect(() => {
-    const el = ref.current; if (!el) return;
-    const mv = e => {
-      const r = el.getBoundingClientRect();
-      el.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%');
-      el.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%');
-      const rx = ((e.clientY-r.top-r.height/2)/r.height)*-4;
-      const ry = ((e.clientX-r.left-r.width/2)/r.width)*4;
-      el.style.transform = `translateY(-4px) perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-    };
-    const ml = () => el.style.transform = '';
-    el.addEventListener('mousemove', mv); el.addEventListener('mouseleave', ml);
-    return () => { el.removeEventListener('mousemove', mv); el.removeEventListener('mouseleave', ml); };
-  }, []);
-}
-
-/* ─── TILT CARD ──────────────────────────────────────────── */
+/* ─── CARD ───────────────────────────────────────────────── */
+/* The 3D tilt + mouse-follow glow was removed: the scroll reveal plus a
+   quiet CSS hover lift carry the interaction without the gimmick. */
 function TiltCard({ className, style, children }) {
-  const ref = useRef(null);
-  useTilt(ref);
-  return <article ref={ref} className={`card ${className||''}`} style={style}>{children}</article>;
+  return <article className={`card ${className||''}`} style={style}>{children}</article>;
 }
 
 /* ─── THREE.JS HERO CANVAS ───────────────────────────────── */
@@ -213,11 +196,11 @@ const SURF_MARS = `
     c=mix(c,vec3(.22,.05,.02),smoothstep(.45,.82,rd)*.8);
     c=mix(c,vec3(.90,.86,.80),smoothstep(.80,.94,abs(op.y)));
     float lava=smoothstep(.82,.96,ridged(op*3.8));
-    c+=vec3(1.4,.38,.07)*lava*(.75+.25*sin(uTime*1.8));
+    c+=vec3(.55,.18,.05)*lava*.4;
     return c;
   }
   float getSpec(vec3 op){return .07;}
-  vec3 getEmit(vec3 op){return vec3(.9,.22,.04)*smoothstep(.82,.96,ridged(op*3.8))*.18;}
+  vec3 getEmit(vec3 op){return vec3(.9,.22,.04)*smoothstep(.82,.96,ridged(op*3.8))*.06;}
 `;
 
 const SURF_GAS = `
@@ -232,7 +215,7 @@ const SURF_GAS = `
     c=mix(c,vec3(.96,.91,.78),smoothstep(.65,.85,sin(y*18.+turb*5.))*.3);
     vec2 sp=(op.xy-vec2(.32,-.09))*vec2(1.2,2.);
     float spot=exp(-dot(sp,sp)*22.);
-    c=mix(c,vec3(.90,.45,.70),spot*.75);
+    c=mix(c,vec3(.78,.36,.22),spot*.7);
     vec2 eye=(op.xy-vec2(.32,-.09))*vec2(2.,3.2);
     c=mix(c,vec3(.98,.82,.62),exp(-dot(eye,eye)*80.)*.9);
     return c;
@@ -277,7 +260,7 @@ const RING_FRAG = NOISE_LIB + `
     float detail=fbm2(vec3(rn*70.,atan(vLP.y,vLP.x)*3.,0.));
     float gap1=smoothstep(.30,.34,rn)*(1.-smoothstep(.34,.40,rn));
     float gap2=smoothstep(.68,.71,rn)*(1.-smoothstep(.71,.74,rn));
-    vec3 col=mix(vec3(.30,.20,.50),vec3(.80,.70,1.),bands*.8+detail*.25);
+    vec3 col=mix(vec3(.38,.32,.24),vec3(.86,.78,.62),bands*.8+detail*.25);
     float alpha=.85*(1.-gap1*.94)*(1.-gap2*.80);
     alpha*=smoothstep(0.,.06,rn)*smoothstep(1.,.93,rn)*(.62+detail*.4);
     col*=abs(normalize(uSunPos-vWP).y)*.5+.5;
@@ -334,7 +317,7 @@ function buildScene(canvas) {
   sGeo.setAttribute('twinkle', new T.BufferAttribute(stw, 1));
   const starMat = new T.ShaderMaterial({
     uniforms: { uTime: { value: 0 } },
-    vertexShader: `attribute float starSize;attribute vec3 color;attribute float twinkle;uniform float uTime;varying vec3 vC;varying float vTw;void main(){vC=color;vTw=.72+.28*sin(uTime*1.6+twinkle*7.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(.85+.3*sin(uTime*1.1+twinkle*5.))*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
+    vertexShader: `attribute float starSize;attribute vec3 color;attribute float twinkle;uniform float uTime;varying vec3 vC;varying float vTw;void main(){vC=color;vTw=.84+.16*sin(uTime*1.2+twinkle*7.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(.92+.16*sin(uTime*.9+twinkle*5.))*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
     fragmentShader: `varying vec3 vC;varying float vTw;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.25,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vC,a*.85*vTw);}`,
     transparent: true, depthWrite: false, blending: T.AdditiveBlending
   });
@@ -389,8 +372,8 @@ function buildScene(canvas) {
     sunGroup.add(s); return s;
   };
   // Bright flare halo removed — left the sun blown-out/too bright in the hero.
-  const coronaTex1 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.55,'rgba(255,130,40,.08)'],[.75,'rgba(120,80,220,.12)'],[1,'rgba(0,0,0,0)']]);
-  const coronaTex2 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.6,'rgba(80,60,180,.06)'],[.85,'rgba(198,255,60,.05)'],[1,'rgba(0,0,0,0)']]);
+  const coronaTex1 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.55,'rgba(255,130,40,.08)'],[.75,'rgba(255,180,90,.09)'],[1,'rgba(0,0,0,0)']]);
+  const coronaTex2 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.6,'rgba(255,150,60,.05)'],[.85,'rgba(255,225,170,.04)'],[1,'rgba(0,0,0,0)']]);
   const corona1      = mkSprite(10.0, coronaTex1, .48);
   const corona2      = mkSprite(17.0, coronaTex2, .24);
 
@@ -518,8 +501,8 @@ function buildScene(canvas) {
     const t = (now-start)/1000;
     mx+=(tmx-mx)*.05; my+=(tmy-my)*.05;
     sScroll+=(scrollYv-sScroll)*.06;
-    // Cinematic fly-in over the first ~2.8s
-    const ie = 1-Math.pow(1-Math.min(1,t/2.8),3);
+    // Cinematic fly-in — quintic ease-out settles without a visible stop
+    const ie = 1-Math.pow(1-Math.min(1,t/3.2),5);
     camera.position.set(0, 1.8+(1-ie)*1.7, 11.0+(1-ie)*4.6);
     camera.lookAt(0,0,0);
     system.rotation.y = t*.028+mx*.26-(1-ie)*.65;
@@ -527,7 +510,7 @@ function buildScene(canvas) {
     system.position.y = -sScroll*.7;
     sunMat.uniforms.uTime.value = t;
     sunCore.rotation.y = t*.07;
-    sunCore.scale.setScalar(1+Math.sin(t*.9)*.018);
+    sunCore.scale.setScalar(1+Math.sin(t*.9)*.006);
     corona1.material.opacity = .46+Math.sin(t*1.1)*.04;
     corona2.material.opacity = .22+Math.sin(t*.7+1.2)*.04;
     corona1.material.rotation = t*.02;
@@ -551,7 +534,7 @@ function buildScene(canvas) {
     trailGeo.attributes.position.needsUpdate = true;
     // Moon around the gas giant
     const gd=modules[3], ga=gd.phase+t*gd.spd;
-    const gx=Math.cos(ga)*gd.r, gy=Math.sin(ga*.55+gd.tilt*4.)*.22, gz=Math.sin(ga)*gd.r;
+    const gx=Math.cos(ga)*gd.r, gy=Math.sin(ga*.55+gd.tilt*4.)*.09, gz=Math.sin(ga)*gd.r;
     const ma=t*.85;
     gasMoon.position.set(gx+Math.cos(ma)*1.18, gy+Math.sin(ma)*.26, gz+Math.sin(ma)*1.18);
     gasMoon.rotation.y = t*.3;
@@ -559,7 +542,7 @@ function buildScene(canvas) {
     gasMoonMat.uniforms.uSunPos.value.copy(sunWorldPos);
     for (const {mesh,pMat,atmo,atmoMat,ring,def} of planets) {
       const a=def.phase+t*def.spd;
-      const px=Math.cos(a)*def.r, py=Math.sin(a*.55+def.tilt*4.)*.22, pz=Math.sin(a)*def.r;
+      const px=Math.cos(a)*def.r, py=Math.sin(a*.55+def.tilt*4.)*.09, pz=Math.sin(a)*def.r;
       mesh.position.set(px,py,pz); mesh.rotation.y+=dt*.18;
       pMat.uniforms.uTime.value=t; pMat.uniforms.uSunPos.value.copy(sunWorldPos);
       atmo.position.set(px,py,pz); atmoMat.uniforms.uSunPos.value.copy(sunWorldPos);
@@ -637,21 +620,15 @@ function Hero({ onCTA }) {
   return (
     <section className={`hero${revealed?' revealed':''}`} id="top">
       <HeroCanvas />
-      <div className="hero-chips" aria-hidden="true">
-        <span className="chip c1"><span className="chip-dot"/><span>KI aktiv</span></span>
-        <span className="chip c2"><span className="chip-dot"/><span>47 Mails sortiert</span></span>
-        <span className="chip c3"><span className="chip-dot"/><span>Rechnung gebucht</span></span>
-        <span className="chip c4"><span className="chip-dot"/><span>Dienstplan aktualisiert</span></span>
-      </div>
       <div className="wrap hero-inner">
-        <span className="eyebrow hero-eyebrow">KI-Betriebssystem für Unternehmen</span>
+        <span className="eyebrow hero-eyebrow">Die smarte Arbeitsstation für Betriebe</span>
         <h1 aria-label="Intelligenz, die mitarbeitet.">
           <span className="word"><span>Intelligenz,</span></span><br/>
           <span className="word"><span>die </span></span>
           <span className="word"><span><em>mit­arbeitet.</em></span></span>
         </h1>
         <p className="lead">
-          NILL verbindet <strong style={{color:'var(--ink)',fontWeight:500}}>Postfach, Buchhaltung, Inventur, Zeiterfassung</strong> und <strong style={{color:'var(--ink)',fontWeight:500}}>Teamverwaltung</strong> zu einem einzigen System — gesteuert von einer KI, die Arbeit erkennt, entscheidet und erledigt.
+          NILL verbindet <strong style={{color:'var(--ink)',fontWeight:500}}>Postfach, Aufgaben, Lieferscheine, Inventur, Zeiterfassung</strong> und <strong style={{color:'var(--ink)',fontWeight:500}}>Teamverwaltung</strong> zu einer Arbeitsstation — unterstützt von einer KI, die mitliest und Arbeit vorbereitet.
         </p>
         <div className="hero-cta">
           <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos registrieren</span><span className="arrow">→</span></MagBtn>
@@ -666,7 +643,7 @@ function Hero({ onCTA }) {
         </p>
       </div>
       <div className="hero-meta">
-        <span>NILL · KI-Betriebssystem</span>
+        <span>NILL · Arbeitsstation</span>
         <div className="scroll-ind"><span>scroll</span><div className="scroll-bar"/></div>
         <span>DE · Made in Germany</span>
       </div>
@@ -677,8 +654,8 @@ function Hero({ onCTA }) {
 /* ─── TICKER ─────────────────────────────────────────────── */
 function Ticker() {
   const row = <>
-    Postfach <em>·</em> Buchhaltung <span className="ticker-sep"/> Inventur <em>·</em> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <em>·</em> Sekretärin <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
-    Postfach <em>·</em> Buchhaltung <span className="ticker-sep"/> Inventur <em>·</em> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <em>·</em> Sekretärin <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
+    Postfach <em>·</em> Aufgaben <span className="ticker-sep"/> Inventur <em>·</em> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <em>·</em> Lieferscheine <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
+    Postfach <em>·</em> Aufgaben <span className="ticker-sep"/> Inventur <em>·</em> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <em>·</em> Lieferscheine <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
   </>;
   return <div className="ticker"><div className="ticker-track" aria-hidden="true"><span>{row}</span></div></div>;
 }
@@ -706,9 +683,9 @@ function Products({ onCTA }) {
             <div><span className="tag"><span className="n">01</span> · Postfach</span><h3>E-Mails, die sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>selbst beantworten.</em></h3><p>Kategorisieren, priorisieren, Antworten schreiben — NILL liest mit und arbeitet voraus.</p></div>
           </TiltCard>
           <TiltCard className="k2">
-            <div><span className="tag"><span className="n">02</span> · Buchhaltung</span><h3>Belege buchen. <em style={{fontStyle:'italic',color:'var(--accent)'}}>Ohne dich.</em></h3><p>Rechnungen per Mail, Scan oder Foto — NILL erkennt, kontiert, verbucht und bereitet auf.</p></div>
+            <div><span className="tag"><span className="n">02</span> · Aufgaben & Lieferscheine</span><h3>Der Tag plant sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>von selbst.</em></h3><p>Aufgaben fürs ganze Team, Lieferscheine per Foto erfasst — direkt an der Station im Tablet- und Kiosk-Modus.</p></div>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',fontFamily:'var(--mono)',fontSize:11,color:'var(--ink-dim)'}}>
-              {['DATEV-ready','OCR','GoBD-konform'].map(t=><span key={t} style={{padding:'6px 10px',border:'1px solid var(--line)',borderRadius:99}}>{t}</span>)}
+              {['Tablet & Kiosk','Foto-Erfassung','PDF-Export'].map(t=><span key={t} style={{padding:'6px 10px',border:'1px solid var(--line)',borderRadius:99}}>{t}</span>)}
             </div>
           </TiltCard>
           <TiltCard className="k3">
@@ -788,15 +765,11 @@ function Stats() {
 
 /* ─── PRICING ────────────────────────────────────────────── */
 const PRICING_TIERS = [
-  {tier:'Solo',sub:'Für Einzelunternehmer & kleine Büros',price:'25',per:'€ / Monat · 1–2 Nutzer',items:['E-Mail, Kalender & Buchhaltung','OCR-Belegerfassung & DATEV-ready','Rechnungserstellung & PDF-Export','KI-Kategorisierung & Vorschläge','E-Mail-Support'],pop:false},
-  {tier:'Team',sub:'Für wachsende Teams & KMUs',price:'50',per:'€ / Monat · bis 10 Nutzer',items:['Alles aus Solo — für bis zu 10 Nutzer','Lohnbuchhaltung & HR-Verwaltung','Arbeitszeiterfassung & Stempeluhr','Urlaubs- & Abwesenheitsverwaltung','Priority-Support'],pop:true},
-  {tier:'Business',sub:'Für größere Unternehmen',price:'90',per:'€ / Monat · 10+ Nutzer',items:['Alles aus Team — unbegrenzte Nutzer','API-Zugang & Webhooks (folgt Q4 2026)','Erweiterte KI-Automatisierungen','Priorisierter Support mit SLA-Garantie'],pop:false},
+  {tier:'Arbeitsstation',sub:'Die smarte Arbeitsstation für deinen Betrieb — Tablet & Kiosk',price:'30',per:'€ / Monat · unbegrenzte Stationen & Mitarbeiter',items:['Zeiterfassung mit QR-Mitarbeiterausweis','Aufgaben- & Taskmanagement fürs ganze Team','Lieferscheine, Inventur & Bestandsführung','E-Mail-Integration: Gmail, Outlook & IMAP','Teamverwaltung, Rollen & HR-Dokumente'],pop:true},
 ];
 function PricingCard({tier,sub,price,per,items,pop}) {
-  const ref2 = useRef(null);
-  useTilt(ref2);
   return (
-    <article ref={ref2} className={`price${pop?' pop':''}`}>
+    <article className={`price${pop?' pop':''}`}>
       {pop && <span className="pop-chip">Meistgewählt</span>}
       <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
       <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
@@ -811,10 +784,10 @@ function Pricing() {
     <section id="preise">
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Eins. Zwei. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Drei.</em></h2></div>
-          <p className="lead">Transparent. Ohne versteckte Kosten. Monatlich kündbar.</p>
+          <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Ein Preis. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Fertig.</em></h2></div>
+          <p className="lead">Transparent. Ohne versteckte Kosten. Monatlich kündbar. Die Komplett-Suite mit KI Sekretärin ist in Entwicklung — Details auf der Preisseite.</p>
         </div>
-        <Reveal stagger className="pricing-grid">
+        <Reveal className="pricing-grid" style={{gridTemplateColumns:'minmax(0,420px)',justifyContent:'center'}}>
           {PRICING_TIERS.map(t => <PricingCard key={t.tier} {...t} />)}
         </Reveal>
       </div>
@@ -829,7 +802,7 @@ function FAQ() {
   const [ref, vis] = useReveal();
   const items = [
     ['Wo werden meine Daten gespeichert?','Alle Daten liegen verschlüsselt auf Servern in Deutschland (Frankfurt). Wir sind nach DSGVO geprüft und bieten auf Wunsch eine Private-Cloud-Instanz.'],
-    ['Ersetzt NILL meinen Steuerberater?','Nein — NILL bereitet alles so auf, dass dein Steuerberater deutlich weniger Zeit braucht. DATEV-ready Export sorgt für reibungslose Übergabe.'],
+    ['Was genau ist die Arbeitsstation?','Ein Tablet- oder Kiosk-Arbeitsplatz für deinen Betrieb: Zeiterfassung per QR-Ausweis, Aufgaben, Lieferscheine und Inventur — ein Preis, beliebig viele Mitarbeiter.'],
     ['Wie lange dauert das Onboarding?','Die meisten Teams sind in 48 Stunden produktiv. Wir unterstützen bei der Einrichtung deiner E-Mail-Konten und Module.'],
     ['Was passiert, wenn die KI einen Fehler macht?','Jede automatische Aktion ist standardmäßig im "Vorschlags-Modus". Du entscheidest, was direkt geht, was freigegeben werden muss, und was dokumentiert wird.'],
     ['Wie nachhaltig ist NILL wirklich?','Unsere Kern-Infrastruktur läuft auf 100 % Ökostrom in Frankfurt. Drittanbieter kompensieren wir zu 105 % über Gold-Standard-Projekte. Jährlicher Nachhaltigkeitsbericht auf Anfrage.'],

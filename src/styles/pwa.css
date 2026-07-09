@@ -87,12 +87,6 @@
   transition:transform .6s var(--ease-out),box-shadow .6s;
   isolation:isolate;
 }
-.pwa-card::before{
-  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;z-index:1;
-  background:radial-gradient(500px 280px at var(--mx,50%) var(--my,0%),rgba(198,255,60,.06),transparent 55%);
-  opacity:0;transition:opacity .5s;
-}
-.pwa-card:hover::before{opacity:1}
 .pwa-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-glass-hover)}
 .pwa-card>*{position:relative;z-index:2}
 

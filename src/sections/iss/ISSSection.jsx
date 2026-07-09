@@ -10,7 +10,7 @@ const MODULES = [
     tag: 'Observation Layer',
     title: 'Intelligente\n<em>Beobachtung</em>',
     description:
-      'NILL überwacht jeden Kanal wie aus der Cupola — Postfach, Belege, Lager, Schichten. Alles in einer Ansicht, ohne tote Winkel.',
+      'NILL überwacht jeden Kanal wie aus der Cupola — Postfach, Aufgaben, Lager, Schichten. Alles in einer Ansicht, ohne tote Winkel.',
     stats: [
       ['24/7', 'aktiv'],
       ['5',    'Module'],
@@ -34,11 +34,11 @@ const MODULES = [
     tag: 'Deep Space Link',
     title: 'Autonome\n<em>Orchestrierung</em>',
     description:
-      'Die Schüssel zeigt nach draußen — NILL spricht mit Banken, Behörden, Lieferanten. Workloads finden ihren Weg, ohne dass du ein Ticket öffnest.',
+      'Die Schüssel zeigt nach draußen — NILL spricht mit Gmail, Outlook und deinem Lager. Aufgaben finden ihren Weg, ohne dass du ein Ticket öffnest.',
     stats: [
-      ['1.200+', 'Aufgaben/Tag'],
-      ['−60 %',  'Handarbeit'],
-      ['0',      'Tickets'],
+      ['3',    'Mail-Anbindungen'],
+      ['24/7', 'synchron'],
+      ['0',    'Tickets'],
     ],
     position: 'br',
   },
@@ -169,7 +169,7 @@ export default function ISSSection() {
               NILL · MISSION CONTROL
             </span>
             <h2>
-              Das Betriebssystem, das dein
+              Die Arbeitsstation, die dein
               <br />
               Unternehmen <em>im Orbit</em> hält.
             </h2>

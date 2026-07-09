@@ -168,7 +168,7 @@ function DistantEarth() {
   useFrame(({ clock }) => {
     surfaceMat.uniforms.uTime.value = clock.elapsedTime
     if (groupRef.current) {
-      groupRef.current.rotation.y = clock.elapsedTime * 0.075
+      groupRef.current.rotation.y = clock.elapsedTime * 0.045
     }
   })
 
@@ -220,9 +220,9 @@ function Starfield() {
         varying vec3 vC; varying float vTw;
         void main(){
           vC = color;
-          vTw = .72 + .28 * sin(uTime * 1.6 + twinkle * 7.);
+          vTw = .84 + .16 * sin(uTime * 1.2 + twinkle * 7.);
           vec4 mv = modelViewMatrix * vec4(position, 1.);
-          gl_PointSize = starSize * (.85 + .3 * sin(uTime * 1.1 + twinkle * 5.)) * (700. / -mv.z);
+          gl_PointSize = starSize * (.92 + .16 * sin(uTime * .9 + twinkle * 5.)) * (700. / -mv.z);
           gl_Position = projectionMatrix * mv;
         }
       `,

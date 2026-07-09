@@ -111,7 +111,7 @@ export function Footer() {
     <footer>
       <div className="wrap">
         <div className="foot-grid">
-          <div><div className="brand" style={{marginBottom:18}}><span className="brand-mark"/><span>NILL</span></div><p style={{maxWidth:'32ch'}}>Das KI-Betriebssystem für Unternehmen. Gebaut in Deutschland, gehostet in Frankfurt.</p></div>
+          <div><div className="brand" style={{marginBottom:18}}><span className="brand-mark"/><span>NILL</span></div><p style={{maxWidth:'32ch'}}>Die smarte Arbeitsstation für Betriebe. Gebaut in Deutschland, gehostet in Frankfurt.</p></div>
           <div><h4>Produkt</h4><ul>
             <li><a href={anchor('produkte')}>Module</a></li>
             <li><Link to="/wie-es-arbeitet">Wie es arbeitet</Link></li>

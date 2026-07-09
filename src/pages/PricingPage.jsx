@@ -18,7 +18,7 @@ const ease    = "cubic-bezier(.16,1,.3,1)";
 
 // ─── Plan data ────────────────────────────────────────────────────────────────
 
-// Warte-Rabatt: Buchhaltung & NILL Sekretärin sind aktuell noch in Entwicklung
+// Warte-Rabatt: die NILL Sekretärin ist aktuell noch in Entwicklung
 // (server-seitig deaktiviert). Wer die Komplett-Suite jetzt bucht, zahlt
 // solange einen reduzierten Preis. 30 % auf alle Suite-Pläne.
 // WICHTIG: Muss als Stripe-Coupon STRIPE_WAIT_DISCOUNT_COUPON (30 % off,
@@ -47,8 +47,8 @@ const ARBEITSSTATION_PLAN = {
   ],
 };
 
-// Full NILL suite. Includes Buchhaltung & NILL Sekretärin, die noch in
-// Entwicklung sind (WIP) — daher der Warte-Rabatt auf alle Pläne.
+// Full NILL suite. Includes the NILL Sekretärin, die noch in Entwicklung
+// ist (WIP) — daher der Warte-Rabatt auf alle Pläne.
 const PLANS = [
   {
     id: "solo",
@@ -62,9 +62,7 @@ const PLANS = [
       "E-Mail-Integration: Gmail, Outlook & IMAP",
       "E-Mail KI-Assistent: 10 Antworten / Tag",
       "Intelligenter Kalender & Aufgaben",
-      "Rechnungserstellung & PDF-Export",
-      { text: "Buchhaltung mit OCR-Belegerfassung", wip: true },
-      { text: "Automatische Steuer- & Kategorieextraktion", wip: true },
+      "E-Mail-Support",
     ],
   },
   {
@@ -80,7 +78,7 @@ const PLANS = [
       "Alles aus Solo — für bis zu 10 Nutzer",
       "E-Mail KI-Assistent: 30 Antworten / Tag",
       "Tägliche KI-Zusammenfassung (immer inklusive)",
-      "Lohnbuchhaltung & Mitarbeiterverwaltung",
+      "Mitarbeiterverwaltung, Rollen & Schichtplan",
       "Arbeitszeiterfassung & HR-Dokumente",
       { text: "NILL Sekretärin: 10 KI-Anfragen / Tag", wip: true },
     ],
@@ -107,11 +105,11 @@ const PLANS = [
 const FAQ = [
   {
     q: "Was ist die Arbeitsstation — und warum wird sie zuerst angeboten?",
-    a: "Die Arbeitsstation ist unser sofort einsatzbereites Produkt: Zeiterfassung, Taskmanagement, Lieferscheine und Inventur im Tablet- & Kiosk-Modus. Sie ist vollständig live und ohne Wartezeit nutzbar. Die Komplett-Suite mit Buchhaltung und NILL Sekretärin befindet sich aktuell noch in Entwicklung.",
+    a: "Die Arbeitsstation ist unser sofort einsatzbereites Produkt: Zeiterfassung, Taskmanagement, Lieferscheine und Inventur im Tablet- & Kiosk-Modus. Sie ist vollständig live und ohne Wartezeit nutzbar. Die Komplett-Suite mit der NILL Sekretärin befindet sich aktuell noch in Entwicklung.",
   },
   {
-    q: "Buchhaltung & NILL Sekretärin sind als „WIP\" markiert — was heißt das?",
-    a: "Diese Module befinden sich in aktiver Entwicklung und sind noch nicht freigeschaltet. Wenn Sie eine Suite (Solo, Team oder Business) jetzt buchen, erhalten Sie einen dauerhaften Warte-Rabatt von 30 %, bis diese Funktionen live gehen — und werden als Erste freigeschaltet.",
+    q: "Die NILL Sekretärin ist als „WIP\" markiert — was heißt das?",
+    a: "Die NILL Sekretärin befindet sich in aktiver Entwicklung und ist noch nicht freigeschaltet. Wenn Sie eine Suite (Solo, Team oder Business) jetzt buchen, erhalten Sie einen Warte-Rabatt von 30 %, bis sie live geht — und werden als Erste freigeschaltet.",
   },
   {
     q: "Kann ich den Plan jederzeit wechseln?",
@@ -255,7 +253,7 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
           color: accent, fontFamily: mono, fontSize: 11, letterSpacing: "0.08em",
           width: "fit-content",
         }}>
-          −{Math.round(WAIT_DISCOUNT * 100)}% Warte-Rabatt · bis Buchhaltung live geht
+          −{Math.round(WAIT_DISCOUNT * 100)}% Warte-Rabatt · bis die Sekretärin live geht
         </div>
       )}
       {cycle === "yearly" && (
@@ -555,11 +553,13 @@ export default function PricingPage() {
           }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
-              background: `conic-gradient(from 210deg, ${accent}, #38f5d0, #7a5cff, #ff4d8d, ${accent})`,
+              background: accent,
               position: "relative", overflow: "hidden",
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)",
             }}>
               <div style={{
-                position: "absolute", inset: 4, borderRadius: 5, background: bg,
+                position: "absolute", left: 6, top: 6, bottom: 6, width: 8,
+                borderRadius: "3px 0 0 3px", background: bg,
               }} />
             </div>
             NILL
@@ -629,7 +629,7 @@ export default function PricingPage() {
           }}>
             {mode === "station"
               ? "Unser sofort verfügbares Produkt: Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Wartezeit."
-              : "Die komplette NILL-Suite. Buchhaltung & NILL Sekretärin sind aktuell noch in Entwicklung (WIP) — wer jetzt bucht, erhält bis zum Go-Live 30 % Warte-Rabatt."}
+              : "Die komplette NILL-Suite. Die NILL Sekretärin ist aktuell noch in Entwicklung (WIP) — wer jetzt bucht, erhält bis zum Go-Live 30 % Warte-Rabatt."}
           </p>
 
           {/* ── Probezeitraum-Hinweis (subtil) ── */}
@@ -641,7 +641,7 @@ export default function PricingPage() {
             fontFamily: mono, fontSize: 11, letterSpacing: "0.16em",
             textTransform: "uppercase", color: ink,
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: 99, background: accent, boxShadow: `0 0 8px ${accent}` }} />
+            <span style={{ width: 6, height: 6, borderRadius: 99, background: accent }} />
             14 Tage kostenlos testen · keine Kreditkarte
           </div>
 
@@ -748,7 +748,7 @@ export default function PricingPage() {
                 −{Math.round(WAIT_DISCOUNT * 100)}%
               </span>
               <p style={{ margin: 0, fontSize: 14, color: inkDim, lineHeight: 1.5 }}>
-                <strong style={{ color: ink }}>Buchhaltung & NILL Sekretärin</strong> sind noch in
+                Die <strong style={{ color: ink }}>NILL Sekretärin</strong> ist noch in
                 Entwicklung. Solange erhalten alle Suite-Pläne{" "}
                 <strong style={{ color: ink }}>30 % Warte-Rabatt</strong> — und werden bei
                 Go-Live als Erste freigeschaltet. Schon heute live:{" "}

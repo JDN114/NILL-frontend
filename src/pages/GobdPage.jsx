@@ -94,7 +94,17 @@ const CHECKLIST = [
 
 export default function GobdPage() {
   return (
-    <LegalLayout title="So ist NILL GoBD-konform">
+    <LegalLayout title="So wird NILL GoBD-konform">
+
+      <p style={{
+        color: inkDim, fontSize: 13, lineHeight: 1.7, margin: '0 0 28px',
+        padding: '12px 16px', borderRadius: 12,
+        border: '1px solid rgba(198,255,60,0.2)', background: 'rgba(198,255,60,0.05)',
+      }}>
+        <strong style={{ color: ink }}>Hinweis:</strong> Das Buchhaltungs-Modul von NILL befindet sich
+        aktuell in Entwicklung und ist noch nicht freigeschaltet. Diese Seite beschreibt, wie die
+        GoBD-Anforderungen darin technisch umgesetzt werden.
+      </p>
 
       <p style={{ color: inkDim, fontSize: 15, lineHeight: 1.75, marginBottom: 12, marginTop: 0 }}>
         Die <strong style={{ color: ink }}>GoBD</strong> („Grundsätze zur ordnungsmäßigen Führung und Aufbewahrung
@@ -103,8 +113,8 @@ export default function GobdPage() {
         Buchführung misst. Wer dagegen verstößt, riskiert Hinzuschätzungen bei der Betriebsprüfung.
       </p>
       <p style={{ color: inkDim, fontSize: 15, lineHeight: 1.75, marginBottom: 44 }}>
-        NILL wurde von Grund auf entlang dieser Anforderungen gebaut — nicht nachträglich
-        „GoBD-ready&quot; gemacht. Hier ist, wie jede Anforderung konkret umgesetzt ist.
+        NILL wird von Grund auf entlang dieser Anforderungen gebaut — nicht nachträglich
+        „GoBD-ready&quot; gemacht. Hier ist, wie jede Anforderung konkret umgesetzt wird.
       </p>
 
       {/* Pillar grid */}

@@ -17,12 +17,12 @@ export default function AboutNillPage() {
     {
       icon: <FiFileText size={32} />,
       title: "Dokumenten- & Daten-Extraktion",
-      desc: "Verträge, Rechnungen oder wichtige Dokumente werden analysiert, relevante Informationen extrahiert und in deinem Dashboard bereitgestellt.",
+      desc: "Verträge, Lieferscheine oder wichtige Dokumente werden analysiert, relevante Informationen extrahiert und in deinem Dashboard bereitgestellt.",
     },
     {
       icon: <FiTrendingUp size={32} />,
-      title: "Buchhaltungsfunktionen",
-      desc: "Automatisierte Erfassung von Einnahmen, Ausgaben und wichtigen Kennzahlen – NILL spart Zeit und reduziert Fehlerquellen.",
+      title: "Zeiterfassung & Arbeitsstation",
+      desc: "Zeiterfassung per QR-Mitarbeiterausweis, Aufgaben und Inventur im Tablet- & Kiosk-Modus – NILL spart Zeit und reduziert Fehlerquellen.",
     },
     {
       icon: <FiShield size={32} />,
@@ -49,8 +49,8 @@ export default function AboutNillPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          NILL ist deine zentrale KI-Plattform für intelligente E-Mail- und Dokumentenprozesse. 
-          Vom Posteingang bis zur Buchhaltung – alles zentral über ein Dashboard steuerbar, 
+          NILL ist deine zentrale KI-Plattform für intelligente E-Mail- und Dokumentenprozesse.
+          Vom Posteingang bis zur Zeiterfassung – alles zentral über ein Dashboard steuerbar,
           effizient, sicher und klimaneutral.
         </motion.p>
 

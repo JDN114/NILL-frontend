@@ -58,7 +58,8 @@ export default function ResendVerification() {
         >
           <span style={{
             width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-            background: "conic-gradient(from 210deg, #c6ff3c, #38f5d0, #7a5cff, #ff4d8d, #c6ff3c)",
+            background: "#c6ff3c",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,.16)",
             position: "relative",
           }} />
           <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 20, color: "#efede7", fontWeight: 400 }}>

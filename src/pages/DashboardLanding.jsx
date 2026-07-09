@@ -183,26 +183,60 @@ const S = `
   }
 
   /* ── Light-mode overrides ──────────────────────────────────────────
-     Flip all hardcoded dark tokens so the page reads on bone white.  */
+     Flip all hardcoded dark tokens so the page reads on bone white.
+     Tuned for stronger contrast + real surface/elevation, so cards and
+     the welcome banner read as physical objects instead of dissolving
+     into the page.  */
   html[data-theme="light"] .nd-root {
-    --ink:       #201d15;
-    --ink-dim:   rgba(var(--ink-tint), .55);
-    --ink-faint: rgba(var(--ink-tint), .22);
-    --line:      rgba(var(--ink-tint), .14);
-    --glass:     rgba(var(--tint), .05);
-    --accent:    #806228;
+    --ink:       #1b1810;
+    --ink-dim:   rgba(var(--ink-tint), .64);
+    --ink-faint: rgba(var(--ink-tint), .26);
+    --line:      rgba(var(--ink-tint), .17);
+    --glass:     rgba(var(--tint), .045);
+    --accent:    #7a5a1e;
     --a2:        #1f5fe0;
     --a3:        #be3c28;
     --bg:        #eae3d4;
     --bg2:       #ddd6c6;
   }
 
-  /* Welcome banner — warm gold glow instead of neon-purple */
+  /* Cards — give them a true light surface + a soft cast shadow so they
+     lift off the bone page instead of blending into it. */
+  html[data-theme="light"] .nd-card {
+    background: rgba(255,252,245,.72);
+    border-color: rgba(var(--ink-tint), .16);
+    box-shadow: 0 1px 2px rgba(42,36,24,.05), 0 6px 16px rgba(42,36,24,.06);
+  }
+  html[data-theme="light"] .nd-card:hover {
+    background: rgba(255,253,248,.96);
+    border-color: rgba(var(--ink-tint), .32);
+    box-shadow: 0 2px 5px rgba(42,36,24,.08), 0 14px 30px rgba(42,36,24,.11);
+  }
+  html[data-theme="light"] .nd-card-icon {
+    background: rgba(255,251,243,.9);
+    border-color: rgba(var(--ink-tint), .16);
+  }
+
+  /* Welcome banner — warm gold glass, defined edge + lift so it reads as
+     the hero of the page rather than a faint tint. */
   html[data-theme="light"] .nd-welcome {
-    background: linear-gradient(135deg, rgba(128,98,40,.1), rgba(128,98,40,.04));
+    background:
+      linear-gradient(135deg, rgba(176,134,52,.17), rgba(176,134,52,.05)),
+      rgba(255,252,245,.55);
+    border-color: rgba(176,134,52,.32);
+    box-shadow: 0 2px 6px rgba(42,36,24,.05), 0 18px 42px rgba(122,92,40,.12);
   }
   html[data-theme="light"] .nd-welcome::before {
-    background: radial-gradient(50% 40% at 30% 30%, rgba(128,98,40,.12), transparent 60%);
+    background: radial-gradient(50% 40% at 30% 30%, rgba(176,134,52,.22), transparent 60%);
+  }
+  html[data-theme="light"] .nd-welcome-eyebrow { color: rgba(122,92,40,.78); }
+  html[data-theme="light"] .nd-bell-btn {
+    background: rgba(255,252,245,.75);
+    border-color: rgba(var(--ink-tint), .16);
+  }
+  html[data-theme="light"] .nd-notif {
+    background: rgba(255,252,245,.6);
+    border-color: rgba(var(--ink-tint), .14);
   }
 
   /* NILL card — blue accent fits bone white better than purple */
@@ -247,8 +281,28 @@ const S = `
   html[data-theme="light"] .nd-feed-panel { background: var(--bg2); }
   html[data-theme="light"] .nd-feed-backdrop { background: rgba(30,24,14,.3); }
 
+  /* AI banner — matching warm-gold surface, defined edge + soft lift. */
+  html[data-theme="light"] .nd-ai-banner {
+    background:
+      linear-gradient(135deg, rgba(176,134,52,.12), rgba(176,134,52,.04)),
+      rgba(255,252,245,.5);
+    border-color: rgba(176,134,52,.34);
+    box-shadow: 0 1px 3px rgba(42,36,24,.05), 0 10px 26px rgba(122,92,40,.09);
+  }
+  html[data-theme="light"] .nd-ai-banner-icon {
+    background: rgba(176,134,52,.16); border-color: rgba(176,134,52,.32);
+  }
+  html[data-theme="light"] .nd-ai-banner-tag { color: rgba(122,92,40,.8); }
   /* AI banner CTA — gold readable on bone white */
-  html[data-theme="light"] .nd-ai-banner-cta { color: #6b5120; }
+  html[data-theme="light"] .nd-ai-banner-cta {
+    color: #6b5120; background: rgba(176,134,52,.18); border-color: rgba(176,134,52,.42);
+  }
+  html[data-theme="light"] .nd-ai-banner-cta:hover {
+    background: rgba(176,134,52,.28); border-color: rgba(176,134,52,.6);
+  }
+
+  /* Section label divider — a touch more present against the busier page. */
+  html[data-theme="light"] .nd-section-label::after { background: rgba(var(--ink-tint), .2); }
 `;
 
 const ICONS = {

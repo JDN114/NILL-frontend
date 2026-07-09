@@ -27,10 +27,6 @@ export default function Founder() {
       id="founder"
       className="relative w-full min-h-screen bg-black text-white pt-32 pb-24 overflow-hidden"
     >
-      {/* Futuristic Glows */}
-      <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/20 blur-[150px] rounded-full"></div>
-      <div className="absolute bottom-10 right-1/3 w-96 h-96 bg-purple-600/20 blur-[200px] rounded-full"></div>
-
       {/* Portrait */}
       <div className="flex justify-center">
         <motion.div
@@ -38,7 +34,7 @@ export default function Founder() {
           whileInView={{ scale: 1, opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden shadow-xl shadow-primary/50 hover:scale-105 transition-transform"
+          className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden shadow-xl"
         >
           <img
             src={FounderImg}

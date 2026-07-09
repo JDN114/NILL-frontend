@@ -71,13 +71,13 @@ export default function WalkthroughSection() {
           <div className="text-col">
             {[
               {scene:'inbox',  idx:'01',title:'07:48 — Die erste Mail liegt schon vorbereitet bereit.',text:'NILL hat die Nacht durchgearbeitet. 47 E-Mails gesichtet, 12 Antworten vorformuliert, 3 zur Freigabe bereit.'},
-              {scene:'ledger', idx:'02',title:'09:15 — Der Handwerker schickt die Rechnung per Foto.',text:'OCR, Kontierung, Zuordnung zum richtigen Projekt, Vorbereitung für DATEV — in 4 Sekunden.'},
+              {scene:'ledger', idx:'02',title:'09:15 — Der Lieferschein kommt per Foto ins System.',text:'NILL erfasst die Positionen, gleicht sie mit der Bestellung ab und schreibt den Bestand fort — in Sekunden.'},
               {scene:'inventory',idx:'03',title:'11:02 — Zwei Artikel rutschen unter die Meldegrenze.',text:'NILL kennt deinen Lieferanten, deine Rabattstufen, deine historische Liefertreue. Die Nachbestellung liegt auf deinem Schreibtisch.'},
               {scene:'time',   idx:'04',title:'13:30 — Mittagspause. Per Klick erfasst.',text:'App oder Browser öffnen, Projekt wählen, starten. NILL berechnet Projekte, Pausen und Überstunden. EuGH-konform.'},
               {scene:'team',   idx:'05',title:'16:48 — Zwei Krankmeldungen, ein Dienstplan neu.',text:'NILL zeigt die Lücken, informiert die betroffenen Kunden und schlägt den passenden Springer vor (folgt Q4 2026).'},
             ].map(({scene,idx,title,text})=>(
               <div key={scene} className="step-item" data-scene={scene}>
-                <div className="step-index"><em>{idx}</em> / {['Postfach','Buchhaltung','Inventur','Zeiterfassung','Team­verwaltung'][parseInt(idx)-1]}</div>
+                <div className="step-index"><em>{idx}</em> / {['Postfach','Lieferscheine','Inventur','Zeiterfassung','Team­verwaltung'][parseInt(idx)-1]}</div>
                 <h3>{title}</h3><p>{text}</p>
               </div>
             ))}
@@ -89,16 +89,16 @@ export default function WalkthroughSection() {
                 <div className="device-frame">
                   <div className={`scene${activeScene==='inbox'?' active':''}`}>
                     <div className="inbox-row hi"><span className="inbox-dot" style={{background:'var(--accent)'}}/><span className="inbox-name">Kunde Müller GmbH</span><span className="inbox-snippet">Re: Angebot Sanierung — vielen Dank …</span><span className="inbox-time">07:48</span></div>
-                    <div className="inbox-row"><span className="inbox-dot"/><span className="inbox-name">DATEV</span><span className="inbox-snippet">Monatsreporting bereit</span><span className="inbox-time">06:02</span></div>
+                    <div className="inbox-row"><span className="inbox-dot"/><span className="inbox-name">NILL</span><span className="inbox-snippet">Wochenbericht bereit</span><span className="inbox-time">06:02</span></div>
                     <div className="inbox-row"><span className="inbox-dot" style={{background:'var(--accent-3)'}}/><span className="inbox-name">L. Schröder</span><span className="inbox-snippet">Urlaubsantrag 12.—19.08.</span><span className="inbox-time">05:55</span></div>
                     <div className="ai-reply">Sehr geehrte Frau Müller, vielen Dank für Ihre Rückmeldung. Wir bestätigen den Termin am <strong>23.04. um 09:00 Uhr</strong> …<span className="typing"/></div>
                   </div>
                   <div className={`scene${activeScene==='ledger'?' active':''}`}>
-                    <div className="ocr-blip"><span className="ocr-pulse"/>OCR läuft</div>
-                    <div className="ledger-head"><span>Datum</span><span>Beleg</span><span>Konto</span><span>Betrag</span></div>
-                    <div className="ledger-row"><span>09.15</span><span>Rechnung <span className="cat">Elektro Baum</span></span><span>3400</span><span className="amount neg">−487,20</span></div>
-                    <div className="ledger-row"><span>09.14</span><span>Abschlag <span className="cat">Müller GmbH</span></span><span>8400</span><span className="amount pos">+3.200,00</span></div>
-                    <div className="ledger-row"><span>08.55</span><span>Kraftstoff <span className="cat">Tank AG</span></span><span>4600</span><span className="amount neg">−128,40</span></div>
+                    <div className="ocr-blip"><span className="ocr-pulse"/>Foto-Erfassung läuft</div>
+                    <div className="ledger-head"><span>Pos.</span><span>Artikel</span><span>Lager</span><span>Menge</span></div>
+                    <div className="ledger-row"><span>01</span><span>Kabeltrommel <span className="cat">Elektro Baum</span></span><span>A-22</span><span className="amount pos">+12</span></div>
+                    <div className="ledger-row"><span>02</span><span>Schalterprogramm <span className="cat">Elektro Baum</span></span><span>B-09</span><span className="amount pos">+48</span></div>
+                    <div className="ledger-row"><span>03</span><span>Leerrohr 25 mm <span className="cat">fehlt — reklamiert</span></span><span>T-77</span><span className="amount neg">−6</span></div>
                   </div>
                   <div className={`scene${activeScene==='inventory'?' active':''}`}>
                     <div className="inv-grid">{SKUS.map((sku,i)=><div key={sku} className={`inv-cell${[2,7,14].includes(i)?' lo':' ok'}`}>{sku}</div>)}</div>

@@ -25,7 +25,7 @@ export default function KarrierePage() {
             Karriere bei NILL
           </h1>
           <p style={{ color: 'rgba(239,237,231,.5)', fontSize: 17, lineHeight: 1.65, maxWidth: '52ch', margin: 0 }}>
-            NILL ist das KI-Betriebssystem für Unternehmen — gebaut in Deutschland, für den globalen Markt.
+            NILL ist die smarte Arbeitsstation für Betriebe — gebaut in Deutschland, für den globalen Markt.
             Wir suchen Menschen, die nicht nur mitarbeiten, sondern mitgestalten wollen.
           </p>
         </div>
@@ -56,7 +56,6 @@ export default function KarrierePage() {
           padding: '36px 40px',
           textAlign: 'center',
         }}>
-          <div style={{ fontSize: 32, marginBottom: 16 }}>🚀</div>
           <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 12, marginTop: 0 }}>
             Offene Stellen
           </h2>

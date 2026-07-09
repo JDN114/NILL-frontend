@@ -81,7 +81,8 @@ export default function ResetPasswordPage() {
           width: 26px;
           height: 26px;
           border-radius: 7px;
-          background: conic-gradient(from 210deg, #c6ff3c, #38f5d0, #7a5cff, #ff4d8d, #c6ff3c);
+          background: #c6ff3c;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
           position: relative;
           overflow: hidden;
           flex-shrink: 0;
@@ -89,8 +90,11 @@ export default function ResetPasswordPage() {
         .nill-auth-brand-mark::after {
           content: "";
           position: absolute;
-          inset: 4px;
-          border-radius: 4px;
+          left: 6px;
+          top: 6px;
+          bottom: 6px;
+          width: 7px;
+          border-radius: 3px 0 0 3px;
           background: #040407;
         }
         .nill-auth-brand-name {

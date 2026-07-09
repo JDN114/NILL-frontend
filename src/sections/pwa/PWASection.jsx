@@ -355,29 +355,21 @@ export default function PWASection() {
             <div className="pwa-feature-ico"><Icon.Wifi/></div>
             <div>
               <h4>Funktioniert auch offline</h4>
-              <p>Belege fotografieren, Notizen erfassen — wird synchronisiert, sobald wieder Netz da ist.</p>
+              <p>Lieferscheine fotografieren, Zeiten erfassen — wird synchronisiert, sobald wieder Netz da ist.</p>
             </div>
           </div>
           <div className="pwa-feature">
             <div className="pwa-feature-ico"><Icon.Bell/></div>
             <div>
               <h4>Benachrichtigungen, wenn&apos;s zählt</h4>
-              <p>Neue Mail mit Freigabe? Beleg vom Steuerberater? Push direkt auf Handy oder Desktop.</p>
+              <p>Neue Mail zur Freigabe? Schichtplan geändert? Push direkt auf Handy oder Desktop.</p>
             </div>
           </div>
         </div>
 
         <div className={`pwa-grid reveal${gridVis?' in':''}`} ref={gridRef}>
           {OS_CARDS.map(({ key, name, browser, tag, icon, Mock, steps }, i) => (
-            <article
-              key={key}
-              className="pwa-card"
-              onMouseMove={(e)=>{
-                const r = e.currentTarget.getBoundingClientRect()
-                e.currentTarget.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%')
-                e.currentTarget.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%')
-              }}
-            >
+            <article key={key} className="pwa-card">
               <header className="pwa-card-head">
                 <div className="pwa-os">
                   <div className={`pwa-os-mark ${key}`}>{OS_ICON(icon)}</div>
