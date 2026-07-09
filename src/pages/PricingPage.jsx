@@ -320,12 +320,6 @@ function PlanCard({ plan, cycle, loading, onCheckout }) {
         }}
       >
         {loading === plan.id ? "Weiterleitung…" : "Zahlungspflichtig abonnieren"}
-        {!loading && (
-          <span style={{ display: "inline-block", transition: `transform 0.3s ${ease}` }}
-            onMouseOver={e => e.currentTarget.style.transform = "translateX(4px)"}
-            onMouseOut={e => e.currentTarget.style.transform = "none"}
-          >→</span>
-        )}
       </button>
     </div>
   );
@@ -442,9 +436,6 @@ export default function PricingPage() {
             gap: "1.1rem",
             boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
           }}>
-            {/* Icon */}
-            <div style={{ fontSize: "2rem", textAlign: "center" }}>⏰</div>
-
             <h2
               id="trial-expired-title"
               style={{
@@ -769,7 +760,7 @@ export default function PricingPage() {
           {mode === "station" ? (
             <div style={{
               display: "flex", justifyContent: "center",
-              perspective: 1400, textAlign: "left",
+              textAlign: "left",
             }}>
               <div style={{ width: "min(420px, 100%)" }}>
                 <PlanCard
@@ -785,7 +776,6 @@ export default function PricingPage() {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               gap: 18,
-              perspective: 1400,
               textAlign: "left",
             }}>
               {PLANS.map(plan => (
@@ -846,7 +836,7 @@ export default function PricingPage() {
               onMouseOver={e => { e.currentTarget.style.background = "#fff"; }}
               onMouseOut={e => { e.currentTarget.style.background = accent; }}
             >
-              Kontakt aufnehmen →
+              Kontakt aufnehmen
             </a>
           </div>
         </div>

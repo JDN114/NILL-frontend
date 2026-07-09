@@ -579,7 +579,7 @@ function EnergyBenchmark() {
         ))}
         <style>{`@keyframes nh2benchFill{to{width:var(--bench-w)}}`}</style>
         <div className="nh2-bench-foot">
-          → NILL-Anfragen sind <em>~{ (rows.find(r=>!r.nill && r.v > rows.find(x=>x.nill).v)?.v / rows.find(r=>r.nill).v || 1).toFixed(1) }×</em> effizienter als der Branchen-Durchschnitt in dieser Kategorie.
+          NILL-Anfragen sind <em>~{ (rows.find(r=>!r.nill && r.v > rows.find(x=>x.nill).v)?.v / rows.find(r=>r.nill).v || 1).toFixed(1) }×</em> effizienter als der Branchen-Durchschnitt in dieser Kategorie.
         </div>
       </div>
     </div>
@@ -764,7 +764,7 @@ export default function SustainabilitySection({ onCTA }) {
             href="#"
             onClick={(e) => { e.preventDefault(); onCTA && onCTA('Nachhaltigkeitsbericht') }}
           >
-            <span>Bericht anfordern</span><span className="arrow">→</span>
+            <span>Bericht anfordern</span>
           </a>
         </div>
       </div>

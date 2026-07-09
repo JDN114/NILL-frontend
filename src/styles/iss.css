@@ -304,8 +304,6 @@
   transition: transform .35s var(--ease-out, cubic-bezier(.16,1,.3,1)), background .25s;
 }
 .iss-outro-cta:hover { background: #fff; transform: translateY(-2px) }
-.iss-outro-cta .arrow { transition: transform .3s var(--ease-out, cubic-bezier(.16,1,.3,1)) }
-.iss-outro-cta:hover .arrow { transform: translateX(4px) }
 .iss-sticky[data-phase="outro"] .iss-outro { opacity: 1; transform: none }
 .iss-sticky[data-phase="outro"] .iss-bar.bot { opacity: 0 }
 .iss-sticky[data-phase="outro"] .iss-card { opacity: 0 !important }

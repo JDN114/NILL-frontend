@@ -19,7 +19,7 @@ export default function KarrierePage() {
 
         <div style={{ marginBottom: 72 }}>
           <span style={{ display: 'inline-block', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '.22em', textTransform: 'uppercase', color: '#c6ff3c', marginBottom: 16 }}>
-            Wir bauen etwas Großes
+            Karriere
           </span>
           <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-.025em', margin: '0 0 20px' }}>
             Karriere bei NILL
@@ -79,7 +79,7 @@ export default function KarrierePage() {
               letterSpacing: '.01em',
             }}
           >
-            Initiative bewerben → jobs@nillai.de
+            Initiativbewerbung an jobs@nillai.de
           </a>
         </div>
 

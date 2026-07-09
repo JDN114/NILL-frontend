@@ -33,27 +33,13 @@ export function Reveal({ className = '', stagger = false, children, ...rest }) {
   );
 }
 
-/* ─── MAGNETIC BUTTON ────────────────────────────────────── */
-function useMagnetic(ref) {
-  useEffect(() => {
-    const el = ref.current; if (!el) return;
-    const mv = e => {
-      const r = el.getBoundingClientRect();
-      el.style.transform = `translate(${(e.clientX-r.left-r.width/2)/r.width*18}px,${(e.clientY-r.top-r.height/2)/r.height*18}px)`;
-    };
-    const ml = () => el.style.transform = '';
-    el.addEventListener('mousemove', mv); el.addEventListener('mouseleave', ml);
-    return () => { el.removeEventListener('mousemove', mv); el.removeEventListener('mouseleave', ml); };
-  }, []);
-}
-
-/* href → plain anchor · to → react-router Link · neither → button */
+/* ─── BUTTON ─────────────────────────────────────────────── */
+/* The magnetic mouse-follow effect was removed — buttons sit still.
+   href → plain anchor · to → react-router Link · neither → button */
 export function MagBtn({ className, children, onClick, href, to, style }) {
-  const ref = useRef(null);
-  useMagnetic(ref);
-  if (to)   return <Link ref={ref} to={to} className={className} onClick={onClick} style={style}>{children}</Link>;
-  if (href) return <a ref={ref} href={href} className={className} onClick={onClick} style={style}>{children}</a>;
-  return <button ref={ref} className={className} onClick={onClick} style={style}>{children}</button>;
+  if (to)   return <Link to={to} className={className} onClick={onClick} style={style}>{children}</Link>;
+  if (href) return <a href={href} className={className} onClick={onClick} style={style}>{children}</a>;
+  return <button className={className} onClick={onClick} style={style}>{children}</button>;
 }
 
 /* ─── NAV ────────────────────────────────────────────────── */
@@ -133,7 +119,7 @@ export function Footer() {
           </ul></div>
         </div>
         <div className="wordmark">NILL<em>.</em></div>
-        <div className="foot-meta"><span>© 2026 NILL AI - Inh. Julian David Nill · nillai.de</span><span>Made with intelligence · Frankfurt a.M.</span></div>
+        <div className="foot-meta"><span>© 2026 NILL AI - Inh. Julian David Nill · nillai.de</span><span>Frankfurt am Main</span></div>
       </div>
     </footer>
   );
@@ -198,7 +184,7 @@ export function Modal({ intent, onClose }) {
               <div className="form-field"><label htmlFor="mm">Nachricht</label><textarea id="mm" name="message" placeholder="Welches Modul interessiert dich?"/></div>
               <div className="modal-actions">
                 <small>Per Klick auf „Senden&quot; wird dein Mailprogramm geöffnet.</small>
-                <MagBtn className="btn btn-primary"><span>Senden</span><span className="arrow">→</span></MagBtn>
+                <MagBtn className="btn btn-primary"><span>Senden</span></MagBtn>
               </div>
             </form>
           </>

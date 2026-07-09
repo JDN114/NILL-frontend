@@ -197,7 +197,7 @@ export default function ISSSection() {
               Bereit, die Station zu betreten?
             </p>
             <a className="iss-outro-cta" href="#cta">
-              Demo anfragen <span className="arrow">→</span>
+              Demo anfragen
             </a>
           </div>
         </div>

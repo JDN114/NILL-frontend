@@ -13,7 +13,7 @@ export default function WieEsArbeitetPage() {
           <section style={{padding:'40px 0 120px',textAlign:'center'}}>
             <div className="wrap">
               <MagBtn className="btn btn-primary" href="https://nillai.de/register">
-                <span>Kostenlos registrieren</span><span className="arrow">→</span>
+                <span>Kostenlos registrieren</span>
               </MagBtn>
             </div>
           </section>

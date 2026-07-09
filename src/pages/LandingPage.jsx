@@ -631,9 +631,8 @@ function Hero({ onCTA }) {
           NILL verbindet <strong style={{color:'var(--ink)',fontWeight:500}}>Postfach, Aufgaben, Lieferscheine, Inventur, Zeiterfassung</strong> und <strong style={{color:'var(--ink)',fontWeight:500}}>Teamverwaltung</strong> zu einer Arbeitsstation — unterstützt von einer KI, die mitliest und Arbeit vorbereitet.
         </p>
         <div className="hero-cta">
-          <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos registrieren</span><span className="arrow">→</span></MagBtn>
-          <MagBtn className="btn btn-ghost" href="/login"><span>Login</span><span className="arrow">→</span></MagBtn>
-          <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Demo')}} href="#"><span>Live-Demo</span><span className="arrow">↓</span></MagBtn>
+          <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos registrieren</span></MagBtn>
+          <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Demo')}} href="#"><span>Live-Demo</span></MagBtn>
         </div>
         <p className="hero-trial-note" style={{
           marginTop:16, fontSize:13, lineHeight:1.5,
@@ -668,7 +667,7 @@ function Products({ onCTA }) {
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
           <div><span className="eyebrow">Module — 05 live · 01 in Entwicklung</span><h2>Sechs Module. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Eine</em> Intelligenz.</h2></div>
-          <p className="lead">Jedes Modul steht für sich — doch gemeinsam werden sie zu einem Gehirn, das dein Unternehmen versteht.</p>
+          <p className="lead">Jedes Modul steht für sich. Zusammen sind sie ein System, das deinen Betrieb kennt.</p>
         </div>
         <Reveal stagger className="bento">
           <TiltCard className="k1">
@@ -680,32 +679,32 @@ function Products({ onCTA }) {
                 </g>
               </svg>
             </div>
-            <div><span className="tag"><span className="n">01</span> · Postfach</span><h3>E-Mails, die sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>selbst beantworten.</em></h3><p>Kategorisieren, priorisieren, Antworten schreiben — NILL liest mit und arbeitet voraus.</p></div>
+            <div><span className="tag"><span className="n">01</span> · Postfach</span><h3>E-Mails, die sich selbst beantworten.</h3><p>Kategorisieren, priorisieren, Antworten schreiben — NILL liest mit und arbeitet voraus.</p></div>
           </TiltCard>
           <TiltCard className="k2">
-            <div><span className="tag"><span className="n">02</span> · Aufgaben & Lieferscheine</span><h3>Der Tag plant sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>von selbst.</em></h3><p>Aufgaben fürs ganze Team, Lieferscheine per Foto erfasst — direkt an der Station im Tablet- und Kiosk-Modus.</p></div>
+            <div><span className="tag"><span className="n">02</span> · Aufgaben & Lieferscheine</span><h3>Der Tag plant sich von selbst.</h3><p>Aufgaben fürs ganze Team, Lieferscheine per Foto erfasst — direkt an der Station im Tablet- und Kiosk-Modus.</p></div>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',fontFamily:'var(--mono)',fontSize:11,color:'var(--ink-dim)'}}>
               {['Tablet & Kiosk','Foto-Erfassung','PDF-Export'].map(t=><span key={t} style={{padding:'6px 10px',border:'1px solid var(--line)',borderRadius:99}}>{t}</span>)}
             </div>
           </TiltCard>
           <TiltCard className="k3">
-            <div><span className="tag"><span className="n">03</span> · Inventur</span><h3>Bestände, die sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>selbst zählen.</em></h3><p>Automatische Fortschreibung, Meldegrenzen mit Benachrichtigung.</p></div>
+            <div><span className="tag"><span className="n">03</span> · Inventur</span><h3>Bestände, die sich selbst zählen.</h3><p>Automatische Fortschreibung, Meldegrenzen mit Benachrichtigung.</p></div>
           </TiltCard>
           <TiltCard className="k4">
-            <div><span className="tag"><span className="n">04</span> · Zeiterfassung</span><h3>Zeit erfasst sich <em style={{fontStyle:'italic',color:'var(--accent)'}}>per Klick.</em></h3><p>Per App oder Browser. NILL weist Projekte zu und berechnet Überstunden.</p></div>
+            <div><span className="tag"><span className="n">04</span> · Zeiterfassung</span><h3>Zeit erfasst sich per Klick.</h3><p>Per App oder Browser. NILL weist Projekte zu und berechnet Überstunden.</p></div>
             <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--ink-dim)',display:'flex',justifyContent:'space-between'}}><span>EuGH-konform</span><span>GPS-optional</span></div>
           </TiltCard>
           <TiltCard className="k5">
-            <div><span className="tag"><span className="n">05</span> · Team­verwaltung</span><h3>Das Team im <em style={{fontStyle:'italic',color:'var(--accent)'}}>Autopilot.</em></h3><p>Urlaub, Krankmeldungen, Dienstpläne, Onboarding — vorbereitet von der KI.</p></div>
+            <div><span className="tag"><span className="n">05</span> · Team­verwaltung</span><h3>Das Team, ohne Zettelwirtschaft.</h3><p>Urlaub, Krankmeldungen, Dienstpläne, Onboarding — vorbereitet von der KI.</p></div>
             <div style={{display:'flex'}}>
               {['MK','LS','JH','+9'].map((l,i)=><span key={l} className="avatar" style={{width:28,height:28,fontSize:10,marginLeft:i?-10:0,background:i?['linear-gradient(135deg,var(--accent),var(--accent-4))','linear-gradient(135deg,var(--accent-3),var(--accent-2))','linear-gradient(135deg,var(--accent-4),var(--accent-3))'][i-1]:undefined}}>{l}</span>)}
             </div>
           </TiltCard>
           <TiltCard className="k6" style={{background:'linear-gradient(90deg,#0c0c10,#12130c)',borderColor:'rgba(198,255,60,.2)'}}>
-            <div><span className="tag"><span className="n">06</span> · KI Sekretärin</span><h3>Nimmt Anrufe entgegen. <em style={{fontStyle:'italic',color:'var(--accent)'}}>Rund um die Uhr.</em></h3></div>
+            <div><span className="tag"><span className="n">06</span> · KI Sekretärin</span><h3>Nimmt Anrufe entgegen. Rund um die Uhr.</h3></div>
             <div style={{display:'flex',alignItems:'center',gap:14}}>
               <span className="badge">In Bearbeitung — Q3 / 2026</span>
-              <MagBtn className="btn btn-ghost" style={{padding:'10px 18px'}} onClick={e=>{e.preventDefault();onCTA('Frühzugang')}} href="#"><span>Frühzugang sichern</span><span className="arrow">→</span></MagBtn>
+              <MagBtn className="btn btn-ghost" style={{padding:'10px 18px'}} onClick={e=>{e.preventDefault();onCTA('Frühzugang')}} href="#"><span>Frühzugang sichern</span></MagBtn>
             </div>
           </TiltCard>
         </Reveal>
@@ -726,7 +725,7 @@ function Teaser({ id, eyebrow, title, lead, to }) {
           <div><span className="eyebrow">{eyebrow}</span><h2 dangerouslySetInnerHTML={{__html:title}}/></div>
           <div>
             <p className="lead">{lead}</p>
-            <MagBtn className="btn btn-primary" to={to} style={{marginTop:26}}><span>Mehr erfahren</span><span className="arrow">→</span></MagBtn>
+            <MagBtn className="btn btn-primary" to={to} style={{marginTop:26}}><span>Mehr erfahren</span></MagBtn>
           </div>
         </div>
       </div>
@@ -734,29 +733,19 @@ function Teaser({ id, eyebrow, title, lead, to }) {
   );
 }
 
-/* ─── STATS ──────────────────────────────────────────────── */
+/* ─── STATS ───────────────────────────────────────────────
+   Only verifiable facts — no invented benchmark numbers, no
+   count-up animation. */
 function Stats() {
   const [ref, vis] = useReveal();
-  const countRef = useRef(null);
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!vis || !countRef.current) return;
-    const start = performance.now();
-    const tick = now => {
-      const p = Math.min(1,(now-start)/1600);
-      setCount(Math.round((1-Math.pow(1-p,3))*87));
-      if(p<1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [vis]);
   return (
     <section style={{padding:'40px 0 120px'}}>
       <div className="wrap">
         <div className={`stats stagger${vis?' in':''}`} ref={ref}>
-          <div className="stat"><div className="num"><em>3,5</em><span>×</span></div><div className="label">Schneller im Alltag</div></div>
-          <div className="stat"><div className="num"><span ref={countRef}>{count}</span><em>%</em></div><div className="label">Weniger manuelle Arbeit</div></div>
-          <div className="stat"><div className="num"><em>24</em><span>/</span><em>7</em></div><div className="label">KI im Einsatz</div></div>
+          <div className="stat"><div className="num"><em>30</em><span>€</span></div><div className="label">Pro Monat · alle Mitarbeiter</div></div>
           <div className="stat"><div className="num"><em>05</em><span>·</span><em>01</em></div><div className="label">Module live · Ein Login</div></div>
+          <div className="stat"><div className="num"><em>100</em><span>%</span></div><div className="label">Gehostet in Deutschland</div></div>
+          <div className="stat"><div className="num"><em>48</em><span>h</span></div><div className="label">Bis dein Team produktiv ist</div></div>
         </div>
       </div>
     </section>
@@ -774,7 +763,7 @@ function PricingCard({tier,sub,price,per,items,pop}) {
       <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
       <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
       <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
-      <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Mehr Erfahren</span><span className="arrow">→</span></MagBtn>
+      <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Details ansehen</span></MagBtn>
     </article>
   );
 }
@@ -825,12 +814,11 @@ function BigCTA({ onCTA }) {
   return (
     <section id="cta" className="cta-big">
       <div className="wrap">
-        <h2 className={`reveal${vis?' in':''}`} ref={ref}>Lass deine KI <br/><em>anfangen</em><br/>zu arbeiten.</h2>
+        <h2 className={`reveal${vis?' in':''}`} ref={ref}>Weniger <br/><em>Verwaltung.</em><br/>Mehr Betrieb.</h2>
         <div className={`cta-sub reveal reveal-delay-1${vis?' in':''}`}>
-          <p className="lead">30 Minuten Live-Demo mit einem unserer Produktspezialisten. Wir zeigen dir direkt an deinem Use-Case, wie NILL arbeitet.</p>
+          <p className="lead">30 Minuten Live-Demo — direkt mit dem Gründer, an deinem echten Arbeitstag. Kein Sales-Team, keine Folien.</p>
           <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-            <MagBtn className="btn btn-primary" onClick={e=>{e.preventDefault();onCTA('Termin')}} href="#"><span>Termin buchen</span><span className="arrow">→</span></MagBtn>
-            <MagBtn className="btn btn-ghost" href="#produkte"><span>Module</span><span className="arrow">↑</span></MagBtn>
+            <MagBtn className="btn btn-primary" onClick={e=>{e.preventDefault();onCTA('Termin')}} href="#"><span>Termin buchen</span></MagBtn>
           </div>
         </div>
       </div>
