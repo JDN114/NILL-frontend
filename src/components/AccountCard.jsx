@@ -1,7 +1,7 @@
 // src/components/AccountCard.jsx
 
 import { useState } from "react";
-import api from "../services/api";
+import api, { API_URL } from "../services/api";
 import { motion } from "framer-motion";
 
 export default function AccountCard() {
@@ -71,12 +71,12 @@ export default function AccountCard() {
    * ----------------------------- */
   const gmailLogin = () => {
     window.location.href =
-      `${import.meta.env.VITE_API_URL}/email-accounts/gmail/auth`;
+      `${API_URL}/email-accounts/gmail/auth`;
   };
 
   const outlookLogin = () => {
     window.location.href =
-      `${import.meta.env.VITE_API_URL}/email-accounts/outlook/auth`;
+      `${API_URL}/email-accounts/outlook/auth`;
   };
 
   /* -----------------------------

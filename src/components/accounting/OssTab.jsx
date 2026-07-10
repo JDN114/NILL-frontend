@@ -1,6 +1,6 @@
 // src/components/accounting/OssTab.jsx — One-Stop-Shop Quartalsmeldung (§18j UStG)
 import React, { useState, useEffect, useCallback } from "react";
-import api from "../../services/api";
+import api, { API_URL } from "../../services/api";
 
 const fmtEur = (n) => `${Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
@@ -23,7 +23,7 @@ export default function OssTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const csvUrl = `${import.meta.env.VITE_API_URL}/tax/oss/report.csv?jahr=${jahr}&quartal=${quartal}`;
+  const csvUrl = `${API_URL}/tax/oss/report.csv?jahr=${jahr}&quartal=${quartal}`;
   const jahre = Array.from({ length: 4 }, (_, i) => now.getFullYear() - i);
 
   return (

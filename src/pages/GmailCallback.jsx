@@ -1,6 +1,7 @@
 // src/pages/GmailCallback.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../services/api";
 
 export default function GmailCallback() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function GmailCallback() {
     // -------------------------------
     // 2️⃣ Backend Callback
     // -------------------------------
-    const callbackUrl = `${import.meta.env.VITE_API_URL}/gmail/callback?code=${encodeURIComponent(
+    const callbackUrl = `${API_URL}/gmail/callback?code=${encodeURIComponent(
       code
     )}&state=${encodeURIComponent(returnedState)}`;
 

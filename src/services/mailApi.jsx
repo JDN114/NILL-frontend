@@ -5,9 +5,9 @@
 // statt direkt `api.post('/gmail/send', …)` aufzurufen, hier durchlaufen —
 // dann funktionieren sie für Gmail, Outlook und IMAP.
 
-import api from "./api";
+import api, { API_URL } from "./api";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+const API_BASE = API_URL ?? "";
 
 /**
  * Provider-aware POST /send.

@@ -1,7 +1,17 @@
 // src/services/api.js
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// Same-Origin-API: Auf nillai.de läuft ALLES über die Vercel-Proxy-Route
+// /api → api.nillai.de, damit das Session-Cookie first-party auf nillai.de
+// liegt (iOS/WebKit räumt Cookies der nie direkt besuchten Subdomain
+// api.nillai.de vorzeitig weg → ungewollte Logouts auf dem iPhone).
+// Laufzeit-Check statt nur Build-Env, damit eine abweichende VITE_API_URL
+// im Vercel-Dashboard das nicht aushebeln kann. Dev/Staging: VITE_API_URL.
+const _host = typeof window !== "undefined" ? window.location.hostname : "";
+export const API_URL =
+  _host === "nillai.de" || _host === "www.nillai.de"
+    ? "/api"
+    : import.meta.env.VITE_API_URL;
 
 if (!API_URL) {
   throw new Error("VITE_API_URL ist nicht gesetzt – Abbruch aus Sicherheitsgründen");

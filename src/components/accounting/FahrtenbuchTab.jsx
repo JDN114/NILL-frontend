@@ -1,6 +1,6 @@
 // src/components/accounting/FahrtenbuchTab.jsx — Elektronisches Fahrtenbuch (§8 Abs. 2 EStG)
 import React, { useState, useEffect, useCallback } from "react";
-import api from "../../services/api";
+import api, { API_URL } from "../../services/api";
 
 const fmtKm = (n) => `${Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
 const KATEGORIEN = [
@@ -111,7 +111,7 @@ export default function FahrtenbuchTab() {
   };
 
   const exportUrl = (typ) =>
-    `${import.meta.env.VITE_API_URL}/api/v1/fahrtenbuch/export/${typ}?fahrzeug_id=${fahrzeugId}&von=${jahr}-01-01&bis=${jahr}-12-31`;
+    `${API_URL}/api/v1/fahrtenbuch/export/${typ}?fahrzeug_id=${fahrzeugId}&von=${jahr}-01-01&bis=${jahr}-12-31`;
 
   const aktivesFahrzeug = fahrzeuge.find(f => f.id === fahrzeugId);
   const istBetrieblich = fahrt.kategorie === "betrieblich";

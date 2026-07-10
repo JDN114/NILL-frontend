@@ -1,6 +1,6 @@
 // src/components/accounting/BankInsights.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import api from "../../services/api";
+import api, { API_URL } from "../../services/api";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -50,7 +50,7 @@ export default function BankInsights() {
 
   const connectBank = () => {
     // GET /bank/connect gibt einen OAuth-Redirect zurück → direkt navigieren
-    window.location.href = `${import.meta.env.VITE_API_URL}/bank/connect`;
+    window.location.href = `${API_URL}/bank/connect`;
   };
 
   const disconnectBank = async () => {

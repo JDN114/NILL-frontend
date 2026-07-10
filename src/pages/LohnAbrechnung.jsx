@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
-import api from "../services/api";
+import api, { API_URL } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const MONTHS = [
@@ -152,13 +152,13 @@ function RunDetail({ run: initialRun, allRuns, onBack, onRefresh }) {
   }
 
   function handlePdf() {
-    // Full-page download — must be a direct URL, so use VITE_API_URL (same
+    // Full-page download — must be a direct URL, so use API_URL (same
     // single source as the api.js instance) rather than a separate env var.
-    window.open(`${import.meta.env.VITE_API_URL}/hr/payroll/${run.id}/pdf`, "_blank");
+    window.open(`${API_URL}/hr/payroll/${run.id}/pdf`, "_blank");
   }
 
   function handleDatevLohn() {
-    window.open(`${import.meta.env.VITE_API_URL}/hr/payroll/${run.id}/datev-lohn.csv`, "_blank");
+    window.open(`${API_URL}/hr/payroll/${run.id}/datev-lohn.csv`, "_blank");
   }
 
   const isFinalized = run.status === "finalized";
