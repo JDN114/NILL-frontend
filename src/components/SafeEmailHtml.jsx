@@ -1,15 +1,21 @@
 // src/components/SafeEmailHtml.jsx
 import React, { useMemo, useRef, useState, useLayoutEffect } from "react";
 import DOMPurify from "dompurify";
+import { useTheme } from "../context/ThemeContext";
 
 // ─────────────────────────────────────────────
 // Farb-Normalisierung
 // Entfernt problematische Farb-Inline-Styles aus Email-HTML
-// damit das Dark-Theme nicht zerstört wird.
+// damit weder Dark- noch Light-Theme zerstört werden.
 // ─────────────────────────────────────────────
 
 const DARK_BG_THRESHOLD = 30;   // RGB-Helligkeit unter der eine BG als "dunkel" gilt
-const LIGHT_TEXT_THRESHOLD = 200; // RGB-Helligkeit über der ein Text als "hell" gilt
+
+// Helligkeit des Panel-Hintergrunds, auf dem der Mail-Body ohne eigene
+// Hintergrundfarbe landet (Detail-View Surface je Theme).
+const THEME_BASE_LUM = { light: 245, dark: 16 };
+// Mindest-Helligkeitsabstand Text↔Hintergrund, darunter greifen wir ein.
+const MIN_LUM_DELTA = 90;
 
 function parseRgb(str) {
   const m = str.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
@@ -51,24 +57,63 @@ function neutralizeStyle(styleStr) {
       // Sehr dunkle Backgrounds (fast schwarz) auch entfernen
       if (rgb && luminance(rgb) < DARK_BG_THRESHOLD) return "background: transparent";
       return match;
-    })
-    // Entferne sehr dunkle oder sehr helle Textfarben
-    .replace(/(?<![a-z-])color\s*:\s*([^;]+)/gi, (match, val) => {
-      const trimmed = val.trim().toLowerCase();
-      if (trimmed === "inherit" || trimmed === "currentcolor") return match;
-      const rgb = parseRgb(trimmed);
-      if (!rgb) return match;
-      const lum = luminance(rgb);
-      // Weißen Text (auf dunklem BG schreiben) behalten — er ist gewollt hell
-      if (lum > LIGHT_TEXT_THRESHOLD) return match;
-      // Sehr dunklen Text (schwarz/dunkelgrau) entfernen — wird von CSS übernommen
-      if (lum < 60) return "color: inherit";
-      return match;
     });
 }
 
+// Effektiver Hintergrund eines Elements: nächste explizite Inline-BG/bgcolor
+// auf dem Element selbst oder einem Vorfahren, sonst der Theme-Grund.
+function effectiveBgLum(el, baseLum) {
+  let node = el;
+  while (node && node.nodeType === 1) {
+    const style = node.getAttribute("style") || "";
+    const m = style.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+    const candidates = [];
+    if (m) candidates.push(m[1]);
+    const bgAttr = node.getAttribute("bgcolor");
+    if (bgAttr) candidates.push(bgAttr);
+    for (const c of candidates) {
+      const t = c.trim().toLowerCase();
+      if (t === "transparent" || t === "none" || t === "inherit") continue;
+      const rgb = parseRgb(t);
+      if (rgb) return luminance(rgb);
+    }
+    node = node.parentElement;
+  }
+  return baseLum;
+}
+
+// Prüft jede explizite Textfarbe gegen ihren effektiven Hintergrund und
+// erzwingt Mindestkontrast — theme-abhängig (weißer Newsletter-Text wäre
+// im Light-Mode sonst unsichtbar, dunkler Text im Dark-Mode ebenso).
+function ensureTextContrast(doc, baseLum) {
+  doc.querySelectorAll("[style], font[color]").forEach((el) => {
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/(?<![a-z-])color\s*:\s*([^;]+)/i);
+    let colorVal = m ? m[1].trim().toLowerCase() : null;
+    const fromFontAttr = !colorVal && el.tagName === "FONT" && el.getAttribute("color");
+    if (fromFontAttr) colorVal = el.getAttribute("color").trim().toLowerCase();
+    if (!colorVal || colorVal === "inherit" || colorVal === "currentcolor") return;
+    const rgb = parseRgb(colorVal);
+    if (!rgb) return;
+    const bgLum = effectiveBgLum(el, baseLum);
+    if (Math.abs(luminance(rgb) - bgLum) >= MIN_LUM_DELTA) return;
+    // Auf Theme-Grund darf das Theme-CSS färben (inherit); auf explizitem
+    // Mail-Hintergrund braucht es eine harte Gegenfarbe.
+    const replacement = bgLum === baseLum
+      ? "inherit"
+      : bgLum < 128 ? "#f4f4f5" : "#1f2937";
+    if (m) {
+      el.setAttribute("style", style.replace(m[0], `color: ${replacement}`));
+    } else if (replacement === "inherit") {
+      el.removeAttribute("color");
+    } else {
+      el.setAttribute("color", replacement);
+    }
+  });
+}
+
 // Traversiert den DOM-Baum nach DOMPurify und normalisiert style-Attribute
-function normalizeEmailDom(doc) {
+function normalizeEmailDom(doc, baseLum) {
   const allElements = doc.querySelectorAll("[style]");
   allElements.forEach((el) => {
     const normalized = neutralizeStyle(el.getAttribute("style"));
@@ -83,11 +128,8 @@ function normalizeEmailDom(doc) {
     if (rgb && luminance(rgb) > 180) el.removeAttribute("bgcolor");
   });
 
-  // color-Attribute auf Fonts entfernen wenn zu dunkel
-  doc.querySelectorAll("font[color]").forEach((el) => {
-    const rgb = parseRgb(el.getAttribute("color") || "");
-    if (rgb && luminance(rgb) < 60) el.removeAttribute("color");
-  });
+  // Erst nach dem BG-Stripping prüfen — der effektive Hintergrund steht dann fest
+  ensureTextContrast(doc, baseLum);
 
   return doc;
 }
@@ -96,6 +138,8 @@ function normalizeEmailDom(doc) {
 // Haupt-Komponente
 // ─────────────────────────────────────────────
 export default function SafeEmailHtml({ html }) {
+  const { theme } = useTheme();
+  const baseLum = THEME_BASE_LUM[theme] ?? THEME_BASE_LUM.dark;
   const isPlainText = html ? !/<\/?[a-z][\s\S]*>/i.test(html) : false;
 
   const cleanHtml = useMemo(() => {
@@ -130,7 +174,7 @@ export default function SafeEmailHtml({ html }) {
     // DOM-Normalisierung nach Sanitize
     const parser = new DOMParser();
     const doc = parser.parseFromString(dirty, "text/html");
-    normalizeEmailDom(doc);
+    normalizeEmailDom(doc, baseLum);
 
     // Links absichern
     doc.querySelectorAll('a[target="_blank"]').forEach((a) => {
@@ -146,7 +190,7 @@ export default function SafeEmailHtml({ html }) {
     });
 
     return doc.body.innerHTML;
-  }, [html, isPlainText]);
+  }, [html, isPlainText, baseLum]);
 
   // ── Scale-to-fit (mobile) ──────────────────────────────────────────────
   // Fixed-width HTML newsletters (600–700px tables) don't reflow to a phone.

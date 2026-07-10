@@ -217,7 +217,6 @@ export function LandingPageShell({ title, render, mainStyle, mainClassName }) {
   }, [title]);
   return (
     <>
-      <div className="vignette" aria-hidden="true"/>
       <LandingNav/>
       <main className={mainClassName} style={{paddingTop:84, ...mainStyle}}>
         {render(openModal)}

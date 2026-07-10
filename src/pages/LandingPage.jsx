@@ -83,7 +83,13 @@ const NOISE_LIB = `
   float fbm3(vec3 p){float v=0.,a=.5;for(int i=0;i<3;i++){v+=a*snoise(p);p*=2.07;a*=.5;}return v;}
   float fbm2(vec3 p){return snoise(p)*.5+snoise(p*2.05+vec3(11.3,5.7,4.1))*.25;}
   float ridged(vec3 p){float v=0.,a=.55;for(int i=0;i<3;i++){float n=1.-abs(snoise(p));v+=a*n*n;p=p*2.1+vec3(3.1,7.7,1.3);a*=.5;}return v;}
-  vec3 tonemap(vec3 c){c=c/(c+1.);return pow(clamp(c,0.,1.),vec3(1./2.2));}
+  /* ACES filmic (Narkowicz fit) + gamma — photographic highlight rolloff
+     instead of the flat Reinhard curve */
+  vec3 tonemap(vec3 x){
+    x*=1.15;
+    vec3 r=(x*(2.51*x+.03))/(x*(2.43*x+.59)+.14);
+    return pow(clamp(r,0.,1.),vec3(1./2.2));
+  }
 `;
 
 const PLANET_VERT = `
@@ -112,13 +118,20 @@ const ATMO_FRAG = `
     vec3 wN=normalize(vWN);
     vec3 vD=normalize(cameraPosition-vWP);
     vec3 sD=normalize(uSunPos-vWP);
-    float rim=pow(1.-max(dot(wN,vD),0.),2.2);
-    float sunF=pow(max(dot(wN,sD)*.55+.45,0.),1.);
+    float rim=pow(1.-max(dot(wN,vD),0.),2.6);
+    float sunF=max(dot(wN,sD)*.55+.45,0.);
+    /* Rayleigh-ish hue shift: the lit limb keeps the atmosphere color,
+       the terminator warms up like a sunset ring */
+    vec3 col=mix(uColor*vec3(1.25,.62,.38),uColor,smoothstep(.12,.55,sunF));
     float alpha=rim*uIntensity*sunF;
-    gl_FragColor=vec4(uColor*alpha,alpha);
+    gl_FragColor=vec4(col*alpha,alpha);
   }
 `;
 
+/* Surface shaders implement ONE function
+     void surf(vec3 op, out vec3 col, out float spec, out vec3 emit)
+   so the (expensive) fbm/snoise field is evaluated once per fragment —
+   the old getSurf/getSpec/getEmit trio recomputed the same noise 3×. */
 function mkPlanetFrag(surfCode) {
   return NOISE_LIB + `
     varying vec3 vLP;varying vec3 vWP;varying vec3 vWN;
@@ -126,144 +139,161 @@ function mkPlanetFrag(surfCode) {
     ${surfCode}
     void main(){
       vec3 op=normalize(vLP);
-      vec3 worldN=normalize(vWN);
-      vec3 sunDir=normalize(uSunPos-vWP);
-      vec3 viewDir=normalize(cameraPosition-vWP);
-      vec3 col=getSurf(op);
-      float spec=getSpec(op);
-      vec3 emit=getEmit(op);
-      float NdotL_geo=dot(worldN,sunDir);
-      float NdotL=max(NdotL_geo,0.);
-      vec3 diff=col*NdotL;
-      vec3 hv=normalize(sunDir+viewDir);
-      float NdotH=max(dot(worldN,hv),0.);
-      float specV=pow(NdotH,20.+spec*200.)*spec*NdotL;
-      vec3 specCol=mix(vec3(.9,.96,1.),vec3(1.),spec*.5)*specV;
-      float dayBlend=smoothstep(-.06,.20,NdotL_geo);
-      vec3 final=mix(col*.010+emit,diff+specCol+col*.028,dayBlend);
-      float termFac=smoothstep(-.15,0.,NdotL_geo)*(1.-smoothstep(0.,.4,NdotL_geo));
-      final+=uAtmo*termFac*.20;
-      final+=uAtmo*pow(1.-max(dot(worldN,viewDir),0.),3.)*smoothstep(0.,.3,NdotL_geo)*.25;
+      vec3 N=normalize(vWN);
+      vec3 S=normalize(uSunPos-vWP);
+      vec3 V=normalize(cameraPosition-vWP);
+      vec3 col;float spec;vec3 emit;
+      surf(op,col,spec,emit);
+      float NdL_g=dot(N,S);
+      float NdL=max(NdL_g,0.);
+      /* slightly super-linear falloff reads like a real photographed
+         terminator instead of flat Lambert */
+      vec3 diff=col*pow(NdL,1.15);
+      vec3 H=normalize(S+V);
+      /* Schlick fresnel boosts grazing-angle speculars (ocean sun glint) */
+      float fres=pow(1.-max(dot(V,N),0.),5.);
+      float specV=pow(max(dot(N,H),0.),40.+spec*260.)*spec*NdL*(.5+.9*fres);
+      vec3 specCol=mix(vec3(.9,.95,1.),vec3(1.),spec*.5)*specV;
+      float day=smoothstep(-.05,.18,NdL_g);
+      vec3 night=col*.006+emit;
+      vec3 final=mix(night,diff+specCol+col*.018,day);
+      /* warm forward-scatter ring along the terminator, cool rim on the day side */
+      float term=smoothstep(-.12,0.,NdL_g)*(1.-smoothstep(0.,.35,NdL_g));
+      final+=mix(vec3(1.,.45,.22),uAtmo,.35)*term*.13;
+      final+=uAtmo*pow(1.-max(dot(N,V),0.),3.5)*smoothstep(-.05,.3,NdL_g)*.22;
       gl_FragColor=vec4(tonemap(final),1.);
     }
   `;
 }
 
 const SURF_EARTH = `
-  vec3 getSurf(vec3 op){
-    float h=fbm3(op*1.5);float lat=abs(op.y);
-    float land=smoothstep(-.02,.15,h);
-    vec3 ocean=mix(vec3(.02,.08,.22),vec3(.04,.22,.38),smoothstep(-.4,-.02,h));
+  void surf(vec3 op,out vec3 c,out float spec,out vec3 emit){
+    /* domain-warped continents — breaks up the blobby fbm islands */
+    vec3 w=vec3(fbm2(op*2.1+13.7),fbm2(op*2.1+7.3),fbm2(op*2.1+3.9))*.32;
+    float h=fbm3(op*1.6+w);
+    float lat=abs(op.y);
+    float land=smoothstep(-.02,.12,h);
+    vec3 ocean=mix(vec3(.008,.035,.10),vec3(.03,.16,.30),smoothstep(-.35,-.02,h));
     float arid=smoothstep(-.25,.5,fbm2(op*1.9+4.));
-    vec3 land3d=mix(vec3(.11,.30,.07),vec3(.62,.48,.20),arid*.85);
-    land3d=mix(land3d,vec3(.05,.18,.04),smoothstep(.5,.9,fbm2(op*2.8+1.2))*.6);
-    land3d=mix(land3d,vec3(.34,.30,.26),smoothstep(.38,.72,h));
-    land3d=mix(land3d,vec3(.93,.96,1.),smoothstep(.60,.82,h));
-    land3d=mix(land3d,vec3(.93,.96,1.),smoothstep(.68,.90,lat));
-    vec3 c=mix(ocean,land3d,land);
-    c=mix(c,vec3(.95,.97,1.),smoothstep(.06,.5,fbm2(op*2.1+vec3(uTime*.009,0.,uTime*.006)))*.5);
-    return c;
-  }
-  float getSpec(vec3 op){
-    float h=fbm3(op*1.5);
-    return (1.-smoothstep(-.02,.15,h))*(1.-smoothstep(.06,.5,fbm2(op*2.1+vec3(uTime*.009,0.,uTime*.006)))*.5)*.85;
-  }
-  vec3 getEmit(vec3 op){
-    float h=fbm3(op*1.5);float land=smoothstep(-.02,.15,h);
-    return vec3(1.,.78,.42)*smoothstep(.3,.6,fbm2(op*4.+2.))*land*.12;
+    vec3 landC=mix(vec3(.09,.26,.06),vec3(.55,.42,.18),arid*.85);
+    landC=mix(landC,vec3(.04,.15,.03),smoothstep(.5,.9,fbm2(op*2.8+1.2))*.6);
+    landC=mix(landC,vec3(.32,.28,.24),smoothstep(.34,.66,h));
+    landC=mix(landC,vec3(.93,.96,1.),smoothstep(.56,.78,h));
+    landC=mix(landC,vec3(.93,.96,1.),smoothstep(.66,.88,lat));
+    c=mix(ocean,landC,land);
+    float cl=smoothstep(.04,.55,fbm2(op*2.3+vec3(uTime*.008,0.,uTime*.005)));
+    c=mix(c,vec3(.96,.975,1.),cl*.85);
+    /* water is the mirror, clouds kill the glint */
+    spec=(1.-land)*(1.-cl)*.9+cl*.05;
+    /* city lights hug the coastlines, never the open sea or cloud tops */
+    float coast=land*(1.-smoothstep(.02,.28,abs(h-.05)));
+    emit=vec3(1.,.72,.35)*smoothstep(.35,.65,fbm2(op*5.+2.))*coast*(1.-cl)*.30;
   }
 `;
 
 const SURF_ICE = `
-  vec3 getSurf(vec3 op){
+  /* Europa-like ice shell: lineae fracture network over smooth plains */
+  void surf(vec3 op,out vec3 c,out float spec,out vec3 emit){
     float h=fbm3(op*2.);float rd=ridged(op*2.8);float lat=abs(op.y);
-    vec3 c=mix(vec3(.02,.08,.20),vec3(.12,.48,.62),smoothstep(-.25,.35,h));
-    c=mix(c,vec3(.84,.95,1.),smoothstep(.52,.80,rd));
-    c=mix(c,vec3(.01,.06,.18),smoothstep(.65,.88,ridged(op*4.8+1.7))*.6);
-    c=mix(c,vec3(.84,.95,1.),smoothstep(.50,.82,lat));
-    c+=vec3(.08,.35,.55)*smoothstep(.70,.90,rd)*.22;
-    return c;
+    c=mix(vec3(.55,.62,.66),vec3(.82,.88,.92),smoothstep(-.3,.4,h));
+    float crack=smoothstep(.62,.86,ridged(op*4.8+1.7));
+    c=mix(c,vec3(.48,.30,.20),crack*.45);
+    c=mix(c,vec3(.90,.95,1.),smoothstep(.55,.85,rd)*.5);
+    c=mix(c,vec3(.93,.97,1.),smoothstep(.55,.85,lat));
+    spec=.30+smoothstep(.4,.85,rd)*.22;
+    emit=vec3(0.);
   }
-  float getSpec(vec3 op){return .55+smoothstep(.4,.85,ridged(op*2.8))*.38;}
-  vec3 getEmit(vec3 op){return vec3(0.);}
 `;
 
 const SURF_MARS = `
-  vec3 getSurf(vec3 op){
-    float h=fbm3(op*1.7+.3);float rd=ridged(op*2.8);
-    vec3 c=mix(vec3(.22,.05,.02),vec3(.68,.22,.08),smoothstep(-.35,.6,h));
-    c=mix(c,vec3(.80,.48,.28),smoothstep(0.,.6,fbm2(op*4.+1.3))*.5);
-    c=mix(c,vec3(.22,.05,.02),smoothstep(.45,.82,rd)*.8);
-    c=mix(c,vec3(.90,.86,.80),smoothstep(.80,.94,abs(op.y)));
-    float lava=smoothstep(.82,.96,ridged(op*3.8));
-    c+=vec3(.55,.18,.05)*lava*.4;
-    return c;
+  /* geologically dead Mars: oxide plains, basalt shields, polar CO2 caps —
+     no glowing lava (that was the cartoon tell) */
+  void surf(vec3 op,out vec3 c,out float spec,out vec3 emit){
+    vec3 w=vec3(fbm2(op*2.4+5.1),fbm2(op*2.4+9.7),fbm2(op*2.4+1.9))*.25;
+    float h=fbm3(op*1.7+w+.3);float rd=ridged(op*2.8);
+    c=mix(vec3(.30,.12,.05),vec3(.62,.28,.12),smoothstep(-.35,.6,h));
+    c=mix(c,vec3(.74,.47,.28),smoothstep(0.,.6,fbm2(op*4.+1.3))*.45);
+    c=mix(c,vec3(.20,.09,.05),smoothstep(.5,.85,rd)*.65);
+    c=mix(c,vec3(.92,.90,.86),smoothstep(.80,.93,abs(op.y)));
+    spec=.05;
+    emit=vec3(0.);
   }
-  float getSpec(vec3 op){return .07;}
-  vec3 getEmit(vec3 op){return vec3(.9,.22,.04)*smoothstep(.82,.96,ridged(op*3.8))*.06;}
 `;
 
 const SURF_GAS = `
-  vec3 getSurf(vec3 op){
+  /* Jovian bands with shear turbulence at the band boundaries and one
+     anticyclonic storm oval */
+  void surf(vec3 op,out vec3 c,out float spec,out vec3 emit){
     float y=op.y;
-    float turb=fbm2(vec3(op.x,y*2.2,op.z)*2.+uTime*.02);
-    float fine=snoise(op*7.+uTime*.03)*.5+.5;
-    float bands=sin(y*7.5+turb*2.8)*(.5+fine*.2);
-    vec3 c=mix(vec3(.56,.32,.12),vec3(.92,.84,.68),smoothstep(-.6,.6,bands));
-    c=mix(c,vec3(.74,.52,.28),smoothstep(.3,.8,abs(y)*.4+turb*.3));
-    c=mix(c,vec3(.40,.22,.08),smoothstep(.4,.85,-bands+.1));
-    c=mix(c,vec3(.96,.91,.78),smoothstep(.65,.85,sin(y*18.+turb*5.))*.3);
-    vec2 sp=(op.xy-vec2(.32,-.09))*vec2(1.2,2.);
+    float turb=fbm2(vec3(op.x,y*2.2,op.z)*2.+uTime*.015);
+    float fine=snoise(vec3(op.x*6.,y*16.,op.z*6.)+uTime*.02)*.5+.5;
+    /* shear: turbulence displaces latitude more where bands meet */
+    float yb=y+turb*.10*sin(y*7.5);
+    float bands=sin(yb*7.5)*(.55+fine*.15);
+    c=mix(vec3(.52,.36,.22),vec3(.86,.80,.68),smoothstep(-.6,.6,bands));
+    c=mix(c,vec3(.68,.50,.32),smoothstep(.3,.8,abs(y)*.4+turb*.3));
+    c=mix(c,vec3(.38,.25,.14),smoothstep(.4,.85,-bands+.1));
+    c=mix(c,vec3(.93,.89,.80),smoothstep(.65,.85,sin(yb*18.+turb*3.))*.28);
+    /* storm oval with a paler collar, like Jupiter's GRS */
+    vec2 sp=(op.xy-vec2(.32,-.09))*vec2(1.2,2.4);
     float spot=exp(-dot(sp,sp)*22.);
-    c=mix(c,vec3(.78,.36,.22),spot*.7);
-    vec2 eye=(op.xy-vec2(.32,-.09))*vec2(2.,3.2);
-    c=mix(c,vec3(.98,.82,.62),exp(-dot(eye,eye)*80.)*.9);
-    return c;
+    float collar=exp(-dot(sp,sp)*9.)-spot;
+    c=mix(c,vec3(.90,.86,.78),max(collar,0.)*.5);
+    c=mix(c,vec3(.72,.34,.20),spot*.75);
+    c=mix(c,vec3(.88,.62,.46),exp(-dot(sp,sp)*70.)*.6);
+    spec=.03;
+    emit=vec3(0.);
   }
-  float getSpec(vec3 op){return .03;}
-  vec3 getEmit(vec3 op){return vec3(0.);}
 `;
 
 const SURF_MOON = `
-  vec3 getSurf(vec3 op){
+  /* regolith: highlands, dark maria, bright ray craters */
+  void surf(vec3 op,out vec3 c,out float spec,out vec3 emit){
     float h=fbm3(op*2.2);float rd=ridged(op*3.2);
-    vec3 c=mix(vec3(.72,.70,.66),vec3(.18,.17,.16),smoothstep(.02,-.2,h));
-    c+=vec3(.20,.19,.18)*smoothstep(.60,.88,rd)*.9;
-    c-=vec3(.08,.07,.07)*smoothstep(.70,.90,ridged(op*6.5+3.))*.8;
-    c=mix(c,vec3(.90,.88,.84),smoothstep(.85,.96,snoise(op*18.)*.5+.5)*smoothstep(0.,.3,h)*.6);
-    return c;
+    c=mix(vec3(.60,.59,.57),vec3(.16,.155,.15),smoothstep(.02,-.2,h));
+    c+=vec3(.17,.165,.16)*smoothstep(.60,.88,rd)*.9;
+    c-=vec3(.07,.065,.06)*smoothstep(.70,.90,ridged(op*6.5+3.))*.8;
+    c=mix(c,vec3(.84,.83,.80),smoothstep(.85,.96,snoise(op*18.)*.5+.5)*smoothstep(0.,.3,h)*.6);
+    spec=.03;
+    emit=vec3(0.);
   }
-  float getSpec(vec3 op){return .04;}
-  vec3 getEmit(vec3 op){return vec3(0.);}
 `;
 
 const SURF_ENERGY = `
-  vec3 getSurf(vec3 op){
-    float pulse=.8+.2*sin(uTime*1.3);
-    float glow=smoothstep(.72,.92,ridged(op*3.2))*pulse;
-    vec3 c=vec3(.03,.06,.02)+fbm2(op*3.)*.03*vec3(.3,1.,.2);
-    c+=vec3(1.3,2.,.42)*glow;
-    c+=vec3(.8,1.35,.20)*smoothstep(.78,.96,ridged(op*5.5+1.5))*pulse*.55;
-    return c;
+  /* the WIP-module planet: dark world with faint auroral filaments —
+     stylized on purpose, but no longer radioactively pulsing */
+  void surf(vec3 op,out vec3 c,out float spec,out vec3 emit){
+    float pulse=.9+.1*sin(uTime*.7);
+    float glow=smoothstep(.76,.94,ridged(op*3.2))*pulse;
+    c=vec3(.02,.035,.02)+fbm2(op*3.)*.02*vec3(.3,1.,.3);
+    c+=vec3(.55,.95,.30)*glow;
+    spec=.08;
+    emit=vec3(.50,.85,.22)*glow*.35;
   }
-  float getSpec(vec3 op){return .10;}
-  vec3 getEmit(vec3 op){return vec3(.76,1.18,.19)*smoothstep(.72,.92,ridged(op*3.2))*(.8+.2*sin(uTime*1.3))*.28;}
 `;
 
+/* Saturn-like ring system: translucent C ring, dense bright B ring,
+   Cassini division, A ring with Encke gap. Radial profile only — real
+   rings have almost no azimuthal structure. */
 const RING_FRAG = NOISE_LIB + `
   varying vec3 vLP;varying vec3 vWP;
   uniform float uInner,uOuter;uniform vec3 uSunPos;
   void main(){
     float rr=length(vLP.xy);
     float rn=clamp((rr-uInner)/(uOuter-uInner),0.,1.);
-    float bands=.5+.5*sin(rn*140.+fbm2(vec3(rn*25.,0.,0.))*4.);
-    float detail=fbm2(vec3(rn*70.,atan(vLP.y,vLP.x)*3.,0.));
-    float gap1=smoothstep(.30,.34,rn)*(1.-smoothstep(.34,.40,rn));
-    float gap2=smoothstep(.68,.71,rn)*(1.-smoothstep(.71,.74,rn));
-    vec3 col=mix(vec3(.38,.32,.24),vec3(.86,.78,.62),bands*.8+detail*.25);
-    float alpha=.85*(1.-gap1*.94)*(1.-gap2*.80);
-    alpha*=smoothstep(0.,.06,rn)*smoothstep(1.,.93,rn)*(.62+detail*.4);
-    col*=abs(normalize(uSunPos-vWP).y)*.5+.5;
+    float grain=fbm2(vec3(rn*160.,0.,0.))*.5+.5;
+    /* radial density profile */
+    float cRing=smoothstep(0.,.10,rn)*(1.-smoothstep(.10,.30,rn))*.35;
+    float bRing=smoothstep(.28,.34,rn)*(1.-smoothstep(.56,.60,rn));
+    float aRing=smoothstep(.66,.70,rn)*(1.-smoothstep(.93,1.,rn))*.75;
+    float encke=1.-smoothstep(.855,.862,rn)*(1.-smoothstep(.868,.875,rn))*.9;
+    float dens=(cRing+bRing+aRing*encke)*(.6+grain*.5);
+    /* icy, slightly tan particles; B ring is the brightest */
+    vec3 col=mix(vec3(.42,.38,.32),vec3(.88,.84,.76),dens);
+    /* lit face vs. light filtering through the unlit face */
+    float sunSide=normalize(uSunPos-vWP).y;
+    col*=clamp(abs(sunSide)*.7+.35,0.,1.);
+    float alpha=clamp(dens,0.,1.)*.92;
     gl_FragColor=vec4(col,alpha);
   }
 `;
@@ -271,12 +301,19 @@ const RING_FRAG = NOISE_LIB + `
 function buildScene(canvas) {
   const T = THREE;
   const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  // 1.25 statt 1.5: die Planeten-Shader (fbm/snoise pro Pixel) sind teuer —
-  // auf Retina ~30 % weniger Fragment-Last, visuell kaum unterscheidbar
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // 1.5 cap: the per-pixel fbm/snoise shaders scale quadratically with
+  // resolution; 1.5 + MSAA is visually indistinguishable from native 2×
+  let pixRatio = Math.min(devicePixelRatio, 1.5);
+  renderer.setPixelRatio(pixRatio);
   renderer.setClearColor(0x02030a, 1);
 
-  const composer = new EffectComposer(renderer)
+  // MSAA render target kills the shimmering geometry edges the composer
+  // otherwise introduces (it bypasses canvas AA); HalfFloat removes the
+  // banding in the bloom falloff
+  const composer = new EffectComposer(renderer, new T.WebGLRenderTarget(1, 1, {
+    type: T.HalfFloatType,
+    samples: 4,
+  }))
 
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(42, 2, 0.1, 300);
@@ -286,39 +323,51 @@ function buildScene(canvas) {
   composer.addPass(new RenderPass(scene, camera))
   const bloomPass = new UnrealBloomPass(
     new T.Vector2(window.innerWidth, window.innerHeight),
-    0.45,  // strength — was 1.1, halved+ to kill the blown-out hero glow
-    0.6,   // radius
-    0.55   // threshold — was 0.12 (everything bloomed); now only the sun core blooms
+    0.34,  // strength — restrained: bloom sells brightness, not haze
+    0.50,  // radius
+    0.86   // threshold — with ACES output only the sun core & glints bloom
   )
   composer.addPass(bloomPass)
 
-  /* STARS — ISS-quality shader: 2200 stars, color-tinted, same GLSL as ISSScene */
-  const N = 2200;
+  /* STARS — static field (no atmosphere in space, so no twinkle).
+     Brightness follows a power law (few bright, many faint), colors span
+     real stellar temperatures, and ~55 % of the stars concentrate along a
+     tilted great circle → a believable Milky Way band. */
+  const N = 3400;
   const sp = new Float32Array(N * 3);
   const ss = new Float32Array(N);
   const sc = new Float32Array(N * 3);
-  const stw = new Float32Array(N);
+  const bandN = new T.Vector3(0.32, 0.86, 0.40).normalize(); // galactic plane normal
+  const tmpV = new T.Vector3();
   for (let i = 0; i < N; i++) {
-    stw[i] = Math.random() * Math.PI * 2;
     const r = 60 + Math.random() * 70, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
-    sp[i*3]   = r * Math.sin(ph) * Math.cos(th);
-    sp[i*3+1] = r * Math.sin(ph) * Math.sin(th);
-    sp[i*3+2] = r * Math.cos(ph);
-    ss[i] = 0.4 + Math.random() * 1.4;
+    tmpV.set(
+      Math.sin(ph) * Math.cos(th),
+      Math.sin(ph) * Math.sin(th),
+      Math.cos(ph)
+    );
+    if (i % 100 < 55) {
+      // squash the component along the band normal → star settles near the plane
+      const d = tmpV.dot(bandN) * (1 - 0.16);
+      tmpV.addScaledVector(bandN, -d).normalize();
+    }
+    sp[i*3]   = tmpV.x * r;
+    sp[i*3+1] = tmpV.y * r;
+    sp[i*3+2] = tmpV.z * r;
+    ss[i] = 0.30 + Math.pow(Math.random(), 3) * 1.7;
+    // color temperature: many warm-white dwarfs, few blue giants / red giants
     const tint = Math.random();
-    sc[i*3]   = tint < .15 ? 1   : (tint > .85 ? .7  : .95);
-    sc[i*3+1] = tint < .15 ? .85 : (tint > .85 ? .8  : .95);
-    sc[i*3+2] = tint < .15 ? .7  : (tint > .85 ? 1   : .95);
+    sc[i*3]   = tint < .10 ? 1   : (tint > .88 ? .72 : .96);
+    sc[i*3+1] = tint < .10 ? .80 : (tint > .88 ? .82 : .94);
+    sc[i*3+2] = tint < .10 ? .62 : (tint > .88 ? 1   : .90);
   }
   const sGeo = new T.BufferGeometry();
   sGeo.setAttribute('position', new T.BufferAttribute(sp, 3));
   sGeo.setAttribute('starSize', new T.BufferAttribute(ss, 1));
   sGeo.setAttribute('color', new T.BufferAttribute(sc, 3));
-  sGeo.setAttribute('twinkle', new T.BufferAttribute(stw, 1));
   const starMat = new T.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } },
-    vertexShader: `attribute float starSize;attribute vec3 color;attribute float twinkle;uniform float uTime;varying vec3 vC;varying float vTw;void main(){vC=color;vTw=.84+.16*sin(uTime*1.2+twinkle*7.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(.92+.16*sin(uTime*.9+twinkle*5.))*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader: `varying vec3 vC;varying float vTw;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.25,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vC,a*.85*vTw);}`,
+    vertexShader: `attribute float starSize;attribute vec3 color;varying vec3 vC;void main(){vC=color;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=starSize*(700./-mv.z);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `varying vec3 vC;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.22,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(vC,a*.8);}`,
     transparent: true, depthWrite: false, blending: T.AdditiveBlending
   });
   const stars = new T.Points(sGeo, starMat);
@@ -340,16 +389,21 @@ function buildScene(canvas) {
     fragmentShader: NOISE_LIB + `
       varying vec3 vP;varying vec3 vN;uniform float uTime;
       void main(){
-        float t=uTime*.22;
-        float n1=fbm3(vP*1.8+t);
-        float n2=fbm2(vP*3.-t*.7);
-        float gran=snoise(vP*12.+t)*.5+.5;
-        vec3 col=mix(vec3(.08,.03,.01),vec3(.98,.40,.07),smoothstep(-.4,.5,n1));
-        col=mix(col,vec3(1.,.88,.68),smoothstep(.3,.8,n1+n2*.2));
-        col+=vec3(.80,1.,.28)*pow(max(gran-.5,0.),4.)*1.1;
-        col=mix(col,vec3(.08,.03,.01),smoothstep(.4,.9,-n2)*.5);
-        float limb=pow(max(dot(normalize(vN),vec3(0,0,1)),0.),.42);
-        col*=.3+limb*.95; col*=1.25;
+        float t=uTime*.18;
+        /* domain-warped convection cells — supergranulation */
+        vec3 w=vec3(fbm2(vP*2.2+t),fbm2(vP*2.2+t+5.1),fbm2(vP*2.2+t+9.7))*.4;
+        float n1=fbm3(vP*1.8+w+t);
+        float gran=snoise(vP*14.+t*1.4)*.5+.5;
+        /* photosphere: hot near-white cells over deep orange lanes —
+           high contrast is what makes granulation read as plasma */
+        vec3 col=mix(vec3(.72,.26,.04),vec3(1.,.78,.42),smoothstep(-.45,.45,n1));
+        col=mix(col,vec3(1.,.94,.80),smoothstep(.30,.80,n1));
+        col+=vec3(1.,.85,.5)*pow(max(gran-.55,0.),3.)*1.6;
+        col=mix(col,vec3(.42,.13,.02),smoothstep(.5,.95,-n1)*.6);
+        /* empirical solar limb darkening: I(mu) ≈ .35+.65*mu^.8 */
+        float mu=max(dot(normalize(vN),vec3(0,0,1)),0.);
+        col*=.35+.65*pow(mu,.8);
+        col*=1.35;
         gl_FragColor=vec4(col,1.);
       }
     `
@@ -374,18 +428,22 @@ function buildScene(canvas) {
   // Bright flare halo removed — left the sun blown-out/too bright in the hero.
   const coronaTex1 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.55,'rgba(255,130,40,.08)'],[.75,'rgba(255,180,90,.09)'],[1,'rgba(0,0,0,0)']]);
   const coronaTex2 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.6,'rgba(255,150,60,.05)'],[.85,'rgba(255,225,170,.04)'],[1,'rgba(0,0,0,0)']]);
-  const corona1      = mkSprite(10.0, coronaTex1, .48);
-  const corona2      = mkSprite(17.0, coronaTex2, .24);
+  const corona1      = mkSprite(10.0, coronaTex1, .30);
+  const corona2      = mkSprite(17.0, coronaTex2, .14);
 
-  /* PLANET MODULES */
+  /* PLANET MODULES — orbital speed follows Kepler's third law (v ∝ r^-3/2,
+     k=0.85 keeps the innermost planet at its previous pace); `rot` is the
+     axial spin (gas giants rotate fastest, tidally-locked moon barely). */
+  const KEPLER = 0.85;
   const modules = [
-    { r:2.20,sz:.30,spd:.26,phase:.3,  tilt:.03,  surf:SURF_EARTH,  atmo:[.55,.90,.22],atmoI:.55 },
-    { r:3.05,sz:.40,spd:.19,phase:1.6, tilt:-.05, surf:SURF_ICE,    atmo:[.18,.88,.90],atmoI:.48 },
-    { r:3.88,sz:.28,spd:.15,phase:3.0, tilt:.04,  surf:SURF_MARS,   atmo:[.92,.28,.20],atmoI:.38 },
-    { r:4.92,sz:.55,spd:.11,phase:4.7, tilt:-.03, surf:SURF_GAS,    atmo:[.88,.68,.35],atmoI:.42,rings:true },
-    { r:6.08,sz:.34,spd:.09,phase:5.9, tilt:.05,  surf:SURF_MOON,   atmo:[.72,.70,.66],atmoI:.22 },
-    { r:7.12,sz:.22,spd:.07,phase:1.2, tilt:-.04, surf:SURF_ENERGY, atmo:[.78,1.,.28], atmoI:.50,future:true },
+    { r:2.20,sz:.30,phase:.3,  tilt:.03,  rot:.16, surf:SURF_EARTH,  atmo:[.30,.55,.95],atmoI:.55 },
+    { r:3.05,sz:.40,phase:1.6, tilt:-.05, rot:.11, surf:SURF_ICE,    atmo:[.55,.75,.90],atmoI:.30 },
+    { r:3.88,sz:.28,phase:3.0, tilt:.04,  rot:.15, surf:SURF_MARS,   atmo:[.85,.55,.35],atmoI:.22 },
+    { r:4.92,sz:.55,phase:4.7, tilt:-.03, rot:.42, surf:SURF_GAS,    atmo:[.82,.70,.50],atmoI:.35,rings:true },
+    { r:6.08,sz:.34,phase:5.9, tilt:.05,  rot:.03, surf:SURF_MOON,   atmo:[.55,.54,.52],atmoI:.10 },
+    { r:7.12,sz:.22,phase:1.2, tilt:-.04, rot:.12, surf:SURF_ENERGY, atmo:[.55,.85,.30],atmoI:.40,future:true },
   ];
+  modules.forEach(m => { m.spd = KEPLER / Math.pow(m.r, 1.5); });
 
   const sunWorldPos = new T.Vector3();
   const planets = [];
@@ -415,7 +473,8 @@ function buildScene(canvas) {
       uniforms:{ uSunPos:{value:new T.Vector3()}, uColor:{value:new T.Color(...m.atmo)}, uIntensity:{value:m.future?.28:m.atmoI} },
       vertexShader:ATMO_VERT, fragmentShader:ATMO_FRAG
     });
-    const atmo = new T.Mesh(new T.SphereGeometry(m.sz*1.12, 32, 22), atmoMat);
+    // thin shell — real atmospheres are a sliver, not a 12 % halo
+    const atmo = new T.Mesh(new T.SphereGeometry(m.sz*1.055, 32, 22), atmoMat);
     system.add(atmo);
 
     // Saturn rings
@@ -450,8 +509,11 @@ function buildScene(canvas) {
   trailGeo.setAttribute('position', new T.BufferAttribute(trailPos, 3).setUsage(T.DynamicDrawUsage));
   trailGeo.setAttribute('age', new T.BufferAttribute(trailAge, 1));
   const trailMat = new T.ShaderMaterial({
-    vertexShader: `attribute float age;varying float vA;void main(){vA=1.-age;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=(1.-age)*(95./-mv.z)+1.5;gl_Position=projectionMatrix*mv;}`,
-    fragmentShader: `varying float vA;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.1,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(mix(vec3(.35,.55,1.),vec3(.85,.95,1.),vA),a*vA*.6);}`,
+    /* real comet tails point AWAY from the sun (radiation pressure), not
+       along the orbit — the sun sits at the system origin, so pushing each
+       trail point outward by its age fans the tail anti-solar */
+    vertexShader: `attribute float age;varying float vA;void main(){vA=1.-age;vec3 p=position+normalize(position)*age*age*1.8;vec4 mv=modelViewMatrix*vec4(p,1.);gl_PointSize=(1.-age)*(95./-mv.z)+1.5;gl_Position=projectionMatrix*mv;}`,
+    fragmentShader: `varying float vA;void main(){vec2 uv=gl_PointCoord-.5;float a=1.-smoothstep(.1,.5,length(uv));if(a<.01)discard;gl_FragColor=vec4(mix(vec3(.35,.55,1.),vec3(.85,.95,1.),vA),a*vA*.55);}`,
     transparent: true, depthWrite: false, blending: T.AdditiveBlending
   });
   const cometTrail = new T.Points(trailGeo, trailMat);
@@ -492,12 +554,28 @@ function buildScene(canvas) {
      frisst GPU/Main-Thread (spürbares Lag bis runter zur Sustainability). */
   const start=performance.now(); let last=start, rafId=0, running=false;
   let sScroll=0, trailInit=false;
+  // Adaptive resolution: sample real frame time over 90-frame windows
+  // (first 60 frames skipped — shader compile stalls) and step the pixel
+  // ratio down 0.25 at a time while the GPU can't hold ~42fps.
+  let perfAcc=0, perfN=-60;
   const animate = () => {
     if (!running) return;
     rafId = requestAnimationFrame(animate);
     const now = performance.now();
-    const dt = Math.min((now-last)/1000, 1/20);
+    const raw = (now-last)/1000;
+    const dt = Math.min(raw, 1/20);
     last = now;
+    perfN++;
+    if (perfN > 0) perfAcc += raw;
+    if (perfN === 90) {
+      if (perfAcc/90 > 0.024 && pixRatio > 1) {
+        pixRatio = Math.max(1, pixRatio - 0.25);
+        renderer.setPixelRatio(pixRatio);
+        composer.setPixelRatio(pixRatio);
+        onResize();
+      }
+      perfAcc = 0; perfN = 0;
+    }
     const t = (now-start)/1000;
     mx+=(tmx-mx)*.05; my+=(tmy-my)*.05;
     sScroll+=(scrollYv-sScroll)*.06;
@@ -511,13 +589,12 @@ function buildScene(canvas) {
     sunMat.uniforms.uTime.value = t;
     sunCore.rotation.y = t*.07;
     sunCore.scale.setScalar(1+Math.sin(t*.9)*.006);
-    corona1.material.opacity = .46+Math.sin(t*1.1)*.04;
-    corona2.material.opacity = .22+Math.sin(t*.7+1.2)*.04;
+    corona1.material.opacity = .30+Math.sin(t*1.1)*.03;
+    corona2.material.opacity = .14+Math.sin(t*.7+1.2)*.03;
     corona1.material.rotation = t*.02;
     corona2.material.rotation = -t*.015;
     sunGroup.getWorldPosition(sunWorldPos);
     stars.rotation.y = t*.003;
-    starMat.uniforms.uTime.value = t;
     // Comet — Kepler-ish sweep, faster near perihelion
     const cr = cometP/(1+cometE*Math.cos(cometTheta));
     cometTheta += dt*1.35/(cr*cr);
@@ -543,7 +620,7 @@ function buildScene(canvas) {
     for (const {mesh,pMat,atmo,atmoMat,ring,def} of planets) {
       const a=def.phase+t*def.spd;
       const px=Math.cos(a)*def.r, py=Math.sin(a*.55+def.tilt*4.)*.09, pz=Math.sin(a)*def.r;
-      mesh.position.set(px,py,pz); mesh.rotation.y+=dt*.18;
+      mesh.position.set(px,py,pz); mesh.rotation.y+=dt*def.rot;
       pMat.uniforms.uTime.value=t; pMat.uniforms.uSunPos.value.copy(sunWorldPos);
       atmo.position.set(px,py,pz); atmoMat.uniforms.uSunPos.value.copy(sunWorldPos);
       if(ring){ring.position.set(px,py,pz);ring.material.uniforms.uSunPos.value.copy(sunWorldPos);}
@@ -628,18 +705,13 @@ function Hero({ onCTA }) {
           <span className="word"><span><em>mit­arbeitet.</em></span></span>
         </h1>
         <p className="lead">
-          NILL verbindet <strong style={{color:'var(--ink)',fontWeight:500}}>Postfach, Aufgaben, Lieferscheine, Inventur, Zeiterfassung</strong> und <strong style={{color:'var(--ink)',fontWeight:500}}>Teamverwaltung</strong> zu einer Arbeitsstation — unterstützt von einer KI, die mitliest und Arbeit vorbereitet.
+          NILL verbindet <strong>Postfach, Aufgaben, Lieferscheine, Inventur, Zeiterfassung</strong> und <strong>Teamverwaltung</strong> zu einer Arbeitsstation — unterstützt von einer KI, die mitliest und Arbeit vorbereitet.
         </p>
         <div className="hero-cta">
           <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos registrieren</span></MagBtn>
           <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Demo')}} href="#"><span>Live-Demo</span></MagBtn>
         </div>
-        <p className="hero-trial-note" style={{
-          marginTop:16, fontSize:13, lineHeight:1.5,
-          color:'rgba(239,237,231,.5)', letterSpacing:'.01em'
-        }}>
-          <span style={{color:'var(--accent)',fontWeight:500}}>14 Tage kostenlos</span> testen — keine Kreditkarte nötig.
-        </p>
+        <p className="hero-trial-note">14 Tage kostenlos testen — keine Kreditkarte nötig.</p>
       </div>
       <div className="hero-meta">
         <span>NILL · Arbeitsstation</span>
@@ -653,8 +725,8 @@ function Hero({ onCTA }) {
 /* ─── TICKER ─────────────────────────────────────────────── */
 function Ticker() {
   const row = <>
-    Postfach <em>·</em> Aufgaben <span className="ticker-sep"/> Inventur <em>·</em> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <em>·</em> Lieferscheine <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
-    Postfach <em>·</em> Aufgaben <span className="ticker-sep"/> Inventur <em>·</em> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <em>·</em> Lieferscheine <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
+    Postfach <span className="ticker-sep"/> Aufgaben <span className="ticker-sep"/> Inventur <span className="ticker-sep"/> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <span className="ticker-sep"/> Lieferscheine <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
+    Postfach <span className="ticker-sep"/> Aufgaben <span className="ticker-sep"/> Inventur <span className="ticker-sep"/> Zeiterfassung <span className="ticker-sep"/> Team­verwaltung <span className="ticker-sep"/> Lieferscheine <span className="ticker-sep"/> <em>Ein Login.</em> <span className="ticker-sep"/>
   </>;
   return <div className="ticker"><div className="ticker-track" aria-hidden="true"><span>{row}</span></div></div>;
 }
@@ -666,16 +738,16 @@ function Products({ onCTA }) {
     <section id="produkte">
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">Module — 05 live · 01 in Entwicklung</span><h2>Sechs Module. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Eine</em> Intelligenz.</h2></div>
+          <div><span className="eyebrow">Module — 05 live · 01 in Entwicklung</span><h2>Sechs Module. <br/><em>Eine</em> Intelligenz.</h2></div>
           <p className="lead">Jedes Modul steht für sich. Zusammen sind sie ein System, das deinen Betrieb kennt.</p>
         </div>
         <Reveal stagger className="bento">
           <TiltCard className="k1">
             <div className="viz" aria-hidden="true">
               <svg viewBox="0 0 600 380" preserveAspectRatio="none">
-                <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#c6ff3c" stopOpacity=".25"/><stop offset="1" stopColor="#c6ff3c" stopOpacity="0"/></linearGradient></defs>
+                <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#c6ff3c" stopOpacity=".18"/><stop offset="1" stopColor="#c6ff3c" stopOpacity="0"/></linearGradient></defs>
                 <g transform="translate(260,40)" opacity=".8">
-                  {[0,60,120,180].map((y,i)=><g key={y} className="mail-row" transform={`translate(0,${y})`}><rect width="300" height="48" rx="8" fill={i===0?"url(#mg)":"rgba(255,255,255,.03)"} stroke="rgba(255,255,255,.08)"/><circle cx="22" cy="24" r="6" fill={['#c6ff3c','#7a5cff','#38f5d0','#ff4d8d'][i]}/><rect x="42" y="16" width={[120,100,140,80][i]} height="6" rx="3" fill="rgba(255,255,255,.6)"/><rect x="42" y="28" width={[200,180,160,220][i]} height="4" rx="2" fill="rgba(255,255,255,.2)"/></g>)}
+                  {[0,60,120,180].map((y,i)=><g key={y} className="mail-row" transform={`translate(0,${y})`}><rect width="300" height="48" rx="6" fill={i===0?"url(#mg)":"rgba(255,255,255,.03)"} stroke="rgba(255,255,255,.08)"/><circle cx="22" cy="24" r="6" fill={i===0?"#c6ff3c":"rgba(239,237,231,.25)"}/><rect x="42" y="16" width={[120,100,140,80][i]} height="6" rx="3" fill="rgba(255,255,255,.6)"/><rect x="42" y="28" width={[200,180,160,220][i]} height="4" rx="2" fill="rgba(255,255,255,.2)"/></g>)}
                 </g>
               </svg>
             </div>
@@ -697,10 +769,10 @@ function Products({ onCTA }) {
           <TiltCard className="k5">
             <div><span className="tag"><span className="n">05</span> · Team­verwaltung</span><h3>Das Team, ohne Zettelwirtschaft.</h3><p>Urlaub, Krankmeldungen, Dienstpläne, Onboarding — vorbereitet von der KI.</p></div>
             <div style={{display:'flex'}}>
-              {['MK','LS','JH','+9'].map((l,i)=><span key={l} className="avatar" style={{width:28,height:28,fontSize:10,marginLeft:i?-10:0,background:i?['linear-gradient(135deg,var(--accent),var(--accent-4))','linear-gradient(135deg,var(--accent-3),var(--accent-2))','linear-gradient(135deg,var(--accent-4),var(--accent-3))'][i-1]:undefined}}>{l}</span>)}
+              {['MK','LS','JH','+9'].map((l,i)=><span key={l} className="avatar" style={{width:28,height:28,fontSize:10,marginLeft:i?-10:0}}>{l}</span>)}
             </div>
           </TiltCard>
-          <TiltCard className="k6" style={{background:'linear-gradient(90deg,#0c0c10,#12130c)',borderColor:'rgba(198,255,60,.2)'}}>
+          <TiltCard className="k6">
             <div><span className="tag"><span className="n">06</span> · KI Sekretärin</span><h3>Nimmt Anrufe entgegen. Rund um die Uhr.</h3></div>
             <div style={{display:'flex',alignItems:'center',gap:14}}>
               <span className="badge">In Bearbeitung — Q3 / 2026</span>
@@ -759,8 +831,7 @@ const PRICING_TIERS = [
 function PricingCard({tier,sub,price,per,items,pop}) {
   return (
     <article className={`price${pop?' pop':''}`}>
-      {pop && <span className="pop-chip">Meistgewählt</span>}
-      <div><span className="eyebrow" style={pop?{color:'var(--accent)'}:{}}>{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
+      <div><span className="eyebrow">{tier}</span><h3 style={{marginTop:12}}>{sub}</h3></div>
       <div className="price-tag"><span className="num" style={price.length>3?{fontSize:52}:{}}>{price}</span>{per&&<span className="per">{per}</span>}</div>
       <ul>{items.map(i=><li key={i}>{i}</li>)}</ul>
       <MagBtn className={`btn ${pop?'btn-primary':'btn-ghost'}`} href="/pricing"><span>Details ansehen</span></MagBtn>
@@ -773,7 +844,7 @@ function Pricing() {
     <section id="preise">
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Ein Preis. <br/><em style={{fontStyle:'italic',color:'var(--accent)',fontFamily:'var(--serif)',fontVariationSettings:'"opsz" 144,"SOFT" 100,"WONK" 1'}}>Fertig.</em></h2></div>
+          <div><span className="eyebrow">Preise — einfach gehalten</span><h2>Ein Preis. <br/><em>Fertig.</em></h2></div>
           <p className="lead">Transparent. Ohne versteckte Kosten. Monatlich kündbar. Die Komplett-Suite mit KI Sekretärin ist in Entwicklung — Details auf der Preisseite.</p>
         </div>
         <Reveal className="pricing-grid" style={{gridTemplateColumns:'minmax(0,420px)',justifyContent:'center'}}>
@@ -835,7 +906,6 @@ export default function LandingPage() {
 
   return (
     <>
-      <div className="vignette" aria-hidden="true"/>
       <ScrollProgress/>
       <LandingNav/>
       <Hero onCTA={openModal}/>
@@ -845,7 +915,7 @@ export default function LandingPage() {
       <Teaser
         id="wie"
         eyebrow="Wie es arbeitet — 05 Schritte"
-        title='Ein Tag, von der <em style="font-style:italic;color:var(--accent);font-family:var(--serif)">KI</em> geführt.'
+        title='Ein Tag, von der <em>KI</em> geführt.'
         lead="Von der ersten Mail um 07:48 bis zum neuen Dienstplan um 16:48 — sieh Schritt für Schritt, wie NILL einen kompletten Arbeitstag durch alle Module begleitet."
         to="/wie-es-arbeitet"
       />
@@ -854,14 +924,14 @@ export default function LandingPage() {
       <Teaser
         id="app"
         eyebrow="Progressive Web App · ohne App Store"
-        title='NILL als App. <em style="font-style:italic;color:var(--accent)">Ohne Store.</em>'
+        title='NILL als App. <em>Ohne Store.</em>'
         lead="Direkt aus dem Browser installiert — auf iOS, Android, macOS und Windows. Offline-fähig, mit Push-Benachrichtigungen und ohne Update-Zwang."
         to="/app"
       />
       <Teaser
         id="nachhaltigkeit"
         eyebrow="Nachhaltigkeit"
-        title='Intelligenz mit <em style="font-style:italic;color:var(--accent)">Verantwortung.</em>'
+        title='Intelligenz mit <em>Verantwortung.</em>'
         lead="100 % Ökostrom in Frankfurt, kompensierte Drittanbieter und ein jährlicher Nachhaltigkeitsbericht. Wie NILL Effizienz und Klimaschutz zusammenbringt."
         to="/nachhaltigkeit"
       />
