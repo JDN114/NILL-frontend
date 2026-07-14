@@ -669,10 +669,15 @@ body {
 .em-drawer-backdrop {
   display: none;
 }
+.em-ptr {
+  display: none;
+}
 
 /* ── Mobile (Gmail-style) ─────────────────────────────────── */
 @media (max-width: 768px) {
-  .em-shell { height: 100dvh; }
+  /* Fill the fixed PageLayout pane (100dvh − 64px navbar). The old 100dvh
+     here overflowed the pane and clipped the last ~130px of the list. */
+  .em-shell { height: 100%; }
 
   /* Sidebar becomes a slide-in drawer instead of disappearing —
      folder/provider switching must stay reachable on mobile. */
@@ -681,11 +686,14 @@ body {
     position: fixed;
     top: 0; bottom: 0; left: 0;
     z-index: 300;
-    width: 78vw; min-width: 0; max-width: 300px;
+    width: 82vw; min-width: 0; max-width: 320px;
     box-shadow: 8px 0 32px rgba(0,0,0,0.45);
     transform: translateX(-100%);
     transition: transform 0.22s cubic-bezier(.2,.8,.4,1);
     background: #0a1322;
+    border-radius: 0 18px 18px 0;
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0));
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
   }
   .em-sidebar--open { transform: translateX(0); }
   .em-drawer-backdrop {
@@ -699,8 +707,14 @@ body {
   .em-list-col          { width: 100%; min-width: 0; border-right: none; position: relative; }
   .em-list-col--pushed  { display: none; }
   .em-detail-col        { display: none; width: 100%; }
-  .em-detail-col--open  { display: flex; }
-  .em-detail-inner      { padding: 1rem 0.95rem 6rem; }
+  /* Opening a mail pushes in from the right like a native navigation stack. */
+  .em-detail-col--open  { display: flex; animation: em-push-in 0.24s cubic-bezier(.2,.8,.4,1); }
+  @keyframes em-push-in {
+    from { transform: translateX(10%); opacity: 0.4; }
+    to   { transform: translateX(0);   opacity: 1; }
+  }
+  /* Clear the raised reply bar + the 62px bottom tab bar. */
+  .em-detail-inner      { padding: 1rem 0.95rem calc(150px + env(safe-area-inset-bottom, 0)); }
 
   /* Detail top bar is the topmost element in the open-email view → notch padding,
      and a bigger, clearly tappable back control. */
@@ -714,7 +728,14 @@ body {
     border-radius: 10px;
   }
   .em-back:active { background: var(--nill-panel-hov); color: var(--nill-text); }
-  .em-detail-subject { font-size: 1.25rem; margin-bottom: 1rem; }
+  .em-detail-subject {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 500;
+    font-size: 1.45rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
 
   /* Single clean header replaces the old logo bar + list-header double row. */
   .em-mobile-bar {
@@ -730,19 +751,22 @@ body {
   }
   .em-mobile-title {
     flex: 1; min-width: 0;
-    font-size: 1.1rem; font-weight: 700;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.25rem; font-weight: 600;
     color: var(--nill-text);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .em-hamburger,
   .em-mobile-refresh {
     display: flex; align-items: center; justify-content: center;
-    width: 42px; height: 42px; flex-shrink: 0;
+    width: 44px; height: 44px; flex-shrink: 0;
     border-radius: 50%; border: none; background: none;
     color: var(--nill-text-sub); cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    transition: background 0.15s, color 0.15s, transform 0.12s;
   }
+  .em-hamburger:active, .em-mobile-refresh:active { transform: scale(0.9); }
   .em-hamburger:hover, .em-hamburger:active,
   .em-mobile-refresh:active { background: var(--nill-panel-hov); color: var(--nill-text); }
   .em-mobile-refresh:disabled { opacity: 0.5; }
@@ -764,14 +788,17 @@ body {
   .em-filter-chips::-webkit-scrollbar { display: none; }
   .em-chip {
     flex-shrink: 0;
-    padding: 0.45rem 0.95rem;
-    font-size: 0.8rem; font-weight: 500;
+    min-height: 40px;
+    padding: 0.5rem 1.05rem;
+    font-size: 0.82rem; font-weight: 500;
     color: var(--nill-text-sub);
     background: var(--nill-panel);
     border: 1px solid var(--nill-border);
     border-radius: 20px;
     cursor: pointer;
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    user-select: none; -webkit-user-select: none;
     transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   .em-chip:active { background: var(--nill-panel-hov); }
@@ -782,13 +809,14 @@ body {
     font-weight: 600;
   }
 
-  /* Gmail-style floating compose button */
+  /* Gmail-style floating compose button — ABOVE the 62px bottom tab bar
+     (it used to sit behind it: z-index 50 vs. the bar's 200). */
   .em-fab {
     display: flex; align-items: center; justify-content: center;
     position: fixed;
     right: 18px;
-    bottom: calc(18px + env(safe-area-inset-bottom, 0));
-    z-index: 50;
+    bottom: calc(62px + env(safe-area-inset-bottom, 0) + 16px);
+    z-index: 210;
     width: 56px; height: 56px;
     border-radius: 50%;
     border: none;
@@ -796,9 +824,27 @@ body {
     color: #1a1206;
     box-shadow: 0 6px 20px rgba(197,165,114,0.45), 0 2px 8px rgba(0,0,0,0.35);
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
     transition: transform 0.12s, box-shadow 0.12s;
   }
   .em-fab:active { transform: scale(0.93); }
+
+  /* Pull-to-refresh indicator: sits in the gap the list reveals while you
+     drag it down (JS drives opacity/rotation/translate, zero re-renders). */
+  .em-ptr { display: block; height: 0; overflow: visible; position: relative; z-index: 5; }
+  .em-ptr-inner {
+    position: absolute; top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--nill-panel);
+    border: 1px solid var(--nill-border);
+    color: var(--nill-gold);
+    opacity: 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    pointer-events: none;
+  }
+  .em-ptr--spin .em-ptr-inner svg { animation: em-spin 0.75s linear infinite; }
 
   /* Roomier, touch-friendly list rows — centered avatar, clearer hierarchy */
   .em-item { padding: 0.85rem 1rem; gap: 0.85rem; min-height: 72px; align-items: center; }
@@ -809,29 +855,44 @@ body {
   .em-item-subject { font-size: 0.82rem; margin-top: 0.15rem; }
   .em-item--unread .em-item-subject { font-weight: 500; color: var(--nill-text-sub); }
   .em-item-date { font-size: 0.72rem; }
-  .em-search-bar { margin: 0.6rem 0.75rem 0.1rem; padding: 0.6rem 0.9rem; border-radius: 24px; }
-  .em-search-input { font-size: 0.9rem; }
+  .em-search-bar { margin: 0.6rem 0.75rem 0.1rem; padding: 0.65rem 1rem; border-radius: 24px; }
+  /* 16px stops iOS zooming the page when the field gets focus */
+  .em-search-input { font-size: 16px; }
+  .em-search-clear { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+
+  /* List clears the bottom tab bar so the last mail is fully reachable */
+  .em-list { padding-bottom: calc(62px + env(safe-area-inset-bottom, 0) + 12px); }
+  .em-load-more-btn {
+    width: 100%; min-height: 48px; justify-content: center;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
 
   /* Bigger tap targets in the drawer nav */
   .em-nav-item { padding: 0.65rem 0.9rem; font-size: 0.86rem; }
   .em-compose { padding: 0.7rem 1rem; }
   .em-provider-tab { padding: 7px 4px; font-size: 0.72rem; }
 
-  /* Sticky reply bar at the bottom of the detail view, like Gmail */
+  /* Sticky reply bar, like Gmail — raised ABOVE the 62px bottom tab bar
+     (it used to be fully hidden behind it: z-index 40 vs. the bar's 200). */
   .em-detail-actions {
     position: fixed;
-    left: 0; right: 0; bottom: 0;
-    z-index: 40;
+    left: 0; right: 0;
+    bottom: calc(62px + env(safe-area-inset-bottom, 0));
+    z-index: 210;
     margin-top: 0;
     padding: 0.7rem 0.85rem;
-    padding-bottom: calc(0.7rem + env(safe-area-inset-bottom, 0));
     background: rgba(7,16,35,0.92);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-top: 1px solid var(--nill-border);
   }
-  .em-reply-btn { flex: 1; justify-content: center; padding: 0.85rem 1rem; font-size: 0.9rem; border-radius: 12px; }
-  .em-reanalyze-btn { padding: 0.85rem 1rem; border-radius: 12px; }
+  .em-reply-btn {
+    flex: 1; justify-content: center; min-height: 48px;
+    padding: 0.85rem 1rem; font-size: 0.9rem; border-radius: 14px;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .em-reply-btn:active { transform: scale(0.98); }
+  .em-reanalyze-btn { min-height: 48px; padding: 0.85rem 1rem; border-radius: 14px; -webkit-tap-highlight-color: transparent; }
 
   /* Native scroll feel on phones. min-height:0 fixes the flexbox scroll-clip
      bug — without it a flex:1/overflow:auto child won't shrink, so the list
@@ -871,6 +932,39 @@ body {
      huge horizontal scroll — only genuine fixed-width layouts pan. */
   .em-detail-body .email-body-render img,
   .em-detail-body .email-body-render figure { max-width: 100% !important; height: auto !important; }
+}
+
+/* ── Geteiltes Modal → Bottom-Sheet auf Phones ──────────────
+   ui/Modal + IMAP-Compose/Reply tragen nill-sheet-wrap/-sheet/-body.
+   Auf Desktop sind die Klassen wirkungslos (keine Regeln außerhalb
+   dieser Media-Query). */
+@media (max-width: 768px) {
+  .nill-sheet-wrap { align-items: flex-end !important; padding: 0 !important; }
+  .nill-sheet {
+    max-width: none !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-left: none !important; border-right: none !important; border-bottom: none !important;
+    max-height: 92dvh !important;
+    animation: nill-sheet-up 0.18s ease;
+  }
+  .nill-sheet::before {
+    content: ""; display: block; width: 35px; height: 4px; border-radius: 99px;
+    background: rgba(255,255,255,0.22); margin: 8px auto 0; flex-shrink: 0;
+  }
+  html[data-theme="light"] .nill-sheet::before { background: rgba(0,0,0,0.2); }
+  .nill-sheet-body {
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0)) !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* 16px-Inputs: verhindert den iOS-Fokus-Zoom in Compose/Reply-Formularen */
+  .nill-sheet input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .nill-sheet select,
+  .nill-sheet textarea { font-size: 16px !important; }
+  @keyframes nill-sheet-up {
+    from { transform: translateY(28px); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
 }
 
 /* ── Animationen ─────────────────────────────────────────── */

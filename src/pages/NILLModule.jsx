@@ -186,9 +186,71 @@ function MonoLabel({ children, color = T.textTer }) {
   );
 }
 
+// ─── Mobile-only styles ──────────────────────────────────────────────────────
+// Every rule lives inside @media (max-width:768px) and overrides the inline
+// desktop styles via !important — desktop rendering stays byte-identical.
+// The module is hardcoded-dark by design (T palette), so the overrides reuse
+// the same palette for exact parity.
+const NM_MOBILE_CSS = `
+@media (max-width: 768px) {
+  .nm-root { flex-direction: column !important; gap: 12px !important; min-height: 0 !important; }
+
+  /* Sidebar → horizontal module chip bar (native segmented feel) */
+  .nm-side {
+    position: static !important; width: 100% !important;
+    flex-direction: row !important; align-items: center !important;
+    background: transparent !important; border: none !important; border-radius: 0 !important;
+    overflow-x: auto !important; overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .nm-side::-webkit-scrollbar { display: none; }
+  .nm-brand, .nm-online { display: none !important; }
+  .nm-nav { display: flex !important; flex-direction: row; gap: 6px; padding: 2px 0 !important; flex: 0 0 auto !important; }
+  .nm-nav button, .nm-calls button {
+    width: auto !important; flex-shrink: 0;
+    min-height: 44px; margin-bottom: 0 !important;
+    padding: 9px 15px !important; border-radius: 99px !important;
+    border: 1px solid ${T.border} !important; background: ${T.bg1} !important;
+    white-space: nowrap;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .nm-nav button:active, .nm-calls button:active { background: ${T.bg2} !important; }
+  .nm-nav button.nm-active { background: ${T.bg3} !important; border-color: ${T.borderHi} !important; }
+  .nm-calls { border-top: none !important; padding: 2px 0 2px 6px !important; flex: 0 0 auto; }
+  .nm-calls > p { display: none !important; }
+
+  /* Content panel: drop the desktop frame → full-bleed, one document scroll */
+  .nm-panel {
+    background: transparent !important; border: none !important; border-radius: 0 !important;
+    padding: 6px 2px 24px !important;
+  }
+
+  /* Section header stacked; forms single column; no-zoom inputs */
+  .nm-sectitle { flex-direction: column !important; align-items: stretch !important; gap: 12px; margin-bottom: 18px !important; }
+  .nm-sectitle h2 { font-size: 24px !important; }
+  .nm-formgrid, .nm-twocol { grid-template-columns: 1fr !important; }
+  .nm-root input, .nm-root select, .nm-root textarea { font-size: 16px !important; min-height: 44px; }
+
+  /* Drawer → bottom sheet with drag handle */
+  .nm-drawer-wrap { align-items: flex-end !important; padding: 0 !important; }
+  .nm-drawer {
+    max-width: 100% !important; max-height: 85dvh !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-left: none !important; border-right: none !important; border-bottom: none !important;
+    padding: 10px 18px calc(24px + env(safe-area-inset-bottom, 0)) !important;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  .nm-drawer::before {
+    content: ""; display: block; width: 35px; height: 4px; border-radius: 99px;
+    background: ${T.borderHi}; margin: 2px auto 16px;
+  }
+}
+`;
+
 function SectionTitle({ title, subtitle, action }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
+    <div className="nm-sectitle" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
       <div>
         <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
         {subtitle && <p style={{ margin: "5px 0 0", fontFamily: FONT_MONO, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
@@ -249,7 +311,7 @@ function Card({ onClick, children, style = {} }) {
 
 function FormGrid({ children, cols = 2 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14 }}>
+    <div className="nm-formgrid" style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14 }}>
       {children}
     </div>
   );
@@ -316,6 +378,7 @@ function ErrorBanner({ message }) {
 function Drawer({ onClose, title, subtitle, maxWidth = 580, children }) {
   return (
     <div
+      className="nm-drawer-wrap"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -324,7 +387,7 @@ function Drawer({ onClose, title, subtitle, maxWidth = 580, children }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 12 }}
         transition={{ duration: 0.18 }}
-        className="nill-scrollbar"
+        className="nill-scrollbar nm-drawer"
         style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth, maxHeight: "88vh", overflowY: "auto", padding: "28px 32px" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
@@ -362,7 +425,7 @@ function InfoBlock({ label, children, color = T.textSec, aiGenerated = false }) 
 
 function TwoCol({ left, right }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+    <div className="nm-twocol" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
       {left}
       {right}
     </div>
@@ -1436,23 +1499,24 @@ export default function NILLModule() {
   return (
     <PageLayout>
       <GlobalStyles />
-      <div className="nill-root" style={{ display: "flex", gap: 20, minHeight: "80vh", fontFamily: FONT_BODY }}>
+      <style>{NM_MOBILE_CSS}</style>
+      <div className="nill-root nm-root" style={{ display: "flex", gap: 20, minHeight: "80vh", fontFamily: FONT_BODY }}>
 
-        <aside style={{
+        <aside className="nm-side" style={{
           width: 210, flexShrink: 0, alignSelf: "flex-start", position: "sticky", top: 24,
           background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10,
           display: "flex", flexDirection: "column", overflow: "hidden",
         }}>
-          <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${T.border}` }}>
+          <div className="nm-brand" style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${T.border}` }}>
             <p style={{ margin: "0 0 2px", fontFamily: FONT_DISPLAY, fontSize: 20, fontWeight: 800, color: T.textPri, letterSpacing: "-0.04em" }}>NILL</p>
             <p style={{ margin: 0, fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.12em" }}>KI-SEKRETÄRIN</p>
           </div>
 
-          <nav style={{ padding: "10px 8px", flex: 1 }}>
+          <nav className="nm-nav" style={{ padding: "10px 8px", flex: 1 }}>
             {MODULES.map(m => {
               const isActive = active === m.id;
               return (
-                <button key={m.id} onClick={() => setActive(m.id)} style={{
+                <button key={m.id} className={isActive ? "nm-active" : ""} onClick={() => setActive(m.id)} style={{
                   display: "flex", alignItems: "center", gap: 10, width: "100%",
                   padding: "9px 12px", borderRadius: 6, border: "none",
                   background: isActive ? T.bg3 : "none",
@@ -1474,7 +1538,7 @@ export default function NILLModule() {
           </nav>
 
           {/* Sektion: Anrufe (eigene Route) */}
-          <div style={{ padding: "12px 8px", borderTop: `1px solid ${T.border}` }}>
+          <div className="nm-calls" style={{ padding: "12px 8px", borderTop: `1px solid ${T.border}` }}>
             <p style={{
               margin: "4px 12px 8px",
               fontFamily: FONT_MONO, fontSize: 9, color: T.textTer,
@@ -1513,7 +1577,7 @@ export default function NILLModule() {
               />
             </button>
           </div>
-          <div style={{ padding: "14px 20px", borderTop: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="nm-online" style={{ padding: "14px 20px", borderTop: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.accent }} />
             <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: T.textTer, letterSpacing: "0.1em" }}>ONLINE</span>
           </div>
@@ -1527,6 +1591,7 @@ export default function NILLModule() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.14 }}
+              className="nm-panel"
               style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, padding: "32px 36px" }}
             >
               {active === "overview"     && <OverviewModule nillNotifications={nillNotifications} dailySummary={dailySummary} />}

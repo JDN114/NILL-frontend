@@ -33,7 +33,7 @@
 .faq{display:flex;flex-direction:column;border-top:1px solid var(--line)}
 
 /* BIG CTA */
-.cta-big{position:relative;padding:180px 0;overflow:hidden;isolation:isolate}
+.cta-big{position:relative;padding:160px 0;overflow:hidden;isolation:isolate}
 
 /* FOOTER */
 footer{border-top:1px solid var(--line);padding:80px 0 40px}
@@ -91,7 +91,7 @@ p{font-size:clamp(15px,1.1vw,18px);line-height:1.55;color:var(--ink-dim)}
 .lead strong{color:var(--ink);font-weight:500}
 /* DER typografische Akzent der Seite: kursives Serif-em in Headlines.
    Einmal hier definiert — keine Inline-Style-Kopien in JSX. */
-h1 em,h2 em{font-style:italic;color:var(--accent);font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1}
+h1 em,h2 em,.more-card h3 em{font-style:italic;color:var(--accent);font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:60;padding:18px 0;transition:backdrop-filter .4s,background .4s}
@@ -149,7 +149,7 @@ h1 em,h2 em{font-style:italic;color:var(--accent);font-variation-settings:"opsz"
 .ticker-sep{width:6px;height:6px;background:var(--ink-faint);border-radius:50%;display:inline-block}
 @keyframes ticker{to{transform:translateX(-50%)}}
 
-section{position:relative;padding:160px 0}
+section{position:relative;padding:140px 0}
 .section-head{display:flex;justify-content:space-between;align-items:end;gap:40px;margin-bottom:72px}
 .section-head h2{max-width:16ch}
 .section-head .lead{max-width:36ch}
@@ -243,6 +243,13 @@ section{position:relative;padding:160px 0}
 .step-index em{font-style:normal;color:var(--ink)}
 @media(max-width:980px){.feature-sticky{grid-template-columns:1fr}.visual-col{position:relative;top:0;height:440px}.step-item{padding:60px 0}}
 
+/* MEHR ÜBER NILL — kompakte Verweis-Karten statt drei Vollhöhen-Teaser */
+.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.more-card h3{font-size:clamp(24px,2.2vw,32px);margin-top:16px}
+.more-card p{margin-top:10px;margin-bottom:24px}
+.more-card .btn{align-self:flex-start}
+@media(max-width:900px){.more-grid{grid-template-columns:1fr}}
+
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:60px 0}
 .stat .num{font-family:var(--serif);font-size:clamp(56px,7vw,96px);letter-spacing:-.04em;line-height:1;display:flex;align-items:baseline;gap:4px}
@@ -275,7 +282,7 @@ section{position:relative;padding:160px 0}
 @keyframes faqIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
 /* BIG CTA */
-.cta-big{position:relative;padding:180px 0;overflow:hidden;isolation:isolate}
+.cta-big{position:relative;padding:160px 0;overflow:hidden;isolation:isolate}
 .cta-big h2{font-size:clamp(64px,12vw,180px)}
 .cta-sub{display:flex;justify-content:space-between;align-items:end;margin-top:40px;gap:30px}
 .cta-sub .lead{max-width:40ch}

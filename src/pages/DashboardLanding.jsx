@@ -120,52 +120,101 @@ const S = `
   .nd-feed-item-time { font-family:var(--mono); font-size:10px; color:var(--ink-dim); flex-shrink:0; padding-top:1px; }
   .nd-feed-empty { padding:48px 20px; text-align:center; color:var(--ink-dim); font-size:13px; }
 
+  /* Mobile-only quick actions — inert & hidden on desktop */
+  .nd-m-quick { display:none; }
+
   @media(max-width:768px) {
-    /* On phones the whole page scrolls naturally with the document (see
-       PageLayout .nill-shell-noscroll). Rather than cramming modules into a
-       2-col app-launcher grid, we mirror the *desktop* card anatomy — icon ·
-       serif title · one-line description · chevron — as a single clean column.
-       Roomy, editorial, minimal: the same feeling as the web layout. */
+    /* Native app home, not a shrunk web page: a free-floating iOS-style
+       large-title greeting (no banner box), a quick-actions shortcut row,
+       and the modules as ONE grouped list card with hairline dividers —
+       the same grouped-list language as the mobile Settings root. */
     .nd-root { padding-bottom:env(safe-area-inset-bottom,0); }
 
-    /* Welcome — the big serif greeting stays the hero, just tightened. */
-    .nd-welcome { padding:22px 20px; margin-bottom:18px; border-radius:16px; }
-    .nd-welcome h1 { font-size:clamp(22px,6.5vw,30px); margin-bottom:6px; }
+    /* Welcome — de-boxed: the greeting floats on the page like a native
+       large title. No border, no gradient card, no glow. */
+    .nd-welcome { padding:10px 2px 2px; margin-bottom:14px; border-radius:0; border:none; background:none; overflow:visible; }
+    .nd-welcome::before { display:none; }
+    .nd-welcome h1 { font-size:clamp(26px,7.5vw,34px); margin-bottom:5px; letter-spacing:-.03em; }
     .nd-welcome-sub { font-size:13px; }
-    .nd-welcome-eyebrow { font-size:9px; margin-bottom:10px; }
-    .nd-bell-btn { width:32px; height:32px; top:16px; right:16px; }
+    .nd-welcome-eyebrow { font-size:9px; margin-bottom:8px; }
+    .nd-bell-btn {
+      width:40px; height:40px; top:6px; right:0;
+      background:rgba(var(--tint),.06);
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+      transition:transform .12s, background .15s;
+    }
+    .nd-bell-btn:active { transform:scale(.92); background:rgba(var(--tint),.1); }
 
-    .nd-section-label { font-size:9px; margin-bottom:12px; }
+    /* Quick actions — horizontal shortcut chips straight into the day */
+    .nd-m-quick {
+      display:flex; gap:8px; margin:0 0 22px;
+      overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
+    .nd-m-quick::-webkit-scrollbar { display:none; }
+    .nd-m-qa {
+      flex-shrink:0; display:flex; align-items:center; gap:8px;
+      min-height:44px; padding:10px 16px;
+      border-radius:22px; border:1px solid var(--line);
+      background:var(--glass); text-decoration:none;
+      color:var(--ink); font-size:13px; font-weight:500;
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+      user-select:none; -webkit-user-select:none;
+      transition:background .12s, transform .12s;
+    }
+    .nd-m-qa:active { background:rgba(var(--tint),.08); transform:scale(.97); }
+    .nd-m-qa-icon { font-size:13px; color:var(--ink-dim); }
 
-    /* One comfortable column of full-width cards — same parts as desktop,
-       laid out as a calm row (icon left · text · chevron right). */
-    .nd-grid { grid-template-columns:1fr; gap:10px; }
-    .nd-card { padding:16px 18px; gap:14px; flex-direction:row; align-items:center; border-radius:16px; }
-    .nd-card:active { background:rgba(var(--tint),.06); }   /* tap feedback, no hover-lift */
-    .nd-card-icon { width:38px; height:38px; font-size:15px; border-radius:10px; margin-bottom:0; }
+    .nd-section-label { font-size:9px; margin-bottom:10px; }
+
+    /* Modules — ONE grouped card, rows divided by hairlines (iOS list). */
+    .nd-grid {
+      grid-template-columns:1fr; gap:0;
+      border:1px solid var(--line); border-radius:18px;
+      background:var(--glass); overflow:hidden;
+    }
+    .nd-card {
+      padding:15px 16px; gap:14px; flex-direction:row; align-items:center;
+      border:none; border-bottom:1px solid var(--line); border-radius:0;
+      background:transparent; min-height:64px;
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+      user-select:none; -webkit-user-select:none;
+      transition:background .12s;
+    }
+    .nd-grid > div:last-child .nd-card { border-bottom:none; }
+    .nd-card:hover { transform:none; background:transparent; border-color:var(--line); }
+    .nd-card:active { background:rgba(var(--tint),.07); }
+    .nd-card-icon { width:40px; height:40px; font-size:16px; border-radius:12px; margin-bottom:0; }
     .nd-card > div:nth-child(2) { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
-    .nd-card-title { font-size:15px; line-height:1.2; }
-    /* Description returns (web feeling) but stays a single muted line. */
+    .nd-card-title { font-size:16px; line-height:1.2; }
+    /* Description stays a single muted line. */
     .nd-card-desc { display:block; font-size:11.5px; line-height:1.4; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     /* Keep only the chevron — hide the "Öffnen" label via zero font-size. */
     .nd-card-arrow { display:flex; align-items:center; margin-top:0; gap:0; font-size:0; color:var(--ink-faint); flex-shrink:0; }
-    .nd-card-arrow span { font-size:16px; }
+    .nd-card-arrow span { font-size:18px; }
     .nd-soon-badge { font-size:8px; padding:1px 7px; align-self:flex-start; }
-    .nd-mode-toggle { margin-top:2px; padding:2px 2px 2px 8px; align-self:flex-start; }
+    .nd-mode-toggle { margin-top:2px; padding:2px 2px 2px 8px; align-self:flex-start; min-height:28px; }
     .nd-mode-toggle-label { display:none; }
 
     .nd-ai-banner { padding:16px 18px; gap:12px; margin-bottom:16px; border-radius:16px; }
     .nd-ai-banner-icon { width:34px; height:34px; font-size:15px; border-radius:10px; }
     .nd-ai-banner-title { font-size:13px; }
     .nd-ai-banner-desc { font-size:11px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .nd-ai-banner-cta { font-size:10px; padding:7px 13px; }
+    .nd-ai-banner-cta { font-size:10px; padding:9px 14px; }
 
     .nd-nill-modules { gap:5px; }
     .nd-nill-module { padding:7px 3px; }
     .nd-nill-module-icon { font-size:13px; }
     .nd-nill-module-label { font-size:8px; }
-    .nd-notif { padding:9px 12px; font-size:12px; }
-    .nd-feed-panel { width:100vw; }
+    .nd-notifs { margin-top:14px; }
+    .nd-notif { padding:9px 12px; font-size:12px; border-radius:12px; }
+
+    /* Activity feed → full-height sheet with native touch rows */
+    .nd-feed-panel { width:100vw; border-left:none; }
+    .nd-feed-hdr { padding-top:calc(14px + env(safe-area-inset-top,0)); }
+    .nd-feed-item { padding:13px 18px; min-height:56px; -webkit-tap-highlight-color:transparent; }
+    .nd-feed-item:active { background:rgba(var(--tint),.05); }
+    .nd-feed-close { width:36px; height:36px; }
+    .nd-feed-body { padding-bottom:env(safe-area-inset-bottom,0); }
 
     /* Footer stays attached at the bottom, compacted so it never forces
        the page into scroll territory on small screens. */
@@ -174,11 +223,10 @@ const S = `
     footer a, footer button { font-size:9px !important; letter-spacing:.08em !important; }
   }
   @media(max-width:420px) {
-    .nd-welcome { padding:18px 16px; margin-bottom:14px; }
-    .nd-welcome h1 { font-size:clamp(20px,7vw,26px); }
-    .nd-card { padding:14px 15px; gap:12px; }
-    .nd-card-icon { width:34px; height:34px; }
-    .nd-grid { gap:8px; }
+    .nd-welcome h1 { font-size:clamp(23px,8vw,28px); }
+    .nd-card { padding:13px 14px; gap:12px; min-height:60px; }
+    .nd-card-icon { width:36px; height:36px; }
+    .nd-m-qa { padding:9px 14px; font-size:12.5px; }
     .nd-nill-modules { grid-template-columns:repeat(3,1fr); }
   }
 
@@ -303,6 +351,24 @@ const S = `
 
   /* Section label divider — a touch more present against the busier page. */
   html[data-theme="light"] .nd-section-label::after { background: rgba(var(--ink-tint), .2); }
+
+  /* ── Mobile × Light: must come AFTER the light overrides above so the
+     de-boxed greeting and the grouped list win on phones too. ── */
+  @media(max-width:768px) {
+    html[data-theme="light"] .nd-welcome { background:none; box-shadow:none; }
+    html[data-theme="light"] .nd-grid {
+      background:rgba(255,252,245,.72);
+      border-color:rgba(var(--ink-tint),.16);
+      box-shadow:0 1px 2px rgba(42,36,24,.05), 0 6px 16px rgba(42,36,24,.06);
+    }
+    html[data-theme="light"] .nd-card { background:transparent; box-shadow:none; border-color:var(--line); }
+    html[data-theme="light"] .nd-card:hover { background:transparent; box-shadow:none; }
+    html[data-theme="light"] .nd-card:active { background:rgba(var(--tint),.08); }
+    html[data-theme="light"] .nd-m-qa {
+      background:rgba(255,252,245,.72);
+      border-color:rgba(var(--ink-tint),.16);
+    }
+  }
 `;
 
 const ICONS = {
@@ -674,6 +740,24 @@ export default function DashboardLanding() {
               </Link>
             </motion.div>
           )}
+
+          {/* ── Quick Actions (mobile-only, display:none auf Desktop) ── */}
+          <div className="nd-m-quick" aria-label="Schnellzugriff">
+            {hasModule("calendar") && hasFeature("calendar") && (
+              <Link to="/dashboard/calendar" className="nd-m-qa">
+                <span className="nd-m-qa-icon">▦</span> Termine
+              </Link>
+            )}
+            <Link to="/dashboard/workflow/tasks" className="nd-m-qa">
+              <span className="nd-m-qa-icon">✓</span> Aufgaben
+            </Link>
+            <Link to="/dashboard/workflow/time" className="nd-m-qa">
+              <span className="nd-m-qa-icon">◷</span> Zeiterfassung
+            </Link>
+            <Link to="/dashboard/workflow/Delivery-notes" className="nd-m-qa">
+              <span className="nd-m-qa-icon">▤</span> Lieferscheine
+            </Link>
+          </div>
 
           {/* ── Module ── */}
           <div className="nd-section-label">Module</div>

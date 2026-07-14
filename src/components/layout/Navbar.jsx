@@ -243,6 +243,26 @@ export default function Navbar() {
 
         @media (max-width: 768px) {
           .nill-bottom-nav { display: block; }
+          .nill-bnav-item {
+            min-height: 58px;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          .nill-bnav-icon { font-size: 1.15rem; }
+          .nill-bnav-label { font-size: 0.62rem; }
+          .nill-bnav-item .nill-bnav-icon-wrap {
+            width: 44px; height: 30px;
+            border-radius: 12px;
+            transition: background 0.15s, transform 0.12s;
+          }
+          .nill-bnav-item:active .nill-bnav-icon-wrap {
+            background: rgba(var(--tint), 0.07);
+            transform: scale(0.92);
+          }
+          .nill-bnav-item.active:active .nill-bnav-icon-wrap {
+            background: rgba(197,165,114,0.18);
+          }
         }
       `}</style>
 

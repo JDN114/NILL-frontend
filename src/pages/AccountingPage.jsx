@@ -198,6 +198,40 @@ const S = `
     .ac-nav-item{padding-left:12px;}
     .ac-nav-item-dot{display:none;}
     .ac-content{grid-column:1;grid-row:3;padding:16px 14px;}
+
+    /* ── Mobile-native polish (touch targets, chips, sheets) ── */
+    .ac-shell{grid-template-rows:54px auto 1fr;}
+    .ac-sidebar{scrollbar-width:none;-webkit-overflow-scrolling:touch;gap:6px;padding:8px 10px;}
+    .ac-sidebar::-webkit-scrollbar{display:none;}
+    .ac-nav-standalone,.ac-nav-item{
+      min-height:44px;padding:10px 16px;border-radius:99px;
+      white-space:nowrap;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+      user-select:none;-webkit-user-select:none;
+    }
+    .ac-nav-standalone:active,.ac-nav-item:active{background:rgba(var(--tint),.08);}
+    .ac-topbar-right .ac-btn{min-height:40px;}
+    .ac-topbar-right button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+    .ac-btn{min-height:44px;}
+    .ac-btn-sm{min-height:40px;}
+    /* Modals → bottom sheets (zentral: gilt für alle Buchhaltungs-Tabs) */
+    .ac-modal-backdrop{align-items:flex-end;padding:0;}
+    .ac-modal{
+      max-width:none;border-radius:16px 16px 0 0;
+      max-height:85dvh;
+      border-left:none;border-right:none;border-bottom:none;
+      padding:14px 20px calc(24px + env(safe-area-inset-bottom,0));
+      overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    }
+    .ac-modal::before{
+      content:"";display:block;width:35px;height:4px;border-radius:99px;
+      background:rgba(var(--tint),.25);margin:0 auto 14px;
+    }
+    .ac-modal input:not([type="checkbox"]):not([type="radio"]),
+    .ac-modal select,.ac-modal textarea{font-size:16px;min-height:44px;}
+    .ac-modal-footer button{min-height:44px;}
+    .ac-content input:not([type="checkbox"]):not([type="radio"]),
+    .ac-content select{font-size:16px;}
   }
 
   .ac-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
@@ -219,7 +253,7 @@ const S = `
     .ac-card{padding:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
     .ac-kpi-grid{grid-template-columns:1fr 1fr;}
     .ac-table{min-width:480px;}
-    .ac-modal{padding:20px 16px;}
+    .ac-modal{padding:14px 16px calc(24px + env(safe-area-inset-bottom,0));}
   }
 
   .ac-btn{padding:8px 18px;border-radius:8px;border:none;font-family:Inter,sans-serif;font-size:.85rem;cursor:pointer;transition:all .15s;font-weight:500;}

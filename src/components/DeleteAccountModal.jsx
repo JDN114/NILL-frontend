@@ -26,8 +26,16 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
+    // sp-sheet-backdrop / sp-sheet: on mobile (≤700px) SettingsPage restyles this
+    // modal into a bottom sheet; on desktop the classes are inert.
+    <div
+      className="sp-sheet-backdrop fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={(e) => {
+        // Backdrop tap closes — mobile only, desktop behavior unchanged.
+        if (e.target === e.currentTarget && window.matchMedia("(max-width: 700px)").matches) onClose();
+      }}
+    >
+      <div className="sp-sheet bg-gray-900 p-8 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
         <h2 className="text-xl font-bold text-white">Account löschen</h2>
         <p className="text-gray-400 text-sm">Diese Aktion kann nicht rückgängig gemacht werden.</p>
 

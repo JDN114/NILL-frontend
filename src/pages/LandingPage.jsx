@@ -1,8 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import * as THREE from 'three';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import ISSSection from '../sections/iss/ISSSection'
 import { useReveal, Reveal, MagBtn, LandingNav, Footer, Modal } from '../components/landing/chrome'
 import '../styles/landing.css'
@@ -307,27 +304,12 @@ function buildScene(canvas) {
   renderer.setPixelRatio(pixRatio);
   renderer.setClearColor(0x02030a, 1);
 
-  // MSAA render target kills the shimmering geometry edges the composer
-  // otherwise introduces (it bypasses canvas AA); HalfFloat removes the
-  // banding in the bloom falloff
-  const composer = new EffectComposer(renderer, new T.WebGLRenderTarget(1, 1, {
-    type: T.HalfFloatType,
-    samples: 4,
-  }))
-
+  // Kein Post-Processing mehr: Bloom war der Glow — direkter Renderer-Output,
+  // Canvas-MSAA übernimmt das Anti-Aliasing.
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(42, 2, 0.1, 300);
   camera.position.set(0, 1.8, 11.0);
   camera.lookAt(0, 0, 0);
-
-  composer.addPass(new RenderPass(scene, camera))
-  const bloomPass = new UnrealBloomPass(
-    new T.Vector2(window.innerWidth, window.innerHeight),
-    0.34,  // strength — restrained: bloom sells brightness, not haze
-    0.50,  // radius
-    0.86   // threshold — with ACES output only the sun core & glints bloom
-  )
-  composer.addPass(bloomPass)
 
   /* STARS — static field (no atmosphere in space, so no twinkle).
      Brightness follows a power law (few bright, many faint), colors span
@@ -411,7 +393,8 @@ function buildScene(canvas) {
   const sunCore = new T.Mesh(new T.SphereGeometry(.92, 64, 48), sunMat);
   sunGroup.add(sunCore);
 
-  /* Sun glow — sprites only (no BackSide sphere rings) */
+  /* Radial-Sprite-Textur — nur noch für den Kometenkopf gebraucht;
+     die Sonnen-Korona-Sprites (der Glow) sind raus. */
   const mkGlowCanvas = (stops) => {
     const c = document.createElement('canvas'); c.width = c.height = 256;
     const g = c.getContext('2d');
@@ -420,16 +403,6 @@ function buildScene(canvas) {
     g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
     const tex = new T.CanvasTexture(c); tex.minFilter = T.LinearFilter; return tex;
   };
-  const mkSprite = (size, tex, op) => {
-    const s = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, opacity: op, blending: T.AdditiveBlending, depthWrite: false, depthTest: false }));
-    s.scale.set(size, size, 1);
-    sunGroup.add(s); return s;
-  };
-  // Bright flare halo removed — left the sun blown-out/too bright in the hero.
-  const coronaTex1 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.55,'rgba(255,130,40,.08)'],[.75,'rgba(255,180,90,.09)'],[1,'rgba(0,0,0,0)']]);
-  const coronaTex2 = mkGlowCanvas([[0,'rgba(0,0,0,0)'],[.6,'rgba(255,150,60,.05)'],[.85,'rgba(255,225,170,.04)'],[1,'rgba(0,0,0,0)']]);
-  const corona1      = mkSprite(10.0, coronaTex1, .30);
-  const corona2      = mkSprite(17.0, coronaTex2, .14);
 
   /* PLANET MODULES — orbital speed follows Kepler's third law (v ∝ r^-3/2,
      k=0.85 keeps the innermost planet at its previous pace); `rot` is the
@@ -542,7 +515,6 @@ function buildScene(canvas) {
     if (!el) return;
     const w=el.clientWidth, h=el.clientHeight;
     renderer.setSize(w,h,false);
-    composer.setSize(w,h);
     camera.aspect=w/h;
     camera.updateProjectionMatrix();
   };
@@ -571,7 +543,6 @@ function buildScene(canvas) {
       if (perfAcc/90 > 0.024 && pixRatio > 1) {
         pixRatio = Math.max(1, pixRatio - 0.25);
         renderer.setPixelRatio(pixRatio);
-        composer.setPixelRatio(pixRatio);
         onResize();
       }
       perfAcc = 0; perfN = 0;
@@ -589,10 +560,6 @@ function buildScene(canvas) {
     sunMat.uniforms.uTime.value = t;
     sunCore.rotation.y = t*.07;
     sunCore.scale.setScalar(1+Math.sin(t*.9)*.006);
-    corona1.material.opacity = .30+Math.sin(t*1.1)*.03;
-    corona2.material.opacity = .14+Math.sin(t*.7+1.2)*.03;
-    corona1.material.rotation = t*.02;
-    corona2.material.rotation = -t*.015;
     sunGroup.getWorldPosition(sunWorldPos);
     stars.rotation.y = t*.003;
     // Comet — Kepler-ish sweep, faster near perihelion
@@ -625,7 +592,7 @@ function buildScene(canvas) {
       atmo.position.set(px,py,pz); atmoMat.uniforms.uSunPos.value.copy(sunWorldPos);
       if(ring){ring.position.set(px,py,pz);ring.material.uniforms.uSunPos.value.copy(sunWorldPos);}
     }
-    composer.render();
+    renderer.render(scene, camera);
   };
   const setRunning = (on) => {
     if (on === running) return;
@@ -645,7 +612,6 @@ function buildScene(canvas) {
     removeEventListener('pointermove',onPointer);
     removeEventListener('scroll',onScroll);
     removeEventListener('resize',onResize);
-    composer.dispose();
     renderer.dispose();
   };
 }
@@ -657,7 +623,7 @@ function HeroCanvas() {
   // section lower on the page runs its own r3f WebGL context — keeping both
   // contexts alive at once janks the page and can hit the browser's per-page
   // context cap on mobile. By unmounting offscreen, buildScene's cleanup runs
-  // (disposes renderer/composer, drops the GL context) so only ONE of the two
+  // (disposes the renderer, drops the GL context) so only ONE of the two
   // hero/ISS contexts is ever live at a time.
   const [mounted, setMounted] = useState(true);
 
@@ -785,21 +751,38 @@ function Products({ onCTA }) {
   );
 }
 
-/* ─── TEASER ─────────────────────────────────────────────
-   Short pointer to a spun-off section page (Wie es arbeitet /
-   App / Nachhaltigkeit) with a "Mehr erfahren" link. */
-function Teaser({ id, eyebrow, title, lead, to }) {
+/* ─── MEHR ÜBER NILL ─────────────────────────────────────
+   Die drei Unterseiten (Wie es arbeitet / App / Nachhaltigkeit)
+   als EINE kompakte Karten-Reihe statt drei fast leerer
+   Vollhöhen-Sektionen — weniger Scroll, klarere Seitenstruktur. */
+const MORE_PAGES = [
+  { id:'wie', eyebrow:'Wie es arbeitet', title:'Ein Tag, von der <em>KI</em> geführt.',
+    lead:'Von der ersten Mail um 07:48 bis zum neuen Dienstplan um 16:48 — Schritt für Schritt durch alle Module.', to:'/wie-es-arbeitet' },
+  { id:'app', eyebrow:'Progressive Web App', title:'NILL als App. <em>Ohne Store.</em>',
+    lead:'Direkt aus dem Browser installiert — auf iOS, Android, macOS und Windows. Offline-fähig, mit Push.', to:'/app' },
+  { id:'nachhaltigkeit', eyebrow:'Nachhaltigkeit', title:'Intelligenz mit <em>Verantwortung.</em>',
+    lead:'100 % Ökostrom in Frankfurt, kompensierte Drittanbieter und ein jährlicher Nachhaltigkeitsbericht.', to:'/nachhaltigkeit' },
+];
+function MoreSection() {
   const [ref, vis] = useReveal();
   return (
-    <section id={id}>
+    <section id="mehr">
       <div className="wrap">
         <div className={`section-head reveal${vis?' in':''}`} ref={ref}>
-          <div><span className="eyebrow">{eyebrow}</span><h2 dangerouslySetInnerHTML={{__html:title}}/></div>
-          <div>
-            <p className="lead">{lead}</p>
-            <MagBtn className="btn btn-primary" to={to} style={{marginTop:26}}><span>Mehr erfahren</span></MagBtn>
-          </div>
+          <div><span className="eyebrow">Vertiefungen — 03 Seiten</span><h2>Mehr über <em>NILL.</em></h2></div>
         </div>
+        <Reveal stagger className="more-grid">
+          {MORE_PAGES.map(m => (
+            <article className="card more-card" id={m.id} key={m.id}>
+              <div>
+                <span className="eyebrow">{m.eyebrow}</span>
+                <h3 dangerouslySetInnerHTML={{__html:m.title}}/>
+                <p>{m.lead}</p>
+              </div>
+              <MagBtn className="btn btn-ghost" to={m.to}><span>Mehr erfahren</span></MagBtn>
+            </article>
+          ))}
+        </Reveal>
       </div>
     </section>
   );
@@ -811,7 +794,7 @@ function Teaser({ id, eyebrow, title, lead, to }) {
 function Stats() {
   const [ref, vis] = useReveal();
   return (
-    <section style={{padding:'40px 0 120px'}}>
+    <section style={{padding:'0 0 140px'}}>
       <div className="wrap">
         <div className={`stats stagger${vis?' in':''}`} ref={ref}>
           <div className="stat"><div className="num"><em>30</em><span>€</span></div><div className="label">Pro Monat · alle Mitarbeiter</div></div>
@@ -912,29 +895,9 @@ export default function LandingPage() {
       <ISSSection />
       <Ticker/>
       <Products onCTA={openModal}/>
-      <Teaser
-        id="wie"
-        eyebrow="Wie es arbeitet — 05 Schritte"
-        title='Ein Tag, von der <em>KI</em> geführt.'
-        lead="Von der ersten Mail um 07:48 bis zum neuen Dienstplan um 16:48 — sieh Schritt für Schritt, wie NILL einen kompletten Arbeitstag durch alle Module begleitet."
-        to="/wie-es-arbeitet"
-      />
       <Stats/>
       <Pricing onCTA={openModal}/>
-      <Teaser
-        id="app"
-        eyebrow="Progressive Web App · ohne App Store"
-        title='NILL als App. <em>Ohne Store.</em>'
-        lead="Direkt aus dem Browser installiert — auf iOS, Android, macOS und Windows. Offline-fähig, mit Push-Benachrichtigungen und ohne Update-Zwang."
-        to="/app"
-      />
-      <Teaser
-        id="nachhaltigkeit"
-        eyebrow="Nachhaltigkeit"
-        title='Intelligenz mit <em>Verantwortung.</em>'
-        lead="100 % Ökostrom in Frankfurt, kompensierte Drittanbieter und ein jährlicher Nachhaltigkeitsbericht. Wie NILL Effizienz und Klimaschutz zusammenbringt."
-        to="/nachhaltigkeit"
-      />
+      <MoreSection/>
       <FAQ/>
       <BigCTA onCTA={openModal}/>
 

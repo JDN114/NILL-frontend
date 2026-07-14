@@ -446,6 +446,50 @@ export default function EmailsPage() {
   const activeEmailRef = useRef(null);
   const searchTimeout  = useRef(null);
 
+  // ── Pull-to-refresh (nur mobile ≤768px; Desktop feuert keine Touch-Events) ──
+  // Direkte DOM-Writes statt State → kein Re-Render pro Touch-Move.
+  const listRef  = useRef(null);
+  const ptrRef   = useRef(null);
+  const pullRef  = useRef({ y0: 0, d: 0, active: false });
+  const PTR_TRIGGER = 58, PTR_MAX = 88;
+
+  const ptrApply = (d, animate) => {
+    const list = listRef.current, ptr = ptrRef.current;
+    if (!list || !ptr) return;
+    list.style.transition = animate ? "transform 0.2s ease" : "none";
+    list.style.transform  = d > 0 ? `translateY(${d}px)` : "";
+    ptr.style.opacity     = String(Math.min(1, d / PTR_TRIGGER));
+    ptr.style.transform   = `translateX(-50%) rotate(${Math.round(d * 3)}deg)`;
+  };
+  const onPtrStart = (e) => {
+    if (!window.matchMedia("(max-width: 768px)").matches) return;
+    if (loading || (listRef.current?.scrollTop ?? 1) > 0) return;
+    pullRef.current = { y0: e.touches[0].clientY, d: 0, active: true };
+  };
+  const onPtrMove = (e) => {
+    const p = pullRef.current;
+    if (!p.active) return;
+    if ((listRef.current?.scrollTop ?? 0) > 0) { p.active = false; ptrApply(0, true); return; }
+    const dy = e.touches[0].clientY - p.y0;
+    p.d = dy > 0 ? Math.min(PTR_MAX, dy * 0.45) : 0;
+    ptrApply(p.d, false);
+  };
+  const onPtrEnd = () => {
+    const p = pullRef.current;
+    if (!p.active) return;
+    p.active = false;
+    if (p.d >= PTR_TRIGGER) {
+      ptrApply(PTR_TRIGGER, true);
+      ptrRef.current?.parentElement?.classList.add("em-ptr--spin");
+      Promise.resolve(loadEmails()).finally(() => {
+        ptrRef.current?.parentElement?.classList.remove("em-ptr--spin");
+        ptrApply(0, true);
+      });
+    } else {
+      ptrApply(0, true);
+    }
+  };
+
   const mailboxRef      = useRef(mailbox);
   const activeFolderRef = useRef(activeFolder);
   const fetchEmailsRef  = useRef(fetchEmails);
@@ -888,8 +932,20 @@ export default function EmailsPage() {
             </p>
           )}
 
+          {/* Pull-to-refresh Indikator (mobile-only, display:none auf Desktop) */}
+          <div className="em-ptr" aria-hidden="true">
+            <div className="em-ptr-inner" ref={ptrRef}>{IC.refresh}</div>
+          </div>
+
           {/* Liste */}
-          <ul className="em-list">
+          <ul
+            className="em-list"
+            ref={listRef}
+            onTouchStart={onPtrStart}
+            onTouchMove={onPtrMove}
+            onTouchEnd={onPtrEnd}
+            onTouchCancel={onPtrEnd}
+          >
             {error && <li className="em-state em-state--error">{error}</li>}
             {!error && loading && emails.length === 0 && <li className="em-state"><Spinner sm /></li>}
             {!error && !loading && displayEmails.length === 0 && (

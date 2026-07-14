@@ -3,6 +3,7 @@ import api from "../../services/api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-dark.css"; // Custom Dark Theme
+import "./calendar.css"; // mobile (≤768px) bottom-sheet styles — no desktop rules
 
 export default function CreateEventModal({ open, onClose, onCreated, selectedDate }) {
   const [form, setForm] = useState({
@@ -44,12 +45,13 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="kal-sheet-wrap fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative z-10 bg-[#0f172a] p-6 rounded-2xl w-[420px] space-y-4 border border-white/10 shadow-xl">
+      <div className="kal-sheet relative z-10 bg-[#0f172a] p-6 rounded-2xl w-[420px] space-y-4 border border-white/10 shadow-xl">
+        <div className="kal-sheet-handle" aria-hidden="true" />
         <h2 className="text-lg font-semibold text-white">Neuer Termin</h2>
 
         {/* TITLE */}
@@ -77,7 +79,7 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
         />
 
         {/* ALL DAY */}
-        <label className="flex items-center gap-2 text-sm text-gray-300">
+        <label className="kal-check flex items-center gap-2 text-sm text-gray-300">
           <input
             type="checkbox"
             checked={form.all_day}
@@ -120,7 +122,7 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
         </div>
 
         {/* ACTIONS */}
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="kal-sheet-actions flex justify-end gap-2 pt-2">
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             Abbrechen
           </button>

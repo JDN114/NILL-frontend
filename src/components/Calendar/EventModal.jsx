@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import api from "../../services/api";
 import { useState, useEffect } from "react";
+import "./calendar.css"; // mobile (≤768px) bottom-sheet styles — no desktop rules
 
 export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
   const [loading, setLoading] = useState(false);
@@ -69,8 +70,18 @@ export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
   // RENDER
   // -------------------------
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <motion.div className="bg-[#0a1120] p-6 rounded-xl w-full max-w-md border border-white/10 shadow-xl">
+    <motion.div
+      className="kal-sheet-wrap fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={(e) => {
+        // Backdrop-tap closes the sheet — mobile only, desktop behavior unchanged
+        if (e.target === e.currentTarget && window.matchMedia("(max-width: 768px)").matches) {
+          onClose();
+        }
+      }}
+    >
+      <motion.div className="kal-sheet bg-[#0a1120] p-6 rounded-xl w-full max-w-md border border-white/10 shadow-xl">
+
+        <div className="kal-sheet-handle" aria-hidden="true" />
 
         <h2 className="text-xl font-bold text-white mb-4">
           Termin bearbeiten
@@ -107,7 +118,7 @@ export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
         />
 
         {/* ACTIONS */}
-        <div className="flex justify-between gap-2">
+        <div className="kal-sheet-actions flex justify-between gap-2">
           <button
             onClick={handleDelete}
             className="bg-red-500/90 px-3 py-2 rounded text-white hover:bg-red-500 transition"
@@ -115,7 +126,7 @@ export default function EventModal({ event, onClose, onUpdated, onDeleted }) {
             Löschen
           </button>
 
-          <div className="flex gap-2">
+          <div className="kal-sheet-actions-main flex gap-2">
             <button
               onClick={onClose}
               className="bg-gray-600 px-3 py-2 rounded text-white hover:bg-gray-500 transition"

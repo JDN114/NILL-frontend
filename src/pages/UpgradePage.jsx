@@ -5,6 +5,35 @@ import api from "../services/api";
 import { useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 
+/* Mobile-only polish — every rule sits inside the media query, desktop is
+   untouched. Big touch targets, :active feedback, native density. */
+const UP_MOBILE_CSS = `
+  @media (max-width: 768px) {
+    .up-wrap {
+      min-height: 0 !important;
+      align-items: flex-start !important;
+      padding-top: 8vh;
+    }
+    .up-title {
+      font-family: 'Fraunces', Georgia, serif !important;
+      font-weight: 400 !important;
+      font-size: 1.5rem !important;
+      letter-spacing: -0.02em;
+    }
+    .up-panel { padding: 18px 16px !important; }
+    .up-cta, .up-back {
+      min-height: 52px;
+      font-size: 16px !important;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.12s, opacity 0.15s;
+    }
+    .up-cta:active, .up-back:active { transform: scale(0.98); }
+  }
+`;
+
 const MODULE_LABELS = {
   accounting: "Buchhaltung",
   calendar:   "Kalender",
@@ -78,7 +107,8 @@ export default function UpgradePage() {
 
   return (
     <PageLayout>
-      <div className="min-h-[70vh] flex items-center justify-center">
+      <style>{UP_MOBILE_CSS}</style>
+      <div className="up-wrap min-h-[70vh] flex items-center justify-center">
         <div className="max-w-md w-full space-y-8 text-center">
 
           {/* Lock icon */}
@@ -93,7 +123,7 @@ export default function UpgradePage() {
 
           {/* Heading */}
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="up-title text-2xl font-bold text-white">
               Kein Zugriff auf {blockedLabel}
             </h1>
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -118,7 +148,7 @@ export default function UpgradePage() {
 
             {/* Upgrade CTA — nur Company Admin + upgradefähiger Plan + module-block */}
             {canUpgrade && reason === "module" && (
-              <div className="bg-gray-800/60 border border-gray-700 rounded-2xl p-5 text-left space-y-3">
+              <div className="up-panel bg-gray-800/60 border border-gray-700 rounded-2xl p-5 text-left space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500 uppercase tracking-widest">Nächster Plan</span>
                   <span className="text-xs font-semibold text-white bg-white/10 px-2 py-0.5 rounded-full">
@@ -129,7 +159,7 @@ export default function UpgradePage() {
                 <button
                   onClick={handlePortal}
                   disabled={loading}
-                  className="w-full py-2.5 rounded-xl font-medium bg-white text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 text-sm"
+                  className="up-cta w-full py-2.5 rounded-xl font-medium bg-white text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 text-sm"
                 >
                   {loading ? "Wird geladen…" : `Auf ${planInfo.next} upgraden →`}
                 </button>
@@ -138,7 +168,7 @@ export default function UpgradePage() {
 
             {/* Feature-block: Hinweis an Admin */}
             {reason === "feature" && (
-              <div className="bg-gray-800/60 border border-gray-700 rounded-2xl p-5 text-left">
+              <div className="up-panel bg-gray-800/60 border border-gray-700 rounded-2xl p-5 text-left">
                 <p className="text-sm text-gray-400">
                   Berechtigungen werden von deinem Company Admin in{" "}
                   <span className="text-white">Workflow → Team → Rollen</span> vergeben.
@@ -151,7 +181,7 @@ export default function UpgradePage() {
             {/* Zurück — immer funktionierend */}
             <button
               onClick={() => navigate(backTarget)}
-              className="w-full py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition text-sm"
+              className="up-back w-full py-2.5 rounded-xl font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition text-sm"
             >
               ← Zurück zum Dashboard
             </button>

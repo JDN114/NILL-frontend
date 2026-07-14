@@ -15,6 +15,93 @@ const DOC_ICONS  = ["📝","📊","🌡️","⚡","💧","🔬","📐","🗒️"
 const inputCls = "w-full px-3 py-2 bg-[rgba(var(--tint),0.04)] border border-[rgba(var(--tint),0.07)] rounded-lg text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[rgba(197,165,114,0.4)] transition-all";
 const labelCls = "block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1";
 
+// ── Mobile-only styles ────────────────────────────────────────────────
+// Every rule lives inside @media (max-width:768px); the dn-* classes are
+// inert on desktop, so desktop rendering stays byte-identical.
+const DN_MOBILE_CSS = `
+@media (max-width: 768px) {
+  /* Content must clear the fixed upload CTA above the 62px bottom tab bar */
+  .dn-root--cta { padding-bottom: 84px; }
+
+  /* Header: stacked, calm; primary action → floating bottom CTA */
+  .dn-head { flex-direction: column; align-items: stretch !important; gap: 10px; margin-bottom: 1rem !important; }
+  .dn-head h1 { font-size: 1.45rem !important; }
+  .dn-head p { font-size: 0.78rem !important; }
+  .dn-upload {
+    position: fixed; left: 16px; right: 16px;
+    bottom: calc(62px + env(safe-area-inset-bottom, 0) + 12px);
+    z-index: 60; justify-content: center; min-height: 52px;
+    border-radius: 26px !important;
+    box-shadow: 0 6px 20px rgba(197,165,114,0.35), 0 2px 8px rgba(0,0,0,0.35);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+    transition: transform 0.12s;
+  }
+  .dn-upload:active { transform: scale(0.98); }
+
+  /* Tabs & status filter → horizontal scrollable chip rows, ≥44px targets */
+  .dn-tabs, .dn-filter { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap !important; }
+  .dn-tabs::-webkit-scrollbar, .dn-filter::-webkit-scrollbar { display: none; }
+  .dn-tabs button, .dn-filter button {
+    flex-shrink: 0; min-height: 44px; padding: 0.55rem 1.05rem !important; white-space: nowrap;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .dn-filter button { font-size: 0.8rem !important; }
+
+  /* Lieferschein-Karten: gestapelt, Aktionen als eigene Zeile, :active statt hover */
+  .dn-note { padding: 0.9rem !important; }
+  .dn-note:active { background: rgba(var(--tint),0.06) !important; }
+  .dn-note-top { flex-direction: column; gap: 0.75rem !important; }
+  .dn-note-actions { width: 100%; justify-content: flex-end; }
+  .dn-note-actions button { min-height: 44px; padding: 0.55rem 1rem !important; }
+
+  /* Inventar/Dokumente: Sidebar + Inhalt → eine Spalte, ein Dokument-Scroll */
+  .dn-split { flex-direction: column; height: auto !important; }
+  .dn-side { width: 100% !important; }
+  /* Hover-only Aktionen sind auf Touch unerreichbar → immer sichtbar */
+  .dn-reveal { opacity: 1 !important; }
+
+  /* Artikel: 12-Spalten-Grid → Karte (Name · Stepper · Meta) */
+  .dn-itemhead { display: none !important; }
+  .dn-item { display: flex !important; flex-wrap: wrap; gap: 0.5rem 0.9rem !important; padding: 0.85rem !important; }
+  .dn-i-name { flex: 1 1 100%; }
+  .dn-i-qty { flex: 0 0 auto; justify-content: flex-start !important; }
+  .dn-i-qty button {
+    width: 40px !important; height: 40px !important; font-size: 1.1rem !important; border-radius: 10px !important;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+  }
+  .dn-i-qty button:active { background: rgba(var(--tint),0.14) !important; }
+  .dn-i-cat, .dn-i-loc { flex: 0 1 auto; align-self: center; }
+  .dn-i-meta { flex: 1 1 100%; }
+
+  /* Doku-Tabelle scrollt in ihrem eigenen Container, nie die Seite */
+  .dn-doctable { -webkit-overflow-scrolling: touch; }
+
+  /* Modals → Bottom Sheets mit Griff, interner Scroll, Safe-Area */
+  .dn-modal-wrap { align-items: flex-end !important; padding: 0 !important; }
+  .dn-modal {
+    max-width: none !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 85dvh !important;
+    border-left: none !important; border-right: none !important; border-bottom: none !important;
+    animation: dnSheetUp 0.15s ease;
+  }
+  .dn-modal::before {
+    content: ""; display: block; width: 35px; height: 4px; border-radius: 99px;
+    background: rgba(var(--ink-tint), 0.28); margin: 10px auto 0; flex-shrink: 0;
+  }
+  .dn-modal-body { padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0)) !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .dn-modal input:not([type="checkbox"]):not([type="color"]):not([type="file"]),
+  .dn-modal select, .dn-modal textarea { font-size: 16px !important; min-height: 44px; }
+  .dn-modal button { min-height: 44px; }
+  @keyframes dnSheetUp {
+    from { transform: translateY(24px); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}
+`;
+
 function fmtUser(name) {
   // Receives a display name from the backend (never an email). Falls back
   // gracefully and strips any domain if a legacy email slips through.
@@ -30,13 +117,13 @@ function fmtDate(d) {
 function Modal({ open, onClose, title, children, maxWidth="max-w-xl" }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className={`bg-[#0d1628] border border-[rgba(var(--tint),0.1)] rounded-xl w-full ${maxWidth} max-h-[90vh] flex flex-col shadow-2xl`} onClick={e=>e.stopPropagation()}>
+    <div className="dn-modal-wrap fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className={`dn-modal bg-[#0d1628] border border-[rgba(var(--tint),0.1)] rounded-xl w-full ${maxWidth} max-h-[90vh] flex flex-col shadow-2xl`} onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(var(--tint),0.07)] flex-shrink-0">
           <h2 className="text-white font-bold text-base">{title}</h2>
           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">✕</button>
         </div>
-        <div className="overflow-y-auto flex-1 px-6 py-4">{children}</div>
+        <div className="dn-modal-body overflow-y-auto flex-1 px-6 py-4">{children}</div>
       </div>
     </div>
   );
@@ -180,9 +267,9 @@ function InventoryTab() {
   }
 
   return (
-    <div className="flex gap-4 h-full">
+    <div className="dn-split flex gap-4 h-full">
       {/* Listen-Sidebar */}
-      <div className="w-56 flex-shrink-0 space-y-2">
+      <div className="dn-side w-56 flex-shrink-0 space-y-2">
         <button onClick={() => { setListForm({name:"",description:"",icon:"📦",color:"#C5A572"}); setListModal("new"); }}
           className="w-full px-3 py-2 text-sm font-semibold bg-[#C5A572] hover:opacity-90 text-black rounded-lg mb-3">
           + Neue Liste
@@ -197,7 +284,7 @@ function InventoryTab() {
                 <span className="text-sm text-white font-medium truncate">{list.name}</span>
               </div>
               <button onClick={e=>{e.stopPropagation(); setListForm({name:list.name,description:list.description||"",icon:list.icon,color:list.color}); setListModal(list);}}
-                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-[#C5A572] text-xs transition-all">✏️</button>
+                className="dn-reveal opacity-0 group-hover:opacity-100 text-slate-600 hover:text-[#C5A572] text-xs transition-all">✏️</button>
             </div>
             <p className="text-[10px] text-slate-600 mt-1">{list.item_count||0} Artikel</p>
             {list.updated_by_name && (
@@ -246,7 +333,7 @@ function InventoryTab() {
             ) : (
               <div className="space-y-2">
                 {/* Header */}
-                <div className="grid grid-cols-12 gap-2 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                <div className="dn-itemhead grid grid-cols-12 gap-2 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">
                   <div className="col-span-4">Artikel</div>
                   <div className="col-span-2 text-center">Bestand</div>
                   <div className="col-span-2">Kategorie</div>
@@ -254,26 +341,26 @@ function InventoryTab() {
                   <div className="col-span-2">Zuletzt geändert</div>
                 </div>
                 {items.map(item => (
-                  <div key={item.id} className={`grid grid-cols-12 gap-2 items-center p-3 rounded-xl border transition-all group ${parseFloat(item.quantity)<=parseFloat(item.min_quantity||0)&&item.min_quantity>0 ? "border-red-500/20 bg-red-500/5" : "border-[rgba(var(--tint),0.07)] bg-[rgba(var(--tint),0.03)] hover:bg-[rgba(var(--tint),0.05)]"}`}>
-                    <div className="col-span-4">
+                  <div key={item.id} className={`dn-item grid grid-cols-12 gap-2 items-center p-3 rounded-xl border transition-all group ${parseFloat(item.quantity)<=parseFloat(item.min_quantity||0)&&item.min_quantity>0 ? "border-red-500/20 bg-red-500/5" : "border-[rgba(var(--tint),0.07)] bg-[rgba(var(--tint),0.03)] hover:bg-[rgba(var(--tint),0.05)]"}`}>
+                    <div className="dn-i-name col-span-4">
                       <p className="text-white text-sm font-medium">{item.name}</p>
                       {item.sku && <p className="text-slate-600 text-[10px]">SKU: {item.sku}</p>}
                     </div>
-                    <div className="col-span-2 flex items-center justify-center gap-1">
+                    <div className="dn-i-qty col-span-2 flex items-center justify-center gap-1">
                       <button onClick={()=>updateQty(item,-1)} className="w-6 h-6 rounded bg-[rgba(var(--tint),0.06)] hover:bg-[rgba(var(--tint),0.12)] text-slate-300 text-sm leading-none">−</button>
                       <span className={`text-sm font-bold mx-1 min-w-[40px] text-center ${parseFloat(item.quantity)<=parseFloat(item.min_quantity||0)&&item.min_quantity>0?"text-red-400":"text-white"}`}>
                         {parseFloat(item.quantity).toLocaleString("de-DE")} <span className="text-slate-500 font-normal text-xs">{item.unit}</span>
                       </span>
                       <button onClick={()=>updateQty(item,1)} className="w-6 h-6 rounded bg-[rgba(var(--tint),0.06)] hover:bg-[rgba(var(--tint),0.12)] text-slate-300 text-sm leading-none">+</button>
                     </div>
-                    <div className="col-span-2 text-slate-500 text-xs">{item.category||"—"}</div>
-                    <div className="col-span-2 text-slate-500 text-xs">{item.location||"—"}</div>
-                    <div className="col-span-2 flex items-center justify-between">
+                    <div className="dn-i-cat col-span-2 text-slate-500 text-xs">{item.category||"—"}</div>
+                    <div className="dn-i-loc col-span-2 text-slate-500 text-xs">{item.location||"—"}</div>
+                    <div className="dn-i-meta col-span-2 flex items-center justify-between">
                       <div>
                         {item.updated_by_name && <p className="text-[10px] text-slate-600">{fmtUser(item.updated_by_name)}</p>}
                         {item.updated_at && <p className="text-[10px] text-slate-700">{fmtDate(item.updated_at)}</p>}
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="dn-reveal flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                         <button onClick={()=>{ setItemForm({name:item.name,unit:item.unit,quantity:item.quantity,min_quantity:item.min_quantity||0,category:item.category||"",location:item.location||"",price_per_unit:item.price_per_unit||"",notes:item.notes||""}); setItemModal(item); }}
                           className="text-slate-600 hover:text-[#C5A572] text-xs">✏️</button>
                         <button onClick={()=>deleteItem(item.id)} className="text-slate-600 hover:text-red-400 text-xs">✕</button>
@@ -428,9 +515,9 @@ function DocListsTab() {
   }
 
   return (
-    <div className="flex gap-4">
+    <div className="dn-split flex gap-4">
       {/* Listen-Sidebar */}
-      <div className="w-56 flex-shrink-0 space-y-2">
+      <div className="dn-side w-56 flex-shrink-0 space-y-2">
         <button onClick={()=>{ setListForm({name:"",description:"",icon:"📝",color:"#3b82f6",columns:[]}); setListModal("new"); }}
           className="w-full px-3 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-3">
           + Neue Dokumentliste
@@ -444,7 +531,7 @@ function DocListsTab() {
                 <span className="text-sm text-white font-medium truncate">{list.name}</span>
               </div>
               <button onClick={e=>{e.stopPropagation(); setListForm({name:list.name,description:list.description||"",icon:list.icon,color:list.color,columns:list.columns||[]}); setListModal(list);}}
-                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-blue-400 text-xs">✏️</button>
+                className="dn-reveal opacity-0 group-hover:opacity-100 text-slate-600 hover:text-blue-400 text-xs">✏️</button>
             </div>
             <p className="text-[10px] text-slate-600 mt-1">{list.entry_count||0} Einträge</p>
             {list.updated_by_name && <p className="text-[10px] text-slate-700">{fmtUser(list.updated_by_name)}</p>}
@@ -482,7 +569,7 @@ function DocListsTab() {
                 Noch keine Einträge
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="dn-doctable overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[rgba(var(--tint),0.07)]">
@@ -670,14 +757,16 @@ export default function DeliveryNotesPage() {
 
   return (
     <PageLayout>
-      <div className="flex items-center justify-between mb-6">
+      <style>{DN_MOBILE_CSS}</style>
+      <div className={tab==="notes" ? "dn-root dn-root--cta" : "dn-root"}>
+      <div className="dn-head flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Lieferscheine & Inventar</h1>
           <p className="text-slate-500 text-sm mt-1">KI-gestützte Lieferscheinerkennung, Bestandsverwaltung & Dokumentation</p>
         </div>
         {tab==="notes" && (
           <button onClick={()=>fileRef.current?.click()} disabled={analyzing}
-            className="px-4 py-2 text-sm font-semibold bg-[#C5A572] hover:opacity-90 disabled:opacity-50 text-black rounded-lg flex items-center gap-2">
+            className="dn-upload px-4 py-2 text-sm font-semibold bg-[#C5A572] hover:opacity-90 disabled:opacity-50 text-black rounded-lg flex items-center gap-2">
             {analyzing ? <><span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"/>Analysiere...</> : "📷 Foto hochladen"}
           </button>
         )}
@@ -687,7 +776,7 @@ export default function DeliveryNotesPage() {
       {error && <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">{error}</div>}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="dn-tabs flex gap-2 mb-6">
         {TABS.map(t => (
           <button key={t.key} onClick={()=>setTab(t.key)}
             className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${tab===t.key ? "bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]" : "bg-[rgba(var(--tint),0.03)] border-[rgba(var(--tint),0.07)] text-slate-500 hover:text-slate-300"}`}>
@@ -705,7 +794,7 @@ export default function DeliveryNotesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex gap-2">
+            <div className="dn-filter flex gap-2">
               {["","pending","confirmed","rejected"].map(s => (
                 <button key={s} onClick={()=>setStatusFilter(s)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${statusFilter===s?"bg-[rgba(197,165,114,0.15)] border-[rgba(197,165,114,0.4)] text-[#C5A572]":"bg-[rgba(var(--tint),0.03)] border-[rgba(var(--tint),0.07)] text-slate-500 hover:text-slate-300"}`}>
@@ -723,8 +812,8 @@ export default function DeliveryNotesPage() {
             ) : (
               <div className="space-y-3">
                 {notes.map(note => (
-                  <div key={note.id} className="bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-xl p-4 hover:bg-[rgba(var(--tint),0.05)] transition-all">
-                    <div className="flex items-start justify-between gap-4">
+                  <div key={note.id} className="dn-note bg-[rgba(var(--tint),0.03)] border border-[rgba(var(--tint),0.07)] rounded-xl p-4 hover:bg-[rgba(var(--tint),0.05)] transition-all">
+                    <div className="dn-note-top flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
                         <span className="text-2xl">{note.source==="photo"?"📷":"✉️"}</span>
                         <div className="min-w-0">
@@ -750,7 +839,7 @@ export default function DeliveryNotesPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="dn-note-actions flex items-center gap-2 flex-shrink-0">
                         <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${statusColor[note.status]}`}>
                           {statusLabel[note.status]}
                         </span>
@@ -776,6 +865,7 @@ export default function DeliveryNotesPage() {
 
       <ConfirmModal note={confirmNote} inventoryItems={inventoryItems}
         onConfirm={handleConfirm} onReject={handleReject} onClose={()=>setConfirmNote(null)}/>
+      </div>
     </PageLayout>
   );
 }

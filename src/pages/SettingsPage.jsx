@@ -217,6 +217,7 @@ function Toggle({ on, onChange, label, description }) {
         {description && <div style={{ fontSize: "0.75rem", color: dim, marginTop: 2 }}>{description}</div>}
       </div>
       <button
+        className="sp-toggle"
         onClick={() => onChange(!on)}
         style={{
           width: 44, height: 24, borderRadius: 99, border: "none",
@@ -408,14 +409,14 @@ function KontaktModal({ onClose }) {
   }
 
   return (
-    <div style={{
+    <div className="sp-sheet-backdrop" style={{
       position: "fixed", inset: 0, zIndex: 100,
       background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem",
     }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{
+      <div className="sp-sheet" style={{
         background: "#0a0a12", border: `1px solid ${border}`,
         borderRadius: 18, padding: "1.75rem",
         width: "100%", maxWidth: 480,
@@ -647,6 +648,13 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("tab") ?? "konto";
+  });
+  // Mobile two-level drill-down (≤700px only — desktop ignores this entirely):
+  // "root" shows the grouped settings list, "section" shows the active tab.
+  // Deep links with ?tab= open straight into the section.
+  const [mobileNav, setMobileNav] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") ? "section" : "root";
   });
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showImapModal,    setShowImapModal]     = useState(false);
@@ -1285,6 +1293,7 @@ export default function SettingsPage() {
   // its panel (if it exposes an id anchor).
   const goToSetting = (entry) => {
     setActiveTab(entry.tab);
+    setMobileNav("section");   // on mobile, jump from the root list into the section
     setSearch("");
     setSearchFocus(false);
     if (entry.anchor) {
@@ -1301,14 +1310,32 @@ export default function SettingsPage() {
     }
   };
 
+  // ── Mobile drill-down helpers (≤700px) ────────────────────────────────────
+  const openMobileTab = (id) => {
+    setActiveTab(id);
+    setMobileNav("section");
+    window.scrollTo({ top: 0 });
+  };
+  const backToMobileRoot = () => {
+    setMobileNav("root");
+    window.scrollTo({ top: 0 });
+  };
+  // iOS-Settings-style grouping of the (already permission-filtered) TABS.
+  const MOBILE_GROUPS = [
+    { label: "Persönlich",    ids: ["konto", "sicherheit", "benachrichtigungen", "ausweis"] },
+    { label: "Arbeitsbereich", ids: ["unternehmen", "team", "integrationen", "abonnement", "email_vorlagen", "station_guide"] },
+    { label: "System",        ids: ["nutzung", "hilfe"] },
+  ].map(g => ({ ...g, items: g.ids.map(id => TABS.find(t => t.id === id)).filter(Boolean) }))
+   .filter(g => g.items.length > 0);
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <PageLayout noScrollMobileOnly>
+    <PageLayout>
       <style>{`
         /* Desktop: the page scrolls normally with the document; the sidebar
            sticks alongside so the tab strip stays in view while you scroll.
-           On mobile we switch to a fixed shell where only the content pane
-           scrolls (keeps the bottom tab bar / nav stable) — see @media below. */
+           On mobile (≤700px) the sidebar disappears and the page becomes an
+           iOS-Settings-style two-level drill-down — see @media below. */
         .sp-layout { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; }
         .sp-header { margin-bottom: 1.5rem; }
         /* Brief highlight ring when the search jumps to a setting. */
@@ -1329,49 +1356,138 @@ export default function SettingsPage() {
           padding: 0.1rem 0.1rem 1.5rem;
         }
 
-        /* Mobile: fixed shell — sidebar becomes a horizontal pill tab strip and
-           only the content pane below it scrolls. */
+        /* Mobile-only drill-down elements — never rendered visually on desktop. */
+        .sp-m-root, .sp-m-secbar { display: none; }
+
+        /* ── Mobile (≤700px): native two-level drill-down ──────────────────
+           The page scrolls naturally with the document (no fixed shell).
+           Level 1 (root): grouped, tappable rows — icon · label · chevron —
+           like the iOS Settings app. Level 2 (section): the tab content,
+           full-width, behind a sticky back bar. */
         @media (max-width: 700px) {
-          .sp-layout { gap: 0; height: 100%; min-height: 0; }
-          .sp-header { margin-bottom: 0.6rem; flex-shrink: 0; }
-          .sp-header h1 { font-size: clamp(1.15rem, 5vw, 1.4rem) !important; }
+          .sp-layout { gap: 0; min-width: 0; }
+          .sp-header { margin-bottom: 1rem; }
+          .sp-header h1 {
+            font-family: "Fraunces", Georgia, serif;
+            font-weight: 500 !important;
+            font-size: clamp(1.5rem, 7vw, 1.9rem) !important;
+          }
           .sp-header-breadcrumb { display: none; }
           .sp-header-sub { display: none; }
-          .sp-body { flex-direction: column; gap: 0; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
-          .sp-sidebar {
-            position: static;
-            width: 100%; max-height: none;
-            flex-direction: row; flex-shrink: 0;
-            overflow-x: auto; overflow-y: hidden;
-            padding-bottom: 0.5rem; margin-bottom: 0.6rem;
-            gap: 6px;
+          .sp-header input { font-size: 16px !important; min-height: 44px; }
+          .sp-header button { min-height: 44px; }
+
+          .sp-body { display: block; min-width: 0; }
+          .sp-sidebar, .sp-sidebar-divider { display: none; }
+
+          /* Level 1 — root list */
+          .sp-mobile-root .sp-content { display: none; }
+          .sp-mobile-section .sp-m-root { display: none; }
+          .sp-m-root { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 0.5rem; }
+          .sp-m-group-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: rgba(var(--ink-tint), 0.45); padding: 0 4px 7px;
           }
-          .sp-sidebar-btn {
-            flex-shrink: 0 !important;
-            border-left: none !important;
-            border-bottom: none !important;
-            border-radius: 99px !important;
-            white-space: nowrap;
-            padding: 0.4rem 0.8rem !important;
-            font-size: 0.74rem !important;
+          .sp-m-group-card {
+            background: rgba(var(--tint), 0.03);
+            border: 1px solid rgba(var(--ink-tint), 0.07);
+            border-radius: 14px; overflow: hidden;
           }
-          .sp-sidebar-btn span { display: none; }
-          .sp-sidebar-divider { display: none; }
+          .sp-m-row {
+            display: flex; align-items: center; gap: 13px;
+            width: 100%; min-height: 56px; padding: 0 14px;
+            background: transparent; border: none;
+            border-bottom: 1px solid rgba(var(--ink-tint), 0.06);
+            color: var(--nill-text, #efede7); text-align: left; cursor: pointer;
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+            user-select: none; -webkit-user-select: none;
+            transition: background 0.12s;
+          }
+          .sp-m-row:last-child { border-bottom: none; }
+          .sp-m-row:active { background: rgba(var(--tint), 0.07); }
+          .sp-m-row-icon {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(197,165,114,0.1); border: 1px solid rgba(197,165,114,0.18);
+            color: var(--nill-gold, #c5a572);
+          }
+          .sp-m-row-label { flex: 1; min-width: 0; font-size: 0.95rem; font-weight: 600; }
+          .sp-m-row-chevron { color: rgba(var(--ink-tint), 0.3); font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
+
+          /* Level 2 — section view: big header yields to a sticky back bar
+             (flush under the 64px navbar via the negative bleed margin). */
+          .sp-mobile-section .sp-header { display: none; }
+          .sp-mobile-section .sp-m-secbar {
+            display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
+            position: sticky; top: 64px; z-index: 30;
+            width: calc(100% + 2rem); max-width: none;
+            margin: -1rem -1rem 0; padding: 0.35rem 0.6rem;
+            background: var(--bg-main, #0a0e1a);
+            border-bottom: 1px solid rgba(var(--ink-tint), 0.07);
+          }
+          .sp-m-back {
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+            background: transparent; border: none; border-radius: 12px;
+            color: var(--nill-gold, #c5a572); cursor: pointer;
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+            user-select: none; -webkit-user-select: none;
+          }
+          .sp-m-back:active { background: rgba(var(--tint), 0.07); }
+          .sp-m-sectitle {
+            font-family: "Fraunces", Georgia, serif; font-size: 1.05rem; font-weight: 600;
+            color: var(--nill-text, #efede7); text-align: center;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          }
+
           .sp-content {
-            gap: 0.75rem; flex: 1; min-height: 0; padding: 0.1rem 0.1rem 1rem;
-            /* width:100% + min-width:0 stop the content pane from being inflated
-               past the viewport by a wide child (e.g. the min-width:480 member
-               table) — which the fixed mobile shell would then clip off-screen
-               with no way to scroll to it. */
+            gap: 0.85rem;
             width: 100%; max-width: 100%; min-width: 0;
-            overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-            scrollbar-width: thin; scrollbar-color: rgba(var(--tint),0.08) transparent;
+            padding: 0.1rem 0 1rem;
           }
           /* Cards/panels are flex items of .sp-content; without min-width:0 they
              inherit min-width:auto (= their content's min size) and refuse to
              shrink, pushing everything off the right edge. */
           .sp-content > * { min-width: 0; max-width: 100%; }
+
+          /* Touch ergonomics: 16px inputs (no iOS focus zoom), ≥44px targets,
+             active-state feedback instead of hover. */
+          .sp-content input:not([type="checkbox"]):not([type="radio"]),
+          .sp-content select,
+          .sp-content textarea { font-size: 16px !important; min-height: 44px; }
+          .sp-content button:not(.sp-toggle) { min-height: 44px; }
+          .sp-content button:active { opacity: 0.75; }
+
+          /* Modals become bottom sheets: pinned to the bottom edge, drag-handle
+             pill, internal scroll, safe-area padding. */
+          .sp-sheet-backdrop { align-items: flex-end !important; padding: 0 !important; }
+          .sp-sheet {
+            width: 100% !important; max-width: none !important; margin: 0 !important;
+            border-radius: 16px 16px 0 0 !important;
+            border-left: none !important; border-right: none !important; border-bottom: none !important;
+            max-height: 85dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0)) !important;
+            box-shadow: 0 -18px 60px rgba(0,0,0,0.55) !important;
+            animation: spSheetUp 0.15s ease;
+          }
+          .sp-sheet::before {
+            content: ""; display: block; width: 35px; height: 4px; border-radius: 99px;
+            background: rgba(var(--ink-tint), 0.28); margin: 0 auto 0.9rem; flex-shrink: 0;
+          }
+          .sp-sheet button { min-height: 44px; }
+          .sp-sheet input:not([type="checkbox"]):not([type="radio"]),
+          .sp-sheet select,
+          .sp-sheet textarea { font-size: 16px !important; min-height: 44px; }
+          @keyframes spSheetUp {
+            from { transform: translateY(24px); opacity: 0.6; }
+            to   { transform: translateY(0);    opacity: 1; }
+          }
+        }
+
+        @media (max-width: 420px) {
+          .sp-header h1 { font-size: clamp(1.35rem, 7.5vw, 1.6rem) !important; }
+          .sp-m-root { gap: 1.05rem; }
+          .sp-m-row { min-height: 54px; padding: 0 12px; gap: 11px; }
+          .sp-m-row-label { font-size: 0.92rem; }
         }
 
         /* Compact settings rows on mobile */
@@ -1384,7 +1500,7 @@ export default function SettingsPage() {
         }
       `}</style>
 
-      <div className="sp-layout">
+      <div className={`sp-layout ${mobileNav === "root" ? "sp-mobile-root" : "sp-mobile-section"}`}>
 
         {/* Page Header */}
         <div className="sp-header">
@@ -1471,6 +1587,34 @@ export default function SettingsPage() {
 
         <div className="sp-body">
 
+          {/* ── Mobile root list (≤700px only, display:none on desktop):
+                 iOS-Settings-style grouped rows that drill into each section. */}
+          <nav className="sp-m-root" aria-label="Einstellungs-Bereiche">
+            {MOBILE_GROUPS.map(g => (
+              <div key={g.label} className="sp-m-group">
+                <div className="sp-m-group-label">{g.label}</div>
+                <div className="sp-m-group-card">
+                  {g.items.map(t => (
+                    <button key={t.id} type="button" className="sp-m-row" onClick={() => openMobileTab(t.id)}>
+                      <span className="sp-m-row-icon">{t.icon}</span>
+                      <span className="sp-m-row-label">{t.label}</span>
+                      <span className="sp-m-row-chevron" aria-hidden="true">›</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="sp-m-group">
+              <div className="sp-m-group-card">
+                <button type="button" className="sp-m-row" onClick={() => setShowKontakt(true)}>
+                  <span className="sp-m-row-icon">{svgContact}</span>
+                  <span className="sp-m-row-label">Kontakt & Support</span>
+                  <span className="sp-m-row-chevron" aria-hidden="true">›</span>
+                </button>
+              </div>
+            </div>
+          </nav>
+
           {/* ── Sidebar / Tab Strip ─────────────────────────────────────── */}
           <nav className="sp-sidebar">
             {TABS.map(tab => {
@@ -1526,6 +1670,19 @@ export default function SettingsPage() {
 
           {/* ── Content ──────────────────────────────────────────────────── */}
           <div className="sp-content">
+
+            {/* Mobile section bar (≤700px only, display:none on desktop):
+                back to the root list · current section title. */}
+            <div className="sp-m-secbar">
+              <button type="button" className="sp-m-back" onClick={backToMobileRoot} aria-label="Zurück zu Einstellungen">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <span className="sp-m-sectitle">{tabLabelOf(activeTab)}</span>
+              <span aria-hidden="true" />
+            </div>
 
             {/* ══ KONTO ══════════════════════════════════════════════════ */}
             {activeTab === "konto" && (
@@ -3227,14 +3384,14 @@ export default function SettingsPage() {
 
       {/* ══ Provider-Picker-Modal ══════════════════════════════════════════ */}
       {showProviderModal && (
-        <div style={{
+        <div className="sp-sheet-backdrop" style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)",
           backdropFilter: "blur(4px)", display: "flex", alignItems: "center",
           justifyContent: "center", zIndex: 50, padding: "1rem",
         }}
           onClick={e => { if (e.target === e.currentTarget) setShowProviderModal(false); }}
         >
-          <div style={{
+          <div className="sp-sheet" style={{
             background: "#0a0a12", border: `1px solid ${border}`,
             borderRadius: 18, padding: "1.75rem",
             width: "100%", maxWidth: 420,

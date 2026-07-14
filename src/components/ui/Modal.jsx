@@ -38,14 +38,16 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
   if (!open) return null;
 
   return (
+    // nill-sheet-wrap / nill-sheet: auf Mobile (≤768px) wird jedes Modal zum
+    // Bottom-Sheet (index.css); auf Desktop sind die Klassen wirkungslos.
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="nill-sheet-wrap fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       role="dialog" aria-modal="true" aria-labelledby="modal-title"
       onClick={onClose}
     >
       <div
         ref={modalRef}
-        className={`bg-gray-900 border border-white/10 rounded-xl w-full ${maxWidth} relative shadow-2xl flex flex-col`}
+        className={`nill-sheet bg-gray-900 border border-white/10 rounded-xl w-full ${maxWidth} relative shadow-2xl flex flex-col`}
         style={{ maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
@@ -66,7 +68,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
         </div>
 
         {/* Scrollbarer Inhalt */}
-        <div className="overflow-y-auto flex-1 px-6 py-4">
+        <div className="nill-sheet-body overflow-y-auto flex-1 px-6 py-4">
           {children}
         </div>
       </div>

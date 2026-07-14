@@ -74,9 +74,50 @@ const MODULES = [
 export default function WorkflowLanding() {
   return (
     <PageLayout>
+      <style>{`
+        /* Mobile-only overhaul — desktop rendering stays byte-identical.
+           Mirrors the DashboardLanding mobile card anatomy:
+           icon left · title + one-line desc · chevron right. */
+        @media (max-width: 768px) {
+          .wl-head { margin-bottom: 1.25rem !important; }
+          .wl-head h1 { font-size: 1.45rem !important; }
+          .wl-head p { font-size: 0.78rem !important; }
+
+          .wl-grid { grid-template-columns: 1fr !important; gap: 0.6rem !important; }
+          .wl-card {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.9rem !important;
+            padding: 0.95rem 1rem !important;
+            min-height: 64px;
+            border-radius: 14px !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            transform: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background 0.12s !important;
+          }
+          .wl-card:active { background: rgba(var(--tint),0.06) !important; }
+          .wl-card-icon { width: 40px !important; height: 40px !important; }
+          .wl-card-text { flex: 1; min-width: 0; }
+          .wl-card-text span:last-child {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: block;
+          }
+          .wl-card-arrow { margin-top: 0 !important; flex-shrink: 0; }
+        }
+        @media (max-width: 420px) {
+          .wl-card { padding: 0.85rem 0.9rem !important; gap: 0.75rem !important; }
+          .wl-card-icon { width: 36px !important; height: 36px !important; }
+        }
+      `}</style>
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div style={{ marginBottom: "2rem" }}>
+      <div className="wl-head" style={{ marginBottom: "2rem" }}>
         <span style={{
           fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
           textTransform: "uppercase", color: "var(--nill-text-dim)",
@@ -95,7 +136,7 @@ export default function WorkflowLanding() {
       </div>
 
       {/* ── Module Grid ─────────────────────────────────── */}
-      <div style={{
+      <div className="wl-grid" style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
         gap: "1rem",
@@ -107,6 +148,7 @@ export default function WorkflowLanding() {
             style={{ textDecoration: "none" }}
           >
             <div
+              className="wl-card"
               style={{
                 padding: "1.35rem 1.4rem",
                 background: "rgba(var(--tint),0.025)",
@@ -134,7 +176,7 @@ export default function WorkflowLanding() {
               }}
             >
               {/* Icon */}
-              <div style={{
+              <div className="wl-card-icon" style={{
                 width: 38, height: 38,
                 borderRadius: 10,
                 background: "var(--nill-gold-dim)",
@@ -147,7 +189,7 @@ export default function WorkflowLanding() {
               </div>
 
               {/* Text */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div className="wl-card-text" style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 <span style={{
                   fontSize: "0.9rem", fontWeight: 700,
                   color: "var(--nill-text)", lineHeight: 1.2,
@@ -164,7 +206,7 @@ export default function WorkflowLanding() {
               </div>
 
               {/* Arrow */}
-              <div style={{
+              <div className="wl-card-arrow" style={{
                 marginTop: "auto",
                 display: "flex", justifyContent: "flex-end",
                 color: "var(--nill-text-dim)",

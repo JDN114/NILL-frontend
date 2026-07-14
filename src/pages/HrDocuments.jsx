@@ -54,7 +54,7 @@ function DocTypeBadge({ type }) {
 }
 
 // ─── Admin upload form ──────────────────────────────────────────────────────
-function UploadForm({ users, onUploaded }) {
+function UploadForm({ users, onUploaded, className }) {
   const [title, setTitle] = useState("");
   const [docType, setDocType] = useState(DOC_TYPES[0]);
   const [description, setDescription] = useState("");
@@ -106,7 +106,7 @@ function UploadForm({ users, onUploaded }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{
+    <form onSubmit={handleSubmit} className={className} style={{
       padding: "1.4rem",
       background: "rgba(var(--tint),0.025)",
       border: "1px solid var(--nill-border)",
@@ -114,12 +114,13 @@ function UploadForm({ users, onUploaded }) {
       display: "flex", flexDirection: "column", gap: "0.85rem",
       marginBottom: "1.5rem",
     }}>
+      <div className="hr-sheet-handle" aria-hidden="true" />
       <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase",
         letterSpacing: "0.08em", color: "var(--nill-text-dim)" }}>
         Dokument hochladen
       </span>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+      <div className="hr-upload-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <label style={{ fontSize: "0.72rem", color: "var(--nill-text-dim)" }}>Titel</label>
           <input style={inputStyle} placeholder="Automatisch aus Dateiname" value={title}
@@ -220,7 +221,7 @@ function DocRow({ doc, isAdmin, users, onDelete, onRead }) {
   }
 
   return (
-    <div style={{
+    <div className="hr-row" style={{
       display: "flex", alignItems: "center", gap: "1rem",
       padding: "0.9rem 1.1rem",
       background: doc.is_read === false ? "rgba(197,165,114,0.04)" : "transparent",
@@ -270,7 +271,7 @@ function DocRow({ doc, isAdmin, users, onDelete, onRead }) {
 
       {/* Actions */}
       <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
-        <button onClick={handleDownload} title="Herunterladen" style={btnStyle("var(--nill-border)")}>
+        <button className="hr-act" onClick={handleDownload} title="Herunterladen" style={btnStyle("var(--nill-border)")}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -280,7 +281,7 @@ function DocRow({ doc, isAdmin, users, onDelete, onRead }) {
         </button>
 
         {!isAdmin && doc.is_read === false && (
-          <button onClick={handleMarkRead} title="Als gelesen markieren" style={btnStyle("rgba(197,165,114,0.25)")}>
+          <button className="hr-act" onClick={handleMarkRead} title="Als gelesen markieren" style={btnStyle("rgba(197,165,114,0.25)")}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="var(--nill-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"/>
@@ -289,7 +290,7 @@ function DocRow({ doc, isAdmin, users, onDelete, onRead }) {
         )}
 
         {isAdmin && (
-          <button onClick={handleDelete} disabled={deleting} title="Löschen"
+          <button className="hr-act" onClick={handleDelete} disabled={deleting} title="Löschen"
             style={btnStyle("rgba(248,113,113,0.15)", "#f87171")}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -328,6 +329,8 @@ export function HrDocsContent({ defaultFilterType = "" }) {
   const [loading,    setLoading]    = useState(true);
   const [filterType, setFilterType] = useState(defaultFilterType);
   const [filterUser, setFilterUser] = useState("");
+  // Mobile-only: upload form is presented as a bottom sheet (desktop always shows it inline).
+  const [sheetOpen,  setSheetOpen]  = useState(false);
 
   async function fetchDocs() {
     try {
@@ -365,9 +368,138 @@ export function HrDocsContent({ defaultFilterType = "" }) {
 
   return (
     <div>
-      {isAdmin && <UploadForm users={users} onUploaded={fetchDocs} />}
+      <style>{`
+        /* Mobile-only bottom-sheet/FAB chrome — invisible on desktop. */
+        .hr-sheet-handle { display: none; }
+        .hr-sheet-backdrop { display: none; }
+        .hr-fab { display: none; }
 
-      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+        @media (max-width: 768px) {
+          /* Upload form → bottom sheet, opened via floating action button. */
+          .hr-upload {
+            display: none !important;
+          }
+          .hr-upload--open {
+            display: flex !important;
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            z-index: 320;
+            margin-bottom: 0 !important;
+            border-radius: 16px 16px 0 0 !important;
+            border-left: none !important; border-right: none !important; border-bottom: none !important;
+            background: var(--bg-panel, var(--nill-bg-grad)) !important;
+            max-height: 85dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 0.6rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom, 0)) !important;
+          }
+          .hr-sheet-handle {
+            display: block;
+            width: 35px; height: 4px;
+            border-radius: 99px;
+            background: rgba(var(--ink-tint), 0.25);
+            margin: 0.25rem auto 0.35rem;
+            flex-shrink: 0;
+          }
+          .hr-sheet-backdrop {
+            display: block;
+            position: fixed; inset: 0; z-index: 310;
+            background: rgba(0,0,0,0.5);
+          }
+          .hr-upload-grid { grid-template-columns: 1fr !important; }
+          .hr-upload input, .hr-upload select {
+            font-size: 16px !important;
+            min-height: 44px;
+          }
+          .hr-upload button[type="submit"] {
+            align-self: stretch !important;
+            min-height: 48px;
+            font-size: 0.9rem !important;
+            border-radius: 12px !important;
+          }
+          .hr-fab {
+            display: flex;
+            align-items: center; justify-content: center;
+            position: fixed;
+            right: 18px;
+            bottom: calc(62px + env(safe-area-inset-bottom, 0) + 14px);
+            z-index: 60;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: var(--nill-gold);
+            color: #1a1206;
+            box-shadow: 0 6px 20px rgba(197,165,114,0.4), 0 2px 8px rgba(0,0,0,0.35);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: transform 0.12s;
+          }
+          .hr-fab:active { transform: scale(0.93); }
+
+          /* Filters → horizontal chip row. */
+          .hr-filters {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.2rem;
+          }
+          .hr-filters::-webkit-scrollbar { display: none; }
+          .hr-filters select {
+            flex-shrink: 0;
+            font-size: 16px !important;
+            min-height: 44px;
+            border-radius: 22px !important;
+            padding: 0.45rem 1rem !important;
+          }
+          .hr-filters > span { flex-shrink: 0; white-space: nowrap; }
+
+          /* Document rows: roomy tappable cards with visible ≥44px actions. */
+          .hr-row {
+            padding: 1rem !important;
+            min-height: 64px;
+            border-radius: 14px !important;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .hr-row:active { background: rgba(var(--tint),0.05) !important; }
+          .hr-act {
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 12px !important;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .hr-act:active { background: var(--nill-panel-hov) !important; }
+        }
+      `}</style>
+
+      {isAdmin && sheetOpen && (
+        <div className="hr-sheet-backdrop" onClick={() => setSheetOpen(false)} />
+      )}
+      {isAdmin && (
+        <UploadForm
+          users={users}
+          onUploaded={() => { fetchDocs(); setSheetOpen(false); }}
+          className={`hr-upload${sheetOpen ? " hr-upload--open" : ""}`}
+        />
+      )}
+      {isAdmin && (
+        <button
+          type="button"
+          className="hr-fab"
+          aria-label="Dokument hochladen"
+          onClick={() => setSheetOpen(o => !o)}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      )}
+
+      <div className="hr-filters" style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
         {!lockType && (
           <select value={filterType} onChange={e => setFilterType(e.target.value)} style={selStyle}>
             <option value="">Alle Typen</option>
@@ -427,7 +559,14 @@ export default function HrDocuments() {
 
   return (
     <PageLayout>
-      <div style={{ marginBottom: "1.75rem" }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .hr-head { margin-bottom: 1.1rem !important; }
+          .hr-head h1 { font-size: 1.45rem !important; }
+          .hr-head p { font-size: 0.78rem !important; }
+        }
+      `}</style>
+      <div className="hr-head" style={{ marginBottom: "1.75rem" }}>
         <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
           textTransform: "uppercase", color: "var(--nill-text-dim)" }}>
           Dashboard / Betrieb / HR Dokumente

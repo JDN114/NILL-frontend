@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import "./calendar.css"; // mobile (≤768px) touch styles — no desktop rules
 
 // -------------------------
 // HELPERS
@@ -64,23 +65,23 @@ export default function EventList({ events = [], onSelect, onDelete }) {
   const grouped = groupByDay(localEvents);
 
   return (
-    <div className="space-y-6 max-h-[420px] overflow-y-auto pr-1">
+    <div className="kal-elist space-y-6 max-h-[420px] overflow-y-auto pr-1">
       {Object.entries(grouped).map(([day, dayEvents]) => (
         <div key={day}>
           {/* DAY HEADER */}
-          <p className="text-sm text-gray-400 mb-2">{formatDayLabel(day)}</p>
+          <p className="kal-eday text-sm text-gray-400 mb-2">{formatDayLabel(day)}</p>
 
           <ul className="space-y-3">
             {dayEvents.map((e) => (
               <motion.li
                 key={e.id}
                 whileHover={{ scale: 1.02 }}
-                className="bg-[#111827] border border-white/5 rounded-xl p-3 transition group hover:border-[var(--accent)]/40"
+                className="kal-eitem bg-[#111827] border border-white/5 rounded-xl p-3 transition group hover:border-[var(--accent)]/40"
               >
                 {/* CLICK AREA */}
-                <div onClick={() => onSelect?.(e)} className="cursor-pointer">
+                <div onClick={() => onSelect?.(e)} className="kal-ebody cursor-pointer">
                   <div className="flex justify-between items-center">
-                    <p className="text-white font-semibold">{e.title || "Ohne Titel"}</p>
+                    <p className="kal-etitle text-white font-semibold">{e.title || "Ohne Titel"}</p>
                     <span className="text-xs text-gray-400">{formatTime(e.start_at, e.end_at, e.all_day)}</span>
                   </div>
 
@@ -89,7 +90,7 @@ export default function EventList({ events = [], onSelect, onDelete }) {
                 </div>
 
                 {/* ACTIONS */}
-                <div className="flex justify-end gap-3 mt-3 opacity-0 group-hover:opacity-100 transition">
+                <div className="kal-eactions flex justify-end gap-3 mt-3 opacity-0 group-hover:opacity-100 transition">
                   <button
                     onClick={(ev) => {
                       ev.stopPropagation();

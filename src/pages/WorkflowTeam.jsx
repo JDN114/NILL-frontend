@@ -62,6 +62,7 @@ function PermBadge({ label, active }) {
 function Modal({ children, onClose }) {
   return (
     <div
+      className="wtm-overlay"
       style={{
         position: "fixed", inset: 0,
         background: "rgba(0,0,0,0.7)",
@@ -71,7 +72,7 @@ function Modal({ children, onClose }) {
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{
+      <div className="wtm-modal" style={{
         background: "#0d1628",
         border: "1px solid var(--nill-border-lg)",
         borderRadius: 16,
@@ -80,6 +81,7 @@ function Modal({ children, onClose }) {
         boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
         display: "flex", flexDirection: "column", gap: "1.25rem",
       }}>
+        <div className="wtm-sheet-handle" aria-hidden="true" />
         {children}
       </div>
     </div>
@@ -312,11 +314,132 @@ export default function WorkflowTeam() {
           .wteam-table-scroll table { min-width: 480px; }
           .wteam-grid-2 { grid-template-columns: 1fr !important; }
         }
+
+        /* Mobile-only sheet chrome — hidden on desktop. */
+        .wtm-sheet-handle { display: none; }
+
+        @media (max-width: 768px) {
+          .wtm-wrap { padding-bottom: 76px; }
+          .wtm-head h1 { font-size: 1.45rem !important; }
+          .wtm-head p { font-size: 0.78rem !important; }
+
+          /* Primary action → sticky bottom CTA above the tab bar. */
+          .wtm-limits { flex-direction: row !important; align-items: center !important; }
+          .wtm-cta {
+            position: fixed;
+            left: 16px; right: 16px;
+            bottom: calc(62px + env(safe-area-inset-bottom, 0) + 12px);
+            z-index: 60;
+            justify-content: center;
+            min-height: 52px;
+            font-size: 0.92rem !important;
+            border-radius: 26px !important;
+            background: var(--nill-gold) !important;
+            border-color: var(--nill-gold) !important;
+            color: #1a1206 !important;
+            box-shadow: 0 6px 20px rgba(197,165,114,0.35), 0 2px 8px rgba(0,0,0,0.35);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.12s !important;
+          }
+          .wtm-cta:active { transform: scale(0.98); }
+
+          /* Tab pills → full-width horizontal chip row. */
+          .wtm-tabs {
+            width: 100% !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            border-radius: 22px !important;
+            gap: 4px !important;
+          }
+          .wtm-tabs::-webkit-scrollbar { display: none; }
+          .wtm-tabs button {
+            flex-shrink: 0;
+            min-height: 42px;
+            padding: 0.5rem 1rem !important;
+            border-radius: 21px !important;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          .wtm-tabs button:active { background: var(--nill-panel-hov) !important; }
+
+          /* Tables → tappable card lists. */
+          .wteam-table-scroll table { min-width: 0 !important; }
+          .wtm-table { display: block; width: 100% !important; }
+          .wtm-table thead { display: none; }
+          .wtm-table tbody { display: block; }
+          .wtm-table tr {
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 0.25rem 0.6rem;
+            padding: 0.85rem 1rem;
+            min-height: 56px;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .wtm-table tr:active { background: rgba(var(--tint),0.04); }
+          .wtm-table td { display: block; padding: 0 !important; border: none; }
+          .wtm-td-mail {
+            flex: 1 1 auto; min-width: 0;
+            font-weight: 600; font-size: 0.88rem;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          }
+          .wtm-td-act { margin-left: auto; flex-shrink: 0; }
+          .wtm-td-act button { min-height: 44px; padding: 0 0.6rem !important; }
+          .wtm-td-role { flex: 1 1 100%; }
+          .wtm-td-role > button { min-height: 40px; padding: 0.45rem 0.9rem !important; border-radius: 20px !important; }
+          .wtm-td-role select { font-size: 16px !important; min-height: 44px; }
+          .wtm-td-role .wtm-inline-btn { min-height: 44px; }
+
+          .wtm-itd-mail { flex: 1 1 100%; font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .wtm-itd-role, .wtm-itd-exp { font-size: 0.72rem !important; }
+          .wtm-itd-act { margin-left: auto; flex-shrink: 0; }
+          .wtm-itd-act button { min-height: 44px; padding: 0 0.4rem !important; }
+
+          /* Role cards: single calm column. */
+          .wtm-roles-grid { grid-template-columns: 1fr !important; }
+          .wtm-roles-grid .wtm-role-actions button { min-height: 44px; padding: 0 0.4rem; }
+
+          /* Modals → bottom sheets. */
+          .wtm-overlay { align-items: flex-end !important; padding: 0 !important; }
+          .wtm-modal {
+            max-width: none !important;
+            border-radius: 16px 16px 0 0 !important;
+            border-left: none !important; border-right: none !important; border-bottom: none !important;
+            max-height: 85dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 0.6rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0)) !important;
+          }
+          .wtm-sheet-handle {
+            display: block;
+            width: 35px; height: 4px;
+            border-radius: 99px;
+            background: rgba(var(--ink-tint), 0.25);
+            margin: 0.2rem auto 0.3rem;
+            flex-shrink: 0;
+          }
+          .wtm-modal input:not([type="checkbox"]), .wtm-modal select {
+            font-size: 16px !important;
+            min-height: 44px;
+          }
+          .wtm-modal .wtm-btnrow button {
+            min-height: 48px;
+            border-radius: 12px !important;
+            font-size: 0.9rem !important;
+          }
+          .wtm-perms label { min-height: 44px; }
+        }
       `}</style>
-      <div style={{ maxWidth: 900, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      <div className="wtm-wrap" style={{ maxWidth: 900, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
         {/* ── Header ──────────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+        <div className="wtm-head" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
               textTransform: "uppercase", color: "var(--nill-text-dim)" }}>
@@ -334,7 +457,7 @@ export default function WorkflowTeam() {
           {isCompanyAdmin() && (() => {
             const atLimit = limits && limits.member_count + limits.pending_invites >= limits.max_users;
             return (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem" }}>
+              <div className="wtm-limits" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem" }}>
                 {limits && (
                   <span style={{ fontSize: "0.7rem", color: atLimit ? "#fbbf24" : "var(--nill-text-mute)", fontWeight: 600 }}>
                     {limits.member_count} / {limits.max_users} Nutzer
@@ -343,6 +466,7 @@ export default function WorkflowTeam() {
                 {atLimit ? (
                   <a
                     href="/settings?tab=abonnement"
+                    className="wtm-cta"
                     style={{
                       display: "inline-flex", alignItems: "center", gap: "0.4rem",
                       padding: "0.6rem 1.2rem",
@@ -357,6 +481,7 @@ export default function WorkflowTeam() {
                   </a>
                 ) : (
                   <button
+                    className="wtm-cta"
                     onClick={() => setShowInviteModal(true)}
                     style={{
                       display: "inline-flex", alignItems: "center", gap: "0.4rem",
@@ -404,7 +529,7 @@ export default function WorkflowTeam() {
         {isCompanyAdmin() && (
           <>
             {/* Tab Bar */}
-            <div style={{
+            <div className="wtm-tabs" style={{
               display: "flex", gap: "2px",
               background: "rgba(var(--tint),0.03)",
               border: "1px solid var(--nill-border)",
@@ -437,7 +562,7 @@ export default function WorkflowTeam() {
                     Noch keine Mitglieder. Lade jemanden ein.
                   </div>
                 ) : (
-                  <div className="wteam-table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: 400 }}>
+                  <div className="wteam-table-scroll"><table className="wtm-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: 400 }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--nill-border)" }}>
                         {["E-Mail", "Rolle", ""].map((h, i) => (
@@ -456,8 +581,8 @@ export default function WorkflowTeam() {
                         <tr key={m.id} style={{
                           borderBottom: i < members.length - 1 ? "1px solid var(--nill-border)" : "none",
                         }}>
-                          <td style={{ padding: "0.85rem 1.25rem", color: "var(--nill-text)" }}>{m.email}</td>
-                          <td style={{ padding: "0.85rem 1.25rem" }}>
+                          <td className="wtm-td-mail" style={{ padding: "0.85rem 1.25rem", color: "var(--nill-text)" }}>{m.email}</td>
+                          <td className="wtm-td-role" style={{ padding: "0.85rem 1.25rem" }}>
                             {assigningMember === m.id ? (
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 <select
@@ -469,6 +594,7 @@ export default function WorkflowTeam() {
                                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                                 <button
+                                  className="wtm-inline-btn"
                                   onClick={() => assignRole(m.id)}
                                   disabled={!assignRoleId}
                                   style={{
@@ -483,6 +609,7 @@ export default function WorkflowTeam() {
                                   Speichern
                                 </button>
                                 <button
+                                  className="wtm-inline-btn"
                                   onClick={() => setAssigningMember(null)}
                                   style={{ fontSize: "0.73rem", color: "var(--nill-text-mute)",
                                     background: "none", border: "none", cursor: "pointer" }}
@@ -508,7 +635,7 @@ export default function WorkflowTeam() {
                               </button>
                             )}
                           </td>
-                          <td style={{ padding: "0.85rem 1.25rem", textAlign: "right" }}>
+                          <td className="wtm-td-act" style={{ padding: "0.85rem 1.25rem", textAlign: "right" }}>
                             {m.id !== user?.id && (
                               <button
                                 onClick={() => setDeletingMember(m)}
@@ -562,14 +689,14 @@ export default function WorkflowTeam() {
                     Noch keine Rollen erstellt.
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
+                  <div className="wtm-roles-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
                     {roles.map(role => (
                       <div key={role.id} style={{ ...panelStyle, padding: "1.1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                           <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--nill-text)" }}>
                             {role.name}
                           </span>
-                          <div style={{ display: "flex", gap: "0.75rem" }}>
+                          <div className="wtm-role-actions" style={{ display: "flex", gap: "0.75rem" }}>
                             <button onClick={() => openEditRole(role)}
                               style={{ fontSize: "0.73rem", color: "var(--nill-text-mute)",
                                 background: "none", border: "none", cursor: "pointer", transition: "color 0.12s" }}
@@ -624,7 +751,7 @@ export default function WorkflowTeam() {
                   </div>
                 ) : (
                   <div className="wteam-table-scroll" style={panelStyle}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", minWidth: 480 }}>
+                    <table className="wtm-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", minWidth: 480 }}>
                       <thead>
                         <tr style={{ borderBottom: "1px solid var(--nill-border)" }}>
                           {["E-Mail", "Rolle", "Status", "Läuft ab", ""].map((h, i) => (
@@ -643,11 +770,11 @@ export default function WorkflowTeam() {
                           <tr key={inv.id} style={{
                             borderBottom: i < invites.length - 1 ? "1px solid var(--nill-border)" : "none",
                           }}>
-                            <td style={{ padding: "0.8rem 1.1rem", color: "var(--nill-text)" }}>{inv.email}</td>
-                            <td style={{ padding: "0.8rem 1.1rem", color: "var(--nill-text-mute)" }}>
+                            <td className="wtm-itd-mail" style={{ padding: "0.8rem 1.1rem", color: "var(--nill-text)" }}>{inv.email}</td>
+                            <td className="wtm-itd-role" style={{ padding: "0.8rem 1.1rem", color: "var(--nill-text-mute)" }}>
                               {roles.find(r => r.id === inv.org_role_id)?.name ?? "—"}
                             </td>
-                            <td style={{ padding: "0.8rem 1.1rem" }}>
+                            <td className="wtm-itd-role" style={{ padding: "0.8rem 1.1rem" }}>
                               <span style={{
                                 fontSize: "0.7rem", fontWeight: 600,
                                 padding: "0.2rem 0.6rem", borderRadius: 20,
@@ -670,10 +797,10 @@ export default function WorkflowTeam() {
                                   : "Abgelaufen"}
                               </span>
                             </td>
-                            <td style={{ padding: "0.8rem 1.1rem", color: "var(--nill-text-dim)", fontSize: "0.73rem" }}>
+                            <td className="wtm-itd-exp" style={{ padding: "0.8rem 1.1rem", color: "var(--nill-text-dim)", fontSize: "0.73rem" }}>
                               {inv.expires_at ? new Date(inv.expires_at).toLocaleDateString("de-DE") : "—"}
                             </td>
-                            <td style={{ padding: "0.8rem 1.1rem", textAlign: "right" }}>
+                            <td className="wtm-itd-act" style={{ padding: "0.8rem 1.1rem", textAlign: "right" }}>
                               {inv.status === "pending" && (
                                 <button
                                   onClick={() => revokeInvite(inv.id)}
@@ -745,7 +872,7 @@ export default function WorkflowTeam() {
 
           <div>
             <ModalLabel>Berechtigungen</ModalLabel>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+            <div className="wtm-perms" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
               {ALL_PERMISSIONS.map(p => (
                 <label key={p.key} style={{
                   display: "flex", alignItems: "center", gap: "0.55rem",
@@ -775,7 +902,7 @@ export default function WorkflowTeam() {
 
           {roleError && <p style={{ margin: 0, fontSize: "0.78rem", color: "#f87171" }}>{roleError}</p>}
 
-          <div style={{ display: "flex", gap: "0.75rem" }}>
+          <div className="wtm-btnrow" style={{ display: "flex", gap: "0.75rem" }}>
             <BtnPrimary onClick={saveRole} disabled={roleSaving}>
               {roleSaving ? "Speichern…" : "Speichern"}
             </BtnPrimary>
@@ -837,7 +964,7 @@ export default function WorkflowTeam() {
           ))}
           {inviteSuccess && <p style={{ margin: 0, fontSize: "0.78rem", color: "#86efac" }}>{inviteSuccess}</p>}
 
-          <div style={{ display: "flex", gap: "0.75rem" }}>
+          <div className="wtm-btnrow" style={{ display: "flex", gap: "0.75rem" }}>
             <BtnPrimary onClick={sendInvite} disabled={inviteSending}>
               {inviteSending ? "Sende…" : "Einladung senden"}
             </BtnPrimary>
@@ -857,7 +984,7 @@ export default function WorkflowTeam() {
             <span style={{ color: "var(--nill-text)", fontWeight: 600 }}>{deletingMember.email}</span>{" "}
             wirklich aus dem Team entfernen?
           </p>
-          <div style={{ display: "flex", gap: "0.75rem" }}>
+          <div className="wtm-btnrow" style={{ display: "flex", gap: "0.75rem" }}>
             <BtnPrimary danger onClick={() => deleteMember(deletingMember.id)}>
               Entfernen
             </BtnPrimary>

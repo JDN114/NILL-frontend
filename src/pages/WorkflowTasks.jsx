@@ -227,10 +227,153 @@ export default function WorkflowTasksPage() {
           .wt-task-actions { margin-left: 0 !important; }
           .wt-h1 { font-size: 1.4rem !important; }
         }
+
+        /* Mobile-only chrome (chips, FAB, sheet) — hidden on desktop. */
+        .wta-chips { display: none; }
+        .wta-fab { display: none; }
+        .wta-sheet-backdrop { display: none; }
+        .wta-sheet-handle { display: none; }
+
+        @media (max-width: 768px) {
+          .wta-head { margin-bottom: 0.9rem !important; }
+          .wt-h1 { font-size: 1.45rem !important; }
+
+          /* Desktop toolbar (toggle + select + button) is replaced by
+             the chip row + floating action button on mobile. */
+          .wta-controls { display: none !important; }
+
+          .wta-chips {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 1.1rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .wta-chips::-webkit-scrollbar { display: none; }
+          .wta-chip {
+            flex-shrink: 0;
+            padding: 0.55rem 1rem;
+            min-height: 40px;
+            font-size: 0.8rem; font-weight: 500;
+            color: var(--nill-text-sub);
+            background: var(--nill-panel);
+            border: 1px solid var(--nill-border);
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background 0.12s, color 0.12s, border-color 0.12s;
+          }
+          .wta-chip:active { background: var(--nill-panel-hov); }
+          .wta-chip--active {
+            background: var(--nill-gold-dim);
+            border-color: rgba(197,165,114,0.4);
+            color: var(--nill-gold);
+            font-weight: 600;
+          }
+          .wta-chip--mine.wta-chip--active {
+            background: var(--nill-blue-dim);
+            border-color: var(--nill-blue-glow);
+            color: #93c5fd;
+          }
+
+          /* Floating "Neue Aufgabe" action above the bottom tab bar. */
+          .wta-fab {
+            display: flex;
+            align-items: center; justify-content: center;
+            position: fixed;
+            right: 18px;
+            bottom: calc(62px + env(safe-area-inset-bottom, 0) + 14px);
+            z-index: 60;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: var(--nill-gold);
+            color: #1a1206;
+            box-shadow: 0 6px 20px rgba(197,165,114,0.4), 0 2px 8px rgba(0,0,0,0.35);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: transform 0.12s;
+          }
+          .wta-fab:active { transform: scale(0.93); }
+
+          /* Create form → bottom sheet. */
+          .wta-sheet-backdrop {
+            display: block;
+            position: fixed; inset: 0; z-index: 310;
+            background: rgba(0,0,0,0.5);
+          }
+          .wta-create {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            z-index: 320;
+            margin-bottom: 0 !important;
+            border-radius: 16px 16px 0 0 !important;
+            border-left: none !important; border-right: none !important; border-bottom: none !important;
+            background: var(--bg-panel, var(--nill-bg-grad)) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            max-height: 85dvh;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+          }
+          .wta-sheet-handle {
+            display: block;
+            width: 35px; height: 4px;
+            border-radius: 99px;
+            background: rgba(var(--ink-tint), 0.25);
+            margin: 0.55rem auto 0.1rem;
+          }
+          .wta-create input, .wta-create select, .wta-create textarea {
+            font-size: 16px !important;
+            min-height: 44px;
+          }
+          .wta-form-row { flex-direction: column; }
+          .wta-create-actions button {
+            flex: 1;
+            min-height: 48px;
+            font-size: 0.9rem !important;
+            border-radius: 12px !important;
+          }
+
+          /* Admin retention strip: compact, hint line hidden. */
+          .wta-autodel { padding: 0.75rem 0.9rem !important; font-size: 0.78rem !important; }
+          .wta-autodel-hint { display: none !important; }
+          .wta-autodel input[type="number"] { font-size: 16px !important; min-height: 40px; }
+
+          /* Task cards: touch feedback + ≥44px full-width actions. */
+          .wta-task { border-radius: 14px !important; }
+          .wta-task .wt-task-actions {
+            width: 100%;
+            display: flex !important;
+            gap: 0.5rem !important;
+          }
+          .wta-abtn {
+            flex: 1 !important;
+            min-height: 44px;
+            font-size: 0.82rem !important;
+            border-radius: 12px !important;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          .wta-abtn:active { filter: brightness(1.25); }
+          .wta-assign { padding: 0.85rem 1rem !important; }
+          .wta-assign select { font-size: 16px !important; min-height: 44px; }
+          .wta-assign button { min-height: 44px; border-radius: 12px !important; }
+        }
       `}</style>
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+      <div className="wta-head" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between",
         marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
@@ -243,7 +386,7 @@ export default function WorkflowTasksPage() {
           </h1>
         </div>
 
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
+        <div className="wta-controls" style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
           {/* Meine Aufgaben Toggle */}
           <button
             onClick={() => setMyTasksOnly(v => !v)}
@@ -295,9 +438,51 @@ export default function WorkflowTasksPage() {
         </div>
       </div>
 
+      {/* ── Mobile: Filter-Chips (ersetzen Toolbar ≤768px) ── */}
+      <div className="wta-chips">
+        <button
+          type="button"
+          className={`wta-chip wta-chip--mine${myTasksOnly ? " wta-chip--active" : ""}`}
+          onClick={() => setMyTasksOnly(v => !v)}
+        >
+          Meine
+        </button>
+        {[
+          { value: "",            label: "Alle" },
+          { value: "open",        label: "Offen" },
+          { value: "in_progress", label: "In Bearbeitung" },
+          { value: "completed",   label: "Erledigt" },
+          { value: "escalated",   label: "Eskaliert" },
+        ].map(opt => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`wta-chip${filterStatus === opt.value ? " wta-chip--active" : ""}`}
+            onClick={() => setFilterStatus(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Mobile: Floating "Neue Aufgabe" (Admin) ────────── */}
+      {isAdmin && (
+        <button
+          type="button"
+          className="wta-fab"
+          aria-label="Neue Aufgabe"
+          onClick={() => setCreateOpen(o => !o)}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      )}
+
       {/* ── Auto-Löschen erledigter Aufgaben (Admin) ───────── */}
       {isAdmin && (
-        <div style={{
+        <div className="wta-autodel" style={{
           display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap",
           padding: "0.7rem 1rem", marginBottom: "1.25rem", borderRadius: 12,
           background: "rgba(var(--tint),0.02)", border: "1px solid var(--nill-border)",
@@ -348,7 +533,7 @@ export default function WorkflowTasksPage() {
               {autoDelMsg}
             </span>
           )}
-          <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--nill-text-dim)" }}>
+          <span className="wta-autodel-hint" style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--nill-text-dim)" }}>
             Nur erledigte Aufgaben · offene bleiben erhalten
           </span>
         </div>
@@ -356,7 +541,11 @@ export default function WorkflowTasksPage() {
 
       {/* ── Aufgabe erstellen (Admin) ──────────────────────── */}
       {createOpen && isAdmin && (
-        <div style={{ ...panelStyle, marginBottom: "1.5rem" }}>
+        <div className="wta-sheet-backdrop" onClick={() => setCreateOpen(false)} />
+      )}
+      {createOpen && isAdmin && (
+        <div className="wta-create" style={{ ...panelStyle, marginBottom: "1.5rem" }}>
+          <div className="wta-sheet-handle" aria-hidden="true" />
           <div style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid var(--nill-border)",
             fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase",
             letterSpacing: "0.09em", color: "var(--nill-text-mute)" }}>
@@ -364,7 +553,7 @@ export default function WorkflowTasksPage() {
           </div>
           <div style={{ padding: "1.1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {/* Zeile 1: Titel + Priorität */}
-            <div style={{ display: "flex", gap: "0.65rem" }}>
+            <div className="wta-form-row" style={{ display: "flex", gap: "0.65rem" }}>
               <input style={{ ...inputBase, flex: 2 }} placeholder="Titel *"
                 value={form.title} onChange={e => fv("title", e.target.value)}
                 onFocus={e => e.target.style.borderColor = "rgba(197,165,114,0.4)"}
@@ -442,7 +631,7 @@ export default function WorkflowTasksPage() {
             </div>
 
             {/* Buttons */}
-            <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.25rem" }}>
+            <div className="wta-create-actions" style={{ display: "flex", gap: "0.6rem", marginTop: "0.25rem" }}>
               <button onClick={createTask} disabled={!form.title.trim() || actionLoading}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "0.4rem",
@@ -550,8 +739,8 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
   }
 
   return (
-    <div style={{ ...panelStyle }}>
-      <div style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "flex-start", gap: "0.85rem", flexWrap: "wrap" }}>
+    <div className="wta-task" style={{ ...panelStyle }}>
+      <div className="wt-task-row" style={{ padding: "0.9rem 1.25rem", display: "flex", alignItems: "flex-start", gap: "0.85rem", flexWrap: "wrap" }}>
         {/* Priorität-Punkt */}
         <div style={{ paddingTop: 4 }}><PriorityDot priority={t.priority} /></div>
 
@@ -587,8 +776,8 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
 
         {/* Aktionen */}
         {t.status !== "completed" && (
-          <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0, flexWrap: "wrap" }}>
-            <button onClick={onComplete} disabled={actionLoading}
+          <div className="wt-task-actions" style={{ display: "flex", gap: "0.4rem", flexShrink: 0, flexWrap: "wrap" }}>
+            <button className="wta-abtn" onClick={onComplete} disabled={actionLoading}
               style={{ padding: "0.35rem 0.85rem", background: "rgba(134,239,172,0.08)",
                 border: "1px solid rgba(134,239,172,0.2)", borderRadius: 8, cursor: "pointer",
                 color: "#86efac", fontSize: "0.75rem", fontWeight: 600, opacity: actionLoading ? 0.4 : 1 }}>
@@ -596,7 +785,7 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
             </button>
 
             {t.status !== "escalated" && (
-              <button onClick={onEscalate} disabled={actionLoading}
+              <button className="wta-abtn" onClick={onEscalate} disabled={actionLoading}
                 style={{ padding: "0.35rem 0.85rem", background: "rgba(248,113,113,0.08)",
                   border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, cursor: "pointer",
                   color: "#f87171", fontSize: "0.75rem", fontWeight: 600, opacity: actionLoading ? 0.4 : 1 }}>
@@ -605,7 +794,7 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
             )}
 
             {isAdmin && (
-              <button onClick={() => setAssignOpen(o => !o)} disabled={actionLoading}
+              <button className="wta-abtn" onClick={() => setAssignOpen(o => !o)} disabled={actionLoading}
                 style={{ padding: "0.35rem 0.85rem", background: "var(--nill-blue-dim)",
                   border: "1px solid var(--nill-blue-glow)", borderRadius: 8, cursor: "pointer",
                   color: "#93c5fd", fontSize: "0.75rem", fontWeight: 600, opacity: actionLoading ? 0.4 : 1 }}>
@@ -618,7 +807,7 @@ function TaskRow({ task: t, isAdmin, orgUsers, orgRoles, actionLoading, onComple
 
       {/* Zuweisung aufklappen */}
       {assignOpen && isAdmin && (
-        <div style={{ borderTop: "1px solid var(--nill-border)", padding: "0.85rem 1.25rem",
+        <div className="wta-assign" style={{ borderTop: "1px solid var(--nill-border)", padding: "0.85rem 1.25rem",
           background: "rgba(var(--tint),0.015)", display: "flex", gap: "0.65rem", flexWrap: "wrap", alignItems: "flex-end" }}>
           <div style={{ flex: 1, minWidth: 160 }}>
             <label style={{ fontSize: "0.68rem", color: "var(--nill-text-mute)", marginBottom: 4, display: "block" }}>

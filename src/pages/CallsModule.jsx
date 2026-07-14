@@ -83,6 +83,137 @@ function GlobalStyles() {
   return null;
 }
 
+// ─── Mobile-only styles ──────────────────────────────────────────────────────
+// Every rule lives inside @media (max-width:768px) and overrides the inline
+// desktop styles via !important — desktop rendering stays byte-identical.
+// This module is hardcoded-dark by design on both themes (like NILLModule),
+// so the mobile overrides reuse the same T palette for exact parity.
+const CM_MOBILE_CSS = `
+@media (max-width: 768px) {
+  /* Full-bleed shell: drop the desktop panel frame, single document scroll */
+  .cm-shell {
+    padding: 18px 14px 32px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    min-height: 0 !important;
+  }
+
+  /* Compact header: title stacked, range switcher becomes a chip row */
+  .cm-sectitle {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px;
+    margin-bottom: 18px !important;
+  }
+  .cm-sectitle h2 { font-size: 26px !important; }
+  .cm-ranges {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cm-ranges::-webkit-scrollbar { display: none; }
+  .cm-ranges button {
+    flex-shrink: 0;
+    min-height: 42px;
+    padding: 9px 18px !important;
+    border-radius: 99px !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .cm-ranges button:active { background: ${T.bg3} !important; }
+
+  /* Stats: five auto-fit tiles → calm 2-up grid */
+  .cm-stats {
+    grid-template-columns: 1fr 1fr !important;
+    margin-bottom: 16px !important;
+  }
+  .cm-stat { border-right: none !important; padding: 14px 16px !important; }
+  .cm-stat > p:last-child { font-size: 22px !important; }
+
+  /* Insights: single column */
+  .cm-insights {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Filter tabs → horizontal scrollable chip row (like .em-chip) */
+  .cm-tabs {
+    overflow-x: auto !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+  }
+  .cm-tabs::-webkit-scrollbar { display: none; }
+  .cm-tab {
+    flex: 0 0 auto !important;
+    min-height: 44px;
+    padding: 9px 16px !important;
+    border-radius: 99px !important;
+    border: 1px solid ${T.border} !important;
+    background: ${T.bg1} !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .cm-tab:active { background: ${T.bg2} !important; }
+  .cm-tab--active {
+    background: ${T.bg3} !important;
+    border-color: ${T.borderHi} !important;
+  }
+
+  /* Call rows: roomy tappable cards with :active feedback (no hover on touch) */
+  .cm-rows { gap: 6px !important; }
+  .cm-row {
+    border-radius: 10px !important;
+    padding: 13px 14px !important;
+    min-height: 64px;
+    gap: 12px !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .cm-row:active { background: ${T.bg2} !important; border-color: ${T.borderHi} !important; }
+
+  /* Detail drawer → bottom sheet */
+  .cm-drawer-wrap {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .cm-drawer {
+    max-width: 100% !important;
+    max-height: 85dvh !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    padding: 10px 18px calc(24px + env(safe-area-inset-bottom, 0)) !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cm-drawer::before {
+    content: "";
+    display: block;
+    width: 35px;
+    height: 4px;
+    border-radius: 99px;
+    background: ${T.borderHi};
+    margin: 2px auto 16px;
+  }
+  .cm-drawer-actions button { min-height: 44px; }
+  .cm-info3 { grid-template-columns: 1fr !important; gap: 8px !important; }
+}
+`;
+
 // ─── Status & intent configs ─────────────────────────────────────────────────
 const CALL_STATUS = {
   in_progress: { label: "AKTIV",      color: T.info,    dim: T.infoDim   },
@@ -233,7 +364,7 @@ function MonoLabel({ children, color = T.textTer }) {
 
 function SectionTitle({ title, subtitle, action }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
+    <div className="cm-sectitle" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
       <div>
         <h2 style={{ margin: 0, fontFamily: FD, fontSize: 22, fontWeight: 700, color: T.textPri, letterSpacing: "-0.02em" }}>{title}</h2>
         {subtitle && <p style={{ margin: "5px 0 0", fontFamily: FM, fontSize: 11, color: T.textSec }}>{subtitle}</p>}
@@ -290,6 +421,7 @@ function ErrorBanner({ message }) {
 function Drawer({ onClose, title, subtitle, maxWidth = 680, children }) {
   return (
     <div
+      className="cm-drawer-wrap"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -298,7 +430,7 @@ function Drawer({ onClose, title, subtitle, maxWidth = 680, children }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 12 }}
         transition={{ duration: 0.18 }}
-        className="nill-scrollbar"
+        className="nill-scrollbar cm-drawer"
         style={{ background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 10, width: "100%", maxWidth, maxHeight: "88vh", overflowY: "auto", padding: "28px 32px" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
@@ -339,13 +471,13 @@ function StatsGrid({ stats, range }) {
     { label: "AUTOM. GELÖST", value: stats.completedClean, hint: T.accent },
   ];
   return (
-    <div style={{
+    <div className="cm-stats" style={{
       display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
       gap: 1, border: `1px solid ${T.border}`, borderRadius: 8, overflow: "hidden",
       marginBottom: 28,
     }}>
       {items.map((s, i) => (
-        <div key={i} style={{
+        <div key={i} className="cm-stat" style={{
           background: T.bg2, padding: "18px 20px",
           borderRight: i < items.length - 1 ? `1px solid ${T.border}` : "none",
         }}>
@@ -444,7 +576,7 @@ function ActivitySparkline({ buckets }) {
 
 function InsightsRow({ stats }) {
   return (
-    <div style={{
+    <div className="cm-insights" style={{
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14, marginBottom: 28,
@@ -483,14 +615,14 @@ function FilterTabs({ value, onChange, counts }) {
     { key: "completed",  label: "BEENDET",     count: counts.completed },
   ];
   return (
-    <div style={{
+    <div className="cm-tabs" style={{
       display: "flex", gap: 2, marginBottom: 14, background: T.bg2,
       borderRadius: 6, padding: 3, border: `1px solid ${T.border}`,
     }}>
       {tabs.map(t => {
         const active = value === t.key;
         return (
-          <button key={t.key} onClick={() => onChange(t.key)} style={{
+          <button key={t.key} className={`cm-tab${active ? " cm-tab--active" : ""}`} onClick={() => onChange(t.key)} style={{
             flex: 1, padding: "8px 4px",
             background: active ? T.bg3 : "none",
             border: active ? `1px solid ${T.border}` : "1px solid transparent",
@@ -524,7 +656,7 @@ function CallRow({ call, onClick, isFirst, isLast }) {
 
   return (
     <div
-      className="nill-card-hover"
+      className="nill-card-hover cm-row"
       onClick={onClick}
       style={{
         background: T.bg1, border: `1px solid ${T.border}`,
@@ -599,7 +731,7 @@ function CallsList({ calls, onSelect }) {
     return <EmptySlate title="Keine Anrufe in diesem Filter" body="Wähle einen anderen Zeitraum oder Filter" />;
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <div className="cm-rows" style={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {calls.map((c, i) => (
         <CallRow
           key={c.id}
@@ -711,7 +843,7 @@ function CallDrawer({ call, onClose, onResolve, resolving }) {
       maxWidth={720}
     >
       {/* Status / actions row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10, flexWrap: "wrap" }}>
+      <div className="cm-drawer-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Tag color={status.color} dim={status.dim}>{status.label}</Tag>
           <Tag color={intent.color} dim={intent.dim}>{intent.short}</Tag>
@@ -726,7 +858,7 @@ function CallDrawer({ call, onClose, onResolve, resolving }) {
       </div>
 
       {/* Caller info row */}
-      <div style={{
+      <div className="cm-info3" style={{
         display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16,
       }}>
         <div style={{ background: T.bg2, border: `1px solid ${T.border}`, borderRadius: 6, padding: "10px 14px" }}>
@@ -908,7 +1040,7 @@ export function CallsBoard() {
         title="Anrufe"
         subtitle="NILL nimmt Anrufe entgegen, beantwortet Fragen und meldet sich, wenn ein Mensch ran muss."
         action={
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="cm-ranges" style={{ display: "flex", gap: 6 }}>
             <GhostBtn active={range === "today"} onClick={() => setRange("today")}>HEUTE</GhostBtn>
             <GhostBtn active={range === "week"}  onClick={() => setRange("week")}>WOCHE</GhostBtn>
             <GhostBtn active={range === "month"} onClick={() => setRange("month")}>MONAT</GhostBtn>
@@ -957,7 +1089,8 @@ export default function CallsModule() {
   return (
     <PageLayout>
       <GlobalStyles />
-      <div className="nill-root" style={{
+      <style>{CM_MOBILE_CSS}</style>
+      <div className="nill-root cm-shell" style={{
         maxWidth: 1180, margin: "0 auto",
         background: T.bg1, border: `1px solid ${T.border}`,
         borderRadius: 10, padding: "32px 36px",

@@ -224,3 +224,222 @@
   color: var(--nill-text);
   border-color: var(--nill-border);
 }
+
+/* ── Mobile-only elements (hidden on desktop, styled in the media
+      query below). New DOM nodes only — desktop rendering unchanged. ── */
+.kal-sheet-handle { display: none; }
+
+/* ── Mobile ≤768px — native calendar feel ───────────────────
+   Everything below is scoped to phones. Desktop stays byte-identical. */
+@media (max-width: 768px) {
+
+  /* — Month grid: thumb-sized, iOS-calendar density — */
+  .calendar-wrapper .react-calendar {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .calendar-wrapper .react-calendar__navigation {
+    margin-bottom: 0.6rem;
+  }
+  /* Declutter: no year-jump double arrows on a phone */
+  .calendar-wrapper .react-calendar__navigation__prev2-button,
+  .calendar-wrapper .react-calendar__navigation__next2-button {
+    display: none;
+  }
+  .calendar-wrapper .react-calendar__navigation button {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .calendar-wrapper .react-calendar__navigation button:enabled:active {
+    background: var(--nill-panel-hov);
+    color: var(--nill-text);
+  }
+  .calendar-wrapper .react-calendar__navigation__label {
+    font-size: 1rem !important;
+    letter-spacing: -0.01em;
+  }
+  .calendar-wrapper .react-calendar__navigation__arrow {
+    font-size: 1.45rem;
+  }
+
+  .calendar-wrapper .react-calendar__month-view__weekdays__weekday abbr {
+    font-size: 0.64rem;
+  }
+
+  /* Day cells: guaranteed ≥44px tap targets, fast :active feedback,
+     no horizontal overflow (7 flex-basis cells of the full width). */
+  .calendar-wrapper .react-calendar__tile {
+    min-height: 44px;
+    padding: 0;
+    font-size: 0.92rem;
+    border-radius: 10px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s, color 0.1s;
+  }
+  .calendar-wrapper .react-calendar__tile:enabled:active {
+    background: var(--nill-panel-hov);
+    color: var(--nill-text);
+  }
+  .calendar-wrapper .react-calendar__tile--now::after,
+  .calendar-wrapper .event-day::before {
+    width: 5px;
+    height: 5px;
+    bottom: 6px;
+  }
+  .calendar-wrapper .react-calendar__year-view__months__month,
+  .calendar-wrapper .react-calendar__decade-view__years__year,
+  .calendar-wrapper .react-calendar__century-view__decades__decade {
+    min-height: 48px;
+    touch-action: manipulation;
+  }
+
+  /* — EventList: hover actions become always-visible, nested scroll
+       becomes natural document flow, rows become native touch cards — */
+  .kal-elist {
+    max-height: none !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+  .kal-eday {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--nill-text-mute) !important;
+  }
+  .kal-eitem {
+    background: rgba(var(--tint), 0.03) !important;
+    border: 1px solid var(--nill-border) !important;
+    border-radius: 14px !important;
+    padding: 0.85rem 0.95rem !important;
+    min-height: 56px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 88px;
+  }
+  .kal-eitem:active {
+    background: var(--nill-panel-hov) !important;
+  }
+  .kal-eitem .kal-ebody p:first-child,
+  .kal-eitem .kal-ebody .kal-etitle {
+    color: var(--nill-text) !important;
+    font-size: 0.95rem;
+  }
+  /* Hover-revealed row actions must be visible + thumb-sized on touch */
+  .kal-eactions {
+    opacity: 1 !important;
+    margin-top: 0.6rem !important;
+    gap: 0.5rem !important;
+  }
+  .kal-eactions button {
+    min-height: 40px;
+    padding: 0.45rem 1rem;
+    border-radius: 10px;
+    background: rgba(var(--tint), 0.05);
+    border: 1px solid var(--nill-border);
+    font-size: 0.78rem !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kal-eactions button:active {
+    background: var(--nill-panel-hov);
+  }
+
+  /* — Modals → bottom sheets (EventModal + CreateEventModal) — */
+  .kal-sheet-wrap {
+    align-items: flex-end !important;
+    /* app bottom tab bar sits at z-index 200 — the sheet must cover it */
+    z-index: 400 !important;
+  }
+  .kal-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    max-height: 85dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 1.15rem calc(1.15rem + env(safe-area-inset-bottom, 0)) !important;
+    animation: kal-sheet-up 0.22s cubic-bezier(0.2, 0.8, 0.4, 1);
+  }
+  @keyframes kal-sheet-up {
+    from { transform: translateY(28px); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .kal-sheet-handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(var(--tint), 0.25);
+    margin: 0.35rem auto 0.9rem;
+    flex-shrink: 0;
+  }
+  /* 16px inputs prevent iOS auto-zoom; ≥44px tap height */
+  .kal-sheet input,
+  .kal-sheet textarea,
+  .kal-sheet .react-datepicker__input-container input {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+  .kal-sheet input[type="checkbox"] {
+    min-height: 0;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .kal-check {
+    min-height: 44px;
+    align-items: center !important;
+    font-size: 0.95rem !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kal-sheet-actions {
+    gap: 0.6rem !important;
+    padding-top: 0.75rem !important;
+  }
+  .kal-sheet-actions button {
+    min-height: 48px;
+    padding: 0.7rem 1.15rem !important;
+    border-radius: 12px !important;
+    font-size: 0.95rem !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kal-sheet-actions button:active {
+    transform: scale(0.98);
+  }
+  .kal-sheet-actions-main {
+    flex: 1;
+    justify-content: flex-end;
+  }
+  .kal-sheet-actions-main button {
+    flex: 1;
+  }
+}
+
+/* ── Mobile ≤420px — small phones ───────────────────────────── */
+@media (max-width: 420px) {
+  .calendar-wrapper .react-calendar__tile {
+    font-size: 0.88rem;
+    border-radius: 9px;
+  }
+  .calendar-wrapper .react-calendar__navigation__label {
+    font-size: 0.94rem !important;
+  }
+  .kal-eitem {
+    padding: 0.75rem 0.85rem !important;
+  }
+  .kal-sheet {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}

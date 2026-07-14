@@ -14,9 +14,9 @@ const formatHM = (ms) => {
 const formatDecimal = (ms) => (ms / 1000 / 60 / 60).toFixed(2);
 
 /* ── kleine Panel-Komponente ───────────────────────────── */
-function Panel({ children, style = {} }) {
+function Panel({ children, style = {}, className }) {
   return (
-    <div style={{
+    <div className={className} style={{
       background: "rgba(var(--tint),0.025)",
       border: "1px solid var(--nill-border)",
       borderRadius: 14,
@@ -144,9 +144,70 @@ export default function WorkflowTimePage() {
 
   return (
     <PageLayout>
+      <style>{`
+        /* Mobile-only overhaul — all rules scoped to ≤768px, desktop untouched. */
+        @media (max-width: 768px) {
+          .wti-head { margin-bottom: 1.1rem !important; }
+          .wti-head h1 { font-size: 1.45rem !important; }
+
+          /* Clock card = hero: big timer, full-width 52px action button. */
+          .wti-clock > div { padding: 1.15rem 1.1rem !important; }
+          .wti-timer { font-size: 2.75rem !important; }
+          .wti-clockbtn {
+            display: flex !important;
+            width: 100%;
+            justify-content: center;
+            padding: 0.95rem 1.2rem !important;
+            font-size: 0.95rem !important;
+            border-radius: 13px !important;
+            min-height: 52px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.12s, background 0.15s !important;
+          }
+          .wti-clockbtn:active { transform: scale(0.98); }
+
+          /* Month navigation: 44px arrows, badge keeps its own row space. */
+          .wti-mnav { gap: 0.6rem; flex-wrap: wrap; }
+          .wti-mbtn {
+            min-width: 44px; min-height: 44px;
+            padding: 0 !important;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.05rem !important;
+            border-radius: 12px !important;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          .wti-mbtn:active { background: var(--nill-panel-hov) !important; }
+          .wti-mlabel { min-width: 0 !important; flex: 1; font-size: 0.92rem !important; }
+          .wti-badge { padding: 0.5rem 1rem !important; }
+
+          /* Entry rows: roomy 60px touch rows with tap feedback. */
+          .wti-row {
+            padding: 1rem 1.1rem !important;
+            min-height: 60px;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .wti-row:active { background: var(--nill-panel-hov); }
+
+          /* Inputs: 16px font stops iOS zoom; comfortable 44px height. */
+          .wti-input {
+            font-size: 16px !important;
+            min-height: 44px;
+            width: 76px !important;
+          }
+          .wti-save { min-height: 44px; padding: 0.55rem 1.2rem !important; }
+
+          .wti-col { gap: 0.9rem !important; }
+        }
+      `}</style>
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div style={{ marginBottom: "1.75rem" }}>
+      <div className="wti-head" style={{ marginBottom: "1.75rem" }}>
         <span style={{
           fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
           textTransform: "uppercase", color: "var(--nill-text-dim)",
@@ -161,10 +222,10 @@ export default function WorkflowTimePage() {
         </h1>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 680 }}>
+      <div className="wti-col" style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 680 }}>
 
         {/* ── Clock Card ──────────────────────────────────── */}
-        <Panel style={{
+        <Panel className="wti-clock" style={{
           border: activeEntry
             ? "1px solid rgba(134,239,172,0.2)"
             : "1px solid var(--nill-border)",
@@ -193,7 +254,7 @@ export default function WorkflowTimePage() {
 
                 {/* Timer */}
                 <div style={{ marginBottom: "1rem" }}>
-                  <p style={{
+                  <p className="wti-timer" style={{
                     fontSize: "2.25rem", fontWeight: 800, margin: 0,
                     color: "var(--nill-text)", fontVariantNumeric: "tabular-nums",
                     letterSpacing: "-0.02em", lineHeight: 1,
@@ -209,6 +270,7 @@ export default function WorkflowTimePage() {
                 </div>
 
                 <button
+                  className="wti-clockbtn"
                   onClick={clockOut}
                   disabled={actionLoading}
                   style={{
@@ -254,6 +316,7 @@ export default function WorkflowTimePage() {
                 </div>
 
                 <button
+                  className="wti-clockbtn"
                   onClick={clockIn}
                   disabled={actionLoading}
                   style={{
@@ -299,7 +362,9 @@ export default function WorkflowTimePage() {
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "0.8rem", color: "var(--nill-text-sub)" }}>Nach</span>
                 <input
+                  className="wti-input"
                   type="number" min="1" max="24" step="0.5"
+                  inputMode="decimal"
                   value={autoHours}
                   onChange={e => setAutoHours(parseFloat(e.target.value))}
                   style={{
@@ -314,6 +379,7 @@ export default function WorkflowTimePage() {
                   Stunden automatisch ausstempeln
                 </span>
                 <button
+                  className="wti-save"
                   onClick={saveSettings}
                   disabled={savingSettings}
                   style={{
@@ -335,9 +401,10 @@ export default function WorkflowTimePage() {
         )}
 
         {/* ── Monats-Navigation ───────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="wti-mnav" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <button
+              className="wti-mbtn"
               onClick={() => handleMonthChange(-1)}
               style={{
                 padding: "0.4rem 0.75rem",
@@ -352,7 +419,7 @@ export default function WorkflowTimePage() {
               ‹
             </button>
 
-            <span style={{
+            <span className="wti-mlabel" style={{
               fontSize: "0.88rem", fontWeight: 700,
               color: "var(--nill-text)", minWidth: 140, textAlign: "center",
             }}>
@@ -360,6 +427,7 @@ export default function WorkflowTimePage() {
             </span>
 
             <button
+              className="wti-mbtn"
               onClick={() => handleMonthChange(1)}
               style={{
                 padding: "0.4rem 0.75rem",
@@ -376,7 +444,7 @@ export default function WorkflowTimePage() {
           </div>
 
           {/* Gesamt-Badge */}
-          <div style={{
+          <div className="wti-badge" style={{
             display: "flex", alignItems: "baseline", gap: "0.4rem",
             padding: "0.4rem 1rem",
             background: "var(--nill-gold-dim)",
@@ -421,6 +489,7 @@ export default function WorkflowTimePage() {
               {entries.map((e, i) => (
                 <div
                   key={i}
+                  className="wti-row"
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "0.8rem 1.25rem",

@@ -66,8 +66,9 @@ export default function ImapReplyModal({ open, onClose, emailId, onSent }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+    // nill-sheet-*: Mobile Bottom-Sheet (index.css), auf Desktop wirkungslos
+    <div className="nill-sheet-wrap fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="nill-sheet nill-sheet-body bg-gray-900 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSend} className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">Antworten</h2>
