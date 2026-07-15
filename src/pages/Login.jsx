@@ -447,7 +447,7 @@ export default function Login() {
                     {emailNotVerified && (
                       <div style={{ marginTop: 8 }}>
                         <span
-                          style={{ color: "#c6ff3c", cursor: "pointer", textDecoration: "underline" }}
+                          style={{ color: "var(--auth-link, #c6ff3c)", cursor: "pointer", textDecoration: "underline" }}
                           onClick={() => navigate("/resend-verification", { state: { email } })}
                         >
                           Bestätigungs-E-Mail erneut senden
@@ -484,11 +484,11 @@ export default function Login() {
               {forgotSent ? (
                 <div style={{
                   padding: "16px 18px",
-                  background: "rgba(198,255,60,.07)",
-                  border: "1px solid rgba(198,255,60,.25)",
+                  background: "var(--auth-ok-bg, rgba(198,255,60,.07))",
+                  border: "1px solid var(--auth-ok-bd, rgba(198,255,60,.25))",
                   borderRadius: 12,
                   fontSize: 13,
-                  color: "rgba(239,237,231,.8)",
+                  color: "var(--auth-ok-tx, rgba(239,237,231,.8))",
                   lineHeight: 1.6,
                 }}>
                   Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.
@@ -543,9 +543,9 @@ export default function Login() {
                     style={{
                       flex: 1, padding:"0.6rem 0.5rem",
                       borderRadius: 10,
-                      border: tfaMethod===m.key ? "1.5px solid rgba(197,165,114,0.7)" : "1.5px solid rgba(255,255,255,0.1)",
-                      background: tfaMethod===m.key ? "rgba(197,165,114,0.12)" : "rgba(255,255,255,0.04)",
-                      color: tfaMethod===m.key ? "#C5A572" : "rgba(255,255,255,0.5)",
+                      border: tfaMethod===m.key ? "1.5px solid var(--auth-2fa-bd-on, rgba(197,165,114,0.7))" : "1.5px solid var(--auth-2fa-bd, rgba(255,255,255,0.1))",
+                      background: tfaMethod===m.key ? "var(--auth-2fa-bg-on, rgba(197,165,114,0.12))" : "var(--auth-2fa-bg, rgba(255,255,255,0.04))",
+                      color: tfaMethod===m.key ? "var(--auth-2fa-tx-on, #C5A572)" : "var(--auth-dim, rgba(255,255,255,0.5))",
                       fontSize:"0.72rem", fontWeight:600, cursor:"pointer",
                       transition:"all 0.15s",
                     }}>
@@ -577,7 +577,7 @@ export default function Login() {
                 <div>
                   {!emailSent ? (
                     <>
-                      <p style={{ fontSize:"0.82rem", color:"rgba(255,255,255,0.5)", marginBottom:"1rem" }}>
+                      <p style={{ fontSize:"0.82rem", color:"var(--auth-dim, rgba(255,255,255,0.5))", marginBottom:"1rem" }}>
                         Wir senden dir einen 6-stelligen Code an deine E-Mail-Adresse.
                       </p>
                       {error && <div className="nill-error">{error}</div>}
@@ -587,7 +587,7 @@ export default function Login() {
                     </>
                   ) : (
                     <form onSubmit={handle2faSubmit} noValidate>
-                      <p style={{ fontSize:"0.82rem", color:"rgba(197,165,114,0.9)", marginBottom:"1rem" }}>
+                      <p style={{ fontSize:"0.82rem", color:"var(--auth-gold, rgba(197,165,114,0.9))", marginBottom:"1rem" }}>
                         Code gesendet. Bitte prüfe deine E-Mails.
                       </p>
                       <div className="nill-field">
@@ -603,7 +603,7 @@ export default function Login() {
                       </button>
                       <button type="button" onClick={handleSendEmailOtp} disabled={loading}
                         style={{ width:"100%", marginTop:"0.5rem", background:"none", border:"none",
-                          color:"rgba(255,255,255,0.4)", fontSize:"0.78rem", cursor:"pointer" }}>
+                          color:"var(--auth-dim2, rgba(255,255,255,0.4))", fontSize:"0.78rem", cursor:"pointer" }}>
                         Code erneut senden
                       </button>
                     </form>
@@ -614,7 +614,7 @@ export default function Login() {
               {/* WebAuthn */}
               {tfaMethod === "webauthn" && (
                 <div>
-                  <p style={{ fontSize:"0.82rem", color:"rgba(255,255,255,0.5)", marginBottom:"1rem" }}>
+                  <p style={{ fontSize:"0.82rem", color:"var(--auth-dim, rgba(255,255,255,0.5))", marginBottom:"1rem" }}>
                     Verwende den Fingerabdruckscanner, Face ID oder einen Sicherheitsschlüssel deines Geräts.
                   </p>
                   {error && <div className="nill-error">{error}</div>}

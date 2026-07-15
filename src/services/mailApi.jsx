@@ -104,6 +104,16 @@ export async function markRead({ provider, emailId }) {
   return api.patch(path);
 }
 
+/** Favorit setzen/entfernen */
+export async function setStarred({ provider, emailId, starred }) {
+  const path = (
+    provider === "imap"    ? `/imap/emails/${emailId}/star` :
+    provider === "outlook" ? `/outlook/emails/${emailId}/star` :
+                             `/gmail/emails/${emailId}/star`
+  );
+  return api.patch(path, { starred });
+}
+
 /** Attachment-Download-URL für <a href=…> — provider-aware. */
 export function attachmentUrl({ email, attachmentId }) {
   const provider = detectProvider(email) || email?.provider;

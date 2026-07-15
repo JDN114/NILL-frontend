@@ -448,7 +448,7 @@ export default function Register() {
                   AGB
                 </a>
                 {" "}und stimme dem{" "}
-                <strong style={{ color: "rgba(239,237,231,.75)" }}>14-tägigen kostenlosen Testzeitraum</strong>
+                <strong style={{ color: "var(--auth-strong, rgba(239,237,231,.75))" }}>14-tägigen kostenlosen Testzeitraum</strong>
                 {" "}zu.
               </span>
             </label>

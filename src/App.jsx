@@ -139,10 +139,19 @@ function PushNotification() {
 }
 
 function PageLoader() {
+  // Follows data-theme (light on dashboard/auth surfaces, dark everywhere
+  // else). Class-based so the light override can win without touching the
+  // dark values — dark renders byte-identically.
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#04070f" }}>
-      <style>{`@keyframes nill-spin { to { transform: rotate(360deg) } }`}</style>
-      <div style={{ width: 24, height: 24, border: "2px solid rgba(197,165,114,0.25)", borderTopColor: "#c5a572", borderRadius: "50%", animation: "nill-spin 0.65s linear infinite" }} />
+    <div className="nill-page-loader">
+      <style>{`
+        @keyframes nill-spin { to { transform: rotate(360deg) } }
+        .nill-page-loader { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #04070f; }
+        .nill-page-loader > span { width: 24px; height: 24px; border: 2px solid rgba(197,165,114,0.25); border-top-color: #c5a572; border-radius: 50%; animation: nill-spin 0.65s linear infinite; }
+        html[data-theme="light"] .nill-page-loader { background: #eae3d4; }
+        html[data-theme="light"] .nill-page-loader > span { border-color: rgba(128,98,40,0.25); border-top-color: #806228; }
+      `}</style>
+      <span />
     </div>
   );
 }

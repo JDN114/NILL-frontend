@@ -284,3 +284,113 @@ html[data-theme="light"] .em-dot--medium { background: #a16207; }
   html[data-theme="light"] .em-mobile-bar { background: var(--bg-panel-soft); }
   html[data-theme="light"] .em-detail-actions { background: rgba(250, 246, 236, 0.92); }
 }
+
+/* ===========================================================================
+   LIGHT MODE — Auth pages (.nill-auth-*)
+   ---------------------------------------------------------------------------
+   Login / Register / ResetPassword each carry their own inline <style> block
+   with hard-coded dark literals (bg #040407, ink #efede7, lime #c6ff3c).
+   ThemeApplier + the index.html pre-paint script apply data-theme=light on
+   /login, /register and /reset-password, and this block remaps the shared
+   class vocabulary. Specificity (0,2,1) beats the inline blocks' (0,1,0) and
+   this file loads last, so dark mode renders byte-identically.
+   The few inline style={{}} literals in the JSX reference the --auth-* vars
+   below (with dark fallbacks), since attribute styles can't be overridden
+   from CSS. The lime accent is darkened to the same #556d00 used on the
+   light dashboard so text accents clear AA on the bone field; the primary
+   button keeps its lime surface (dark text on lime passes on its own).
+   ======================================================================== */
+
+html[data-theme="light"] .nill-auth-root {
+  background: #eae3d4;
+  color: #201d15;
+
+  /* Vars consumed by inline style={{}} literals in Login/Register JSX */
+  --auth-link:       #556d00;
+  --auth-dim:        rgba(32, 29, 21, 0.62);
+  --auth-dim2:       rgba(32, 29, 21, 0.55);
+  --auth-gold:       #806228;
+  --auth-strong:     #201d15;
+  --auth-ok-bg:      rgba(85, 109, 0, 0.07);
+  --auth-ok-bd:      rgba(85, 109, 0, 0.30);
+  --auth-ok-tx:      #2e2a20;
+  --auth-2fa-bd-on:  rgba(128, 98, 40, 0.65);
+  --auth-2fa-bd:     rgba(42, 36, 24, 0.16);
+  --auth-2fa-bg-on:  rgba(128, 98, 40, 0.10);
+  --auth-2fa-bg:     rgba(42, 36, 24, 0.04);
+  --auth-2fa-tx-on:  #806228;
+}
+html[data-theme="light"] .nill-auth-root::before {
+  background:
+    radial-gradient(60% 50% at 20% 20%, rgba(122, 92, 255, 0.06), transparent 60%),
+    radial-gradient(50% 40% at 80% 80%, rgba(85, 109, 0, 0.05), transparent 60%);
+}
+html[data-theme="light"] .nill-auth-card {
+  background: #faf6ec;
+  border-color: rgba(42, 36, 24, 0.14);
+  box-shadow: 0 1px 2px rgba(42, 36, 24, 0.06), 0 12px 32px rgba(42, 36, 24, 0.10);
+}
+html[data-theme="light"] .nill-auth-brand-name,
+html[data-theme="light"] .nill-auth-heading { color: #201d15; }
+html[data-theme="light"] .nill-auth-heading em { color: #556d00; }
+html[data-theme="light"] .nill-auth-sub { color: rgba(32, 29, 21, 0.62); }
+html[data-theme="light"] .nill-label { color: rgba(32, 29, 21, 0.55); }
+
+html[data-theme="light"] .nill-input {
+  background: rgba(42, 36, 24, 0.04);
+  border-color: rgba(42, 36, 24, 0.16);
+  color: #201d15;
+}
+html[data-theme="light"] .nill-input::placeholder { color: rgba(32, 29, 21, 0.35); }
+html[data-theme="light"] .nill-input:focus { border-color: rgba(85, 109, 0, 0.55); }
+
+html[data-theme="light"] .nill-error {
+  color: #b3134f;
+  background: rgba(179, 19, 79, 0.06);
+  border-color: rgba(179, 19, 79, 0.25);
+}
+html[data-theme="light"] .nill-error a { color: #556d00; }
+
+/* Primary button: lime surface works on bone; hover inverts to warm ink
+   (the dark-mode hover is white, which would vanish on the light card). */
+html[data-theme="light"] .nill-btn-primary:hover:not(:disabled) {
+  background: #201d15;
+  color: #eae3d4;
+}
+html[data-theme="light"] .nill-btn-ghost {
+  color: #201d15;
+  border-color: rgba(42, 36, 24, 0.22);
+}
+html[data-theme="light"] .nill-btn-ghost:hover {
+  border-color: rgba(42, 36, 24, 0.42);
+  background: rgba(42, 36, 24, 0.04);
+}
+
+html[data-theme="light"] .nill-auth-footer { color: rgba(32, 29, 21, 0.55); }
+html[data-theme="light"] .nill-auth-footer a,
+html[data-theme="light"] .nill-auth-footer span.link { color: #556d00; }
+html[data-theme="light"] .nill-divider { background: rgba(42, 36, 24, 0.12); }
+
+html[data-theme="light"] .nill-inactivity-banner {
+  background: rgba(128, 98, 40, 0.07);
+  border-color: rgba(128, 98, 40, 0.30);
+}
+html[data-theme="light"] .nill-inactivity-title { color: #806228; }
+html[data-theme="light"] .nill-inactivity-body { color: rgba(32, 29, 21, 0.62); }
+
+html[data-theme="light"] .nill-success-icon {
+  background: rgba(85, 109, 0, 0.09);
+  border-color: rgba(85, 109, 0, 0.35);
+  color: #556d00;
+}
+html[data-theme="light"] .nill-privacy-box {
+  background: rgba(42, 36, 24, 0.03);
+  border-color: rgba(42, 36, 24, 0.13);
+}
+html[data-theme="light"] .nill-privacy-box:has(input:checked) {
+  border-color: rgba(85, 109, 0, 0.45);
+  background: rgba(85, 109, 0, 0.05);
+}
+html[data-theme="light"] .nill-privacy-checkbox { border-color: rgba(42, 36, 24, 0.35); }
+html[data-theme="light"] .nill-privacy-label { color: rgba(32, 29, 21, 0.68); }
+html[data-theme="light"] .nill-privacy-label a { color: #556d00; }

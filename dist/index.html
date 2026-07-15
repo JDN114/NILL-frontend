@@ -4,15 +4,17 @@
     <script>
       /* Apply the effective theme before paint to avoid a flash of the wrong
          mode. Must mirror <ThemeApplier>: dark is the standard mode, and light
-         only applies on dashboard surfaces — the landing/marketing/legal/auth
-         pages always stay dark regardless of the saved preference. */
+         applies on dashboard AND auth surfaces (login/register/reset) — the
+         landing/marketing/legal pages always stay dark regardless of the
+         saved preference. */
       (function () {
         try {
           var stored = localStorage.getItem("nill-theme");
           var p = location.pathname;
-          var dash = ["/dashboard", "/station", "/ausweis", "/admin", "/upgrade", "/onboarding", "/redeem-coupon"];
-          var onDash = dash.some(function (x) { return p.indexOf(x) === 0; });
-          var effective = stored === "light" && onDash ? "light" : "dark";
+          var themed = ["/dashboard", "/station", "/ausweis", "/admin", "/upgrade", "/onboarding", "/redeem-coupon",
+                        "/login", "/register", "/reset-password"];
+          var onThemed = themed.some(function (x) { return p.indexOf(x) === 0; });
+          var effective = stored === "light" && onThemed ? "light" : "dark";
           document.documentElement.setAttribute("data-theme", effective);
         } catch (e) {
           document.documentElement.setAttribute("data-theme", "dark");
@@ -153,13 +155,27 @@
         0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
         40%           { transform: scale(1);   opacity: 1;   }
       }
+
+      /* Light mode (set pre-paint by the data-theme script above): the boot
+         loader follows the saved theme on dashboard/auth surfaces, so there is
+         no dark flash before a light page. Values mirror theme-modes.css
+         (bone field, warm ink, dark lime for the small accents). */
+      html[data-theme="light"],
+      html[data-theme="light"] body { background: #eae3d4; }
+      html[data-theme="light"] #nill-boot { background: #eae3d4; }
+      html[data-theme="light"] .nb-logo { color: #201d15; }
+      html[data-theme="light"] .nb-logo span { color: #556d00; }
+      html[data-theme="light"] .nb-bar-wrap { background: rgba(42,36,24,0.12); }
+      html[data-theme="light"] .nb-bar,
+      html[data-theme="light"] .nb-dot { background: #556d00; }
+      html[data-theme="light"] .nb-text { color: rgba(32,29,21,0.75); }
     </style>
-    <script type="module" crossorigin src="/assets/index-CaNHXG2s.js"></script>
+    <script type="module" crossorigin src="/assets/index-eklVfJtO.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react--hPKs4bs.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-misc-xcvkua7f.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-router-B9EJrQcr.js">
     <link rel="stylesheet" crossorigin href="/assets/vendor-misc-BK_H5ORi.css">
-    <link rel="stylesheet" crossorigin href="/assets/index-Cigu3Wvj.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-xZdEeBkB.css">
   </head>
   <body>
     <!-- Ladescreen — wird entfernt sobald React mountet -->

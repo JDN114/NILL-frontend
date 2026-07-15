@@ -8,9 +8,10 @@
 // existing users see no change unless they opt in.
 //
 // The attribute is written to <html> by <ThemeApplier> (mounted inside the
-// Router) so the light theme only affects authenticated dashboard surfaces —
-// the landing/marketing/legal/auth pages always stay dark regardless of the
-// saved preference.
+// Router). The light theme applies on authenticated dashboard surfaces AND on
+// the auth pages (login/register/reset — including their loading states), so
+// the app doesn't flash dark→light around the login flow. The landing/
+// marketing/legal pages always stay dark regardless of the saved preference.
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -31,6 +32,19 @@ export const DASHBOARD_ROUTE_PREFIXES = [
 
 export function isDashboardPath(pathname) {
   return DASHBOARD_ROUTE_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+// Auth pages also follow the saved theme (light styles live in
+// theme-modes.css under `.nill-auth-root`), but they do NOT show the
+// floating ThemeToggle — that stays gated to isDashboardPath.
+// Must be mirrored in the pre-paint script in index.html.
+export const AUTH_ROUTE_PREFIXES = ["/login", "/register", "/reset-password"];
+
+export function isThemedPath(pathname) {
+  return (
+    isDashboardPath(pathname) ||
+    AUTH_ROUTE_PREFIXES.some((p) => pathname.startsWith(p))
+  );
 }
 
 const ThemeContext = createContext({ theme: "dark", toggleTheme: () => {}, setTheme: () => {} });
@@ -76,14 +90,14 @@ export function ThemeProvider({ children }) {
 }
 
 // Writes the effective `data-theme` onto <html>. Light only applies on
-// dashboard surfaces; everywhere else (and as the default) it stays dark.
-// Must be rendered inside <Router> because it reads the current location.
+// dashboard + auth surfaces; everywhere else (and as the default) it stays
+// dark. Must be rendered inside <Router> because it reads the current location.
 export function ThemeApplier() {
   const { theme } = useTheme();
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const effective = theme === "light" && isDashboardPath(pathname) ? "light" : "dark";
+    const effective = theme === "light" && isThemedPath(pathname) ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", effective);
   }, [theme, pathname]);
 

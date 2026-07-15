@@ -26,7 +26,7 @@ import ImapComposeModal from "../components/ImapComposeModal";
 import ImapAccountSwitcher from "../components/ImapAccountSwitcher";
 import SmartFolderModal from "../components/SmartFolderModal";
 import api from "../services/api";
-import { attachmentUrl, reanalyze } from "../services/mailApi";
+import { attachmentUrl, reanalyze, setStarred } from "../services/mailApi";
 
 const IC = {
   refresh: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>),
@@ -43,12 +43,19 @@ const IC = {
   more:    (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
   menu:    (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>),
   plus:    (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
+  star:     (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>),
+  starFill: (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>),
 };
+
+// Sentinel für die Favoriten-Ansicht — verhält sich wie ein Smart-Folder,
+// lädt aber über den eigenen /gmail/emails/starred Endpoint.
+const STARRED_VIEW = "__starred__";
 
 const FILTERS = [
   { key: "all",    label: "Alle" },
-  { key: "unread", label: "Ungelesen" },
-  { key: "read",   label: "Gelesen" },
+  { key: "unread",  label: "Ungelesen" },
+  { key: "read",    label: "Gelesen" },
+  { key: "starred", label: "Favoriten" },
   { key: "high",   label: "Dringend" },
   { key: "today",  label: "Heute" },
   { key: "week",   label: "Diese Woche" },
@@ -180,7 +187,7 @@ const AiPanel = memo(function AiPanel({ email, aiEnabled }) {
 
 // ── Memoized EmailListItem — re-renders only when its own props change ─────────
 const EmailListItem = memo(function EmailListItem({
-  id, isActive, isUnread, senderName, subject, category, priority, dateStr, onOpen, aiEnabled,
+  id, isActive, isUnread, isStarred, senderName, subject, category, priority, dateStr, onOpen, onToggleStar, aiEnabled,
 }) {
   const prio = aiEnabled ? PRIO[priority] : null;
   return (
@@ -196,6 +203,14 @@ const EmailListItem = memo(function EmailListItem({
         <div className="em-item-top">
           <span className="em-item-sender">{senderName}</span>
           <div className="em-item-top-right">
+            <button
+              className={`em-star${isStarred ? " em-star--on" : ""}`}
+              onClick={e => { e.stopPropagation(); onToggleStar(id, !isStarred); }}
+              title={isStarred ? "Favorit entfernen" : "Als Favorit markieren"}
+              aria-label={isStarred ? "Favorit entfernen" : "Als Favorit markieren"}
+            >
+              {isStarred ? IC.starFill : IC.star}
+            </button>
             {prio && <span className={`em-dot ${prio.dot}`} title={prio.label} />}
             <span className="em-item-date">{dateStr}</span>
           </div>
@@ -340,7 +355,7 @@ function AttachmentPreview({ att, email, onClose }) {
 }
 
 // ── Memoized EmailDetail — re-renders only when activeEmail content changes ──
-const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReanalyze, aiEnabled }) {
+const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReanalyze, aiEnabled, isStarred, onToggleStar }) {
   const [preview, setPreview] = useState(null); // att object or null
 
   if (!email) return <div className="em-detail-empty">Wähle eine E-Mail aus</div>;
@@ -356,6 +371,14 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReana
       )}
       <div className="em-detail-topbar">
         <button onClick={onClose} className="em-back">{IC.back} Zurück</button>
+        <button
+          className={`em-star em-star--detail${isStarred ? " em-star--on" : ""}`}
+          onClick={() => onToggleStar(email.id, !isStarred)}
+          title={isStarred ? "Favorit entfernen" : "Als Favorit markieren"}
+        >
+          {isStarred ? IC.starFill : IC.star}
+          <span className="em-star-label">{isStarred ? "Favorit" : "Favorisieren"}</span>
+        </button>
       </div>
       <div className="em-detail-inner">
         <h2 className="em-detail-subject">{email.subject || "(Kein Betreff)"}</h2>
@@ -494,6 +517,8 @@ export default function EmailsPage() {
   const activeFolderRef = useRef(activeFolder);
   const fetchEmailsRef  = useRef(fetchEmails);
   const openEmailRef    = useRef(openEmail);
+  const providerRef     = useRef(provider);
+  useEffect(() => { providerRef.current = provider; }, [provider]);
   useEffect(() => { mailboxRef.current = mailbox; }, [mailbox]);
   useEffect(() => { activeFolderRef.current = activeFolder; }, [activeFolder]);
   useEffect(() => { fetchEmailsRef.current = fetchEmails; }, [fetchEmails]);
@@ -530,7 +555,12 @@ export default function EmailsPage() {
     if (!connected) return;
     setLoading(true); setError(null); setSearchResults(null);
     try {
-      if (activeFolderRef.current) {
+      if (activeFolderRef.current === STARRED_VIEW) {
+        const r = await api.get("/gmail/emails/starred", { params: { provider: providerRef.current } });
+        setEmails((r.data?.emails || []).sort((a, b) =>
+          new Date(b.received_at || 0) - new Date(a.received_at || 0)
+        ));
+      } else if (activeFolderRef.current) {
         const r = await api.get(`/gmail/folders/${activeFolderRef.current}/emails`);
         setEmails((r.data?.emails || []).sort((a, b) =>
           new Date(b.received_at || 0) - new Date(a.received_at || 0)
@@ -607,6 +637,7 @@ export default function EmailsPage() {
         switch (activeFilter) {
           case "unread":  return !mail.read;
           case "read":    return  mail.read;
+          case "starred": return !!mail.starred;
           case "high":    return  mail.priority === "high";
           case "today":   return new Date(mail.received_at || 0).toDateString() === now.toDateString();
           case "week":    return new Date(mail.received_at || 0) >= sow;
@@ -623,7 +654,9 @@ export default function EmailsPage() {
   }, [emails, searchResults, activeFilter]);
 
   const unreadCount   = useMemo(() => emails.filter(m => !m.read && m.mailbox !== "sent").length, [emails]);
-  const canLoadMore   = searchResults === null && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
+  // In Ordner-/Favoriten-Ansichten gibt es kein Nachladen (loadMore guarded eh
+  // auf activeFolder) — Button dort gar nicht erst anzeigen.
+  const canLoadMore   = searchResults === null && !activeFolder && hasMore?.[mailbox === "inbox" ? "inbox" : "sent"];
   const activeEmailId = activeEmail?.id ?? null;
 
   // ── Polling (nur für AI-Status der geöffneten Mail) ─────────────────────
@@ -680,6 +713,21 @@ export default function EmailsPage() {
   }, [stopPolling, closeEmail]);
 
   const handleReply = useCallback(() => setReplyOpen(true), []);
+
+  // ── Favoriten-Toggle (optimistisch, Revert bei API-Fehler) ───────────────
+  // starOverrides deckt die Detail-Ansicht ab, falls die Mail nicht (mehr)
+  // in der geladenen Liste steht (z. B. nach Ordner-/Postfachwechsel).
+  const [starOverrides, setStarOverrides] = useState({});
+  const toggleStar = useCallback((id, next) => {
+    const apply = (val) => {
+      setEmails(prev => prev.map(e => (e.id === id ? { ...e, starred: val } : e)));
+      setSearchResults(prev => prev ? prev.map(e => (e.id === id ? { ...e, starred: val } : e)) : prev);
+      setStarOverrides(o => ({ ...o, [id]: val }));
+    };
+    apply(next);
+    setStarred({ provider: providerRef.current, emailId: id, starred: next })
+      .catch(() => apply(!next));
+  }, []);
 
   const handleReanalyze = useCallback(async () => {
     const id = activeEmailRef.current?.id;
@@ -756,9 +804,14 @@ export default function EmailsPage() {
 
   const filterLabel = FILTERS.find(f => f.key === activeFilter)?.label;
   const isSearching = search.trim().length > 0;
-  const listTitle = activeFolder
+  const listTitle = activeFolder === STARRED_VIEW
+    ? "Favoriten"
+    : activeFolder
     ? `${folders.find(f => f.id === activeFolder)?.icon ?? ""} ${folders.find(f => f.id === activeFolder)?.name ?? ""}`.trim()
     : mailbox === "inbox" ? "Posteingang" : "Gesendet";
+  const detailStarred = activeEmailId != null
+    ? (starOverrides[activeEmailId] ?? activeEmail?.starred ?? false)
+    : false;
 
   return (
     <>
@@ -816,6 +869,11 @@ export default function EmailsPage() {
                 {badge > 0 && <span className="em-badge">{badge}</span>}
               </button>
             ))}
+            <button
+              onClick={() => { setActiveFolder(STARRED_VIEW); setSearch(""); setSearchResults(null); setActiveFilter("all"); handleClose(); setDrawerOpen(false); }}
+              className={`em-nav-item ${activeFolder === STARRED_VIEW ? "em-nav-item--active" : ""}`}>
+              <span className="em-nav-fav">{IC.star} Favoriten</span>
+            </button>
 
             {folders.length > 0 && <div className="em-nav-divider"/>}
             {folders.map(f => (
@@ -959,12 +1017,14 @@ export default function EmailsPage() {
                 id={mail.id}
                 isActive={activeEmailId === mail.id}
                 isUnread={!mail.read}
+                isStarred={!!(starOverrides[mail.id] ?? mail.starred)}
                 senderName={mail._senderName}
                 subject={mail.subject}
                 category={mail.category}
                 priority={mail.priority}
                 dateStr={mail._dateStr}
                 onOpen={handleOpen}
+                onToggleStar={toggleStar}
                 aiEnabled={aiEnabled}
               />
             ))}
@@ -980,7 +1040,7 @@ export default function EmailsPage() {
 
         {/* ── Detail ── */}
         <div className={`em-detail-col ${activeEmail ? "em-detail-col--open" : ""}`}>
-          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} onReanalyze={handleReanalyze} aiEnabled={aiEnabled} />
+          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} onReanalyze={handleReanalyze} aiEnabled={aiEnabled} isStarred={detailStarred} onToggleStar={toggleStar} />
         </div>
       </div>
 

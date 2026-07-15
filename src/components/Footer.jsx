@@ -17,10 +17,12 @@ const S = `
     justify-content: space-between; gap: 12px;
     font-family: "Inter", system-ui, sans-serif;
   }
+  /* WCAG 1.4.3: 11px text needs 4.5:1 — .55 on the near-black marketing bg
+     ≈ 5.6:1, .72 on the light bone bg ≈ 5:1 (the old .38 was ~3.1:1). */
   .nf-copy {
     font-family: "JetBrains Mono", monospace;
     font-size: 11px; letter-spacing: 0.12em;
-    color: rgba(var(--ink-tint), .38);
+    color: rgba(var(--ink-tint), .55);
   }
   .nf-nav {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px;
@@ -28,12 +30,15 @@ const S = `
   .nf-link {
     font-family: "JetBrains Mono", monospace;
     font-size: 11px; letter-spacing: 0.1em;
-    color: rgba(var(--ink-tint), .38);
+    color: rgba(var(--ink-tint), .55);
     text-decoration: none;
     background: none; border: none; padding: 0; cursor: pointer;
     transition: color .15s;
   }
-  .nf-link:hover { color: rgba(var(--ink-tint), .75); }
+  .nf-link:hover { color: rgba(var(--ink-tint), .9); }
+  html[data-theme="light"] .nf-copy,
+  html[data-theme="light"] .nf-link { color: rgba(var(--ink-tint), .72); }
+  html[data-theme="light"] .nf-link:hover { color: rgba(var(--ink-tint), .95); }
 `;
 
 const NAV_LINKS = [

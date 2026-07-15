@@ -426,6 +426,32 @@ body {
 }
 .em-back:hover { color: var(--nill-text); background: var(--nill-panel-hov); }
 
+/* ── Favoriten-Stern (Liste + Detail) ────────────────────── */
+.em-star {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+  background: none; border: none; cursor: pointer;
+  padding: 0.25rem; border-radius: 6px;
+  color: var(--nill-text-mute);
+  transition: color 0.15s, background 0.15s, transform 0.15s;
+}
+.em-star:hover { color: var(--nill-text); background: var(--nill-panel-hov); }
+.em-star--on,
+.em-star--on:hover { color: var(--nill-gold); }
+.em-star:active { transform: scale(0.88); }
+.em-star--detail {
+  margin-left: auto;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+}
+.em-star-label { display: none; }
+.em-star--detail .em-star-label { display: inline; }
+.em-nav-fav { display: inline-flex; align-items: center; gap: 0.45rem; }
+@media (max-width: 768px) {
+  /* größere Touch-Fläche für den Stern in Liste + Detail-Topbar */
+  .em-star { padding: 0.45rem; }
+  .em-star--detail { padding: 0.5rem 0.75rem; font-size: 0.9rem; border-radius: 10px; }
+}
+
 /* Scrollender Innenbereich — EINZIGER Scroll der App */
 .em-detail-inner {
   flex: 1; overflow-y: auto; overflow-x: hidden;
