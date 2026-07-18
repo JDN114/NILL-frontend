@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT   = "#38f5d0";
 const DAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -43,6 +45,8 @@ function Spinner() {
 }
 
 function TabBar({ active, onChange }) {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   return (
     <div style={{
       display:"flex", gap:8, marginBottom:24,
@@ -56,7 +60,7 @@ function TabBar({ active, onChange }) {
           padding:"6px 18px", borderRadius:99, cursor:"pointer",
           border: active===key ? "1px solid rgba(56,245,208,0.35)" : "1px solid rgba(var(--ink-tint),0.08)",
           background: active===key ? "rgba(56,245,208,0.08)" : "rgba(var(--tint),0.03)",
-          color: active===key ? ACCENT : "rgba(var(--ink-tint),0.5)",
+          color: active===key ? accent : "rgba(var(--ink-tint),0.5)",
           fontFamily:"'JetBrains Mono', monospace", fontSize:"0.72rem",
           letterSpacing:"0.1em", textTransform:"uppercase", transition:"all 0.2s",
         }}>{label}</button>
@@ -67,6 +71,9 @@ function TabBar({ active, onChange }) {
 
 // ── Schichtplan-Tab (existing logic) ─────────────────────────────────────────
 function SchichtplanTab() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
+  const goldText = accentText("#c5a572", theme);
   const [weekStart, setWeekStart] = useState(() => monday());
   const [members,     setMembers]     = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -102,14 +109,14 @@ function SchichtplanTab() {
           <button key={i} onClick={() => setWeekStart(w => addDays(w, delta))} style={{
             width:32, height:32, borderRadius:8,
             border:"1px solid rgba(var(--ink-tint),0.1)",
-            background:"rgba(var(--tint),0.04)", color:"#efede7",
+            background:"rgba(var(--tint),0.04)", color:"rgba(var(--ink-tint),1)",
             cursor:"pointer", fontSize:"1rem",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>{lbl}</button>
         ))}
         <span style={{
           fontFamily:"'JetBrains Mono', monospace", fontSize:"0.82rem",
-          color:"#efede7", letterSpacing:"0.03em", minWidth:210, textAlign:"center",
+          color:"rgba(var(--ink-tint),1)", letterSpacing:"0.03em", minWidth:210, textAlign:"center",
         }}>{weekLabel}</span>
         <button onClick={() => setWeekStart(monday())} style={{
           padding:"0.3rem 0.8rem", borderRadius:8,
@@ -151,7 +158,7 @@ function SchichtplanTab() {
                     <th key={i} style={{
                       padding:"0.5rem 0.35rem", textAlign:"center", minWidth:86,
                       fontFamily:"'JetBrains Mono', monospace", fontSize:"0.65rem", fontWeight:700,
-                      color: isToday ? ACCENT : "rgba(var(--ink-tint),0.35)",
+                      color: isToday ? accent : "rgba(var(--ink-tint),0.35)",
                     }}>
                       <div>{DAY_LABELS[i]}</div>
                       <div style={{ fontSize:"0.58rem", fontWeight:400, opacity:0.7 }}>{fmtDay(d)}</div>
@@ -169,10 +176,10 @@ function SchichtplanTab() {
                         width:30, height:30, borderRadius:"50%",
                         background:"rgba(197,165,114,0.12)", border:"1px solid rgba(197,165,114,0.25)",
                         display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:"0.65rem", fontWeight:800, color:"#c5a572", flexShrink:0,
+                        fontSize:"0.65rem", fontWeight:800, color: goldText, flexShrink:0,
                       }}>{initials(dispName(member))}</div>
                       <div>
-                        <div style={{ fontSize:"0.8rem", fontWeight:700, color:"#efede7", lineHeight:1.2 }}>
+                        <div style={{ fontSize:"0.8rem", fontWeight:700, color:"rgba(var(--ink-tint),1)", lineHeight:1.2 }}>
                           {dispName(member)}
                         </div>
                         {member.org_role_name && (
@@ -203,7 +210,7 @@ function SchichtplanTab() {
                               fontSize:"0.63rem", fontWeight:700, padding:"2px 7px", borderRadius:20,
                               background:`rgba(${hexRgb(a.color||"#c5a572")},0.15)`,
                               border:`1px solid rgba(${hexRgb(a.color||"#c5a572")},0.3)`,
-                              color: a.color||"#c5a572", whiteSpace:"nowrap",
+                              color: accentText(a.color||"#c5a572", theme), whiteSpace:"nowrap",
                               fontFamily:"'JetBrains Mono', monospace",
                             }}>
                               {a.template_name || "Schicht"}
@@ -230,6 +237,9 @@ function SchichtplanTab() {
 
 // ── Urlaubsübersicht-Tab ──────────────────────────────────────────────────────
 function UrlaubsTab() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
+  const goldText = accentText("#c5a572", theme);
   const [year, setYear]         = useState(new Date().getFullYear());
   const [typeFilter, setType]   = useState("all");
   const [absences, setAbsences] = useState([]);
@@ -304,17 +314,17 @@ function UrlaubsTab() {
           <button onClick={() => setYear(y => y-1)} style={{
             width:30, height:30, borderRadius:8,
             border:"1px solid rgba(var(--ink-tint),0.1)", background:"rgba(var(--tint),0.04)",
-            color:"#efede7", cursor:"pointer", fontSize:"1rem",
+            color:"rgba(var(--ink-tint),1)", cursor:"pointer", fontSize:"1rem",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>‹</button>
           <span style={{
             fontFamily:"'JetBrains Mono', monospace", fontSize:"0.9rem",
-            color:"#efede7", letterSpacing:"0.06em", minWidth:48, textAlign:"center",
+            color:"rgba(var(--ink-tint),1)", letterSpacing:"0.06em", minWidth:48, textAlign:"center",
           }}>{year}</span>
           <button onClick={() => setYear(y => y+1)} style={{
             width:30, height:30, borderRadius:8,
             border:"1px solid rgba(var(--ink-tint),0.1)", background:"rgba(var(--tint),0.04)",
-            color:"#efede7", cursor:"pointer", fontSize:"1rem",
+            color:"rgba(var(--ink-tint),1)", cursor:"pointer", fontSize:"1rem",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>›</button>
         </div>
@@ -333,7 +343,7 @@ function UrlaubsTab() {
                 background: isActive
                   ? `rgba(${hexRgb(meta.bg)},0.12)`
                   : "rgba(var(--tint),0.03)",
-                color: isActive ? meta.bg : "rgba(var(--ink-tint),0.45)",
+                color: isActive ? accentText(meta.bg, theme) : "rgba(var(--ink-tint),0.45)",
                 fontFamily:"'JetBrains Mono', monospace", fontSize:"0.68rem",
                 letterSpacing:"0.08em", textTransform:"uppercase", transition:"all 0.18s",
               }}>
@@ -377,7 +387,7 @@ function UrlaubsTab() {
                   <div style={{
                     position:"absolute", top:0, bottom:0,
                     left:`${todayPct}%`, width:1,
-                    background: ACCENT, opacity:0.5,
+                    background: accent, opacity:0.5,
                   }} />
                 );
               })()}
@@ -416,10 +426,10 @@ function UrlaubsTab() {
                       width:26, height:26, borderRadius:"50%", flexShrink:0,
                       background:"rgba(197,165,114,0.1)", border:"1px solid rgba(197,165,114,0.2)",
                       display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:"0.6rem", fontWeight:800, color:"#c5a572",
+                      fontSize:"0.6rem", fontWeight:800, color: goldText,
                     }}>{initials(dispName(emp))}</div>
                     <div style={{
-                      fontSize:"0.8rem", fontWeight:600, color:"#efede7",
+                      fontSize:"0.8rem", fontWeight:600, color:"rgba(var(--ink-tint),1)",
                       overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                     }}>{dispName(emp)}</div>
                   </div>
@@ -430,7 +440,7 @@ function UrlaubsTab() {
                       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
                         <span style={{
                           fontFamily:"'JetBrains Mono', monospace", fontSize:"0.6rem",
-                          color: pct !== null && pct >= 90 ? "#f87171" : "rgba(var(--ink-tint),0.4)",
+                          color: pct !== null && pct >= 90 ? accentText("#f87171", theme) : "rgba(var(--ink-tint),0.4)",
                         }}>
                           {used}{annual ? `/${annual}` : ""} T
                         </span>
@@ -477,7 +487,7 @@ function UrlaubsTab() {
                     const todayPct = ((dayOfYear(new Date())-1) / totalDays) * 100;
                     return <div style={{
                       position:"absolute", top:0, bottom:0, left:`${todayPct}%`,
-                      width:1, background: `${ACCENT}55`,
+                      width:1, background: `${accent}55`,
                     }} />;
                   })()}
 
@@ -507,7 +517,7 @@ function UrlaubsTab() {
                       >
                         <span style={{
                           fontFamily:"'JetBrains Mono', monospace", fontSize:"0.52rem",
-                          color: meta.bg, fontWeight:700, letterSpacing:"0.05em",
+                          color: accentText(meta.bg, theme), fontWeight:700, letterSpacing:"0.05em",
                           whiteSpace:"nowrap", padding:"0 4px",
                           overflow:"hidden", textOverflow:"ellipsis",
                         }}>
@@ -548,7 +558,7 @@ function UrlaubsTab() {
             </div>
             {new Date().getFullYear() === year && (
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <div style={{ width:1, height:12, background: ACCENT, opacity:0.6 }} />
+                <div style={{ width:1, height:12, background: accent, opacity:0.6 }} />
                 <span style={{
                   fontFamily:"'JetBrains Mono', monospace", fontSize:"0.62rem",
                   color:"rgba(var(--ink-tint),0.3)",
@@ -564,13 +574,14 @@ function UrlaubsTab() {
 
 // ── Hauptseite ────────────────────────────────────────────────────────────────
 export default function ArbeitsStationSchichtplan() {
+  const { theme } = useTheme();
   const [tab, setTab] = useState("schicht");
 
   return (
     <ArbeitsStationLayout
       title={tab === "schicht" ? "Schichtplan" : "Urlaubsübersicht"}
       icon={tab === "schicht" ? "⬡" : "✈️"}
-      accent={ACCENT}
+      accent={accentText(ACCENT, theme)}
       maxWidth={1100}
     >
       <style>{`@keyframes as-spin { to { transform: rotate(360deg); } }`}</style>

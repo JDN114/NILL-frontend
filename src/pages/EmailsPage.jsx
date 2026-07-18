@@ -26,13 +26,15 @@ import ImapComposeModal from "../components/ImapComposeModal";
 import ImapAccountSwitcher from "../components/ImapAccountSwitcher";
 import SmartFolderModal from "../components/SmartFolderModal";
 import api from "../services/api";
-import { attachmentUrl, reanalyze, setStarred } from "../services/mailApi";
+import { attachmentUrl, fetchAttachmentFiles, reanalyze, setStarred } from "../services/mailApi";
+import { htmlToText, textToHtml, MAX_BODY_LENGTH } from "../utils/mailBody";
 
 const IC = {
   refresh: (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>),
   compose: (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
   back:    (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>),
   reply:   (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>),
+  forward: (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>),
   search:  (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
   filter:  (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>),
   close:   (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
@@ -90,6 +92,37 @@ function fmtLong(str) {
   if (!str) return "";
   return new Date(str).toLocaleString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
+// Vorbefüllung fürs Compose-Modal beim Weiterleiten: Fwd:-Betreff + zitierte
+// Original-Mail als Text. Die Quote wird so geklammert, dass Header + Hinweis
+// sicher unter MAX_BODY_LENGTH bleiben (textToHtml schneidet sonst stumm ab).
+function buildForwardInitial(email, files, provider) {
+  const s = extractSender(email);
+  const subjRaw = email.subject || "";
+  const subject = /^\s*(fwd|wg|fw)\s*:/i.test(subjRaw) ? subjRaw : `Fwd: ${subjRaw}`.trim();
+
+  const header = [
+    "",
+    "",
+    "---------- Weitergeleitete Nachricht ----------",
+    `Von: ${s.name && s.name !== s.email ? `${s.name} <${s.email}>` : s.email}`,
+    `Datum: ${fmtLong(email.received_at)}`,
+    `Betreff: ${subjRaw || "(Kein Betreff)"}`,
+    email.to_address ? `An: ${email.to_address}` : null,
+    "",
+    "",
+  ].filter(v => v !== null).join("\n");
+
+  let quote = htmlToText(email.body ?? "");
+  const room = MAX_BODY_LENGTH - header.length - 40;
+  if (quote.length > room) quote = `${quote.slice(0, Math.max(0, room))}\n\n… [gekürzt]`;
+
+  let body = header + quote;
+  // IMAP versendet den Body 1:1 als HTML-Part („HTML erlaubt“-Textarea) —
+  // Plain-Text-Umbrüche würden dort kollabieren, daher vorkonvertieren.
+  if (provider === "imap") body = textToHtml(body);
+  return { subject, body, files };
+}
+
 const Avatar = memo(function Avatar({ name }) {
   const letter = (name || "?")[0].toUpperCase();
   const hue = [...(name || "")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
@@ -355,7 +388,7 @@ function AttachmentPreview({ att, email, onClose }) {
 }
 
 // ── Memoized EmailDetail — re-renders only when activeEmail content changes ──
-const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReanalyze, aiEnabled, isStarred, onToggleStar }) {
+const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onForward, forwarding, onReanalyze, aiEnabled, isStarred, onToggleStar }) {
   const [preview, setPreview] = useState(null); // att object or null
 
   if (!email) return <div className="em-detail-empty">Wähle eine E-Mail aus</div>;
@@ -420,6 +453,10 @@ const EmailDetail = memo(function EmailDetail({ email, onClose, onReply, onReana
         <div className="em-detail-actions">
           <button onClick={onReply} className="em-reply-btn">
             {IC.reply} Antworten
+          </button>
+          <button onClick={onForward} disabled={forwarding} className="em-forward-btn"
+            title="E-Mail samt Anhängen weiterleiten">
+            {forwarding ? <Spinner sm /> : IC.forward} {forwarding ? "Wird vorbereitet…" : "Weiterleiten"}
           </button>
           {aiEnabled && onReanalyze && (
             <button onClick={onReanalyze} className="em-reanalyze-btn" title="KI-Analyse neu ausführen (zählt auf das Tageslimit)">
@@ -714,6 +751,30 @@ export default function EmailsPage() {
 
   const handleReply = useCallback(() => setReplyOpen(true), []);
 
+  // ── Weiterleiten: Anhänge der Original-Mail laden, dann Compose-Modal
+  //    vorbefüllt öffnen (Fwd:-Betreff + zitierter Text + Original-Anhänge).
+  const [composeInitial, setComposeInitial] = useState(null);
+  const [forwarding, setForwarding] = useState(false);
+  const forwardingRef = useRef(false);
+  const handleForward = useCallback(async () => {
+    const email = activeEmailRef.current;
+    if (!email || forwardingRef.current) return;
+    forwardingRef.current = true;
+    setForwarding(true);
+    try {
+      const { files } = await fetchAttachmentFiles({ email });
+      setComposeInitial(buildForwardInitial(email, files, providerRef.current));
+      setComposeOpen(true);
+    } finally {
+      forwardingRef.current = false;
+      setForwarding(false);
+    }
+  }, []);
+  const openBlankCompose = useCallback(() => {
+    setComposeInitial(null);
+    setComposeOpen(true);
+  }, []);
+
   // ── Favoriten-Toggle (optimistisch, Revert bei API-Fehler) ───────────────
   // starOverrides deckt die Detail-Ansicht ab, falls die Mail nicht (mehr)
   // in der geladenen Liste steht (z. B. nach Ordner-/Postfachwechsel).
@@ -853,7 +914,7 @@ export default function EmailsPage() {
             </div>
           )}
 
-          <button onClick={() => setComposeOpen(true)} className="em-compose">
+          <button onClick={openBlankCompose} className="em-compose">
             {IC.compose} Verfassen
           </button>
 
@@ -921,7 +982,7 @@ export default function EmailsPage() {
           </div>
 
           {/* Mobile-only floating compose button (Gmail-style FAB) */}
-          <button onClick={() => setComposeOpen(true)} className="em-fab" aria-label="Verfassen">
+          <button onClick={openBlankCompose} className="em-fab" aria-label="Verfassen">
             {IC.plus}
           </button>
           <div className="em-list-header">
@@ -1040,13 +1101,15 @@ export default function EmailsPage() {
 
         {/* ── Detail ── */}
         <div className={`em-detail-col ${activeEmail ? "em-detail-col--open" : ""}`}>
-          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} onReanalyze={handleReanalyze} aiEnabled={aiEnabled} isStarred={detailStarred} onToggleStar={toggleStar} />
+          <EmailDetail email={activeEmail} onClose={handleClose} onReply={handleReply} onForward={handleForward} forwarding={forwarding} onReanalyze={handleReanalyze} aiEnabled={aiEnabled} isStarred={detailStarred} onToggleStar={toggleStar} />
         </div>
       </div>
 
       {/* Provider-aware Modals */}
       <ReplyModal emailId={activeEmail?.id} open={replyOpen} onClose={() => setReplyOpen(false)} />
-      <ComposeModal open={composeOpen} onClose={() => setComposeOpen(false)} onSent={() => fetchEmails?.("sent")} />
+      <ComposeModal open={composeOpen} initial={composeInitial}
+        onClose={() => { setComposeOpen(false); setComposeInitial(null); }}
+        onSent={() => fetchEmails?.("sent")} />
 
       <SmartFolderModal
         open={folderModalOpen}

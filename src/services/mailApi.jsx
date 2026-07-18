@@ -123,6 +123,30 @@ export function attachmentUrl({ email, attachmentId }) {
   return `${API_BASE}${path}`;
 }
 
+/**
+ * Lädt die Original-Anhänge einer E-Mail als File-Objekte (für Weiterleiten:
+ * werden dem Compose-Modal vorgegeben und über send-with-attachments erneut
+ * hochgeladen). Best-effort: fehlgeschlagene Downloads werden übersprungen,
+ * `failed` zählt sie, damit die UI warnen kann.
+ */
+export async function fetchAttachmentFiles({ email }) {
+  const atts = email?.attachments ?? [];
+  const files = [];
+  let failed = 0;
+  for (const att of atts) {
+    try {
+      const r = await fetch(attachmentUrl({ email, attachmentId: att.id }), { credentials: "include" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const blob = await r.blob();
+      const type = att.content_type?.split(";")[0].trim() || blob.type || "application/octet-stream";
+      files.push(new File([blob], att.filename || "anhang", { type }));
+    } catch {
+      failed += 1;
+    }
+  }
+  return { files, failed };
+}
+
 /** Bestimme Provider eines geöffneten Email-Detail-Objekts. */
 export function detectProvider(email) {
   if (!email) return null;

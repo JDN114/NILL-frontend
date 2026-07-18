@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import QrScannerStation from "../../components/QrScannerStation";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT       = "#ff4d8d";
 const ACCENT_OUT   = "#38f5d0";
@@ -97,6 +99,9 @@ function CountdownRing({ remainingMs, totalMs, onBack }) {
 // ── ResultScreen ──────────────────────────────────────────────────────────────
 
 function ResultScreen({ result, onBack }) {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
+  const accentOut = accentText(ACCENT_OUT, theme);
   const [now, setNow]           = useState(Date.now());
   const [remainingMs, setRemaining] = useState(DISPLAY_MS);
   const startTs = useRef(Date.now());
@@ -117,7 +122,7 @@ function ResultScreen({ result, onBack }) {
   const emp     = result.employee;
   const monthly = result.monthly_entries ?? [];
   const monthlyHours = result.monthly_hours ?? 0;
-  const color   = isIn ? ACCENT : ACCENT_OUT;
+  const color   = isIn ? accent : accentOut;
 
   const clockInMs = isIn && entry?.clock_in
     ? new Date(entry.clock_in).getTime() : null;
@@ -149,7 +154,7 @@ function ResultScreen({ result, onBack }) {
             <div style={{
               fontFamily: "'Fraunces',Georgia,serif",
               fontSize: "clamp(1.3rem,2.5vw,1.9rem)", fontWeight: 400,
-              color: "#efede7", letterSpacing: "-0.02em", lineHeight: 1.1,
+              color: "rgba(var(--ink-tint),1)", letterSpacing: "-0.02em", lineHeight: 1.1,
             }}>
               {isIn ? "Eingestempelt" : "Ausgestempelt"}
             </div>
@@ -185,7 +190,7 @@ function ResultScreen({ result, onBack }) {
             <div style={{
               fontFamily: "'JetBrains Mono',monospace",
               fontSize: "clamp(1rem,2vw,1.35rem)", fontWeight: 700,
-              color: ACCENT, letterSpacing: "0.04em",
+              color: accent, letterSpacing: "0.04em",
               fontVariantNumeric: "tabular-nums",
             }}>
               {fmtTime(entry.clock_in)} Uhr
@@ -206,7 +211,7 @@ function ResultScreen({ result, onBack }) {
             <div style={{
               fontFamily: "'JetBrains Mono',monospace",
               fontSize: "clamp(1rem,2vw,1.35rem)", fontWeight: 700,
-              color: ACCENT, letterSpacing: "0.04em",
+              color: accent, letterSpacing: "0.04em",
               fontVariantNumeric: "tabular-nums",
             }}>
               {fmtHmLive(entry.clock_in, now)}
@@ -241,7 +246,7 @@ function ResultScreen({ result, onBack }) {
             fontFamily: "'JetBrains Mono',monospace", fontSize: "0.75rem",
             fontWeight: 700, color: "rgba(var(--ink-tint),0.7)",
           }}>
-            Gesamt: <span style={{ color: "#efede7" }}>{decimalToHm(monthlyHours)}</span>
+            Gesamt: <span style={{ color: "rgba(var(--ink-tint),1)" }}>{decimalToHm(monthlyHours)}</span>
           </div>
         </div>
 
@@ -281,7 +286,7 @@ function ResultScreen({ result, onBack }) {
                     {isActive && (
                       <span style={{
                         marginLeft: 6, fontSize: "0.6rem",
-                        color: ACCENT, fontFamily: "'JetBrains Mono',monospace",
+                        color: accent, fontFamily: "'JetBrains Mono',monospace",
                         letterSpacing: "0.08em",
                       }}>● AKTIV</span>
                     )}
@@ -300,7 +305,7 @@ function ResultScreen({ result, onBack }) {
                   <div style={{
                     fontFamily: "'JetBrains Mono',monospace",
                     fontSize: "0.75rem", fontWeight: 600,
-                    color: isActive ? ACCENT : "rgba(var(--ink-tint),0.7)",
+                    color: isActive ? accent : "rgba(var(--ink-tint),0.7)",
                     whiteSpace: "nowrap", textAlign: "right",
                     minWidth: 52,
                   }}>
@@ -320,6 +325,7 @@ function ResultScreen({ result, onBack }) {
 // ── ScanScreen ────────────────────────────────────────────────────────────────
 
 function ScanScreen({ onResult }) {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
@@ -353,7 +359,7 @@ function ScanScreen({ onResult }) {
         <div style={{
           fontFamily: "'Fraunces',Georgia,serif",
           fontSize: "clamp(1.6rem,3vw,2.2rem)", fontWeight: 400,
-          color: "#efede7", letterSpacing: "-0.02em",
+          color: "rgba(var(--ink-tint),1)", letterSpacing: "-0.02em",
         }}>
           {loading ? "Prüfe Ausweis…" : "Ausweis scannen"}
         </div>
@@ -390,7 +396,7 @@ function ScanScreen({ onResult }) {
         <div style={{
           padding: "0.5rem 1.2rem", borderRadius: 8,
           background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)",
-          color: "#f87171", fontSize: "0.82rem",
+          color: accentText("#f87171", theme), fontSize: "0.82rem",
           fontFamily: "'Inter',system-ui,sans-serif",
         }}>
           {error}
@@ -403,10 +409,11 @@ function ScanScreen({ onResult }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ArbeitsStationZeit() {
+  const { theme } = useTheme();
   const [result, setResult] = useState(null);
 
   return (
-    <ArbeitsStationLayout title="Zeiterfassung" icon="⏱" accent={ACCENT}>
+    <ArbeitsStationLayout title="Zeiterfassung" icon="⏱" accent={accentText(ACCENT, theme)}>
       <style>{`
         @keyframes as-spin { to { transform: rotate(360deg); } }
       `}</style>

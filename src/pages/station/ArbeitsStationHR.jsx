@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT = "#fbbf24";
 
@@ -26,6 +28,8 @@ function Spinner({ color = ACCENT, size = 20 }) {
 }
 
 function TabBar({ tabs, active, onChange }) {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   return (
     <div style={{
       display: "flex", gap: 8, marginBottom: 24,
@@ -36,7 +40,7 @@ function TabBar({ tabs, active, onChange }) {
           padding: "6px 18px", borderRadius: 99,
           border: active === key ? "1px solid rgba(251,191,36,0.35)" : "1px solid rgba(var(--ink-tint),0.08)",
           background: active === key ? "rgba(251,191,36,0.1)" : "rgba(var(--tint),0.03)",
-          color: active === key ? ACCENT : "rgba(var(--ink-tint),0.5)",
+          color: active === key ? accent : "rgba(var(--ink-tint),0.5)",
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase",
           cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
@@ -48,7 +52,7 @@ function TabBar({ tabs, active, onChange }) {
               background: active === key ? "rgba(251,191,36,0.15)" : "rgba(var(--tint),0.06)",
               border: active === key ? "1px solid rgba(251,191,36,0.2)" : "1px solid rgba(var(--tint),0.08)",
               borderRadius: 99, padding: "0px 6px", fontSize: "0.65rem",
-              color: active === key ? ACCENT : "rgba(var(--ink-tint),0.4)",
+              color: active === key ? accent : "rgba(var(--ink-tint),0.4)",
             }}>{count}</span>
           )}
         </button>
@@ -59,6 +63,8 @@ function TabBar({ tabs, active, onChange }) {
 
 // ── HR-Dokumente Tab ──────────────────────────────────────────────────────────
 function DocsTab() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const [docs, setDocs]         = useState([]);
   const [loading, setLoading]   = useState(true);
   const [downloading, setDl]    = useState(null);
@@ -100,7 +106,7 @@ function DocsTab() {
             padding: "4px 14px", borderRadius: 99, cursor: "pointer",
             border: subFilter === key ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(var(--ink-tint),0.07)",
             background: subFilter === key ? "rgba(251,191,36,0.08)" : "transparent",
-            color: subFilter === key ? ACCENT : "rgba(var(--ink-tint),0.45)",
+            color: subFilter === key ? accent : "rgba(var(--ink-tint),0.45)",
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem",
             letterSpacing: "0.08em", textTransform: "uppercase",
             display: "flex", alignItems: "center", gap: 6,
@@ -136,11 +142,11 @@ function DocsTab() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
                     <span style={{
                       fontFamily: "'Fraunces', Georgia, serif", fontSize: "1rem",
-                      color: "#efede7", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      color: "rgba(var(--ink-tint),1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>{doc.title || doc.file_name}</span>
                     {isNew && <span style={{
                       fontFamily: "'JetBrains Mono', monospace", fontSize: "0.58rem",
-                      color: ACCENT, background: "rgba(251,191,36,0.12)",
+                      color: accent, background: "rgba(251,191,36,0.12)",
                       border: "1px solid rgba(251,191,36,0.25)", borderRadius: 99, padding: "1px 7px",
                     }}>Neu</span>}
                   </div>
@@ -152,7 +158,7 @@ function DocsTab() {
                 <button onClick={() => download(doc)} disabled={downloading === doc.id} style={{
                   width: 38, height: 38, borderRadius: 10, flexShrink: 0,
                   border: "1px solid rgba(251,191,36,0.25)", background: "rgba(251,191,36,0.07)",
-                  color: ACCENT, fontSize: "1rem", cursor: "pointer",
+                  color: accent, fontSize: "1rem", cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                   {downloading === doc.id ? <Spinner size={16} /> : "↓"}
@@ -168,6 +174,8 @@ function DocsTab() {
 
 // ── Listen Tab ────────────────────────────────────────────────────────────────
 function ListenTab() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const [notes, setNotes]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -225,7 +233,7 @@ function ListenTab() {
         <button onClick={() => fileRef.current?.click()} disabled={analyzing} style={{
           padding: "0.4rem 1rem", borderRadius: 10,
           border: "1px solid rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.07)",
-          color: ACCENT, fontFamily: "'JetBrains Mono', monospace",
+          color: accent, fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.68rem", letterSpacing: "0.08em", textTransform: "uppercase",
           cursor: analyzing ? "not-allowed" : "pointer",
           display: "flex", alignItems: "center", gap: 7, opacity: analyzing ? 0.6 : 1,
@@ -241,7 +249,7 @@ function ListenTab() {
         <div style={{
           marginBottom: 14, padding: "0.65rem 1rem", borderRadius: 10,
           background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)",
-          color: "#f87171", fontSize: "0.8rem",
+          color: accentText("#f87171", theme), fontSize: "0.8rem",
         }}>{error}</div>
       )}
 
@@ -281,7 +289,7 @@ function ListenTab() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontFamily: "'Fraunces', Georgia, serif", fontSize: "1rem",
-                      color: "#efede7", marginBottom: 2,
+                      color: "rgba(var(--ink-tint),1)", marginBottom: 2,
                     }}>
                       {note.supplier || "Unbekannter Lieferant"}
                     </div>
@@ -349,7 +357,7 @@ function ListenTab() {
                               <div style={{ flex: 1 }}>
                                 <span style={{
                                   fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.88rem",
-                                  color: isDone ? "rgba(var(--ink-tint),0.4)" : "#efede7",
+                                  color: isDone ? "rgba(var(--ink-tint),0.4)" : "rgba(var(--ink-tint),1)",
                                   textDecoration: isDone ? "line-through" : "none",
                                 }}>
                                   {item.name}
@@ -412,10 +420,11 @@ function Empty({ icon, text }) {
 
 // ── Seite ─────────────────────────────────────────────────────────────────────
 export default function ArbeitsStationHR() {
+  const { theme } = useTheme();
   const [tab, setTab] = useState("dokumente");
 
   return (
-    <ArbeitsStationLayout title="HR & Listen" icon="📄" accent={ACCENT} maxWidth={820}>
+    <ArbeitsStationLayout title="HR & Listen" icon="📄" accent={accentText(ACCENT, theme)} maxWidth={820}>
       <style>{`@keyframes as-spin { to { transform: rotate(360deg); } }`}</style>
 
       <TabBar

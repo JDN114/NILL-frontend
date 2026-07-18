@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT = "#38f5d0";
 
@@ -30,6 +32,8 @@ function dayKey(date) {
 }
 
 function EventItem({ event }) {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const hasTime = event.start && !event.all_day;
   const isNow = event.start && event.end &&
     new Date() >= new Date(event.start) && new Date() <= new Date(event.end);
@@ -50,7 +54,7 @@ function EventItem({ event }) {
         minWidth: 70,
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: "0.72rem",
-        color: isNow ? ACCENT : "rgba(var(--ink-tint),0.4)",
+        color: isNow ? accent : "rgba(var(--ink-tint),0.4)",
         letterSpacing: "0.03em",
         paddingTop: 2,
         flexShrink: 0,
@@ -67,7 +71,7 @@ function EventItem({ event }) {
               boxShadow: `0 0 6px ${ACCENT}`,
               animation: "as-pulse 1.5s ease-in-out infinite",
             }} />
-            <span style={{ fontSize: "0.58rem", color: ACCENT }}>Jetzt</span>
+            <span style={{ fontSize: "0.58rem", color: accent }}>Jetzt</span>
           </div>
         )}
       </div>
@@ -78,7 +82,7 @@ function EventItem({ event }) {
           fontFamily: "'Fraunces', Georgia, serif",
           fontSize: "clamp(0.95rem, 1.8vw, 1.15rem)",
           fontWeight: 400,
-          color: "#efede7",
+          color: "rgba(var(--ink-tint),1)",
           letterSpacing: "-0.01em",
           lineHeight: 1.2,
           overflow: "hidden",
@@ -100,6 +104,8 @@ function EventItem({ event }) {
 }
 
 export default function ArbeitsStationKalender() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -132,7 +138,7 @@ export default function ArbeitsStationKalender() {
   const today = dayKey(new Date());
 
   return (
-    <ArbeitsStationLayout title="Kalender" icon="▦" accent={ACCENT} maxWidth={780}>
+    <ArbeitsStationLayout title="Kalender" icon="▦" accent={accent} maxWidth={780}>
       <style>{`
         @keyframes as-spin  { to { transform: rotate(360deg); } }
         @keyframes as-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
@@ -177,7 +183,7 @@ export default function ArbeitsStationKalender() {
                       fontSize: "0.6rem",
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: isToday ? ACCENT : "rgba(var(--ink-tint),0.35)",
+                      color: isToday ? accent : "rgba(var(--ink-tint),0.35)",
                     }}>
                       {date.toLocaleDateString("de-DE", { weekday: "short" })}
                     </div>
@@ -185,7 +191,7 @@ export default function ArbeitsStationKalender() {
                       fontFamily: "'Fraunces', Georgia, serif",
                       fontSize: isToday ? "1.6rem" : "1.3rem",
                       fontWeight: 400,
-                      color: isToday ? ACCENT : "#efede7",
+                      color: isToday ? accent : "rgba(var(--ink-tint),1)",
                       lineHeight: 1,
                     }}>
                       {date.getDate()}
@@ -203,7 +209,7 @@ export default function ArbeitsStationKalender() {
                       fontSize: "0.62rem",
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: ACCENT,
+                      color: accent,
                       background: "rgba(56,245,208,0.08)",
                       border: "1px solid rgba(56,245,208,0.2)",
                       borderRadius: 99,

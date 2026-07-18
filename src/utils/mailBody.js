@@ -43,6 +43,22 @@ export function buildPreviewHtml({ bodyHtml, template, dark }) {
   </body></html>`;
 }
 
+// HTML body → readable plain text (for quoting an original mail when
+// forwarding). Block elements and <br> become newlines; styles/scripts drop.
+export function htmlToText(html) {
+  if (!html) return "";
+  const doc = new DOMParser().parseFromString(String(html), "text/html");
+  doc.querySelectorAll("style,script,title,head").forEach(n => n.remove());
+  doc.querySelectorAll("br").forEach(n => n.replaceWith("\n"));
+  doc.querySelectorAll("p,div,tr,li,h1,h2,h3,h4,h5,h6,blockquote,table")
+    .forEach(n => n.append("\n"));
+  return (doc.body?.textContent || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 // True for a syntactically valid single e-mail address.
 export function isValidEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v ?? "").trim());

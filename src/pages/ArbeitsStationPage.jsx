@@ -51,10 +51,10 @@ const S = `
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     padding: 0 clamp(16px,3vw,40px);
     height: clamp(56px,7vw,72px);
-    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px;
     flex-shrink: 0;
   }
-  .as-hdr-brand { display:flex; align-items:center; gap:12px; }
+  .as-hdr-brand { display:flex; align-items:center; gap:12px; justify-self:start; }
   .as-logo-box {
     width: clamp(30px,3.5vw,40px); height: clamp(30px,3.5vw,40px);
     background: var(--as-accent); border-radius: 8px;
@@ -72,7 +72,7 @@ const S = `
   }
 
   /* Clock */
-  .as-clock { text-align:right; }
+  .as-clock { text-align:center; justify-self:center; }
   .as-clock-time {
     font-family: var(--as-mono); font-size:clamp(1.1rem,2vw,1.6rem);
     font-weight:700; color:var(--as-ink); letter-spacing:0.04em; line-height:1;
@@ -84,6 +84,7 @@ const S = `
 
   /* Exit button */
   .as-exit-btn {
+    justify-self: end;
     padding: 0.35rem 0.9rem;
     background: var(--as-glass); border: 1px solid var(--as-line); border-radius:7px;
     color: var(--as-ink-sub);

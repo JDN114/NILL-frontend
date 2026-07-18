@@ -35,7 +35,9 @@ function HdrField({ label, value }) {
   );
 }
 
-export default function EmailComposeModal({ open, onClose, onSent }) {
+// `initial` (optional): {to?, subject?, body?, files?} — Vorbefüllung beim
+// Öffnen, z. B. für „Weiterleiten" (Fwd:-Betreff + zitierte Original-Mail).
+export default function EmailComposeModal({ open, onClose, onSent, initial }) {
   const mail  = useMailApi();
   const gmail = useContext(GmailContext);
 
@@ -59,11 +61,14 @@ export default function EmailComposeModal({ open, onClose, onSent }) {
 
   useEffect(() => {
     if (open) {
-      setTo(""); setSubject(""); setBody(""); setCc(""); setBcc("");
-      setShowCc(false); setShowBcc(false); setFiles([]); setTemplateId(null);
+      setTo(initial?.to ?? ""); setSubject(initial?.subject ?? "");
+      setBody(initial?.body ?? ""); setCc(""); setBcc("");
+      setShowCc(false); setShowBcc(false); setFiles(initial?.files ?? []);
+      setTemplateId(null);
       setShowTemplates(false); setError(null); setWarning(null);
       setLoading(false); setPreview(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

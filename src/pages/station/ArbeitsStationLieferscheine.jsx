@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT = "#fb923c";
 
@@ -27,6 +29,8 @@ function fmtDate(d) {
 }
 
 export default function ArbeitsStationLieferscheine() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const [notes, setNotes]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -73,7 +77,7 @@ export default function ArbeitsStationLieferscheine() {
                 : notes.filter(n => n.status === filter);
 
   return (
-    <ArbeitsStationLayout title="Lieferscheine" icon="📦" accent={ACCENT} maxWidth={820}>
+    <ArbeitsStationLayout title="Lieferscheine" icon="📦" accent={accent} maxWidth={820}>
       <style>{`@keyframes as-spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Toolbar */}
@@ -90,7 +94,7 @@ export default function ArbeitsStationLieferscheine() {
                 ? "1px solid rgba(251,146,60,0.35)"
                 : "1px solid rgba(var(--ink-tint),0.08)",
               background: filter === key ? "rgba(251,146,60,0.1)" : "rgba(var(--tint),0.03)",
-              color: filter === key ? ACCENT : "rgba(var(--ink-tint),0.5)",
+              color: filter === key ? accent : "rgba(var(--ink-tint),0.5)",
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
@@ -101,7 +105,7 @@ export default function ArbeitsStationLieferscheine() {
                   background: filter === key ? "rgba(251,146,60,0.15)" : "rgba(var(--tint),0.06)",
                   border: filter === key ? "1px solid rgba(251,146,60,0.2)" : "1px solid rgba(var(--tint),0.08)",
                   borderRadius: 99, padding: "0 5px", fontSize: "0.6rem",
-                  color: filter === key ? ACCENT : "rgba(var(--ink-tint),0.4)",
+                  color: filter === key ? accent : "rgba(var(--ink-tint),0.4)",
                 }}>{count}</span>
               )}
             </button>
@@ -110,7 +114,7 @@ export default function ArbeitsStationLieferscheine() {
         <button onClick={() => fileRef.current?.click()} disabled={analyzing} style={{
           padding: "0.45rem 1.1rem", borderRadius: 10,
           border: "1px solid rgba(251,146,60,0.3)", background: "rgba(251,146,60,0.08)",
-          color: ACCENT, fontFamily: "'JetBrains Mono', monospace",
+          color: accent, fontFamily: "'JetBrains Mono', monospace",
           fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase",
           cursor: analyzing ? "not-allowed" : "pointer",
           display: "flex", alignItems: "center", gap: 7,
@@ -127,7 +131,7 @@ export default function ArbeitsStationLieferscheine() {
         <div style={{
           marginBottom: 16, padding: "0.75rem 1rem",
           background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)",
-          borderRadius: 12, color: "#f87171",
+          borderRadius: 12, color: accentText("#f87171", theme),
           fontFamily: "'Inter', system-ui, sans-serif", fontSize: "0.8rem",
         }}>{error}</div>
       )}
@@ -149,6 +153,7 @@ export default function ArbeitsStationLieferscheine() {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {shown.map(note => {
             const s = STATUS[note.status] || STATUS.pending;
+            const sText = accentText(s.text, theme);
             return (
               <div key={note.id} style={{
                 padding: "16px 20px", borderRadius: 16,
@@ -168,12 +173,12 @@ export default function ArbeitsStationLieferscheine() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                     <span style={{
                       fontFamily: "'Fraunces', Georgia, serif",
-                      fontSize: "1rem", fontWeight: 400, color: "#efede7",
+                      fontSize: "1rem", fontWeight: 400, color: "rgba(var(--ink-tint),1)",
                     }}>{note.supplier || "Unbekannter Lieferant"}</span>
                     <span style={{
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: "0.58rem", letterSpacing: "0.1em", textTransform: "uppercase",
-                      color: s.text, background: s.bg, border: `1px solid ${s.border}`,
+                      color: sText, background: s.bg, border: `1px solid ${s.border}`,
                       borderRadius: 99, padding: "1px 8px",
                     }}>{s.label}</span>
                   </div>
@@ -208,7 +213,7 @@ export default function ArbeitsStationLieferscheine() {
                   <button onClick={() => quickConfirm(note.id)} style={{
                     padding: "0.4rem 0.9rem", borderRadius: 10, flexShrink: 0,
                     border: "1px solid rgba(134,239,172,0.3)", background: "rgba(134,239,172,0.08)",
-                    color: "#86efac", fontFamily: "'JetBrains Mono', monospace",
+                    color: accentText("#86efac", theme), fontFamily: "'JetBrains Mono', monospace",
                     fontSize: "0.65rem", letterSpacing: "0.08em", textTransform: "uppercase",
                     cursor: "pointer", transition: "background 0.2s",
                   }}

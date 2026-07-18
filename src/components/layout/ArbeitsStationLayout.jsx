@@ -44,11 +44,11 @@ const S = `
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     padding: 0 clamp(20px,4vw,48px);
     height: clamp(60px,8vw,76px);
-    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px;
     flex-shrink: 0; position: sticky; top: 0; z-index: 10;
   }
 
-  .asl-hdr-left { display:flex; align-items:center; gap:14px; }
+  .asl-hdr-left { display:flex; align-items:center; gap:14px; justify-self:start; }
 
   .asl-back {
     width:34px; height:34px; border-radius:9px;
@@ -73,7 +73,7 @@ const S = `
   }
 
   /* Clock */
-  .asl-clock { text-align:center; }
+  .asl-clock { text-align:center; justify-self:center; }
   .asl-clock-time {
     font-family: var(--asl-mono); font-size:clamp(1.1rem,2.2vw,1.6rem);
     font-weight:700; color:var(--asl-ink); letter-spacing:0.06em; line-height:1;
@@ -86,7 +86,7 @@ const S = `
   .asl-org {
     font-family: var(--asl-mono); font-size:0.65rem;
     color:var(--asl-ink-sub); letter-spacing:0.12em;
-    text-transform:uppercase; text-align:right;
+    text-transform:uppercase; text-align:right; justify-self:end;
   }
 
   /* Scrollable content area */

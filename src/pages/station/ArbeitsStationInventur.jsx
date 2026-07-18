@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT = "#a78bfa";
 
@@ -16,6 +18,8 @@ function Spinner() {
 }
 
 export default function ArbeitsStationInventur() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const [lists, setLists]               = useState([]);
   const [activeList, setActiveList]     = useState(null);
   const [items, setItems]               = useState([]);
@@ -63,7 +67,7 @@ export default function ArbeitsStationInventur() {
   );
 
   return (
-    <ArbeitsStationLayout title="Inventur" icon="◫" accent={ACCENT} maxWidth={1020}>
+    <ArbeitsStationLayout title="Inventur" icon="◫" accent={accent} maxWidth={1020}>
       <style>{`@keyframes as-spin { to { transform: rotate(360deg); } }`}</style>
 
       {loading ? (
@@ -98,7 +102,7 @@ export default function ArbeitsStationInventur() {
                 <div style={{ fontSize: "1.2rem", marginBottom: 4 }}>{list.icon}</div>
                 <div style={{
                   fontFamily: "'Fraunces', Georgia, serif",
-                  fontSize: "0.9rem", color: "#efede7", letterSpacing: "-0.01em", lineHeight: 1.2,
+                  fontSize: "0.9rem", color: "rgba(var(--ink-tint),1)", letterSpacing: "-0.01em", lineHeight: 1.2,
                 }}>{list.name}</div>
                 <div style={{
                   fontFamily: "'JetBrains Mono', monospace",
@@ -121,7 +125,7 @@ export default function ArbeitsStationInventur() {
                 <span style={{ fontSize: "0.9rem" }}>⚠</span>
                 <span style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
-                  fontSize: "0.76rem", color: "#f87171",
+                  fontSize: "0.76rem", color: accentText("#f87171", theme),
                 }}>
                   {lowStock.length} Artikel unter Mindestbestand:{" "}
                   <strong>{lowStock.map(i => i.name).join(", ")}</strong>
@@ -178,7 +182,7 @@ export default function ArbeitsStationInventur() {
                       <div>
                         <div style={{
                           fontFamily: "'Fraunces', Georgia, serif",
-                          fontSize: "0.95rem", color: "#efede7", letterSpacing: "-0.01em",
+                          fontSize: "0.95rem", color: "rgba(var(--ink-tint),1)", letterSpacing: "-0.01em",
                         }}>{item.name}</div>
                         {item.sku && (
                           <div style={{
@@ -195,7 +199,7 @@ export default function ArbeitsStationInventur() {
                           style={{
                             width: 28, height: 28, borderRadius: 8,
                             border: "1px solid rgba(var(--tint),0.1)",
-                            background: "rgba(var(--tint),0.04)", color: "#efede7",
+                            background: "rgba(var(--tint),0.04)", color: "rgba(var(--ink-tint),1)",
                             cursor: isBusy ? "not-allowed" : "pointer",
                             fontSize: "1rem", lineHeight: 1,
                             display: "flex", alignItems: "center", justifyContent: "center",
@@ -205,7 +209,7 @@ export default function ArbeitsStationInventur() {
                         <span style={{
                           fontFamily: "'JetBrains Mono', monospace",
                           fontSize: "0.9rem", fontWeight: 700,
-                          color: isLow ? "#f87171" : "#efede7",
+                          color: isLow ? accentText("#f87171", theme) : "rgba(var(--ink-tint),1)",
                           minWidth: 44, textAlign: "center",
                         }}>
                           {qty.toLocaleString("de-DE")}
@@ -219,7 +223,7 @@ export default function ArbeitsStationInventur() {
                           style={{
                             width: 28, height: 28, borderRadius: 8,
                             border: "1px solid rgba(var(--tint),0.1)",
-                            background: "rgba(var(--tint),0.04)", color: "#efede7",
+                            background: "rgba(var(--tint),0.04)", color: "rgba(var(--ink-tint),1)",
                             cursor: isBusy ? "not-allowed" : "pointer",
                             fontSize: "1rem", lineHeight: 1,
                             display: "flex", alignItems: "center", justifyContent: "center",

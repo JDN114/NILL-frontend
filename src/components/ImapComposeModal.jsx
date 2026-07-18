@@ -14,7 +14,9 @@ import RecipientSuggestInput from "./RecipientSuggestInput";
 
 const imapInput = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gray-500";
 
-export default function ImapComposeModal({ open, onClose, onSent }) {
+// `initial` (optional): {to?, subject?, body?, files?} — Vorbefüllung beim
+// Öffnen, z. B. für „Weiterleiten" (Fwd:-Betreff + zitierte Original-Mail).
+export default function ImapComposeModal({ open, onClose, onSent, initial }) {
   const imap = useContext(ImapContext);
 
   const [accountId, setAccountId] = useState(imap?.activeAccountId ?? null);
@@ -30,9 +32,11 @@ export default function ImapComposeModal({ open, onClose, onSent }) {
   useEffect(() => {
     if (open) {
       setAccountId(imap?.activeAccountId ?? null);
-      setTo(""); setSubject(""); setBody(""); setCc(""); setBcc("");
-      setFiles([]); setError(null);
+      setTo(initial?.to ?? ""); setSubject(initial?.subject ?? "");
+      setBody(initial?.body ?? ""); setCc(""); setBcc("");
+      setFiles(initial?.files ?? []); setError(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, imap?.activeAccountId]);
 
   if (!open) return null;

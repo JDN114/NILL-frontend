@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import ArbeitsStationLayout from "../../components/layout/ArbeitsStationLayout";
 import QrScannerStation from "../../components/QrScannerStation";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
+import { accentText } from "../../utils/stationAccent";
 
 const ACCENT = "#c6ff3c";
 
@@ -46,9 +48,12 @@ function SignatureCanvas({ onSigned }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "rgba(var(--tint),0.03)";
+    // Canvas 2D can't resolve CSS custom properties — read the computed
+    // theme values so the pad still adapts between light/dark.
+    const cs = getComputedStyle(canvas);
+    ctx.fillStyle = `rgba(${cs.getPropertyValue("--tint").trim()},0.03)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#efede7";
+    ctx.strokeStyle = `rgb(${cs.getPropertyValue("--ink-tint").trim()})`;
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -179,6 +184,10 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
       background: "rgba(4,7,15,0.9)", backdropFilter: "blur(10px)",
       WebkitBackdropFilter: "blur(10px)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem",
+      // This overlay is a fixed dark panel regardless of the dashboard theme —
+      // pin the shared --tint/--ink-tint tokens to their dark-mode values so
+      // nested rgba(var(--…)) text doesn't go dark-on-dark in light mode.
+      "--tint": "255,255,255", "--ink-tint": "239,237,231",
     }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{
         background: "rgba(12,16,28,0.98)",
@@ -199,7 +208,7 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
           </div>
           <div style={{
             fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.2rem",
-            fontWeight: 400, color: "#efede7", letterSpacing: "-0.02em",
+            fontWeight: 400, color: "rgba(var(--ink-tint),1)", letterSpacing: "-0.02em",
             lineHeight: 1.2,
           }}>
             {task.title}
@@ -310,6 +319,8 @@ function ConfirmModal({ task, onConfirmed, onClose }) {
 
 // ── Aufgaben-Karte ────────────────────────────────────────────────────────────
 function TaskCard({ task, onOpenConfirm }) {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const p   = PRIO[task.priority] ?? { dot: "#94a3b8", label: task.priority, bg: "rgba(148,163,184,0.08)", border: "rgba(148,163,184,0.2)" };
   const dl  = deadlineInfo(task.due_at);
   const isOverdue = dl?.label === "Überfällig";
@@ -333,7 +344,7 @@ function TaskCard({ task, onOpenConfirm }) {
         <div style={{
           fontFamily: "'Fraunces', Georgia, serif",
           fontSize: "clamp(0.95rem, 1.8vw, 1.1rem)", fontWeight: 400,
-          color: "#efede7", letterSpacing: "-0.01em", lineHeight: 1.2, marginBottom: 6,
+          color: "rgba(var(--ink-tint),1)", letterSpacing: "-0.01em", lineHeight: 1.2, marginBottom: 6,
         }}>
           {task.title}
         </div>
@@ -351,7 +362,7 @@ function TaskCard({ task, onOpenConfirm }) {
           <span style={{
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
             letterSpacing: "0.08em", textTransform: "uppercase",
-            color: p.dot, background: p.bg, border: `1px solid ${p.border}`,
+            color: accentText(p.dot, theme), background: p.bg, border: `1px solid ${p.border}`,
             borderRadius: 99, padding: "2px 8px",
           }}>{p.label}</span>
 
@@ -359,7 +370,7 @@ function TaskCard({ task, onOpenConfirm }) {
             <span style={{
               fontFamily: "'JetBrains Mono', monospace", fontSize: "0.62rem",
               letterSpacing: "0.06em",
-              color: dl.color, background: dl.bg, border: `1px solid ${dl.border}`,
+              color: accentText(dl.color, theme), background: dl.bg, border: `1px solid ${dl.border}`,
               borderRadius: 99, padding: "2px 8px",
             }}>⏰ {dl.label}</span>
           )}
@@ -381,7 +392,7 @@ function TaskCard({ task, onOpenConfirm }) {
         style={{
           width: 38, height: 38, borderRadius: 10, flexShrink: 0,
           border: "1px solid rgba(198,255,60,0.25)", background: "rgba(198,255,60,0.06)",
-          color: ACCENT, fontSize: "1rem", cursor: "pointer",
+          color: accent, fontSize: "1rem", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "background 0.2s, border-color 0.2s, transform 0.15s",
         }}
@@ -397,6 +408,8 @@ function TaskCard({ task, onOpenConfirm }) {
 
 // ── Hauptseite ────────────────────────────────────────────────────────────────
 export default function ArbeitsStationAufgaben() {
+  const { theme } = useTheme();
+  const accent = accentText(ACCENT, theme);
   const [tasks, setTasks]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [roleFilter, setRoleFilter] = useState("all");
@@ -443,7 +456,7 @@ export default function ArbeitsStationAufgaben() {
   ).length;
 
   return (
-    <ArbeitsStationLayout title="Aufgaben" icon="⌘" accent={ACCENT}>
+    <ArbeitsStationLayout title="Aufgaben" icon="⌘" accent={accent}>
       <style>{`
         @keyframes as-spin { to { transform: rotate(360deg); } }
       `}</style>
@@ -462,7 +475,7 @@ export default function ArbeitsStationAufgaben() {
             padding: "5px 16px", borderRadius: 99,
             border: statusFilter === key ? `1px solid rgba(198,255,60,0.35)` : "1px solid rgba(var(--ink-tint),0.08)",
             background: statusFilter === key ? "rgba(198,255,60,0.1)" : "rgba(var(--tint),0.03)",
-            color: statusFilter === key ? ACCENT : "rgba(var(--ink-tint),0.5)",
+            color: statusFilter === key ? accent : "rgba(var(--ink-tint),0.5)",
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
             letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 7,
@@ -472,7 +485,7 @@ export default function ArbeitsStationAufgaben() {
               background: statusFilter === key ? "rgba(198,255,60,0.15)" : "rgba(var(--tint),0.06)",
               border: statusFilter === key ? "1px solid rgba(198,255,60,0.2)" : "1px solid rgba(var(--tint),0.08)",
               borderRadius: 99, padding: "0 5px", fontSize: "0.6rem",
-              color: statusFilter === key ? ACCENT : "rgba(var(--ink-tint),0.4)",
+              color: statusFilter === key ? accent : "rgba(var(--ink-tint),0.4)",
             }}>{count}</span>
           </button>
         ))}
@@ -481,7 +494,7 @@ export default function ArbeitsStationAufgaben() {
           <div style={{
             padding: "5px 14px", borderRadius: 99,
             border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.07)",
-            color: "#f87171", fontFamily: "'JetBrains Mono', monospace",
+            color: accentText("#f87171", theme), fontFamily: "'JetBrains Mono', monospace",
             fontSize: "0.68rem", letterSpacing: "0.1em", textTransform: "uppercase",
             display: "flex", alignItems: "center", gap: 6,
           }}>
@@ -509,7 +522,7 @@ export default function ArbeitsStationAufgaben() {
               background: roleFilter === role
                 ? "rgba(198,255,60,0.08)"
                 : "rgba(var(--tint),0.02)",
-              color: roleFilter === role ? ACCENT : "rgba(var(--ink-tint),0.4)",
+              color: roleFilter === role ? accent : "rgba(var(--ink-tint),0.4)",
               fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
               letterSpacing: "0.06em", textTransform: "uppercase",
               transition: "all 0.18s",
