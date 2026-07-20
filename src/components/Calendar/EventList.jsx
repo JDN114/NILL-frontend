@@ -35,6 +35,15 @@ function formatDayLabel(date) {
 // -------------------------
 // GROUP EVENTS BY DAY
 // -------------------------
+function audienceBadge(e) {
+  if (e?.audience === "org") return { label: "Team", color: "#93c5fd", bg: "rgba(59,130,246,0.14)" };
+  if (e?.audience === "role") {
+    const names = e?.role_names?.length ? e.role_names.join(", ") : "Rollen";
+    return { label: names, color: "#c5a572", bg: "rgba(197,165,114,0.14)" };
+  }
+  return null; // private → kein Badge
+}
+
 function groupByDay(events) {
   const groups = {};
   events.forEach((e) => {
@@ -80,9 +89,22 @@ export default function EventList({ events = [], onSelect, onDelete }) {
               >
                 {/* CLICK AREA */}
                 <div onClick={() => onSelect?.(e)} className="kal-ebody cursor-pointer">
-                  <div className="flex justify-between items-center">
-                    <p className="kal-etitle text-white font-semibold">{e.title || "Ohne Titel"}</p>
-                    <span className="text-xs text-gray-400">{formatTime(e.start_at, e.end_at, e.all_day)}</span>
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="kal-etitle text-white font-semibold truncate">{e.title || "Ohne Titel"}</p>
+                      {(() => {
+                        const b = audienceBadge(e);
+                        return b ? (
+                          <span
+                            className="text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+                            style={{ color: b.color, background: b.bg }}
+                          >
+                            {b.label}
+                          </span>
+                        ) : null;
+                      })()}
+                    </div>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{formatTime(e.start_at, e.end_at, e.all_day)}</span>
                   </div>
 
                   {e.description && <p className="text-sm text-gray-300 mt-2 line-clamp-2">{e.description}</p>}
@@ -98,18 +120,21 @@ export default function EventList({ events = [], onSelect, onDelete }) {
                     }}
                     className="text-xs text-indigo-400 hover:text-indigo-300"
                   >
-                    Bearbeiten
+                    {e.editable === false ? "Ansehen" : "Bearbeiten"}
                   </button>
 
-                  <button
-                    onClick={(ev) => {
-                      ev.stopPropagation();
-                      onDelete?.(e);
-                    }}
-                    className="text-xs text-red-400 hover:text-red-300"
-                  >
-                    Löschen
-                  </button>
+                  {/* Team-/Rollen-Termine kann nur der Org-Admin löschen */}
+                  {e.editable !== false && (
+                    <button
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        onDelete?.(e);
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300"
+                    >
+                      Löschen
+                    </button>
+                  )}
                 </div>
               </motion.li>
             ))}

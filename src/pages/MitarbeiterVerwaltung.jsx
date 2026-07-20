@@ -47,6 +47,7 @@ function ProfileForm({ employee, onSave, onClose }) {
     health_insurance: p.health_insurance || "",
     health_insurance_type: p.health_insurance_type || "gesetzlich",
     annual_vacation_days: p.annual_vacation_days ?? 24,
+    weekly_hours: p.weekly_hours ?? "",
     notes: p.notes || "",
   });
   const [saving, setSaving] = useState(false);
@@ -66,6 +67,7 @@ function ProfileForm({ employee, onSave, onClose }) {
             salary_monthly: form.salary_monthly ? parseFloat(form.salary_monthly) : null,
             tax_class: parseInt(form.tax_class),
             annual_vacation_days: parseInt(form.annual_vacation_days),
+            weekly_hours: form.weekly_hours === "" || form.weekly_hours === null ? null : parseFloat(form.weekly_hours),
             birthday: form.birthday || null,
             start_date: form.start_date || null,
             end_date: form.end_date || null,
@@ -171,6 +173,11 @@ function ProfileForm({ employee, onSave, onClose }) {
             {field("Urlaubsanspruch (Tage/Jahr)",
               <input style={inputStyle} type="number" value={form.annual_vacation_days}
                 onChange={e => set("annual_vacation_days", e.target.value)} min={0} max={60} />
+            )}
+            {field("Soll-Wochenstunden",
+              <input style={inputStyle} type="number" step="0.5" value={form.weekly_hours}
+                placeholder="leer = nach Vertragsart"
+                onChange={e => set("weekly_hours", e.target.value)} min={0} max={60} />
             )}
           </>
         )}

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PageLayout from "../components/layout/PageLayout";
 import CalendarWrapper from "../components/Calendar/CalendarWrapper";
 import EventList from "../components/Calendar/EventList";
 import EventModal from "../components/Calendar/EventModal";
 import CreateEventModal from "../components/Calendar/CreateEventModal";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 
 /* ─── kleine Hilfs-Komponenten ─────────────────────────── */
@@ -126,7 +127,23 @@ export default function CalendarPage() {
   // where the chip row is display:none and both views render side by side.
   const [mobileView, setMobileView]   = useState("monat");
 
+  const { isCompanyAdmin } = useAuth();
+  const isAdmin = isCompanyAdmin?.() ?? false;
+  const [roles, setRoles]             = useState([]);
+  // Rollen-/Zielgruppen-Filter: "all" | "private" | "org" | <role-id>
+  const [audienceFilter, setAudienceFilter] = useState("all");
+
   useEffect(() => { fetchEvents(); }, []);
+
+  // Rollen nur für den Admin laden (für Filter + Termin-Zielgruppe).
+  useEffect(() => {
+    if (!isAdmin) return;
+    let mounted = true;
+    api.get("/team/roles", { withCredentials: true })
+      .then((res) => { if (mounted) setRoles(Array.isArray(res.data) ? res.data : []); })
+      .catch(() => { if (mounted) setRoles([]); });
+    return () => { mounted = false; };
+  }, [isAdmin]);
 
   async function handleDelete(event) {
     try {
@@ -159,18 +176,30 @@ export default function CalendarPage() {
   const isSameDay = (d1, d2) =>
     d1 && d2 && new Date(d1).toDateString() === new Date(d2).toDateString();
 
+  // Zielgruppen-Filter auf die geladenen Termine anwenden.
+  const displayEvents = useMemo(() => {
+    if (audienceFilter === "all") return events;
+    return events.filter((e) => {
+      if (audienceFilter === "private") return e.audience === "private";
+      if (audienceFilter === "org") return e.audience === "org";
+      // konkrete Rolle
+      return e.audience === "role" &&
+        (e.role_ids || []).map(String).includes(String(audienceFilter));
+    });
+  }, [events, audienceFilter]);
+
   const now   = new Date();
   const next7 = new Date(); next7.setDate(now.getDate() + 7);
 
-  const eventsNext7Days = events
+  const eventsNext7Days = displayEvents
     .filter((e) => e?.start && e.start >= now && e.start <= next7)
     .sort((a, b) => a.start - b.start);
 
-  const eventsForDay = events.filter(
+  const eventsForDay = displayEvents.filter(
     (e) => e?.start && isSameDay(e.start, selectedDate)
   );
 
-  const todayEvents = events.filter(
+  const todayEvents = displayEvents.filter(
     (e) => e?.start && isSameDay(e.start, now)
   );
 
@@ -181,7 +210,7 @@ export default function CalendarPage() {
   // Mobile agenda: alle anstehenden Termine (ab heute 0:00), nach Tag gruppiert
   const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
   const agendaGroups = [];
-  events
+  displayEvents
     .filter((e) => e?.start && e.start >= startOfToday)
     .sort((a, b) => a.start - b.start)
     .forEach((e) => {
@@ -457,6 +486,52 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {/* ── ZIELGRUPPEN-/ROLLEN-FILTER (nur Admin) ──────── */}
+      {!loading && !error && isAdmin && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: "0.6rem",
+          marginBottom: "1rem", flexWrap: "wrap",
+        }}>
+          <span style={{
+            fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em",
+            textTransform: "uppercase", color: "var(--nill-text-dim)",
+          }}>
+            Filter
+          </span>
+          <select
+            value={audienceFilter}
+            onChange={(e) => setAudienceFilter(e.target.value)}
+            style={{
+              background: "rgba(var(--tint),0.04)",
+              border: "1px solid var(--nill-border)",
+              borderRadius: 10, color: "var(--nill-text)",
+              fontSize: "0.8rem", padding: "0.45rem 0.75rem",
+              cursor: "pointer", outline: "none",
+            }}
+          >
+            <option value="all">Alle Termine</option>
+            <option value="private">Nur meine (privat)</option>
+            <option value="org">Ganzes Team</option>
+            {roles.length > 0 && <option disabled>──────────</option>}
+            {roles.map((r) => (
+              <option key={r.id} value={String(r.id)}>Rolle: {r.name}</option>
+            ))}
+          </select>
+          {audienceFilter !== "all" && (
+            <button
+              onClick={() => setAudienceFilter("all")}
+              style={{
+                fontSize: "0.72rem", color: "var(--nill-text-mute)",
+                background: "transparent", border: "none", cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
+              zurücksetzen
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ── CONTENT GRID ────────────────────────────────── */}
       {!loading && !error && (
         <motion.div
@@ -479,7 +554,7 @@ export default function CalendarPage() {
               <CalendarWrapper
                 value={selectedDate}
                 onChange={setSelectedDate}
-                events={events}
+                events={displayEvents}
               />
             </div>
           </Panel>
@@ -582,7 +657,14 @@ export default function CalendarPage() {
       {/* ── MODALS ──────────────────────────────────────── */}
       <AnimatePresence>
         {modalEvent && (
-          <EventModal event={modalEvent} onClose={() => setModalEvent(null)} />
+          <EventModal
+            event={modalEvent}
+            onClose={() => setModalEvent(null)}
+            onUpdated={fetchEvents}
+            onDeleted={fetchEvents}
+            isAdmin={isAdmin}
+            roles={roles}
+          />
         )}
       </AnimatePresence>
 
@@ -592,6 +674,9 @@ export default function CalendarPage() {
             open={createOpen}
             onClose={() => setCreateOpen(false)}
             onCreated={fetchEvents}
+            selectedDate={selectedDate}
+            isAdmin={isAdmin}
+            roles={roles}
           />
         )}
       </AnimatePresence>

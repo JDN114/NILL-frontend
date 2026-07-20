@@ -5,7 +5,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-dark.css"; // Custom Dark Theme
 import "./calendar.css"; // mobile (≤768px) bottom-sheet styles — no desktop rules
 
-export default function CreateEventModal({ open, onClose, onCreated, selectedDate }) {
+export default function CreateEventModal({
+  open,
+  onClose,
+  onCreated,
+  selectedDate,
+  isAdmin = false,
+  roles = [],
+}) {
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -14,6 +21,11 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
     start_at: selectedDate || new Date(),
     end_at: selectedDate || new Date(),
   });
+  // Zielgruppe: private | org | role. Nur der Org-Admin kann sie ändern —
+  // normale Mitarbeiter legen immer nur private (nur-für-mich) Termine an.
+  const [audience, setAudience] = useState("private");
+  const [roleIds, setRoleIds] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (selectedDate) {
@@ -25,22 +37,35 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
 
   const handleChange = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
+  const toggleRole = (id) =>
+    setRoleIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
   const createEvent = async () => {
     if (!form.title || !form.start_at) {
       alert("Titel und Startzeit sind Pflicht");
       return;
     }
+    if (isAdmin && audience === "role" && roleIds.length === 0) {
+      alert("Bitte mindestens eine Rolle auswählen");
+      return;
+    }
     try {
+      setSaving(true);
+      const eff = isAdmin ? audience : "private";
       await api.post("/calendar/events", {
         ...form,
         start_at: form.start_at.toISOString(),
         end_at: form.all_day ? form.start_at.toISOString() : form.end_at.toISOString(),
+        audience: eff,
+        role_ids: eff === "role" ? roleIds : null,
       });
       onCreated?.();
       onClose();
     } catch (e) {
       console.error("create event failed", e);
-      alert("Fehler beim Erstellen des Termins");
+      alert(e?.response?.data?.detail || "Fehler beim Erstellen des Termins");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -121,6 +146,61 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
           )}
         </div>
 
+        {/* SICHTBARKEIT / ZIELGRUPPE */}
+        {isAdmin ? (
+          <div className="space-y-2 pt-1">
+            <label className="text-xs text-gray-400 block">Sichtbar für</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { key: "private", label: "Nur ich" },
+                { key: "org", label: "Ganzes Team" },
+                { key: "role", label: "Rollen" },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setAudience(opt.key)}
+                  className={`px-2 py-2 rounded-lg text-xs font-medium border transition ${
+                    audience === opt.key
+                      ? "bg-[var(--accent)]/20 border-[var(--accent)]/60 text-white"
+                      : "bg-gray-800 border-white/10 text-gray-300 hover:border-white/25"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {audience === "role" && (
+              <div className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-white/10 bg-gray-800/60 p-2 space-y-1">
+                {roles.length === 0 ? (
+                  <p className="text-xs text-gray-500 px-1 py-1">
+                    Noch keine Rollen angelegt. Rollen unter „Team“ verwalten.
+                  </p>
+                ) : (
+                  roles.map((r) => (
+                    <label
+                      key={r.id}
+                      className="flex items-center gap-2 text-sm text-gray-200 px-1 py-1 cursor-pointer hover:bg-white/5 rounded"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={roleIds.includes(r.id)}
+                        onChange={() => toggleRole(r.id)}
+                      />
+                      {r.name}
+                    </label>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500 pt-1">
+            🔒 Dieser Termin ist nur für dich sichtbar.
+          </p>
+        )}
+
         {/* ACTIONS */}
         <div className="kal-sheet-actions flex justify-end gap-2 pt-2">
           <button onClick={onClose} className="text-gray-400 hover:text-white">
@@ -128,9 +208,10 @@ export default function CreateEventModal({ open, onClose, onCreated, selectedDat
           </button>
           <button
             onClick={createEvent}
-            className="bg-[var(--accent)] px-4 py-2 rounded-lg text-sm hover:bg-opacity-80 transition"
+            disabled={saving}
+            className="bg-[var(--accent)] px-4 py-2 rounded-lg text-sm hover:bg-opacity-80 transition disabled:opacity-50"
           >
-            Speichern
+            {saving ? "Speichern…" : "Speichern"}
           </button>
         </div>
       </div>

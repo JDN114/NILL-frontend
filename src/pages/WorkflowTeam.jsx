@@ -9,6 +9,7 @@ import { MitarbeiterContent } from "./MitarbeiterVerwaltung";
 import { LohnAbrechnungContent } from "./LohnAbrechnung";
 import { UrlaubsContent } from "./UrlaubsVerwaltung";
 import { SchichtplanContent } from "./Schichtplan";
+import { StundenlisteContent } from "./Stundenliste";
 
 const ALL_PERMISSIONS = [
   { key: "calendar",   label: "Kalender" },
@@ -289,6 +290,7 @@ export default function WorkflowTeam() {
     { key: "invites",      label: "Einladungen"      },
     { key: "schichtplan",  label: "Schichtplan"      },
     { key: "mitarbeiter",  label: "Mitarbeiter"      },
+    { key: "stundenliste", label: "Stundenliste"     },
     { key: "abrechnung",   label: "Lohnabrechnung"   },
     { key: "urlaub",       label: "Urlaub"           },
     { key: "dokumente",    label: "Dokumente"        },
@@ -829,6 +831,12 @@ export default function WorkflowTeam() {
           {activeTab === "mitarbeiter" && (
             <div style={{ padding: "1.25rem 0" }}>
               <MitarbeiterContent />
+            </div>
+          )}
+          {/* ── Stundenliste Tab ──────────────────────────── */}
+          {activeTab === "stundenliste" && (
+            <div style={{ padding: "1.25rem 0" }}>
+              <StundenlisteContent />
             </div>
           )}
           {/* ── Lohnabrechnung Tab ────────────────────────── */}
