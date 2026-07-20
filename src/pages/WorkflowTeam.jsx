@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { HrDocsContent } from "./HrDocuments";
 import { MitarbeiterContent } from "./MitarbeiterVerwaltung";
-import { LohnAbrechnungContent } from "./LohnAbrechnung";
 import { UrlaubsContent } from "./UrlaubsVerwaltung";
 import { SchichtplanContent } from "./Schichtplan";
 import { StundenlisteContent } from "./Stundenliste";
@@ -291,7 +290,6 @@ export default function WorkflowTeam() {
     { key: "schichtplan",  label: "Schichtplan"      },
     { key: "mitarbeiter",  label: "Mitarbeiter"      },
     { key: "stundenliste", label: "Stundenliste"     },
-    { key: "abrechnung",   label: "Lohnabrechnung"   },
     { key: "urlaub",       label: "Urlaub"           },
     { key: "dokumente",    label: "Dokumente"        },
   ];
@@ -837,12 +835,6 @@ export default function WorkflowTeam() {
           {activeTab === "stundenliste" && (
             <div style={{ padding: "1.25rem 0" }}>
               <StundenlisteContent />
-            </div>
-          )}
-          {/* ── Lohnabrechnung Tab ────────────────────────── */}
-          {activeTab === "abrechnung" && (
-            <div style={{ padding: "1.25rem 0" }}>
-              <LohnAbrechnungContent />
             </div>
           )}
           {/* ── Urlaub Tab ────────────────────────────────── */}

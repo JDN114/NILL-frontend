@@ -47,85 +47,22 @@ const ARBEITSSTATION_PLAN = {
   ],
 };
 
-// Full NILL suite. Includes the NILL Sekretärin, die noch in Entwicklung
-// ist (WIP) — daher der Warte-Rabatt auf alle Pläne.
-const PLANS = [
-  {
-    id: "solo",
-    title: "Solo",
-    subtitle: "Für Einzelunternehmer & kleine Büros",
-    seats: "1–2 Personen",
-    monthlyPrice: 25,
-    yearlyPrice: 240,
-    waitDiscount: true,
-    features: [
-      "E-Mail-Integration: Gmail, Outlook & IMAP",
-      "E-Mail KI-Assistent: 10 Antworten / Tag",
-      "Intelligenter Kalender & Aufgaben",
-      "E-Mail-Support",
-    ],
-  },
-  {
-    id: "team",
-    title: "Team",
-    subtitle: "Für wachsende Teams & KMUs",
-    seats: "3–10 Personen",
-    monthlyPrice: 50,
-    yearlyPrice: 480,
-    pop: true,
-    waitDiscount: true,
-    features: [
-      "Alles aus Solo — für bis zu 10 Nutzer",
-      "E-Mail KI-Assistent: 30 Antworten / Tag",
-      "Tägliche KI-Zusammenfassung (immer inklusive)",
-      "Mitarbeiterverwaltung, Rollen & Schichtplan",
-      "Arbeitszeiterfassung & HR-Dokumente",
-      { text: "NILL Sekretärin: 10 KI-Anfragen / Tag", wip: true },
-    ],
-  },
-  {
-    id: "business",
-    title: "Business",
-    subtitle: "Für größere Unternehmen & Agenturen",
-    seats: "10+ Personen",
-    monthlyPrice: 90,
-    yearlyPrice: 864,
-    waitDiscount: true,
-    features: [
-      "Alles aus Team — unbegrenzte Nutzerzahl",
-      "E-Mail KI-Assistent: 100 Antworten / Tag",
-      "API-Zugang & Webhooks (folgt Q4 2026)",
-      "Priorisierter Support mit SLA-Garantie",
-      "Nutzungsanalysen & individuelle Berichte (folgt Q4 2026)",
-      { text: "NILL Sekretärin: 25 KI-Anfragen / Tag", wip: true },
-    ],
-  },
-];
-
 const FAQ = [
   {
-    q: "Was ist die Arbeitsstation — und warum wird sie zuerst angeboten?",
-    a: "Die Arbeitsstation ist unser sofort einsatzbereites Produkt: Zeiterfassung, Taskmanagement, Lieferscheine und Inventur im Tablet- & Kiosk-Modus. Sie ist vollständig live und ohne Wartezeit nutzbar. Die Komplett-Suite mit der NILL Sekretärin befindet sich aktuell noch in Entwicklung.",
+    q: "Was ist die Arbeitsstation?",
+    a: "Die Arbeitsstation ist unser sofort einsatzbereites Produkt: Zeiterfassung, Taskmanagement, Lieferscheine und Inventur im Tablet- & Kiosk-Modus. Sie ist vollständig live und ohne Wartezeit nutzbar — ein Preis, beliebig viele Mitarbeiter.",
   },
   {
-    q: "Die NILL Sekretärin ist als „WIP\" markiert — was heißt das?",
-    a: "Die NILL Sekretärin befindet sich in aktiver Entwicklung und ist noch nicht freigeschaltet. Wenn Sie eine Suite (Solo, Team oder Business) jetzt buchen, erhalten Sie einen Warte-Rabatt von 30 %, bis sie live geht — und werden als Erste freigeschaltet.",
-  },
-  {
-    q: "Kann ich den Plan jederzeit wechseln?",
-    a: "Ja. Sie können jederzeit upgraden oder downgraden. Änderungen werden zum nächsten Abrechnungszeitraum wirksam.",
+    q: "Für wie viele Mitarbeiter gilt der Preis?",
+    a: "Für beliebig viele. Die Arbeitsstation hat einen festen Preis ohne Nutzer- oder Stationslimit — Sie zahlen nicht pro Sitzplatz.",
   },
   {
     q: "Was passiert nach dem kostenlosen Test?",
-    a: "Nach der Testphase wählen Sie einen Plan, der zu Ihrem Team passt. Ihre Daten bleiben vollständig erhalten.",
+    a: "Nach der 14-tägigen Testphase abonnieren Sie die Arbeitsstation, um weiterzuarbeiten. Ihre Daten bleiben vollständig erhalten.",
   },
   {
     q: "Sind die Preise inkl. Mehrwertsteuer?",
     a: "Alle genannten Preise verstehen sich zzgl. der gesetzlichen Mehrwertsteuer. Die Abrechnung erfolgt monatlich oder jährlich.",
-  },
-  {
-    q: "Gibt es einen Enterprise-Plan für größere Teams?",
-    a: "Ab 20+ Nutzern erstellen wir gerne ein individuelles Angebot. Kontaktieren Sie uns unter info@nillai.de.",
   },
 ];
 
@@ -362,7 +299,6 @@ function FaqItem({ q, a }) {
 
 export default function PricingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [mode, setMode] = useState("station"); // "station" = Arbeitsstation (live) · "suite" = NILL Komplett
   const [cycle, setCycle] = useState("monthly");
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [error, setError] = useState(null);
@@ -605,22 +541,15 @@ export default function PricingPage() {
             margin: "0 0 28px",
             color: ink,
           }}>
-            {mode === "station" ? (
-              <>Eine smarte<br />
-              <em style={{ fontStyle: "italic", color: accent }}>Arbeitsstation</em></>
-            ) : (
-              <>Der richtige Plan<br />
-              <em style={{ fontStyle: "italic", color: accent }}>für jede Größe</em></>
-            )}
+            Eine smarte<br />
+            <em style={{ fontStyle: "italic", color: accent }}>Arbeitsstation</em>
           </h1>
 
           <p style={{
             fontSize: "clamp(16px, 1.3vw, 20px)", lineHeight: 1.55,
             color: inkDim, maxWidth: "56ch", margin: "0 auto 40px",
           }}>
-            {mode === "station"
-              ? "Unser sofort verfügbares Produkt: Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Wartezeit."
-              : "Die komplette NILL-Suite. Die NILL Sekretärin ist aktuell noch in Entwicklung (WIP) — wer jetzt bucht, erhält bis zum Go-Live 30 % Warte-Rabatt."}
+            Unser sofort verfügbares Produkt: Zeiterfassung, Taskmanagement und Lieferscheine — alles in einer Station. Ein Preis, beliebig viele Mitarbeiter. Ohne Wartezeit.
           </p>
 
           {/* ── Probezeitraum-Hinweis (subtil) ── */}
@@ -634,35 +563,6 @@ export default function PricingPage() {
           }}>
             <span style={{ width: 6, height: 6, borderRadius: 99, background: accent }} />
             14 Tage kostenlos testen · keine Kreditkarte
-          </div>
-
-          {/* ── Produkt-Modus: Komplettlösung vs. Arbeitsstation ── */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 36 }}>
-            <div style={{
-              display: "inline-flex",
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${line}`,
-              borderRadius: 99, padding: 5, gap: 5,
-            }}>
-              {[
-                { id: "station", label: "Arbeitsstation" },
-                { id: "suite",   label: "NILL Komplett" },
-              ].map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setMode(m.id)}
-                  style={{
-                    padding: "11px 26px", borderRadius: 99, border: "none",
-                    fontFamily: sans, fontSize: 14, fontWeight: 600, cursor: "pointer",
-                    transition: "background 0.25s, color 0.25s",
-                    background: mode === m.id ? accent : "transparent",
-                    color: mode === m.id ? "#000" : inkDim,
-                  }}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Billing toggle */}
@@ -720,128 +620,23 @@ export default function PricingPage() {
             </div>
           )}
 
-          {/* Warte-Rabatt-Hinweis (nur Suite) */}
-          {mode === "suite" && (
-            <div style={{
-              maxWidth: "64ch", margin: "0 auto 36px",
-              padding: "16px 22px", borderRadius: 16,
-              background: "rgba(198,255,60,0.05)",
-              border: "1px solid rgba(198,255,60,0.2)",
-              display: "flex", alignItems: "center", gap: 14,
-              textAlign: "left",
-            }}>
-              <span style={{
-                flexShrink: 0, fontFamily: mono, fontSize: 11, fontWeight: 600,
-                letterSpacing: "0.12em", textTransform: "uppercase",
-                padding: "6px 12px", borderRadius: 99,
-                background: accent, color: "#000",
-              }}>
-                −{Math.round(WAIT_DISCOUNT * 100)}%
-              </span>
-              <p style={{ margin: 0, fontSize: 14, color: inkDim, lineHeight: 1.5 }}>
-                Die <strong style={{ color: ink }}>NILL Sekretärin</strong> ist noch in
-                Entwicklung. Solange erhalten alle Suite-Pläne{" "}
-                <strong style={{ color: ink }}>30 % Warte-Rabatt</strong> — und werden bei
-                Go-Live als Erste freigeschaltet. Schon heute live:{" "}
-                <button
-                  onClick={() => setMode("station")}
-                  style={{
-                    background: "none", border: "none", padding: 0, cursor: "pointer",
-                    color: accent, font: "inherit", textDecoration: "underline",
-                  }}
-                >
-                  die Arbeitsstation
-                </button>.
-              </p>
-            </div>
-          )}
-
-          {/* Plan cards */}
-          {mode === "station" ? (
-            <div style={{
-              display: "flex", justifyContent: "center",
-              textAlign: "left",
-            }}>
-              <div style={{ width: "min(420px, 100%)" }}>
-                <PlanCard
-                  plan={ARBEITSSTATION_PLAN}
-                  cycle={cycle}
-                  loading={loadingPlan}
-                  onCheckout={handleCheckout}
-                />
-              </div>
-            </div>
-          ) : (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 18,
-              textAlign: "left",
-            }}>
-              {PLANS.map(plan => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  cycle={cycle}
-                  loading={loadingPlan}
-                  onCheckout={handleCheckout}
-                />
-              ))}
-            </div>
-          )}
-
-        </div>
-      </section>
-
-      {/* ── Feature comparison note (only for the full suite) ──────────── */}
-      {mode === "suite" && (
-      <section style={{ padding: "0 0 80px" }}>
-        <div style={{ width: "min(1280px, 100% - 48px)", margin: "0 auto" }}>
+          {/* Plan card — nur die Arbeitsstation (live) */}
           <div style={{
-            padding: "44px",
-            borderRadius: radius,
-            border: `1px solid rgba(198,255,60,0.18)`,
-            background: "radial-gradient(60% 90% at 100% 0%, rgba(198,255,60,0.06), transparent 60%), linear-gradient(180deg, rgba(198,255,60,0.02), transparent)",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            gap: 30, flexWrap: "wrap",
+            display: "flex", justifyContent: "center",
+            textAlign: "left",
           }}>
-            <div>
-              <div style={{
-                fontFamily: mono, fontSize: 11, letterSpacing: "0.2em",
-                textTransform: "uppercase", color: accent, marginBottom: 10,
-              }}>
-                Enterprise & Großunternehmen
-              </div>
-              <p style={{
-                fontFamily: serif, fontSize: "clamp(20px, 2.2vw, 28px)",
-                letterSpacing: "-0.015em", lineHeight: 1.25,
-                color: ink, maxWidth: "52ch", margin: 0,
-                fontWeight: 400,
-              }}>
-                Benötigen Sie mehr als 20 Nutzer, individuelle Integrationen oder
-                dediziertes Hosting? Wir erstellen Ihnen{" "}
-                <em style={{ fontStyle: "italic", color: accent }}>gerne ein persönliches Angebot.</em>
-              </p>
+            <div style={{ width: "min(420px, 100%)" }}>
+              <PlanCard
+                plan={ARBEITSSTATION_PLAN}
+                cycle={cycle}
+                loading={loadingPlan}
+                onCheckout={handleCheckout}
+              />
             </div>
-            <a
-              href="mailto:info@nillai.de?subject=Enterprise-Anfrage"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                padding: "14px 26px", borderRadius: 99,
-                fontFamily: sans, fontSize: 14, fontWeight: 600,
-                background: accent, color: "#000",
-                textDecoration: "none", flexShrink: 0,
-                transition: "background 0.2s",
-              }}
-              onMouseOver={e => { e.currentTarget.style.background = "#fff"; }}
-              onMouseOut={e => { e.currentTarget.style.background = accent; }}
-            >
-              Kontakt aufnehmen
-            </a>
           </div>
+
         </div>
       </section>
-      )}
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section style={{ padding: "80px 0 120px" }}>
