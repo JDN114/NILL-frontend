@@ -218,6 +218,7 @@ export function StundenlisteContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
+  const [downloading, setDownloading] = useState(false);
 
   async function load() {
     setLoading(true); setError("");
@@ -240,6 +241,30 @@ export function StundenlisteContent() {
     if (m < 1) { m = 12; y -= 1; }
     if (m > 12) { m = 1; y += 1; }
     setMonth(m); setYear(y);
+  }
+
+  async function downloadPdf() {
+    setDownloading(true); setError("");
+    try {
+      const params = { year, month };
+      if (selectedUser !== "all") params.user_id = selectedUser;
+      const res = await api.get("/hr/timesheet/pdf", { params, responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      const who = selectedUser !== "all"
+        ? (data?.employees?.find((e) => e.user_id === selectedUser)?.name?.replace(/\s+/g, "_") || "Mitarbeiter") + "_"
+        : "";
+      a.download = `Stundenliste_${who}${MONTHS[month - 1]}_${year}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e?.response?.data?.detail || "PDF-Download fehlgeschlagen.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const employees = useMemo(() => {
@@ -311,6 +336,27 @@ export function StundenlisteContent() {
             <option key={e.user_id} value={e.user_id}>{e.name}</option>
           ))}
         </select>
+
+        <button
+          onClick={downloadPdf}
+          disabled={downloading || loading || !(data?.employees?.length)}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "0.4rem",
+            background: "var(--nill-gold-dim, rgba(197,165,114,0.12))",
+            border: "1px solid rgba(197,165,114,0.28)",
+            borderRadius: 8, color: "var(--nill-gold)", fontSize: "0.8rem",
+            fontWeight: 700, padding: "0.45rem 0.9rem",
+            cursor: downloading ? "not-allowed" : "pointer", opacity: downloading ? 0.6 : 1,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          {downloading ? "Erstelle PDF…" : "PDF herunterladen"}
+        </button>
       </div>
 
       {error && (
