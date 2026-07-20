@@ -109,6 +109,29 @@ html[data-theme="light"] {
   --shadow:        0 1px 2px rgba(42, 36, 24, 0.07), 0 8px 24px rgba(42, 36, 24, 0.10);
   --shadow-glass:  0 1px 2px rgba(42, 36, 24, 0.06), 0 6px 20px rgba(42, 36, 24, 0.08);
   --shadow-glass-hover: 0 2px 4px rgba(42, 36, 24, 0.08), 0 12px 32px rgba(42, 36, 24, 0.12);
+
+  /* ── Semantic status colours ──────────────────────────────────────────────
+     Components (SettingsPage tokens, modals, badges) hard-code the dark-mode
+     pastels #f87171 / #34d399 / #fbbf24 inline; inline styles can't be reached
+     from CSS, so those references were changed to var(--nill-danger, #f87171)
+     etc. with the dark literal as fallback. Dark leaves these undefined → the
+     fallback renders (byte-identical). Light defines AA-clearing tones on the
+     bone field (same tones already used for the .em-* email badges). */
+  --nill-danger: #b42318;   /* ~6:1 on bone — error text / destructive */
+  --nill-ok:     #157347;   /* ~5.3:1 — success text                   */
+  --nill-warn:   #92600a;   /* ~5.2:1 — warning / needs-attention      */
+
+  /* Elevated solid surface for modals / pop-ups. Dark modals hard-code a near
+     -black (#0a0a12 / #0d0c0b / rgba(15,18,28,·)) inline; those were changed to
+     var(--nill-elevated, <literal>) so light lifts them to a warm off-white
+     card that sits slightly above the bone field. */
+  --nill-elevated: #fbf8f0;
+
+  /* Module accent neons (Hilfe page icons) darkened per-hue for the bone field.
+     Referenced as var(--mod-*, <neon>) so dark keeps its neon via fallback. */
+  --mod-accounting: #4f7a00;   /* lime  #c6ff3c → olive  */
+  --mod-email:      #5b3fd6;   /* violet #7a5cff darkened */
+  --mod-calendar:   #0d8f7a;   /* teal  #38f5d0 darkened  */
 }
 
 /* The page chrome backgrounds are set with hard-coded Tailwind gradients on
@@ -394,3 +417,20 @@ html[data-theme="light"] .nill-privacy-box:has(input:checked) {
 html[data-theme="light"] .nill-privacy-checkbox { border-color: rgba(42, 36, 24, 0.35); }
 html[data-theme="light"] .nill-privacy-label { color: rgba(32, 29, 21, 0.68); }
 html[data-theme="light"] .nill-privacy-label a { color: #556d00; }
+
+/* ===========================================================================
+   LIGHT MODE — ImapConnectModal (.nim-*)
+   ---------------------------------------------------------------------------
+   The IMAP connect pop-up injects its own <style> string whose foregrounds
+   hard-code the dark ink #efede7. The modal container background is swapped to
+   var(--nill-elevated,·) in the JSX, but these class-scoped text colours can't
+   use a per-value var, so remap them here (specificity 0,2,0 beats the 0,1,0
+   in the injected block; this file loads last). Dark renders byte-identically.
+   ======================================================================== */
+html[data-theme="light"] .nim-input,
+html[data-theme="light"] .nim-input-sm { color: var(--nill-text); }
+html[data-theme="light"] .nim-input::placeholder,
+html[data-theme="light"] .nim-input-sm::placeholder { color: rgba(32, 29, 21, 0.35); }
+html[data-theme="light"] .nim-btn-ghost:hover:not(:disabled),
+html[data-theme="light"] .nim-close:hover { color: var(--nill-text); }
+html[data-theme="light"] .nim-tooltip-box { background: var(--nill-elevated); }

@@ -25,9 +25,14 @@ const dim      = "var(--nill-text-dim,rgba(var(--ink-tint),.5))";
 const mute     = "var(--nill-text-mute,rgba(var(--ink-tint),.28))";
 const gold     = "var(--nill-gold,#c5a572)";
 const goldDim  = "rgba(197,165,114,0.1)";
-const red      = "#f87171";
-const green    = "#34d399";
-const amber    = "#fbbf24";
+// Semantic status colours: dark keeps the pastels via the fallback; light mode
+// flips them to AA-clearing tones (defined in theme-modes.css). These read as
+// text/border/background across the page and feed the Badge identity checks
+// (`color === green`) — the constants keep working since both sides reference
+// the same string.
+const red      = "var(--nill-danger,#f87171)";
+const green    = "var(--nill-ok,#34d399)";
+const amber    = "var(--nill-warn,#fbbf24)";
 
 // ─── Settings search index ──────────────────────────────────────────────────
 // Each entry maps a searchable setting to the tab it lives on (and an optional
@@ -294,7 +299,7 @@ const HELP_MODULES = [
   {
     icon: "◎",
     title: "Buchhaltung",
-    color: "#c6ff3c",
+    color: "var(--mod-accounting,#c6ff3c)",
     features: [
       "Eingangs- & Ausgangsrechnungen erstellen, hochladen und verwalten",
       "Doppelte Buchführung mit SKR03-Kontenrahmen",
@@ -309,7 +314,7 @@ const HELP_MODULES = [
   {
     icon: "✉",
     title: "E-Mails",
-    color: "#7a5cff",
+    color: "var(--mod-email,#7a5cff)",
     features: [
       "Gmail, Outlook & IMAP/Custom-Domain verbinden",
       "Mehrere Postfächer parallel verwalten",
@@ -321,7 +326,7 @@ const HELP_MODULES = [
   {
     icon: "▦",
     title: "Kalender",
-    color: "#38f5d0",
+    color: "var(--mod-calendar,#38f5d0)",
     features: [
       "Termine und Meetings planen",
       "Aufgaben mit Fälligkeitsdaten verknüpfen",
@@ -332,7 +337,7 @@ const HELP_MODULES = [
   {
     icon: "⌘",
     title: "Team & Workflows",
-    color: "#c5a572",
+    color: gold,
     features: [
       "Aufgaben erstellen, zuweisen & verfolgen",
       "Zeiterfassung pro Mitarbeiter",
@@ -347,7 +352,7 @@ const HELP_MODULES = [
   {
     icon: "◈",
     title: "NILL KI-Sekretärin",
-    color: "#7a5cff",
+    color: "var(--mod-email,#7a5cff)",
     wip: true,
     features: [
       "KI-gestützte Bearbeitung eingehender E-Mails",
@@ -417,7 +422,7 @@ function KontaktModal({ onClose }) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="sp-sheet" style={{
-        background: "#0a0a12", border: `1px solid ${border}`,
+        background: "var(--nill-elevated,#0a0a12)", border: `1px solid ${border}`,
         borderRadius: 18, padding: "1.75rem",
         width: "100%", maxWidth: 480,
         display: "flex", flexDirection: "column", gap: "1.25rem",
@@ -3392,7 +3397,7 @@ export default function SettingsPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowProviderModal(false); }}
         >
           <div className="sp-sheet" style={{
-            background: "#0a0a12", border: `1px solid ${border}`,
+            background: "var(--nill-elevated,#0a0a12)", border: `1px solid ${border}`,
             borderRadius: 18, padding: "1.75rem",
             width: "100%", maxWidth: 420,
             display: "flex", flexDirection: "column", gap: "1.1rem",

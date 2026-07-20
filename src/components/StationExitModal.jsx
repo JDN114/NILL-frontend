@@ -13,7 +13,7 @@ const overlay = {
 };
 
 const card = {
-  background: "rgba(15,18,28,0.98)",
+  background: "var(--nill-elevated,rgba(15,18,28,0.98))",
   border: "1px solid rgba(var(--ink-tint),0.1)",
   borderRadius: 20,
   padding: "2rem 2.25rem",
@@ -31,7 +31,7 @@ const inputStyle = {
   background: "rgba(var(--tint),0.04)",
   border: "1px solid rgba(var(--tint),0.12)",
   borderRadius: 10,
-  color: "#efede7",
+  color: "var(--nill-text,#efede7)",
   fontSize: "0.95rem",
   fontFamily: "'JetBrains Mono', monospace",
   letterSpacing: "0.1em",
@@ -113,7 +113,7 @@ export default function StationExitModal({ onClose, hasPassword }) {
             fontFamily: "'Fraunces', Georgia, serif",
             fontSize: "1.4rem",
             fontWeight: 400,
-            color: "#efede7",
+            color: "var(--nill-text,#efede7)",
             letterSpacing: "-0.02em",
           }}>
             Station verlassen?
@@ -137,7 +137,7 @@ export default function StationExitModal({ onClose, hasPassword }) {
             spellCheck={false}
             name="station-exit-password"
           />
-          {error && <div style={{ fontSize: "0.78rem", color: "#f87171" }}>{error}</div>}
+          {error && <div style={{ fontSize: "0.78rem", color: "var(--nill-danger,#f87171)" }}>{error}</div>}
           <button type="submit" disabled={loading || !password} style={{ ...btnPrimary, opacity: loading || !password ? 0.6 : 1 }}>
             {loading ? "Prüfen…" : "Bestätigen"}
           </button>

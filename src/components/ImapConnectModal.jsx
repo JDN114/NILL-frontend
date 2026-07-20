@@ -362,7 +362,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
       zIndex: 50, padding: "1rem",
     }}>
       <div style={{
-        background: "#0d0c0b",
+        background: "var(--nill-elevated,#0d0c0b)",
         border: "1px solid rgba(var(--ink-tint),0.07)",
         borderRadius: 14,
         width: "100%", maxWidth: 480,
@@ -377,7 +377,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
           {/* Header */}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#efede7" }}>
+              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--nill-text,#efede7)" }}>
                 {isReauth ? "Verbindung erneuern" : "Postfach verbinden"}
               </h2>
               <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "rgba(var(--ink-tint),.5)" }}>
@@ -430,7 +430,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
             {hasUnknownDomain && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fbbf24", flexShrink: 0 }}/>
-                <span style={{ fontSize: "0.75rem", color: "#fbbf24" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--nill-warn,#fbbf24)" }}>
                   Unbekannter Provider — IMAP-Daten deines Hosters eingeben.
                 </span>
               </div>
@@ -451,7 +451,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
               required
             />
             {needsAppPassword && (
-              <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: "#fbbf24", lineHeight: 1.5 }}>
+              <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: "var(--nill-warn,#fbbf24)", lineHeight: 1.5 }}>
                 {detected.name} erfordert bei 2FA ein <strong>App-Passwort</strong> — in den Sicherheitseinstellungen des Kontos erstellen.
               </p>
             )}
@@ -603,7 +603,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
               background: "rgba(248,113,113,0.08)",
               border: "1px solid rgba(248,113,113,0.25)",
               borderRadius: 10, padding: "0.75rem",
-              fontSize: "0.83rem", color: "#f87171", lineHeight: 1.5,
+              fontSize: "0.83rem", color: "var(--nill-danger,#f87171)", lineHeight: 1.5,
             }}>
               {error}
             </div>

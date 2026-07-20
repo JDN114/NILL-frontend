@@ -73,7 +73,7 @@ function Modal({ children, onClose }) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="wtm-modal" style={{
-        background: "#0d1628",
+        background: "var(--nill-elevated,#0d1628)",
         border: "1px solid var(--nill-border-lg)",
         borderRadius: 16,
         padding: "1.75rem",
@@ -119,7 +119,7 @@ function BtnPrimary({ children, onClick, disabled, danger }) {
         background: danger ? "rgba(248,113,113,0.12)" : "var(--nill-gold-dim)",
         border: `1px solid ${danger ? "rgba(248,113,113,0.3)" : "rgba(197,165,114,0.3)"}`,
         borderRadius: 10, cursor: "pointer",
-        color: danger ? "#f87171" : "var(--nill-gold)",
+        color: danger ? "var(--nill-danger,#f87171)" : "var(--nill-gold)",
         fontSize: "0.82rem", fontWeight: 700,
         opacity: disabled ? 0.5 : 1,
         transition: "background 0.15s, border-color 0.15s",
