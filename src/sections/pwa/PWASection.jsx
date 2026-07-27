@@ -174,7 +174,7 @@ function MockAndroid() {
         <MobileUrlBar url="nillai.de"/>
         <SiteSkeleton/>
         <div className="pwa-android-banner">
-          <span className="ico">N</span>
+          <span className="ico" aria-hidden="true"/>
           <div className="txt">
             <strong>NILL installieren</strong>
             <span>nillai.de</span>

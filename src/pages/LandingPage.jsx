@@ -664,25 +664,24 @@ function Hero({ onCTA }) {
     <section className={`hero${revealed?' revealed':''}`} id="top">
       <HeroCanvas />
       <div className="wrap hero-inner">
-        <span className="eyebrow hero-eyebrow">Die smarte Arbeitsstation für Betriebe</span>
         <h1 aria-label="Intelligenz, die mitarbeitet.">
           <span className="word"><span>Intelligenz,</span></span><br/>
-          <span className="word"><span>die </span></span>
+          {/* Geschütztes Leerzeichen: ein normales wird am Ende des
+              inline-block .word getrimmt und „die" klebte an „mitarbeitet". */}
+          <span className="word"><span>die&nbsp;</span></span>
           <span className="word"><span><em>mit­arbeitet.</em></span></span>
         </h1>
         <p className="lead">
-          NILL verbindet <strong>Postfach, Aufgaben, Lieferscheine, Inventur, Zeiterfassung</strong> und <strong>Teamverwaltung</strong> zu einer Arbeitsstation — unterstützt von einer KI, die mitliest und Arbeit vorbereitet.
+          Die smarte Arbeitsstation für Betriebe — mit einer KI, die mitliest und Arbeit vorbereitet.
         </p>
         <div className="hero-cta">
-          <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos registrieren</span></MagBtn>
+          <MagBtn className="btn btn-primary" href="/register"><span>Kostenlos starten</span></MagBtn>
           <MagBtn className="btn btn-ghost" onClick={e=>{e.preventDefault();onCTA('Demo')}} href="#"><span>Live-Demo</span></MagBtn>
         </div>
-        <p className="hero-trial-note">14 Tage kostenlos testen — keine Kreditkarte nötig.</p>
+        <p className="hero-trial-note">14 Tage kostenlos — keine Kreditkarte nötig.</p>
       </div>
       <div className="hero-meta">
-        <span>NILL · Arbeitsstation</span>
         <div className="scroll-ind"><span>scroll</span><div className="scroll-bar"/></div>
-        <span>DE · Made in Germany</span>
       </div>
     </section>
   );

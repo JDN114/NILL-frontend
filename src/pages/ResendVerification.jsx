@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
+import BrandMark from "../components/BrandMark";
 
 export default function ResendVerification() {
   const navigate = useNavigate();
@@ -56,12 +57,7 @@ export default function ResendVerification() {
           style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40, cursor: "pointer" }}
           onClick={() => navigate("/")}
         >
-          <span style={{
-            width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-            background: "#c6ff3c",
-            boxShadow: "inset 0 0 0 1px rgba(255,255,255,.16)",
-            position: "relative",
-          }} />
+          <BrandMark size={26} style={{ color: "#c6ff3c" }} />
           <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 20, color: "#efede7", fontWeight: 400 }}>
             NILL
           </span>

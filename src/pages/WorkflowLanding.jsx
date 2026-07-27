@@ -29,6 +29,19 @@ const MODULES = [
     ),
   },
   {
+    title: "Checklisten",
+    description: "Wiederkehrende Abläufe abhaken & dokumentieren",
+    to: "/dashboard/workflow/checklisten",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 11 12 14 15 11"/>
+        <path d="M9 7h6"/>
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+      </svg>
+    ),
+  },
+  {
     title: "Zeiterfassung",
     description: "Arbeitszeiten & Monatsübersicht",
     to: "/dashboard/workflow/time",

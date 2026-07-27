@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import BrandMark from "./BrandMark";
 
 const bg     = "#040407";
 const ink    = "#efede7";
@@ -27,13 +28,7 @@ export default function LegalLayout({ title, children, fillViewport = false }) {
         onMouseEnter={e => e.currentTarget.querySelector("span").style.color = accent}
         onMouseLeave={e => e.currentTarget.querySelector("span").style.color = ink}
       >
-        <div style={{
-          width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-          background: `conic-gradient(from 210deg, ${accent}, #38f5d0, #7a5cff, #ff4d8d, ${accent})`,
-          position: "relative", overflow: "hidden",
-        }}>
-          <div style={{ position: "absolute", inset: 4, borderRadius: 5, background: bg }} />
-        </div>
+        <BrandMark size={28} style={{ color: accent }} />
         <span style={{ fontFamily: serif, fontSize: 20, letterSpacing: "-0.02em", color: ink, transition: "color 0.2s" }}>
           NILL
         </span>

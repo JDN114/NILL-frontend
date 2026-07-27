@@ -100,6 +100,18 @@ export const ImapProvider = ({ children }) => {
     return r.data;
   }, [fetchStatus]);
 
+  // Server-Autodiscovery: aus der E-Mail-Adresse die IMAP/SMTP-Einstellungen
+  // ermitteln, damit der User nur noch das Passwort eingeben muss.
+  const autodiscover = useCallback(async (email) => {
+    try {
+      const r = await api.get("/imap/autodiscover", { params: { email } });
+      return r.data?.found ? r.data : null;
+    } catch (e) {
+      console.warn("[ImapContext] autodiscover", e);
+      return null;
+    }
+  }, []);
+
   // ── Listen laden ────────────────────────────────────────────────────────
   const _fetchList = useCallback(async (box, append, currentCursor) => {
     if (!activeIdRef.current) return [];
@@ -194,7 +206,7 @@ export const ImapProvider = ({ children }) => {
     activeAccountId,
     setActiveAccount: setActiveAccountId,
     activeAccount: accounts.find(a => a.id === activeAccountId) ?? null,
-    addAccount, removeAccount, testAccount, reauthAccount,
+    addAccount, removeAccount, testAccount, reauthAccount, autodiscover,
     needsReauth: accounts.some(a => a.status === "needs_reauth"),
   }), [
     accounts, activeAccountId, initializing,
@@ -202,7 +214,7 @@ export const ImapProvider = ({ children }) => {
     nextCursorInbox, nextCursorSent,
     fetchStatus, fetchInboxEmails, fetchSentEmails,
     searchEmails, openEmail, closeEmail,
-    addAccount, disconnectImap, removeAccount, testAccount, reauthAccount,
+    addAccount, disconnectImap, removeAccount, testAccount, reauthAccount, autodiscover,
   ]);
 
   return <ImapContext.Provider value={value}>{children}</ImapContext.Provider>;

@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import api from "../services/api";
+import BrandMark from "../components/BrandMark";
 
 // Public checkout endpoints routed through the single api.js instance
 // (VITE_API_URL baseURL + CSRF + credentials). Normalizes axios errors to the
@@ -46,6 +47,7 @@ const S = {
     gap: 12,
   },
   logo: { fontWeight: 800, fontSize: "1.25rem", letterSpacing: -0.5 },
+  mark: { color: "#c6ff3c" },   /* Brandmark auf dunklem Header */
   container: { maxWidth: 680, margin: "0 auto", padding: "28px 16px 48px" },
   card: {
     background: "#fff",
@@ -258,7 +260,7 @@ export default function CheckoutPage() {
   if (err && !info) {
     return (
       <div style={S.page}>
-        <div style={S.header}><span style={S.logo}>NILL</span></div>
+        <div style={S.header}><BrandMark size={26} style={S.mark} /><span style={S.logo}>NILL</span></div>
         <div style={S.container}>
           <div style={S.alert}>{err}</div>
         </div>
@@ -269,7 +271,7 @@ export default function CheckoutPage() {
   if (info?.bereits_bezahlt || info?.status === "bezahlt") {
     return (
       <div style={S.page}>
-        <div style={S.header}><span style={S.logo}>NILL</span></div>
+        <div style={S.header}><BrandMark size={26} style={S.mark} /><span style={S.logo}>NILL</span></div>
         <div style={S.container}>
           <div style={S.success}>
             <div style={{ fontSize: "2.5rem", marginBottom: 8 }}>✓</div>
@@ -295,6 +297,7 @@ export default function CheckoutPage() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} * { box-sizing: border-box; }`}</style>
 
       <div style={S.header}>
+        <BrandMark size={26} style={S.mark} />
         <span style={S.logo}>NILL</span>
         <span style={{ color: "#94a3b8", fontSize: ".85rem", marginLeft: "auto" }}>
           Sichere Zahlung

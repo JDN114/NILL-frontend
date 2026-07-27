@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import api from "../services/api";
+import BrandMark from "../components/BrandMark";
 
 export const AuthContext = createContext(null);
 
@@ -106,6 +107,10 @@ export function AuthProvider({ children }) {
           @keyframes nb-bar{0%{transform:scaleX(0);opacity:1}80%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
           @keyframes nb-dot{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
         `}</style>
+        <BrandMark size={46} style={{
+          color:"var(--auth-mark, #c6ff3c)", marginBottom:20,
+          animation:"nb-pulse 2.4s ease-in-out infinite",
+        }}/>
         <div style={{
           fontFamily:"Fraunces,serif", fontSize:"2.8rem", fontWeight:700,
           color:"#efede7", letterSpacing:"-.02em", marginBottom:40,

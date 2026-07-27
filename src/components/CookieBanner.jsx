@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { grantAnalytics, denyAnalytics } from "../utils/analytics";
 import api from "../services/api";
+import BrandMark from "./BrandMark";
 
 const KEY = "nill_cookie_v1";
 
@@ -207,13 +208,7 @@ export default function CookieBanner() {
             {/* Left: logo + text */}
             <div style={{ flex:1, minWidth:260 }}>
               <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:".35rem" }}>
-                <div style={{
-                  width:20, height:20, borderRadius:5,
-                  background:"conic-gradient(from 210deg, #c6ff3c, #38f5d0, #7a5cff, #ff4d8d, #c6ff3c)",
-                  position:"relative", overflow:"hidden", flexShrink:0,
-                }}>
-                  <div style={{ position:"absolute", inset:3, borderRadius:3, background:"#040407" }}/>
-                </div>
+                <BrandMark size={20} style={{ color:"#c6ff3c" }} />
                 <span style={{ fontSize:".88rem", fontWeight:700, color:"#efede7", letterSpacing:".01em" }}>
                   Cookies &amp; Datenschutz
                 </span>

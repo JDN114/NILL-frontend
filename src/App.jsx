@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavig
 
 import { ThemeProvider, ThemeApplier } from "./context/ThemeContext";
 import ThemeToggle from "./components/ThemeToggle";
+import BrandMark from "./components/BrandMark";
 import { AuthProvider } from "./context/AuthContext";
 import { GmailProvider } from "./context/GmailContext";
 import { OutlookProvider } from "./context/OutlookContext";
@@ -37,6 +38,7 @@ const WorkflowLanding        = lazyWithRetry(() => import("./pages/WorkflowLandi
 const WorkflowTasks          = lazyWithRetry(() => import("./pages/WorkflowTasks"));
 const WorkflowTime           = lazyWithRetry(() => import("./pages/WorkflowTime"));
 const WorkflowTeam           = lazyWithRetry(() => import("./pages/WorkflowTeam"));
+const Checklisten            = lazyWithRetry(() => import("./pages/Checklisten"));
 const TransactionPage        = lazyWithRetry(() => import("./pages/TransactionPage"));
 const AdminPage              = lazyWithRetry(() => import("./pages/AdminPage"));
 const RedeemCoupon           = lazyWithRetry(() => import("./pages/RedeemCouponPage"));
@@ -121,12 +123,7 @@ function PushNotification() {
             width: 300, boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
             animation: "nill-push-in 0.25s cubic-bezier(0.34,1.56,0.64,1)",
           }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-            background: "linear-gradient(135deg,#d4af37,#a07830)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 700, color: "#000",
-          }}>N</div>
+          <BrandMark size={32} style={{ color: "#d4af37" }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#efeee7", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{n.title}</div>
             <div style={{ fontSize: "0.72rem", color: "rgba(239,237,231,0.55)", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{n.body}</div>
@@ -286,6 +283,9 @@ function App() {
                   }/>
                   <Route path="/dashboard/workflow/time" element={
                     <ProtectedRoute><WorkflowTime /></ProtectedRoute>
+                  }/>
+                  <Route path="/dashboard/workflow/checklisten" element={
+                    <ProtectedRoute><Checklisten /></ProtectedRoute>
                   }/>
                   <Route path="/dashboard/workflow/team" element={
                     <ProtectedRoute>

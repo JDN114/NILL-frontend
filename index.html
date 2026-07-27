@@ -52,6 +52,10 @@
     <!-- PWA manifest -->
     <link rel="manifest" href="/manifest.json" />
 
+    <!-- Favicon — SVG zuerst (skaliert verlustfrei), .ico als Fallback -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+
     <!-- Theme color (Statusleiste auf Android / Safari) -->
     <meta name="theme-color" content="#040407" />
 
@@ -59,7 +63,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="NILL" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Android / allgemein -->
     <meta name="mobile-web-app-capable" content="yes" />
@@ -89,6 +93,17 @@
         transition: opacity 0.35s ease;
       }
       #nill-boot.fade-out { opacity: 0; pointer-events: none; }
+
+      /* Brandmark — Geometrie identisch zu src/styles/brand.css und
+         src/components/BrandMark.jsx, hier inline damit der Loader ohne
+         geladenes CSS/JS steht. */
+      .nb-mark {
+        width: 46px;
+        height: 46px;
+        fill: #c6ff3c;
+        margin-bottom: 20px;
+        animation: nb-pulse 2.4s ease-in-out infinite;
+      }
 
       .nb-logo {
         font-family: 'Fraunces', serif;
@@ -163,6 +178,7 @@
       html[data-theme="light"],
       html[data-theme="light"] body { background: #eae3d4; }
       html[data-theme="light"] #nill-boot { background: #eae3d4; }
+      html[data-theme="light"] .nb-mark { fill: #556d00; }
       html[data-theme="light"] .nb-logo { color: #201d15; }
       html[data-theme="light"] .nb-logo span { color: #556d00; }
       html[data-theme="light"] .nb-bar-wrap { background: rgba(42,36,24,0.12); }
@@ -174,6 +190,7 @@
   <body>
     <!-- Ladescreen — wird entfernt sobald React mountet -->
     <div id="nill-boot">
+      <svg class="nb-mark" viewBox="0 0 100 100" aria-hidden="true"><path fill-rule="evenodd" d="M27 0H73A27 27 0 0 1 100 27V73A27 27 0 0 1 73 100H27A27 27 0 0 1 0 73V27A27 27 0 0 1 27 0ZM26 26 41 26 64 49.9583 64 13 74 13 74 76 36 36.4167 36 76 26 76Z"/></svg>
       <div class="nb-logo">NILL<span>.</span></div>
       <div class="nb-bar-wrap"><div class="nb-bar"></div></div>
       <div class="nb-dots">

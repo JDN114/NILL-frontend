@@ -1,0 +1,32 @@
+/* ==========================================================================
+   NILL Brandmark — eine einzige Quelle der Wahrheit
+   --------------------------------------------------------------------------
+   Die Marke ist ein Monogramm-N als Aussparung in einer abgerundeten Kachel.
+   Der rechte Stamm steigt über die Versalhöhe hinaus — das ist die Signatur
+   der Marke, kein Zeichenfehler.
+
+   Geometrie (100x100-Raster) wird an drei Stellen gespiegelt und muss
+   synchron bleiben:
+     1. hier, als Mask-Data-URI (--nill-mark-src)
+     2. src/components/BrandMark.jsx (React/SVG)
+     3. index.html (Boot-Loader, inline SVG)
+   Die PNG/ICO-Assets in /public werden aus derselben Geometrie gerendert.
+
+   Nutzung: Farbe kommt aus `background-color` (nicht `color`), die Aussparung
+   ist transparent — die Marke nimmt also den Hintergrund der Seite auf.
+   ========================================================================== */
+
+:root {
+  --nill-mark-src: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Cpath%20fill-rule%3D'evenodd'%20d%3D'M27%200H73A27%2027%200%200%201%20100%2027V73A27%2027%200%200%201%2073%20100H27A27%2027%200%200%201%200%2073V27A27%2027%200%200%201%2027%200ZM26%2026%2041%2026%2064%2049.9583%2064%2013%2074%2013%2074%2076%2036%2036.4167%2036%2076%2026%2076Z'%2F%3E%3C%2Fsvg%3E");
+}
+
+/* Basisklasse — überall verwendbar, Größe per width/height oder font-size. */
+.nill-mark {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  background-color: currentColor;
+  -webkit-mask: var(--nill-mark-src) center / contain no-repeat;
+  mask: var(--nill-mark-src) center / contain no-repeat;
+}

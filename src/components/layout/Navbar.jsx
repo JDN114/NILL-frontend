@@ -80,13 +80,10 @@ export default function Navbar() {
         }
         .nill-navbar-logo-mark {
           width: 30px; height: 30px;
-          background: var(--nill-gold);
-          border-radius: 8px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 0.85rem; font-weight: 900;
-          color: #03060a;
-          letter-spacing: -0.02em;
           flex-shrink: 0;
+          background-color: var(--nill-gold);
+          -webkit-mask: var(--nill-mark-src) center / contain no-repeat;
+          mask: var(--nill-mark-src) center / contain no-repeat;
         }
         .nill-navbar-logo-text {
           font-size: 1rem;
@@ -271,7 +268,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/dashboard" className="nill-navbar-logo">
-            <div className="nill-navbar-logo-mark">N</div>
+            <div className="nill-navbar-logo-mark" aria-hidden="true" />
             <span className="nill-navbar-logo-text">NILL</span>
           </Link>
 

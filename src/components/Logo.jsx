@@ -1,41 +1,31 @@
 import React from "react";
+import BrandMark from "./BrandMark";
 
 /**
-  * Simple SVG text logo "NILL" with small "AI" — scalable and inline, editable.
-  * Replace colors/path if you want a traced vector from your uploaded image.
-  */
-export default function Logo({ width = 130, height = 36 }) {
-   return (
-     <svg
-       width={width}
-       height={height}
-       viewBox="0 0 400 120"
-       fill="none"
-       xmlns="http://www.w3.org/2000/svg"
-       aria-label="NILL AI Logo"
-     >
-       <rect width="400" height="120" fill="none" />
-       <g transform="translate(20,10)">
-         <text
-           x="0"
-           y="80"
-           style={{ fontFamily: "Inter, sans-serif", fontWeight: 800 }}
-           fontSize="90"
-           fill="#0f1724"
-         >
-           NILL
-         </text>
-         <text
-           x="320"
-           y="86"
-           style={{ fontFamily: "Inter, sans-serif", fontWeight: 700 }}
-           fontSize="30"
-           fill="#0f1724"
-         >
-           AI
-         </text>
-       </g>
-     </svg>
-   ); 
+ * NILL Lockup — Brandmark + Wortmarke.
+ * Die Marke selbst liegt in BrandMark.jsx; hier nur die Kombination mit dem
+ * Schriftzug. Farbe kommt über `color` vom Elternelement (currentColor).
+ */
+export default function Logo({ size = 28, showWordmark = true, className = "" }) {
+  return (
+    <span
+      className={className}
+      style={{ display: "inline-flex", alignItems: "center", gap: size * 0.36 }}
+      aria-label="NILL"
+    >
+      <BrandMark size={size} aria-hidden="true" role={undefined} />
+      {showWordmark && (
+        <span
+          style={{
+            fontFamily: '"Fraunces", Georgia, serif',
+            fontSize: size * 0.78,
+            letterSpacing: "-0.02em",
+            lineHeight: 1,
+          }}
+        >
+          NILL
+        </span>
+      )}
+    </span>
+  );
 }
-

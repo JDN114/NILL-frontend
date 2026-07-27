@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import BrandMark from "../components/BrandMark";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, Sector,
@@ -350,6 +351,10 @@ function NillLoader({ text = "Wird geladen…" }) {
           40%          { transform:scale(1);   opacity:1;   }
         }
       `}</style>
+      <BrandMark size={46} style={{
+        color:"#c6ff3c", marginBottom:20,
+        animation:"nill-pulse 2.4s ease-in-out infinite",
+      }}/>
       <div style={{
         fontFamily:"Fraunces,serif", fontSize:"2.8rem", fontWeight:700,
         color:"#efede7", letterSpacing:"-.02em", marginBottom:40,

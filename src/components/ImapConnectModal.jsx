@@ -236,12 +236,16 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
   const [error,        setError]        = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedHint,    setSavedHint]    = useState(false);
+  const [discovering,  setDiscovering]  = useState(false);
+  const [discovered,   setDiscovered]   = useState(null); // { provider, verified }
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setSubmitting(false);
     setSavedHint(false);
+    setDiscovering(false);
+    setDiscovered(null);
     if (account) {
       setForm(fromAccount(account));
       setShowAdvanced(false);
@@ -253,17 +257,17 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
 
   const detected = useMemo(() => presetFor(form.email), [form.email]);
 
-  // Known provider: email domain is in PRESETS
-  const isKnown = !!(savedHint || detected);
-  // Unknown custom domain: has a domain typed but not in PRESETS
-  const hasUnknownDomain = !detected && !savedHint
+  // Known provider: from local PRESETS, a saved config, or a verified autodiscovery
+  const isKnown = !!(savedHint || detected || discovered?.verified);
+  // Unknown custom domain we couldn't resolve — user must enter server data
+  const hasUnknownDomain = !detected && !savedHint && !discovered && !discovering
     && form.email.includes("@")
     && (form.email.split("@")[1]?.length ?? 0) > 2;
 
   useEffect(() => {
     if (isReauth || !form.email.includes("@")) return;
     let cancelled = false;
-    getImapSavedByEmail(form.email).then(saved => {
+    getImapSavedByEmail(form.email).then(async saved => {
       if (cancelled) return;
       if (saved) {
         setForm(prev => ({
@@ -278,6 +282,7 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
         }));
         setSavedHint(true);
         setShowAdvanced(false);
+        setDiscovered(null);
         return;
       }
       if (detected) {
@@ -293,17 +298,42 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
         }));
         setSavedHint(false);
         setShowAdvanced(false);
+        setDiscovered(null);
         return;
       }
-      // Unknown provider — open server settings automatically
+      // Unknown provider — ask the backend to resolve the server settings so the
+      // user doesn't have to know their IMAP host. Fills the fields on success.
       const dom = form.email.split("@")[1];
-      if (dom && dom.length > 2) {
-        setSavedHint(false);
+      if (!dom || dom.length <= 2) return;
+      setSavedHint(false);
+      setDiscovered(null);
+      if (!imap?.autodiscover) { setShowAdvanced(true); return; }
+      setDiscovering(true);
+      const res = await imap.autodiscover(form.email);
+      if (cancelled) return;
+      setDiscovering(false);
+      if (res && res.imap_host) {
+        setForm(prev => ({
+          ...prev,
+          imap_host:     res.imap_host     || prev.imap_host,
+          imap_port:     res.imap_port     || prev.imap_port,
+          imap_use_ssl:  res.imap_use_ssl  ?? prev.imap_use_ssl,
+          imap_starttls: res.imap_starttls ?? prev.imap_starttls,
+          smtp_host:     res.smtp_host     || prev.smtp_host,
+          smtp_port:     res.smtp_port     || prev.smtp_port,
+          smtp_use_ssl:  res.smtp_use_ssl  ?? prev.smtp_use_ssl,
+          username:      prev.username || prev.email,
+        }));
+        setDiscovered({ provider: res.provider || "", verified: !!res.verified });
+        // Verified hit → keep the panel collapsed; unverified guess → show it so
+        // the user can eyeball/adjust the host before connecting.
+        setShowAdvanced(!res.verified);
+      } else {
         setShowAdvanced(true);
       }
     });
     return () => { cancelled = true; };
-  }, [form.email, isReauth]);
+  }, [form.email, isReauth, imap, detected]);
 
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
@@ -350,9 +380,10 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
     ["Mailbox.org", "Posteo", "Fastmail", "Yandex Mail"].includes(detected.name);
 
   // Server settings panel is shown when:
-  // - unknown provider (always, auto-opened)
+  // - unknown provider we couldn't resolve (auto-opened)
   // - user manually expanded it for a known provider
-  const showServerPanel = hasUnknownDomain || showAdvanced;
+  // Hidden while autodiscovery is in flight so no empty fields flash.
+  const showServerPanel = (hasUnknownDomain || showAdvanced) && !discovering;
 
   return (
     <div style={{
@@ -424,6 +455,30 @@ export default function ImapConnectModal({ open, onClose, onConnected, account }
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", flexShrink: 0 }}/>
                 <span style={{ fontSize: "0.75rem", color: "#34d399" }}>
                   {detected.name} erkannt — automatisch konfiguriert.
+                </span>
+              </div>
+            )}
+            {discovering && !isReauth && (
+              <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 6 }}>
+                <span className="nim-spinner" style={{ width: 11, height: 11, borderColor: "rgba(197,165,114,0.3)", borderTopColor: "#c5a572" }}/>
+                <span style={{ fontSize: "0.75rem", color: "rgba(var(--ink-tint),.5)" }}>
+                  Servereinstellungen werden gesucht…
+                </span>
+              </div>
+            )}
+            {!savedHint && !detected && discovered?.verified && !isReauth && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", flexShrink: 0 }}/>
+                <span style={{ fontSize: "0.75rem", color: "#34d399" }}>
+                  {discovered.provider ? `${discovered.provider} erkannt` : "Provider erkannt"} — automatisch konfiguriert.
+                </span>
+              </div>
+            )}
+            {!savedHint && !detected && discovered && !discovered.verified && !isReauth && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fbbf24", flexShrink: 0 }}/>
+                <span style={{ fontSize: "0.75rem", color: "var(--nill-warn,#fbbf24)" }}>
+                  Servereinstellungen vermutet — bitte unten kurz prüfen.
                 </span>
               </div>
             )}

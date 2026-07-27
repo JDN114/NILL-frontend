@@ -57,10 +57,10 @@ const S = `
   .as-hdr-brand { display:flex; align-items:center; gap:12px; justify-self:start; }
   .as-logo-box {
     width: clamp(30px,3.5vw,40px); height: clamp(30px,3.5vw,40px);
-    background: var(--as-accent); border-radius: 8px;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:900; font-size:clamp(0.8rem,1.2vw,1rem);
-    color: var(--as-logo-fg); letter-spacing:-0.02em; flex-shrink:0;
+    flex-shrink:0;
+    background-color: var(--as-accent);
+    -webkit-mask: var(--nill-mark-src) center / contain no-repeat;
+    mask: var(--nill-mark-src) center / contain no-repeat;
   }
   .as-logo-name {
     font-family: var(--as-serif); font-size:clamp(0.9rem,1.4vw,1.15rem);
@@ -277,7 +277,7 @@ export default function ArbeitsStationPage() {
         {/* ── Header ── */}
         <header className="as-hdr">
           <div className="as-hdr-brand">
-            <div className="as-logo-box">N</div>
+            <div className="as-logo-box" aria-hidden="true" />
             <div>
               <div className="as-logo-name">{org?.name ?? "Nill"}</div>
               <div className="as-logo-tag">ArbeitsStation</div>

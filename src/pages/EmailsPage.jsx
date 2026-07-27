@@ -883,7 +883,7 @@ export default function EmailsPage() {
         {/* ── Sidebar ── */}
         <aside className={`em-sidebar${drawerOpen ? " em-sidebar--open" : ""}`}>
           <a href="/dashboard" className="em-logo">
-            <span className="em-logo-mark">N</span>
+            <span className="em-logo-mark" aria-hidden="true" />
             <span className="em-logo-label">NILL</span>
           </a>
 

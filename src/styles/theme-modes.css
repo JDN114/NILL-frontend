@@ -330,6 +330,7 @@ html[data-theme="light"] .nill-auth-root {
 
   /* Vars consumed by inline style={{}} literals in Login/Register JSX */
   --auth-link:       #556d00;
+  --auth-mark:       #556d00;   /* Brandmark auf heller Karte — Lime trägt hier nicht */
   --auth-dim:        rgba(32, 29, 21, 0.62);
   --auth-dim2:       rgba(32, 29, 21, 0.55);
   --auth-gold:       #806228;

@@ -260,11 +260,10 @@
   animation:pwaPulse 2.2s ease-out infinite;
 }
 .pwa-android-banner .ico{
-  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  width:30px;height:30px;flex-shrink:0;
   background:linear-gradient(180deg,#D4FF60,#B5E63D);
-  display:grid;place-items:center;color:#0a0a0c;font-weight:700;
-  font-family:var(--serif);font-size:14px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 10px -2px rgba(198,255,60,.4);
+  -webkit-mask:var(--nill-mark-src) center/contain no-repeat;
+  mask:var(--nill-mark-src) center/contain no-repeat;
 }
 .pwa-android-banner .txt{flex:1;min-width:0}
 .pwa-android-banner .txt strong{
@@ -289,9 +288,10 @@
   display:flex;align-items:center;gap:8px;margin-bottom:4px;
 }
 .pwa-body .pwa-logo-mark{
-  width:18px;height:18px;border-radius:5px;position:relative;
-  background:conic-gradient(from 210deg,#C6FF3C,#40E5C8,#8870FF,#FF6B95,#C6FF3C);
-  box-shadow:0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.3);
+  width:18px;height:18px;flex-shrink:0;
+  background-color:var(--accent);
+  -webkit-mask:var(--nill-mark-src) center/contain no-repeat;
+  mask:var(--nill-mark-src) center/contain no-repeat;
 }
 .pwa-body .pwa-logo-name{
   font-family:var(--serif);font-size:11px;color:var(--ink);letter-spacing:-.015em;
@@ -384,11 +384,19 @@
   display:grid;place-items:center;position:relative;
 }
 .pwa-qr svg{width:100%;height:100%}
+/* Brandmark in der QR-Mitte: der Code liegt auf Papier (#f3f0e6), darum
+   Tinte statt Lime — die N-Aussparung zeigt das Papier-Plättchen darunter. */
 .pwa-qr-logo{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:26px;height:26px;border-radius:7px;
-  background:conic-gradient(from 210deg,#C6FF3C,#40E5C8,#8870FF,#FF6B95,#C6FF3C);
-  box-shadow:0 0 0 3px #f3f0e6,inset 0 1px 0 rgba(255,255,255,.5);
+  background:#f3f0e6;
+  box-shadow:0 0 0 3px #f3f0e6;
+}
+.pwa-qr-logo::after{
+  content:"";display:block;width:100%;height:100%;
+  background-color:#0a0a0c;
+  -webkit-mask:var(--nill-mark-src) center/contain no-repeat;
+  mask:var(--nill-mark-src) center/contain no-repeat;
 }
 .pwa-footer-text .eyebrow{margin-bottom:14px;color:var(--accent)}
 .pwa-footer-text h3{
