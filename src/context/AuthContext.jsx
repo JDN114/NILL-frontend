@@ -95,54 +95,65 @@ export function AuthProvider({ children }) {
   }), [user, org, loading, logout, updateOrg, isSolo, isCompanyAdmin, isNillAdmin, hasModule, hasFeature, isTrialActive, trialDaysRemaining]);
 
   if (loading) {
+    // Class-based like PageLoader: inline style={{}} literals are unreachable
+    // for the light override, which made this full-screen gate flash near-black
+    // on every cold start in light mode. Dark values render byte-identically.
     return (
-      <div style={{
-        position:"fixed", inset:0, background:"#040407",
-        display:"flex", flexDirection:"column",
-        alignItems:"center", justifyContent:"center",
-        zIndex:9999,
-      }}>
+      <div className="nill-session-loader">
         <style>{`
           @keyframes nb-pulse{0%,100%{opacity:1}50%{opacity:.35}}
           @keyframes nb-bar{0%{transform:scaleX(0);opacity:1}80%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
           @keyframes nb-dot{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+          .nill-session-loader{
+            position:fixed; inset:0; background:#040407; z-index:9999;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+          }
+          .nill-session-loader .nsl-mark{
+            margin-bottom:20px; animation:nb-pulse 2.4s ease-in-out infinite;
+            color:var(--nill-mark-ink, #F2F2EE);
+          }
+          .nill-session-loader .nsl-word{
+            font-family:Fraunces,serif; font-size:2.8rem; font-weight:700;
+            color:#efede7; letter-spacing:-.02em; margin-bottom:40px;
+            animation:nb-pulse 2.4s ease-in-out infinite;
+          }
+          .nill-session-loader .nsl-word span{ color:#c6ff3c; }
+          .nill-session-loader .nsl-track{
+            width:180px; height:2px; background:rgba(239,237,231,.08);
+            border-radius:2px; overflow:hidden; margin-bottom:28px;
+          }
+          .nill-session-loader .nsl-bar{
+            height:100%; background:#c6ff3c; border-radius:2px;
+            transform-origin:left; animation:nb-bar 1.6s cubic-bezier(.4,0,.2,1) infinite;
+          }
+          .nill-session-loader .nsl-dots{ display:flex; gap:8px; margin-bottom:24px; }
+          .nill-session-loader .nsl-dots i{
+            width:5px; height:5px; border-radius:50%; background:#c6ff3c;
+            animation:nb-dot 1.2s ease-in-out infinite;
+          }
+          .nill-session-loader .nsl-caption{
+            color:rgba(155,152,144,.9); font-size:.72rem; letter-spacing:.08em;
+            text-transform:uppercase; font-family:Inter,sans-serif;
+          }
+
+          html[data-theme="light"] .nill-session-loader{ background:#eae3d4; }
+          html[data-theme="light"] .nill-session-loader .nsl-word{ color:#201d15; }
+          html[data-theme="light"] .nill-session-loader .nsl-word span{ color:#556d00; }
+          html[data-theme="light"] .nill-session-loader .nsl-bar,
+          html[data-theme="light"] .nill-session-loader .nsl-dots i{ background:#556d00; }
+          html[data-theme="light"] .nill-session-loader .nsl-track{ background:rgba(42,36,24,.10); }
+          html[data-theme="light"] .nill-session-loader .nsl-caption{ color:rgba(32,29,21,.62); }
         `}</style>
-        <BrandMark size={46} style={{
-          color:"var(--auth-mark, #c6ff3c)", marginBottom:20,
-          animation:"nb-pulse 2.4s ease-in-out infinite",
-        }}/>
-        <div style={{
-          fontFamily:"Fraunces,serif", fontSize:"2.8rem", fontWeight:700,
-          color:"#efede7", letterSpacing:"-.02em", marginBottom:40,
-          animation:"nb-pulse 2.4s ease-in-out infinite",
-        }}>
-          NILL<span style={{color:"#c6ff3c"}}>.</span>
-        </div>
-        <div style={{
-          width:180, height:2, background:"rgba(239,237,231,.08)",
-          borderRadius:2, overflow:"hidden", marginBottom:28,
-        }}>
-          <div style={{
-            height:"100%", background:"#c6ff3c", borderRadius:2,
-            transformOrigin:"left",
-            animation:"nb-bar 1.6s cubic-bezier(.4,0,.2,1) infinite",
-          }}/>
-        </div>
-        <div style={{display:"flex", gap:8, marginBottom:24}}>
+        <BrandMark size={46} className="nsl-mark" />
+        <div className="nsl-word">NILL<span>.</span></div>
+        <div className="nsl-track"><div className="nsl-bar" /></div>
+        <div className="nsl-dots">
           {[0,1,2].map(i => (
-            <div key={i} style={{
-              width:5, height:5, borderRadius:"50%", background:"#c6ff3c",
-              animation:`nb-dot 1.2s ease-in-out ${i*0.2}s infinite`,
-            }}/>
+            <i key={i} style={{ animationDelay:`${i*0.2}s` }} />
           ))}
         </div>
-        <div style={{
-          color:"rgba(155,152,144,.9)", fontSize:".72rem",
-          letterSpacing:".08em", textTransform:"uppercase",
-          fontFamily:"Inter,sans-serif",
-        }}>
-          Lade Session…
-        </div>
+        <div className="nsl-caption">Lade Session…</div>
       </div>
     );
   }

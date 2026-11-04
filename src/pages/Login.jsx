@@ -17,6 +17,9 @@ export default function Login() {
   const [tempToken, setTempToken] = useState("");
   const [totpCode, setTotpCode]   = useState("");
   const [tfaMethod, setTfaMethod] = useState("totp"); // "totp" | "email" | "webauthn"
+  // Factors this account can actually complete; the server tells us which.
+  // Older backends don't send the list — then we offer all three as before.
+  const [tfaMethods, setTfaMethods] = useState(["totp", "email", "webauthn"]);
   const [emailSent, setEmailSent] = useState(false);
 
   // Forgot-password state
@@ -27,6 +30,17 @@ export default function Login() {
 
   const [searchParams] = useSearchParams();
   const inactivityLogout = searchParams.get("reason") === "inactivity";
+
+  // Where to go after a successful login. ProtectedRoute parks the blocked
+  // route in ?next=… so a deep link (e.g. tapping an e-mail push that points at
+  // /dashboard/emails) survives the detour through the login screen.
+  // Only same-origin absolute paths are accepted — never a protocol-relative
+  // "//evil.tld" or an absolute URL, which would make this an open redirect.
+  const nextParam = searchParams.get("next");
+  const destination =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : "/dashboard";
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -46,8 +60,14 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", { email, password });
       if (res.data?.["2fa_required"]) {
+        const available = Array.isArray(res.data.methods) && res.data.methods.length
+          ? res.data.methods
+          : ["totp", "email", "webauthn"];
         setTempToken(res.data.temp_token);
-        setTfaMethod(res.data.method || "totp");
+        setTfaMethods(available);
+        setTfaMethod(
+          available.includes(res.data.method) ? res.data.method : available[0]
+        );
         setStep("2fa");
         setLoading(false);
         return;
@@ -55,7 +75,7 @@ export default function Login() {
       const me = await api.get("/auth/me", { withCredentials: true });
       setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
       setOrg(me.data.org ?? null);
-      navigate("/dashboard", { replace: true });
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error("Login Fehler:", err);
       if (err?.response?.status === 403) {
@@ -81,7 +101,7 @@ export default function Login() {
       const me = await api.get("/auth/me", { withCredentials: true });
       setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
       setOrg(me.data.org ?? null);
-      navigate("/dashboard", { replace: true });
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error("2FA Fehler:", err);
       setError(err?.response?.data?.detail || "Ungültiger Code. Bitte erneut versuchen.");
@@ -163,7 +183,7 @@ export default function Login() {
       const me = await api.get("/auth/me", { withCredentials: true });
       setUser({ id: me.data.id, email: me.data.email, role: me.data.role, is_admin: me.data.is_admin, org_role: me.data.org_role ?? null });
       setOrg(me.data.org ?? null);
-      navigate("/dashboard", { replace: true });
+      navigate(destination, { replace: true });
     } catch (err) {
       if (err?.name === "NotAllowedError") {
         setError("Biometrische Authentifizierung abgebrochen.");
@@ -227,7 +247,7 @@ export default function Login() {
           width: 26px;
           height: 26px;
           flex-shrink: 0;
-          background-color: var(--auth-mark, #c6ff3c);
+          background-color: var(--nill-mark-ink, #F2F2EE);
           -webkit-mask: var(--nill-mark-src) center / contain no-repeat;
           mask: var(--nill-mark-src) center / contain no-repeat;
         }
@@ -525,7 +545,7 @@ export default function Login() {
                   { key:"totp",     label:"🔐 Authenticator", desc:"TOTP-App Code" },
                   { key:"email",    label:"📧 E-Mail Code",    desc:"Code per E-Mail" },
                   { key:"webauthn", label:"🪪 Biometrie",      desc:"Touch / Face ID" },
-                ].map(m => (
+                ].filter(m => tfaMethods.includes(m.key)).map(m => (
                   <button key={m.key} type="button"
                     onClick={() => { setTfaMethod(m.key); setError(null); setTotpCode(""); setEmailSent(false); }}
                     style={{

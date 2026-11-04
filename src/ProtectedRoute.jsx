@@ -12,7 +12,15 @@ export default function ProtectedRoute({ children }) {
     if (loading) return;
 
     if (!user) {
-      navigate("/login", { replace: true });
+      // Hand the blocked route to the login screen so a deep link survives the
+      // detour (tapping an e-mail push lands on /dashboard/emails, not on the
+      // dashboard). A query param — not router state — because the session can
+      // also die across a full page load, which discards state.
+      const target = location.pathname + location.search + location.hash;
+      const next = target && target !== "/dashboard"
+        ? `/login?next=${encodeURIComponent(target)}`
+        : "/login";
+      navigate(next, { replace: true });
       return;
     }
 
@@ -41,7 +49,7 @@ export default function ProtectedRoute({ children }) {
       navigate("/station", { replace: true });
       return;
     }
-  }, [loading, user, org, navigate, location.pathname]);
+  }, [loading, user, org, navigate, location.pathname, location.search, location.hash]);
 
   if (loading) return null;
   if (!user) return null;

@@ -51,7 +51,13 @@ export function setInactivityPref(id) {
 async function doLogout() {
   try { await api.post("/auth/logout"); } catch { /* ignore */ }
   localStorage.removeItem("nill_imap_saved");
-  window.location.href = "/login?reason=inactivity";
+  // Carry the current route over so the user lands back where they were
+  // instead of on the dashboard (same ?next= contract as ProtectedRoute).
+  const here = window.location.pathname + window.location.search + window.location.hash;
+  const next = here.startsWith("/login") || here === "/dashboard"
+    ? ""
+    : `&next=${encodeURIComponent(here)}`;
+  window.location.href = `/login?reason=inactivity${next}`;
 }
 
 export default function useInactivityLogout(isAuthenticated) {
