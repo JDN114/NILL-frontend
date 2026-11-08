@@ -99,7 +99,7 @@ export function AuthProvider({ children }) {
     // for the light override, which made this full-screen gate flash near-black
     // on every cold start in light mode. Dark values render byte-identically.
     return (
-      <div className="nill-session-loader">
+      <div className="nill-session-loader" data-nill-loader="">
         <style>{`
           @keyframes nb-pulse{0%,100%{opacity:1}50%{opacity:.35}}
           @keyframes nb-bar{0%{transform:scaleX(0);opacity:1}80%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}

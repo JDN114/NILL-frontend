@@ -89,7 +89,8 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        z-index: 9999;
+        /* über dem Session-Loader (9999), damit nichts durchblitzt */
+        z-index: 10000;
         transition: opacity 0.35s ease;
       }
       #nill-boot.fade-out { opacity: 0; pointer-events: none; }
@@ -206,21 +207,31 @@
     <script type="module" src="/src/main.jsx"></script>
 
     <script>
-      // Entferne den Loader sobald React den ersten Inhalt in #root rendert
+      // Ein einziger Ladescreen bis zur echten Seite: React rendert vorher
+      // noch den Session-Gate (AuthContext) und den Suspense-Fallback
+      // (PageLoader) — beide tragen [data-nill-loader]. Solange einer davon
+      // im Baum steckt, bleibt #nill-boot oben (z-index 10000) und wird erst
+      // ausgeblendet, wenn echter Seiteninhalt da ist. Vorher wechselten hier
+      // in ~400ms drei unterschiedliche Loader-Designs = "Login flasht".
       (function () {
         var loader = document.getElementById('nill-boot');
-        if (!loader) return;
-        var obs = new MutationObserver(function () {
-          var root = document.getElementById('root');
-          if (root && root.children.length > 0) {
-            loader.classList.add('fade-out');
-            setTimeout(function () { loader.remove(); }, 380);
-            obs.disconnect();
-          }
-        });
-        obs.observe(document.getElementById('root'), { childList: true });
-        // Fallback: nach 4s immer entfernen
-        setTimeout(function () { loader.classList.add('fade-out'); setTimeout(function () { loader.remove(); }, 380); }, 4000);
+        var root = document.getElementById('root');
+        if (!loader || !root) return;
+        var done = false;
+        function finish() {
+          if (done) return;
+          done = true;
+          obs.disconnect();
+          loader.classList.add('fade-out');
+          setTimeout(function () { loader.remove(); }, 380);
+        }
+        function check() {
+          if (root.children.length > 0 && !root.querySelector('[data-nill-loader]')) finish();
+        }
+        var obs = new MutationObserver(check);
+        obs.observe(root, { childList: true, subtree: true });
+        // Fallback: nie länger als 8s hängen bleiben
+        setTimeout(finish, 8000);
       })();
     </script>
   </body>

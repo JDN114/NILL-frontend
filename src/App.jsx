@@ -140,11 +140,16 @@ function PageLoader() {
   // else). Class-based so the light override can win without touching the
   // dark values — dark renders byte-identically.
   return (
-    <div className="nill-page-loader">
+    <div className="nill-page-loader" data-nill-loader="">
       <style>{`
         @keyframes nill-spin { to { transform: rotate(360deg) } }
-        .nill-page-loader { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #04070f; }
-        .nill-page-loader > span { width: 24px; height: 24px; border: 2px solid rgba(197,165,114,0.25); border-top-color: #c5a572; border-radius: 50%; animation: nill-spin 0.65s linear infinite; }
+        .nill-page-loader { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #040407; }
+        /* Spinner erst nach 300ms einblenden: schnelle Chunk-Loads (Login →
+           Dashboard) zeigen dann nur eine ruhige Fläche statt eines kurz
+           aufblitzenden Spinners. Hintergrund = Boot-/Login-Schwarz #040407
+           (vorher #04070f → sichtbarer Farbsprung). */
+        .nill-page-loader > span { width: 24px; height: 24px; border: 2px solid rgba(197,165,114,0.25); border-top-color: #c5a572; border-radius: 50%; opacity: 0; animation: nill-spin 0.65s linear infinite, nill-loader-in 0.2s ease 0.3s forwards; }
+        @keyframes nill-loader-in { to { opacity: 1 } }
         html[data-theme="light"] .nill-page-loader { background: #eae3d4; }
         html[data-theme="light"] .nill-page-loader > span { border-color: rgba(128,98,40,0.25); border-top-color: #806228; }
       `}</style>
