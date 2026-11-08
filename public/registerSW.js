@@ -3,9 +3,15 @@ if ("serviceWorker" in navigator) {
   // When a new service worker takes control, reload once so the page runs the
   // latest shell + assets. Without this, an old SW can keep serving a stale
   // app shell that points at deleted JS bundles → blank, unrendered page.
+  //
+  // Only when an OLD worker was in control at page load, though: on a first
+  // visit (new device, fresh PWA install, iOS evicted the SW) clients.claim()
+  // also fires controllerchange, and reloading then threw away the already
+  // rendered page → loader, page, loader again, page.
+  const hadController = !!navigator.serviceWorker.controller;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing) return;
+    if (!hadController || refreshing) return;
     refreshing = true;
     window.location.reload();
   });
