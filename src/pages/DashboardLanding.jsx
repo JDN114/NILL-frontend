@@ -460,6 +460,11 @@ export default function DashboardLanding() {
     () => localStorage.getItem("nill_feed_seen") || "1970-01-01T00:00:00Z"
   );
   const { hasFeature, hasModule, isCompanyAdmin, org } = useAuth();
+  // Entsteht das Dashboard noch hinter dem Boot-Loader (Kaltstart), rendert
+  // es sofort fertig: sonst blendet der Loader (350ms) aus, während die Karten
+  // gestaffelt (bis 600ms) einblenden → Logo-Geist über halben Karten. Die
+  // Einblend-Animation bleibt für In-App-Navigation erhalten.
+  const [intro] = useState(() => typeof document === "undefined" || !document.getElementById("nill-boot"));
 
   const toggleAccountingMode = (e) => {
     e.preventDefault();
@@ -688,7 +693,7 @@ export default function DashboardLanding() {
           {/* ── Welcome ── */}
           <motion.div
             className="nd-welcome"
-            initial={{ opacity: 0, y: 16 }}
+            initial={intro && { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: .6 }}
           >
@@ -722,6 +727,7 @@ export default function DashboardLanding() {
           {aiConsentDone === false && isCompanyAdmin() && (
             <motion.div
               className="nd-ai-banner"
+              // kommt erst nach /me/onboarding-status → immer sanft einblenden
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: .45 }}
@@ -768,7 +774,7 @@ export default function DashboardLanding() {
                 return (
                   <motion.div
                     key={card.key}
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={intro && { opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * .05 }}
                   >
@@ -788,7 +794,7 @@ export default function DashboardLanding() {
               return (
                 <motion.div
                   key={card.key}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={intro && { opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * .05 }}
                 >

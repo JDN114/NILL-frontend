@@ -89,8 +89,9 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        /* über dem Session-Loader (9999), damit nichts durchblitzt */
-        z-index: 10000;
+        /* über allem, was die App fixiert rendert — Session-Loader (9999),
+           ThemeToggle (2147483000), Push-Toasts — damit nichts durchblitzt */
+        z-index: 2147483600;
         transition: opacity 0.35s ease;
       }
       #nill-boot.fade-out { opacity: 0; pointer-events: none; }
@@ -210,7 +211,7 @@
       // Ein einziger Ladescreen bis zur echten Seite: React rendert vorher
       // noch den Session-Gate (AuthContext) und den Suspense-Fallback
       // (PageLoader) — beide tragen [data-nill-loader]. Solange einer davon
-      // im Baum steckt, bleibt #nill-boot oben (z-index 10000) und wird erst
+      // im Baum steckt, bleibt #nill-boot ganz oben und wird erst
       // ausgeblendet, wenn echter Seiteninhalt da ist. Vorher wechselten hier
       // in ~400ms drei unterschiedliche Loader-Designs = "Login flasht".
       (function () {
